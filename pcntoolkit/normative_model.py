@@ -143,6 +143,7 @@ class NormativeModel:
         self.set_ensure_save_dirs()
         self.compute_zscores(data)
         self.compute_centiles(data, recompute=True)
+        self.compute_baseline_logp(data)
         self.compute_logp(data)
         self.compute_yhat(data)
         if self.evaluate_model:
@@ -716,9 +717,70 @@ class NormativeModel:
         self.postprocess(data)
         return data
 
+    def compute_baseline_logp(self, data: NormData) -> NormData:
+        """
+        Computes the log-probability of the data under a simple Gaussian model.
+        
+        The baseline model is a Gaussian with mean and standard deviation
+        computed from the scaled Y data. This serves as a null model reference
+        to evaluate for example the MSLL (Mean Standardized Log Loss) of our
+        fitted model.
+
+        Parameters
+        ----------
+        data : NormData
+            Test data containing response variables (Y).
+
+        Returns
+        -------
+        NormData
+            Data with baseline_logp computed for each response variable.
+        """
+        self.preprocess(data)
+
+        # Initialize logp array for a baseline Gaussian model with mean/std of the data
+        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        data["baseline_logp"] = xr.DataArray(
+            np.zeros((data.X.shape[0], len(respvar_intersection))),
+            dims=("observations", "response_vars"),
+            coords={"observations": data.observations},
+        )
+
+        # Compute the baseline Gaussian's model logp on scaled Y data
+        Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
+        for responsevar in respvar_intersection:
+            resp_predict_data = data.sel({"response_vars": responsevar})
+            _, _, _, Y, _ = self.extract_data(resp_predict_data)
+            y_scaled = Y.values
+            baseline_logp = self.elemwise_logp_baseline_model(y_scaled)
+            data["baseline_logp"].loc[{"response_vars": responsevar}] = baseline_logp
+
+        self.postprocess(data)
+        return data
+    
+    @staticmethod
+    def elemwise_logp_baseline_model(y_scaled: np.ndarray) -> np.ndarray:
+        """
+        Compute log-probability for each observation under a baseline 
+        Gaussian model.
+        
+        Parameters
+        ----------
+        y_scaled : np.ndarray
+            Scaled response variable values.
+            
+        Returns
+        -------
+        np.ndarray
+            Log-probability
+        """
+        baseline_mu = np.mean(y_scaled)
+        baseline_sigma = np.std(y_scaled)
+        return -0.5 * np.log(2 * np.pi * baseline_sigma**2) - ((y_scaled - baseline_mu) ** 2) / (2 * baseline_sigma**2)
+
     def compute_logp(self, data: NormData) -> NormData:
         """
-        Computes the log-probability of the data under the model.
+        Computes the log-probability of the data under the fitted model.
 
         Parameters
         ----------
@@ -729,10 +791,11 @@ class NormativeModel:
         -------
         NormData
             Prediction results containing:
-            - Logp: log-probability of the response variables per datapoint
+            - logp: log-probability of the response variables per datapoint under the fitted model
         """
         self.preprocess(data)
 
+        # Initialise logp array with the correct dimensions and coordinates
         respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
         data["logp"] = xr.DataArray(
             np.zeros((data.X.shape[0], len(respvar_intersection))),
@@ -740,6 +803,7 @@ class NormativeModel:
             coords={"observations": data.observations},
         )
 
+        # Compute the fitted model's logp on scaled Y data
         Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
         for responsevar in respvar_intersection:
             resp_predict_data = data.sel({"response_vars": responsevar})

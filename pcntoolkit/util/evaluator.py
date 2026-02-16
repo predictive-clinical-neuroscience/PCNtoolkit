@@ -344,34 +344,41 @@ class Evaluator:
         yhat = data["Yhat"].values
         return float(explained_variance_score(y, yhat))
 
-    def _evaluate_msll(self, data: NormData) -> float:
+    def _evaluate_msll(self, data: NormData) -> float | None:
         """
         Calculate Mean Standardized Log Loss.
+
+        MSLL compares the fitted model's log loss to a baseline Gaussian model.
+        Note that both should be computed on the same (scaled) data to ensure 
+        proper comparison, as log-likelihoods are scale-dependent.
 
         Parameters
         ----------
         data : NormData
-            Data container with predictions and actual values
+            Data container with predictions and actual values.
 
         Returns
         -------
-        float
+        float | None
             Mean standardized log loss between actual and predicted values
         """
+        # Fitted model mean log loss (negative log-likelihood)
         logp = data["logp"].values
-        y = data["Y"].values
-        
-        # model mean log loss (negative log-likelihood)
         mll_model = -np.mean(logp)
 
-        # baseline: Gaussian with mean and std of y_true
-        mu_null = np.mean(y)
-        sigma_null = np.std(y)
-        null_logp = -0.5 * np.log(2 * np.pi * sigma_null**2) - ((y - mu_null)**2) / (2 * sigma_null**2)
-        mll_null = -np.mean(null_logp)
+        # Check that the baseline logp is calculated on the scaled data
+        if "baseline_logp" not in data:
+            print("Cannot compute MSLL because baseline log probability is "
+                  "not computed on scaled data.")
+            return None
 
-        # standardized
-        return mll_model - mll_null
+        # Baseline Gaussian model mean log loss (negative log-likelihood)
+        baseline_logp = data["baseline_logp"].values
+        mll_null = -np.mean(baseline_logp)
+
+        # Compute MSLL (mean standardized log loss)
+        msll = mll_model - mll_null
+        return float(msll)
 
     def _evaluate_nll(self, data: NormData) -> float:
         """
