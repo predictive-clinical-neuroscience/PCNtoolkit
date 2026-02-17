@@ -61,6 +61,13 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
        conda create -n .ptk-dev
        conda activate .ptk-dev
 
+.. note::
+    **Windows users:** Before proceeding to step 4, install additional conda packages required to compile C/C++ extensions:
+
+    .. code-block:: bash
+
+        conda install -c conda-forge m2w64-toolchain libpython
+
 4. **Install the dependencies** 
 
    .. code-block:: bash
@@ -71,6 +78,39 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
 .. note::
     **Alternative quicker option:** To simplify and automate commands that are frequently used during development, we use `GNU Make <https://www.gnu.org/software/make/>`_. Common development tasks are defined as short scripts in the ``Makefile``. For example, steps 3 and 4 can be done with a single command: ``make dev-setup``. After it, you should activate the environment with ``conda activate .ptk-dev``.
+
+.. note::
+    **Installing Make on Windows:** Windows does not come with Make pre-installed. Setting it up manually can be complicated, so we generally do not recommend using it directly on Windows. But if you still want to use ``Make``, the easiest way is via `Git Bash <https://git-scm.com/install/windows>`_. Here's how to install it for Git Bash:
+
+    **Step 1: Download Make**
+    
+    1. Go to `ezwinports on SourceForge <https://sourceforge.net/projects/ezwinports/files/>`_
+    2. Download **make-4.4.1-without-guile-w32-bin.zip** (or newest version without guile)
+
+    **Step 2: Install to Git**
+    
+    1. Extract the downloaded zip file
+    2. Find your Git installation folder (usually ``C:\Users\YourUsername\AppData\Local\Programs\Git\``)
+    3. Copy the contents of the extracted folders into ``Git\mingw64\``:
+       
+       - ``bin\`` → ``Git\mingw64\bin\``
+       - ``include\`` → ``Git\mingw64\include\``
+       - ``lib\`` → ``Git\mingw64\lib\``
+       - ``share\`` → ``Git\mingw64\share\``
+
+    **Step 3: Verify Installation in Git Bash**
+
+    .. code-block:: bash
+
+        make --version
+    
+    **Step 4: Initialise conda in Git Bash to be able to use it**
+    
+    You only need to do that once, and then you can use your installed conda with Git Bash: 
+    
+    .. code-block:: bash
+
+        conda init bash
 
 Congrats! You have now set up your development environment. 
 
