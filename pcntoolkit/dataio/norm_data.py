@@ -11,19 +11,25 @@ is used by all the models in the toolkit.
 from __future__ import annotations
 
 import copy
-import fcntl
 import os
+
+try:
+    import fcntl
+except ImportError:
+  fcntl = None
+
 from collections import defaultdict
 from functools import reduce
 
 # pylint: disable=deprecated-class
+from typing_extensions import LiteralString
+
 from typing import (
     Any,
     Dict,
     Generator,
     Hashable,
     List,
-    LiteralString,
     Mapping,
     Optional,
     Sequence,
