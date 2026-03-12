@@ -12,6 +12,10 @@ from __future__ import annotations
 
 import copy
 import json
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 import os
 from collections import defaultdict
 from functools import reduce
