@@ -123,7 +123,7 @@ class Warnings:
     DATA_NOT_SCALED = "Data is not scaled, skipping scaling back to original scale."
     DATA_ALREADY_SCALED = "Data is already scaled, skipping scaling back to original scale."
     NO_COVARIATES = "No covariates provided for dataset {dataset_name}."
-    SYNTHESIZE_N_SAMPLES_IGNORED = "n_samples is ignored because data is provided."
+    SYNTHESIZE_N_SAMPLES_IGNORED = "{n_samples} sample(s) ignored because data is provided."
     CENTILES_ALREADY_COMPUTED_FOR_CENTILES = "Centiles are already computed for {dataset_name} for centiles {centiles}, skipping computation. Force recompute by passing recompute=True to compute_centiles"
     THRIVELINES_ALREADY_COMPUTED_FOR = "Thrivelines are already computed for {dataset_name} for offsets {offsets}, skipping computation. Force recompute by passing recompute=True to compute_thrivelines"
     REMOVE_NAN_SET_TO_FALSE = (
@@ -150,10 +150,12 @@ class Warnings:
         "Falling back to the default 'l-bfgs-b' optimizer. "
         "Please set optimizer='l-bfgs-b' to avoid this warning."
     )
-    MISSING_BATCH_EFFECTS = (
-    "Transfer data contains fewer batch effect levels than training data. "
-    "This may lead to biased results."
-    )
+    TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
+        "Transfer data contains fewer batch effect levels than training data. "
+        "This may lead to biased results."
+    )    
+
+
 class Errors:
     ERROR_BATCH_SIZE_AND_N_BATCHES_MISMATCH = "Batch size ({batch_size}) and number of batches ({n_batches}) are both specified, but do not match the number of response variables ({n_response_vars})"
     ERROR_ENVIRONMENT_NOT_FOUND = (

@@ -9,7 +9,6 @@ import glob
 import importlib.metadata
 import json
 import os
-import warnings
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -207,13 +206,11 @@ class NormativeModel:
 
         new_model.preprocess(transfer_data)
 
-if hasattr(self, "batch_effects") and hasattr(transfer_data, "batch_effects"):
-    if len(transfer_data.batch_effects) < len(self.batch_effects):
-        warnings.warn(
-            "Transfer dataset contains fewer batch effects than the training dataset. "
-            "This may lead to biased transfer corrections.",
-            UserWarning,
-        )
+        if hasattr(self, "batch_effects") and hasattr(transfer_data, "batch_effects"):
+            if len(transfer_data.batch_effects) < len(self.batch_effects):
+                Output.warning(
+                    Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS
+                )
         new_model.register_batch_effects(transfer_data)
 
         Output.print(Messages.TRANSFERRING_MODELS, n_models=len(respvar_intersection))
