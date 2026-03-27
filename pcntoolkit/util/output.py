@@ -153,7 +153,7 @@ class Warnings:
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
         "Transfer data contains fewer batch effect levels than training data. "
         "This may lead to biased results."
-    )    
+    )
 
 
 class Errors:
