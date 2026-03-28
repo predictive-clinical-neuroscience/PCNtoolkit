@@ -174,3 +174,8 @@ Models estimated on earlier versions of PCNtoolkit (up until v0.39) are NOT COMP
 **Bug fixes**
 1. Fix MSLL computation
 2. Refactor logging for BLR: add warnings and errors related to optimizers and warping
+
+# Version 1.2.0.post1
+
+**Hotfix**
+Fix packaging issues (no missing files or folders)

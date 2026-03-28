@@ -1,6 +1,6 @@
 [project]
 name = "pcntoolkit"
-version = "1.2.0"
+version = "1.2.0.post1"
 description = "Predictive Clinical Neuroscience Toolkit"
 readme = "README.md"
 license = "GPL-3.0-only"
@@ -62,8 +62,8 @@ normative = "pcntoolkit.normative:entrypoint"
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["pcntoolkit"]
+[tool.setuptools.packages.find]
+include = ["pcntoolkit*"]
 
 [tool.ruff]
 exclude = [

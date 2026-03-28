@@ -16,7 +16,7 @@ __all__ = [
     "BsplineBasisFunction",
     "LinearBasisFunction",
     "PolynomialBasisFunction",
-    "ComnpositeBasisFunction",
+    "CompositeBasisFunction",
     "NormativeModel",
     "BLR",
     "HBR",

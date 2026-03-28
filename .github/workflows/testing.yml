@@ -1,7 +1,7 @@
 # This configuration does the following:
 
-#   It runs the tests when code is pushed to the master and dev branch and 
-#   when a pull request is created.
+#   It runs the tests when code is pushed to dev branch and 
+#   when a pull request to dev is created.
 #   It sets up a Python environment, installs project dependencies, and runs pytest.
 #   Test results are uploaded as artifacts for later examination.
 
@@ -10,11 +10,9 @@ name: testing
 on:
   push:
     branches:
-      - master 
       - dev
   pull_request:
     branches:
-      - master
       - dev
 jobs:
   build:

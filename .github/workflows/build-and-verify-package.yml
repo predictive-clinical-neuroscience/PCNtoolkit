@@ -1,0 +1,35 @@
+# Build the package and verify that all folders and files
+# exist in the wheel using check-wheel-contents.
+
+name: build-and-verify-package
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install build tools
+        run: pip install build check-wheel-contents
+
+      - name: Build package 
+        run: python -m build
+
+      # we verify the wheel contents. The wheel is what the user gets with 'pip install pcntoolkit'
+      - name: Verify wheel contents
+        run: check-wheel-contents --package pcntoolkit dist/*.whl
