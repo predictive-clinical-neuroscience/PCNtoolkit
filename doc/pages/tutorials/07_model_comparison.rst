@@ -1,5 +1,5 @@
-Compare two HBR models
-================
+Compare normative models
+========================
 
 .. code:: ipython3
 
@@ -67,7 +67,7 @@ Compare two HBR models
         	sex (2)
     	site (23)
         
-
+    
 
 .. code:: ipython3
 
@@ -230,7 +230,7 @@ Compare two HBR models
 
     Process: 83228 - 2025-11-20 13:24:22 - Fitting models on 2 response variables.
     Process: 83228 - 2025-11-20 13:24:22 - Fitting model for WM-hypointensities.
-
+    
 
 .. code:: ipython3
 
@@ -292,6 +292,19 @@ Compare two HBR models
     Process: 83743 - 2025-11-20 13:25:06 - Computing log-probabilities for Right-Lateral-Ventricle.
     Process: 83743 - 2025-11-20 13:25:06 - Computing log-probabilities for WM-hypointensities.
     Process: 83743 - 2025-11-20 13:25:07 - Computing yhat for 2 response variables.
+    
+
+
+.. parsed-literal::
+
+    Output()
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+    
 
 
 
@@ -304,20 +317,7 @@ Compare two HBR models
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
+    
 
 
 
@@ -330,13 +330,13 @@ Compare two HBR models
 
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/arviz/stats/stats.py:797: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
-
+    
 
 
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
+    
 
 
 
@@ -349,7 +349,7 @@ Compare two HBR models
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
+    
 
 
 .. parsed-literal::
@@ -358,7 +358,7 @@ Compare two HBR models
       warnings.warn(
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/arviz/stats/stats.py:797: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
-
+    
 
 .. code:: ipython3
 
@@ -370,7 +370,7 @@ Compare two HBR models
 .. parsed-literal::
 
     Right-Lateral-Ventricle
-
+    
 
 
 .. raw:: html
@@ -437,7 +437,7 @@ Compare two HBR models
 .. parsed-literal::
 
     WM-hypointensities
-
+    
 
 
 .. raw:: html

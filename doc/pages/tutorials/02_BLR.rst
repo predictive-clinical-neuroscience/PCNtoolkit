@@ -79,7 +79,7 @@ First we download a small example dataset from github.
         	sex (2)
     	site (23)
         
-
+    
 
 .. code:: ipython3
 
@@ -202,7 +202,7 @@ All results can be found in the save directory.
     Process: 75222 - 2025-11-20 13:13:43 - Fitting models on 4 response variables.
     Process: 75222 - 2025-11-20 13:13:43 - Fitting model for WM-hypointensities.
     Process: 75222 - 2025-11-20 13:13:44 - Fitting model for Right-Lateral-Ventricle.
-
+    
 
 .. parsed-literal::
 
@@ -258,12 +258,12 @@ All results can be found in the save directory.
       return f(*arrays, *other_args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=6.36754e-17): result may not be accurate.
       return f(*arrays, *other_args, **kwargs)
-
+    
 
 .. parsed-literal::
 
     Process: 75222 - 2025-11-20 13:13:46 - Fitting model for Right-Amygdala.
-
+    
 
 .. parsed-literal::
 
@@ -290,7 +290,7 @@ All results can be found in the save directory.
       return f(*arrays, *other_args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=1.95743e-41): result may not be accurate.
       return f(*arrays, *other_args, **kwargs)
-
+    
 
 .. parsed-literal::
 
@@ -341,7 +341,7 @@ All results can be found in the save directory.
     Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for Right-Amygdala.
     Process: 75222 - 2025-11-20 13:13:48 - Saving model to:
     	resources/blr/save_dir.
-
+    
 
 
 
@@ -1182,7 +1182,7 @@ Let’s start with the centiles.
         scatter_data=train,  # Scatter this data along with the centiles
         batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},  # Highlight these groups
         show_other_data=True,  # scatter data not in those groups as smaller black circles
-        harmonize=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
+        harmonize_data=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
         show_yhat=True,
     )
 
@@ -1213,7 +1213,7 @@ Let’s start with the centiles.
     Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data for WM-hypointensities.
     Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data for CortexVol.
     Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data for Right-Amygdala.
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_14_1.png
@@ -1301,7 +1301,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_20_1.png
@@ -1321,7 +1321,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_20_3.png
@@ -1341,7 +1341,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_20_5.png
@@ -1361,7 +1361,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_20_7.png
@@ -1642,7 +1642,7 @@ Predicting
     Process: 75222 - 2025-11-20 13:13:50 - Computing yhat for WM-hypointensities.
     Process: 75222 - 2025-11-20 13:13:50 - Computing yhat for CortexVol.
     Process: 75222 - 2025-11-20 13:13:50 - Computing yhat for Right-Amygdala.
-
+    
 
 
 
@@ -2502,7 +2502,7 @@ Harmonize
     Process: 75222 - 2025-11-20 13:13:51 - Harmonizing data for WM-hypointensities.
     Process: 75222 - 2025-11-20 13:13:51 - Harmonizing data for CortexVol.
     Process: 75222 - 2025-11-20 13:13:51 - Harmonizing data for Right-Amygdala.
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_27_1.png
@@ -2575,7 +2575,7 @@ site B.
     Process: 75222 - 2025-11-20 13:13:53 - Harmonizing data for WM-hypointensities.
     Process: 75222 - 2025-11-20 13:13:53 - Harmonizing data for CortexVol.
     Process: 75222 - 2025-11-20 13:13:53 - Harmonizing data for Right-Amygdala.
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_29_1.png
@@ -2641,7 +2641,7 @@ site B.
     Process: 75222 - 2025-11-20 13:13:53 - Harmonizing data for WM-hypointensities.
     Process: 75222 - 2025-11-20 13:13:53 - Harmonizing data for CortexVol.
     Process: 75222 - 2025-11-20 13:13:53 - Harmonizing data for Right-Amygdala.
-
+    
 
 
 .. image:: 02_BLR_files/02_BLR_30_1.png
