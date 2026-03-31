@@ -1,8 +1,8 @@
 cff-version: "1.2.0"
 message: "If you use this software, please cite it using the metadata below."
 title: "PCNtoolkit"
-version: "1.2.0"
-date-released: "2026-03-24"
+version: "1.2.0.post1"
+date-released: "2026-03-28"
 doi: "10.5281/zenodo.5207839"
 authors:
   - family-names: "de Boer"
