@@ -20,9 +20,11 @@ the PCNtoolkit. For more details you can read the paper below:
 What we will do
 ~~~~~~~~~~~~~~~
 
-**Classic normative modelling workflow** 1. *Fit a model* on all data
-together (let’s call it *baseline model* as later we will compare it
-with the aggregated model produced from the FL workflow)
+**Classic normative modelling workflow**
+
+1. *Fit a model* on all data together (let’s call it *baseline model* as
+   later we will compare it with the aggregated model produced from the
+   FL workflow)
 
 **Prepare the data for FL**
 
@@ -165,14 +167,6 @@ locations 1 and 2 (e.g, a hospital in France and in the USA). All these
 locations don’t want to share their data due to privacy. For this
 reason, they use the FL workflow.
 
-.. figure:: 12_federated_learning_files/fl-graph.png
-   :alt: alt text
-
-   alt text
-
-Figure 1: Adopted from Fed-BioMed toolbox (for more info see:
-https://fedbiomed.org/)
-
 .. code:: ipython3
 
     # Pick 2 sites for each remote location
@@ -307,7 +301,7 @@ Visualize the data
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_9_0.png
+.. image:: 12_federated_learning_files/12_federated_learning_8_0.png
 
 
 Configure the HBR model
@@ -812,7 +806,7 @@ The central location trains an HBR model using only its own 19 sites.
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_16_0.png
+.. image:: 12_federated_learning_files/12_federated_learning_15_0.png
 
 
 Step 2: Extend the central model to remote locations
@@ -1242,11 +1236,11 @@ model.
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_20_0.png
+.. image:: 12_federated_learning_files/12_federated_learning_19_0.png
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_20_1.png
+.. image:: 12_federated_learning_files/12_federated_learning_19_1.png
 
 
 Each extended model knows about both the central sites (via synthetic
@@ -1903,11 +1897,11 @@ Step 1: Transfer to both locations
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_28_0.png
+.. image:: 12_federated_learning_files/12_federated_learning_27_0.png
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_28_1.png
+.. image:: 12_federated_learning_files/12_federated_learning_27_1.png
 
 
 Step 2: Merge transferred models and predict
@@ -2162,7 +2156,7 @@ Centile curves
     
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_32_1.png
+.. image:: 12_federated_learning_files/12_federated_learning_31_1.png
 
 
 .. parsed-literal::
@@ -2172,7 +2166,7 @@ Centile curves
     
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_32_3.png
+.. image:: 12_federated_learning_files/12_federated_learning_31_3.png
 
 
 .. parsed-literal::
@@ -2182,7 +2176,7 @@ Centile curves
     
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_32_5.png
+.. image:: 12_federated_learning_files/12_federated_learning_31_5.png
 
 
 QQ plots and evaluation metrics
@@ -2231,15 +2225,15 @@ QQ plots and evaluation metrics
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_34_0.png
+.. image:: 12_federated_learning_files/12_federated_learning_33_0.png
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_34_1.png
+.. image:: 12_federated_learning_files/12_federated_learning_33_1.png
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_34_2.png
+.. image:: 12_federated_learning_files/12_federated_learning_33_2.png
 
 
 
