@@ -1,3 +1,6 @@
+# To run this script, execute "python doc/convert_notebooks.py" from the root
+# of the repository.
+
 import glob
 import os
 import shutil
@@ -41,7 +44,9 @@ def convert_notebooks() -> None:
                                 # environment that is running this script
                 "-m",
                 "jupyter",
-                "nbconvert",
+                "nbconvert", # nbconvert needs the package "pandoc". Please
+                             # install with
+                             # "conda install -c conda-forge pandoc"
                 "--to",
                 "rst",
                 nb_path,
@@ -52,7 +57,6 @@ def convert_notebooks() -> None:
             ],
             check=True,
         )
-
 
 if __name__ == "__main__":
     clean_tutorials_dir()
