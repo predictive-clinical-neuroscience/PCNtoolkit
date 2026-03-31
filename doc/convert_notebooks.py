@@ -58,6 +58,30 @@ def convert_notebooks() -> None:
             check=True,
         )
 
+
+def fix_image_paths() -> None:
+    """Replace URL-encoded backslashes in RST image directives.
+
+    On Windows, nbconvert encodes path separators as ``%5C``
+    in ``.. image::`` directives. Sphinx cannot resolve these
+    paths, so we replace every ``%5C`` with a forward slash
+    after conversion.
+    """
+    # Iterate over every generated RST file in the tutorials dir
+    for rst_path in glob.glob(os.path.join(TUTORIALS_DIR, "*.rst")):
+        # Read the file content as text
+        with open(rst_path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+        # Replace all URL-encoded backslashes with forward slashes
+        fixed = content.replace("%5C", "/")
+        # Only write back if the content actually changed
+        if fixed != content:
+            with open(rst_path, "w", encoding="utf-8") as fh:
+                fh.write(fixed)
+
+
 if __name__ == "__main__":
     clean_tutorials_dir()
     convert_notebooks()
+    if os.name == "nt":  # Only fix image paths on Windows
+        fix_image_paths()
