@@ -2,6 +2,7 @@ import glob
 import os
 import shutil
 import subprocess
+import sys
 
 EXAMPLES_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "examples")
@@ -36,6 +37,9 @@ def convert_notebooks() -> None:
 
         subprocess.run(
             [
+                sys.executable, # resolve "jupyter" from the virtual
+                                # environment that is running this script
+                "-m",
                 "jupyter",
                 "nbconvert",
                 "--to",
