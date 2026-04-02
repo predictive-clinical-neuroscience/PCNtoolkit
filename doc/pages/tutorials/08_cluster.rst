@@ -10,8 +10,7 @@ it on a compute node. The notebook is tailored to the Slurm environment
 on the Donders HPC cluster, but can be adapted to other Slurm or Torque
 environments.
 
-IMPORTANT
-~~~~~~~~~
+**IMPORTANT**
 
 This notebook is just a demo for a small dataset. The same code can be
 applied to larger datasets, but keep in mind that the this notebook
@@ -58,7 +57,7 @@ After selecting the environment, the weird symbol in the top right
 corner should now show the environment name.
 
 Imports
-~~~~~~~
+-------
 
 .. code:: ipython3
 
@@ -287,7 +286,7 @@ Now we can just do:
 
 
 Loading a fold model
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 We can load a model for a specific fold by calling ``load_model`` on the
 runner object. This will return a ``NormativeModel``, which we can

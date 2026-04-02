@@ -23,6 +23,7 @@ Welcome to PCNToolkit's documentation!
    pages/tutorials/08_cluster.rst
    pages/tutorials/09_command_line_interface.rst
    pages/tutorials/12_federated_learning.rst
+   pages/tutorials/13_evaluation_metrics.rst
 
 
 .. toctree::

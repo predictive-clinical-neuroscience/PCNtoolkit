@@ -4,8 +4,8 @@ Federated normative modeling
 In multi-site neuroimaging studies, data often cannot leave the hospital
 or institution where it was collected, due to privacy regulations such
 as GDPR. **Federated learning (FL)** addresses this constraint: each
-site trains a model locally and shares only the trained model; never the
-raw data.
+site trains a model locally and shares only the trained model
+parameters; never the raw data.
 
 This tutorial demonstrates a FL workflow for normative modeling using
 the PCNtoolkit. For more details you can read the paper below:
@@ -18,7 +18,7 @@ the PCNtoolkit. For more details you can read the paper below:
      https://doi.org/10.1371/journal.pone.0278776
 
 What we will do
-~~~~~~~~~~~~~~~
+---------------
 
 **Classic normative modelling workflow**
 
@@ -36,21 +36,21 @@ What we will do
 4. *Extend* the central model to each of the two smaller datasets
 5. *Merge (= aggregate)* the central model and the two extended models
    into a single global model
-6. *Evaluate* final aggregated model
+6. *Evaluate* the final aggregated model
 
 **FL with ``transfer()``**
 
 7. *Transfer* the central model to each of the two smaller datasets
 8. *Merge* the central model and the two transferred models into a
    single global model
-9. *Evaluate* final aggregated model
+9. *Evaluate* the final aggregated model
 
 **Evaluation**
 
 10. *Compare* the aggregated models to the baseline model
 
 The functions that we will use
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 +-----------------------------------+-----------------------------------+
 | Function                          | Role                              |
@@ -73,7 +73,7 @@ The functions that we will use
 +-----------------------------------+-----------------------------------+
 
 Imports
-~~~~~~~
+-------
 
 .. code:: ipython3
 
@@ -158,8 +158,10 @@ variable (``WM-hypointensities``) to keep the tutorial fast.
 Split data
 ----------
 
-We split the data into: - A large central dataset (19 sites) - Two
-smaller datasets (each dataset has 2 sites)
+We split the data into:
+
+- A large central dataset (19 sites)
+- Two smaller datasets (each dataset has 2 sites)
 
 In a FL scenario the large model would be owned by a central location
 (e.g., a hospital in the Netherlands) and the smaller ones by remote
@@ -312,54 +314,48 @@ models (baseline, central, transferred, and aggregated). This ensures a
 fair comparison. We use a Normal likelihood HBR with B-spline basis
 functions.
 
-For a detailed explanation of this configuration, see *Tutorial 03 - HBR
-with Normal Likelihood*.
-
 .. code:: ipython3
 
-    # Prior for the mean function (mu)
     mu = make_prior(
         linear=True,
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 5.0)),
+        slope=make_prior(dist_name="Normal", dist_params=(0.0, 10.0)),
         intercept=make_prior(
             random=True,
             mu=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
-            sigma=make_prior(dist_name="Gamma", dist_params=(1.0, 1.0)
+            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0), mapping="softplus", mapping_params=(0.0, 3.0)),
         ),
         basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
-    ))
-    
-    # Prior for the noise function (sigma)
+    )
     sigma = make_prior(
         linear=True,
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
+        slope=make_prior(dist_name="Normal", dist_params=(0.0, 2.0)),
         intercept=make_prior(dist_name="Normal", dist_params=(1.0, 1.0)),
         basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
         mapping="softplus",
-        mapping_params=(0.0, 2.0),
+        mapping_params=(0.0, 3.0),
     )
-    
     
     likelihood = NormalLikelihood(mu, sigma)
     
     template_hbr = HBR(
         name="template",
         cores=16,
-        progressbar=True,
+        progressbar=False,
         draws=1500,
         tune=500,
         chains=4,
         nuts_sampler="nutpie",
         likelihood=likelihood,
     )
+    
 
 --------------
 
 Part 1: Baseline model
 ----------------------
 
-In a non-FL scenario, we would pool all the data from every site into a
-single dataset and train one model.
+In a non-FL scenario, we would pool all the data from all the 23 sites
+into a single dataset and train one model.
 
 .. code:: ipython3
 
@@ -376,207 +372,9 @@ single dataset and train one model.
         outscaler="standardize",
     );
     
+    # Use the data from all 23 sites, before any splitting happened.
     baseline_model.fit_predict(
         train_all, test_all);
-
-
-.. parsed-literal::
-
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\pytensor\link\c\cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
-    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
-    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
-    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
-      warnings.warn(
-    
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>63</td>
-                        <td>0.28</td>
-                        <td>31</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>69</td>
-                        <td>0.25</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>35</td>
-                        <td>0.25</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>48</td>
-                        <td>0.28</td>
-                        <td>15</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
---------------
 
 Part 2: FL with ``extend()``
 ----------------------------
@@ -594,7 +392,7 @@ The central location trains an HBR model using only its own 19 sites.
 
     central_model = NormativeModel(
         template_regression_model=template_hbr,
-        savemodel=False,
+        savemodel=True,
         evaluate_model=True,
         saveresults=False,
         saveplots=False,
@@ -606,194 +404,6 @@ The central location trains an HBR model using only its own 19 sites.
     )
     
     central_model.fit(train_central)
-
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>83</td>
-                        <td>0.26</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>78</td>
-                        <td>0.27</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>60</td>
-                        <td>0.26</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>32</td>
-                        <td>0.26</td>
-                        <td>15</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
 
 .. code:: ipython3
 
@@ -812,17 +422,21 @@ The central location trains an HBR model using only its own 19 sites.
 Step 2: Extend the central model to remote locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each remote location receives the central model file and calls
-``extend()`` locally using its own private data.
+Each remote location receives the central model json files that are
+saved in ``resources/federated/central`` and calls ``extend()`` locally
+using its own private data.
 
 ``extend()`` synthesizes data from the central model’s learned
 distribution, merges it with the real local data, and refits a full
 model.
 
-**No real data is exchanged only model parameters.**
+No real data is exchanged only model parameters.
 
 .. code:: ipython3
 
+    # Location 1 loads the central model from disk
+    central_model = NormativeModel.load("resources/federated/central")
+    
     # Location 1 extends the central model
     # with their private data.
     extended_1 = central_model.extend(
@@ -832,196 +446,11 @@ model.
         ),
     )
 
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>71</td>
-                        <td>0.27</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>166</td>
-                        <td>0.30</td>
-                        <td>3</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>130</td>
-                        <td>0.24</td>
-                        <td>31</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>115</td>
-                        <td>0.23</td>
-                        <td>63</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
 .. code:: ipython3
 
+    # Location 2 loads the central model from disk
+    central_model = NormativeModel.load("resources/federated/central")
+    
     # Location 2 extends the central model
     # with their private data.
     extended_2 = central_model.extend(
@@ -1030,194 +459,6 @@ model.
             "resources/federated/extended_2"
         ),
     )
-
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>88</td>
-                        <td>0.23</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>34</td>
-                        <td>0.26</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>83</td>
-                        <td>0.27</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>124</td>
-                        <td>0.27</td>
-                        <td>2</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
 
 .. code:: ipython3
 
@@ -1249,18 +490,24 @@ data) and its own local sites.
 Step 3: Merge extended models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Merge the central model with both extended models using
-``NormativeModel.merge()``.
+The remote locations send back to the central location their updated
+model parameters. The central location merges the central model with
+both extended models using ``NormativeModel.merge()``.
 
-Under the hood, ``merge()`` does the following: 1. Calls
-``synthesize()`` on each model to generate synthetic data from its
-learned distribution 2. Pools all synthetic datasets together 3. Refits
-a single global model on the combined synthetic data
+Under the hood, ``merge()`` does the following:
 
-**No real data is exchanged only model parameters.**
+1. Calls ``synthesize()`` on each model to generate synthetic data from
+   its learned distribution
+2. Pools all synthetic datasets together
+3. Refits a single global model on the combined synthetic data
+
+No real data is exchanged only model parameters.
 
 .. code:: ipython3
 
+    # For simplicity, we will not load the extended models from disk 
+    # using `NormativeModel.load`, but in practice you would do that here.
+    
     # Merge central + both extended models
     aggregated_model_with_extend = NormativeModel.merge(
         save_dir=(
@@ -1273,194 +520,6 @@ a single global model on the combined synthetic data
         ],
     )
 
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for 12 seconds</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>104</td>
-                        <td>0.25</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>49</td>
-                        <td>0.23</td>
-                        <td>31</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>92</td>
-                        <td>0.27</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>68</td>
-                        <td>0.20</td>
-                        <td>63</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
 Step 4: Predict with the aggregated model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1471,18 +530,17 @@ test set.
 
     # make a copy that holds all the test data
     test_all_extended = test_all.copy(deep=True)
+    
     # Predict the test data based on the aggegated model
     aggregated_model_with_extend.predict(
         test_all_extended
     );
 
---------------
-
 Part 3: FL with ``transfer()``
 ------------------------------
 
-We now repeat the federated workflow, but using ``transfer()`` instead
-of ``extend()``.
+We now repeat the FL workflow, but using ``transfer()`` instead of
+``extend()``.
 
 Step 1: Transfer to both locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1504,381 +562,6 @@ Step 1: Transfer to both locations
             "resources/federated/transferred_2"
         ),
     )
-
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.51</td>
-                        <td>7</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.41</td>
-                        <td>7</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.48</td>
-                        <td>7</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>1</td>
-                        <td>0.46</td>
-                        <td>7</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>8</td>
-                        <td>0.37</td>
-                        <td>7</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>2</td>
-                        <td>0.39</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>9</td>
-                        <td>0.36</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>8</td>
-                        <td>0.35</td>
-                        <td>15</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
 
 .. code:: ipython3
 
@@ -1923,202 +606,16 @@ Step 2: Merge transferred models and predict
     test_all_transferred = test_all.copy(deep=True)
     aggregated_model_with_transfer.predict(test_all_transferred);
 
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>45</td>
-                        <td>0.23</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>33</td>
-                        <td>0.23</td>
-                        <td>31</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>52</td>
-                        <td>0.24</td>
-                        <td>15</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>203</td>
-                        <td>0.25</td>
-                        <td>31</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
 --------------
 
-Final comparison: aggregated (extend) vs aggregated (transfer) vs. baseline
----------------------------------------------------------------------------
+Aggregated vs baseline model
+----------------------------
 
-We now compare all three models: - **baseline**: all data pooled -
-**Aggregated (extend)**: remote sites used ``extend()`` - **Aggregated
-(transfer)**: remote sites used ``transfer()``
+We now compare all three models:
+
+- **baseline**: all data pooled
+- **Aggregated (extend)**: remote sites used ``extend()``
+- **Aggregated (transfer)**: remote sites used ``transfer()``
 
 Centile curves
 ~~~~~~~~~~~~~~
@@ -2291,47 +788,47 @@ QQ plots and evaluation metrics
         <tr>
           <th>baseline</th>
           <th>WM-hypointensities</th>
-          <td>0.283357</td>
-          <td>0.037593</td>
-          <td>0.343657</td>
-          <td>-0.309733</td>
-          <td>0.809536</td>
-          <td>0.283257</td>
-          <td>512.393429</td>
-          <td>0.457326</td>
-          <td>1.461914e-12</td>
-          <td>0.716743</td>
-          <td>0.968612</td>
+          <td>0.360218</td>
+          <td>0.037037</td>
+          <td>0.341988</td>
+          <td>-0.320961</td>
+          <td>0.798308</td>
+          <td>0.357200</td>
+          <td>485.243446</td>
+          <td>0.490306</td>
+          <td>1.828886e-14</td>
+          <td>0.642800</td>
+          <td>0.967453</td>
         </tr>
         <tr>
           <th>Aggregated (extend)</th>
           <th>WM-hypointensities</th>
-          <td>0.254675</td>
+          <td>0.369571</td>
           <td>0.038889</td>
-          <td>0.342497</td>
-          <td>-0.299144</td>
-          <td>0.885658</td>
-          <td>0.250139</td>
-          <td>524.097735</td>
-          <td>0.431402</td>
-          <td>3.339060e-11</td>
-          <td>0.749861</td>
-          <td>0.952947</td>
+          <td>0.322612</td>
+          <td>-0.330280</td>
+          <td>0.854522</td>
+          <td>0.369446</td>
+          <td>480.599146</td>
+          <td>0.495714</td>
+          <td>8.515981e-15</td>
+          <td>0.630554</td>
+          <td>0.961769</td>
         </tr>
         <tr>
           <th>Aggregated (transfer)</th>
           <th>WM-hypointensities</th>
-          <td>0.209173</td>
-          <td>0.035185</td>
-          <td>0.366371</td>
-          <td>-0.257403</td>
-          <td>0.927399</td>
-          <td>0.203533</td>
-          <td>540.139196</td>
-          <td>0.325028</td>
-          <td>1.047982e-06</td>
-          <td>0.796467</td>
-          <td>0.952010</td>
+          <td>0.307336</td>
+          <td>0.049630</td>
+          <td>0.354095</td>
+          <td>-0.273420</td>
+          <td>0.911382</td>
+          <td>0.307070</td>
+          <td>503.809550</td>
+          <td>0.405179</td>
+          <td>6.102418e-10</td>
+          <td>0.692930</td>
+          <td>0.946122</td>
         </tr>
       </tbody>
     </table>
@@ -2361,3 +858,12 @@ Both aggregated models show a systematic deviation from the identity
 line at the **lower tail** of the QQ plot. That means the model
 “expects” the lowest-percentile subjects to have smaller observed values
 than they actually do.
+
+Evaluation metrics
+~~~~~~~~~~~~~~~~~~
+
+Looking at all evaluation metrics, the **aggregated (transfer)**
+performs worse than the other two models. While the **aggregated
+(extend)** performs *slightly* worse than the baseline model. For more
+info on the evaluation metrics, see our tutorial
+`here <https://pcntoolkit.readthedocs.io/en/stable/pages/tutorials/13_evaluation_metrics.html>`__.
