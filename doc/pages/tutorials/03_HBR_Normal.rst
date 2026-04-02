@@ -2,8 +2,8 @@ HBR with Normal likelihood
 ==========================
 
 Welcome to this tutorial notebook that will go through the fitting and
-evaluation of Normative models with a Hierarchical Bayesian Regression (HBR)
-model using a Normal likelihood.
+evaluation of Normative models with a Hierarchical Bayesian Regression
+(HBR) model using a Normal likelihood.
 
 Let’s jump right in.
 
@@ -224,23 +224,23 @@ NormalLikelihood, which we will use to model our response variable.
         # Mu is linear because we want to allow the mean to vary as a function of the covariates.
         linear=True,
         # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 10.
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 3.0)),
+        slope=make_prior(dist_name="Normal", dist_params=(0.0, 5.0)),
         # The intercept is random, because we expect the intercept to vary between sites and sexes.
         intercept=make_prior(
             random=True,
             # Mu is the mean of the intercept, which is normally distributed with a mean of 0 and a standard deviation of 1.
             mu=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
             # Sigma is the scale at which the intercepts vary. It is a positive parameter, so we have to map it to the positive domain.
-            sigma=make_prior(dist_name="Normal", dist_params=(1.0, 1.0), mapping="softplus", mapping_params=(0.0, 2.0)),
+            sigma=make_prior(dist_name="Gamma", dist_params=(1.0, 1.0)
         ),
         # We use a B-spline basis function to allow for non-linearity in the mean.
         basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
-    )
+    ))
     sigma = make_prior(
         # Sigma is also linear, because we want to allow the standard deviation to vary as a function of the covariates: heteroskedasticity.
         linear=True,
         # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 2.0)),
+        slope=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
         # The intercept is not random, because we assume the intercept of the variance to be the same for all sites and sexes.
         intercept=make_prior(dist_name="Normal", dist_params=(1.0, 1.0)),
         # We use a B-spline basis function to allow for non-linearity in the standard deviation.
@@ -254,8 +254,9 @@ NormalLikelihood, which we will use to model our response variable.
         # b -> scaling
         # c -> vertical shift
         # You can leave c out, and it will default to 0.
-        mapping_params=(0.0, 3.0),
+        mapping_params=(0.0, 2.0),
     )
+    
     
     # Set the likelihood with the priors we just created.
     likelihood = NormalLikelihood(mu, sigma)
@@ -325,7 +326,7 @@ All results can be found in the save directory.
 
 .. code:: ipython3
 
-    model.fit_predict(train, test)
+    model.fit_predict(train, test);
 
 
 
@@ -418,7 +419,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -512,7 +513,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -605,7 +606,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -699,7 +700,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -792,7 +793,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -886,7 +887,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -979,7 +980,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -1073,7 +1074,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -1916,7 +1917,7 @@ Let’s start with the centiles.
         scatter_data=train,  # Scatter this data along with the centiles
         batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},  # Highlight these groups
         show_other_data=True,  # scatter data not in those groups as smaller black circles
-        harmonize=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
+        harmonize_data=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
     )
 
 
@@ -2231,7 +2232,7 @@ Predicting
 
 .. code:: ipython3
 
-    model.predict(test)
+    model.predict(test);
 
 
 

@@ -53,6 +53,7 @@ dev = [
     "sphinx-rtd-theme>=3.0.2",
     "ruff>=0.8.6",
     "pytest-cov>=6.0.0",
+    "nbconvert>=7.15.0",
 ]
 
 [project.scripts]
