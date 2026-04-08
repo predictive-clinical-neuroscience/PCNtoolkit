@@ -853,18 +853,18 @@ class NormativeModel:
 
         self.postprocess(data)
         return data
-    
+
     @staticmethod
     def elemwise_logp_baseline_model(y_scaled: np.ndarray) -> np.ndarray:
         """
-        Compute log-probability for each observation under a baseline 
+        Compute log-probability for each observation under a baseline
         Gaussian model.
-        
+
         Parameters
         ----------
         y_scaled : np.ndarray
             Scaled response variable values.
-            
+
         Returns
         -------
         np.ndarray
