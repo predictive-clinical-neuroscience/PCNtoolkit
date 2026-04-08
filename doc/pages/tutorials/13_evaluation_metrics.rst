@@ -226,20 +226,31 @@ Williams <https://gaussianprocess.org/gpml/chapters/RW.pdf#page=27>`__.
 MACE — Mean absolute centile error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. math:: \text{MACE} = \frac{1}{|C|} \sum_{c \in C} \left| c - \hat{F}_c \right|
+.. math:: \text{MACE} = \frac{1}{b} \sum_{k=1}^{b} \left( \frac{1}{m} \sum_{j=1}^{m} \left| q_j - \frac{\sum_{i=1}^{n} \mathbf{1}\{\hat{q}_{ij} \geq y_i\}}{n} \right| \right)
 
-where :math:`\hat{F}_c` is the empirical fraction of subjects whose true
-value falls below the predicted :math:`c`-th centile curve.
+where: - :math:`b` is the number of batch of batch effects (i.e., unique
+combinations of sex and site) - :math:`m` is the number of centiles used
+for calibration - :math:`q_j` is the :math:`j`-th target centile level
+(e.g. 0.05, 0.25, 0.50, 0.75, 0.95) - :math:`\hat{q}_{ij}` is the
+predicted :math:`j`-th centile value for the :math:`i`-th subject -
+:math:`y_i` is the true value for the :math:`i`-th subject - :math:`n`
+is the number of subjects in the batch group -
+:math:`\mathbf{1}\{\hat{q}_{ij} \geq y_i\}` is an indicator function
+that outputs 1 or 0, depending on whether :math:`y_i` lies below or
+above its predicted :math:`j`-th centile value, respectively. So,
+:math:`\frac{\sum_i \mathbf{1}\{\hat{q}_{ij} \geq y_i\}}{n}` is the
+empirical fraction of subjects below the :math:`j`-th centile curve
 
-MACE checks, for each predicted centile level (e.g. the 10th, 25th,
-50th, 75th, 95th centile curve), what fraction of subjects actually
-falls below it in the data. A perfectly calibrated model has exactly 10%
-of subjects below its 10th centile, 25% below its 25th centile, and so
-on. MACE averages the absolute deviation from this ideal across all
+The maths above might seem complicated. To put simply, the MACE checks,
+for each predicted centile level (e.g. the 10th, 25th, 50th, 75th, 95th
+centile curve), what fraction of subjects actually falls below it in the
+data. A perfectly calibrated model has exactly 10% of subjects below its
+10th centile, 25% below its 25th centile, and so on. MACE averages the
+absolute deviation from this perfectly calibrated model across all
 centile levels.
 
 - MACE values close to 0 indicate the predicted centile curves closely
-  match the empirical distribution of the data.
+  match the distribution of the data.
 
 **Connection to the QQ plot:** The QQ plot is the “uncompressed” version
 of MACE. Each point on the QQ plot corresponds to MACE at a specific
@@ -247,11 +258,10 @@ quantile level. Systematic deviations from the diagonal (e.g. an S-curve
 or U-curve) indicate where along the distribution calibration breaks
 down - information that MACE collapses into a single number.
 
-This metric is adopted from *equation 2* of this paper: > Zamanzadeh,
-M., Verduyn, Y., De Boer, A., Ros, T., Wolfers, T., Dinga, R., Šafář
-Postma, M., Marquand, A. F., Van Wingerden, M., & Kia, S. M. (2025).
-MEGaNorm: Normative Modeling of MEG Brain Oscillations Across the Human
-Lifespan. Neuroscience. https://doi.org/10.1101/2025.06.23.660997
+This metric is adopted from *equation 4* of this paper: > Zamanzadeh,
+M., Verduyn, Y., de Boer, A. et al. Normative modeling of MEG brain
+oscillations across the human lifespan. Commun Biol (2026).
+https://doi.org/10.1038/s42003-026-09825-2
 
 --------------
 
@@ -295,6 +305,10 @@ Z-scores.
 |                        | model may be missing distributional         |
 |                        | structure                                   |
 +------------------------+---------------------------------------------+
+
+You can read more about the Shapiro–Wilk test in
+`this <https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test>`__
+wikipedia page.
 
 Summary table
 -------------

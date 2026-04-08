@@ -441,14 +441,88 @@ class Evaluator:
 
     def _evaluate_mace(self, data: NormData) -> float:
         """
-        Calculate Mean Absolute Centile Error.
+        Calculate Mean Absolute Centile Error (MACE).
+
+        MACE measures centile calibration by comparing, for each predicted
+        centile level, the fraction of subjects whose true value falls below
+        that centile curve against the nominal centile value.
+
+        Calibration is computed separately within each unique batch group
+        (i.e. each group of site and sex), and the
+        per-group MACE values are averaged to give the final score. This
+        approach prevents well-calibrated large sites from
+        masking poor calibration at smaller sites.
+
+        This metric is adopted from Zamanzadeh et al. (2026).
+
+        Parameters
+        ----------
+        data : NormData
+            Data container for a single response variable, containing
+            Y, centiles, and batch_effects.
+
+        Returns
+        -------
+        float
+            Mean absolute centile error, averaged over all batch groups.
         """
+        # True response values
         y = data["Y"].values
+        # Nomical centile levels, E.g. [0.05, 0.1, ..., 0.95]
         centile_list = data.centile.values
+        # Predicted centile curves
         centile_data = data.centiles.values
-        empirical_centiles = (centile_data >= y).mean(axis=1)
-        mace = np.abs(centile_list - empirical_centiles).mean()
-        return float(mace)
+
+        # Collect one MACE value for each unique batch effect
+        batch_mace: list[float] = []
+
+        # Check if there are batch effects
+        unique_batch_effects: dict = data.attrs.get("unique_batch_effects", {})
+        has_batch = (
+            "batch_effects" in data.data_vars
+            and len(unique_batch_effects) > 0
+        )
+
+        if has_batch:
+            # Get batch effects values eg [['site1', 'M'], ['site1', 'F'], ...]
+            be_values = data["batch_effects"].values
+            # Get batch effect dimension names eg ['site', 'sex']
+            be_dims = list(data.batch_effect_dims.values)
+
+            # Iterate over each batch dimension
+            for dim_idx, dim_name in enumerate(be_dims):
+                # Get unique batch effects eg 
+                # ['site1', 'site2', ...]
+                unique_vals = unique_batch_effects.get(dim_name, [])
+
+                # Compute MACE for each unique batch effect
+                for batch_val in unique_vals:
+                    # Boolean mask selecting subjects in this unique batch 
+                    # effect
+                    mask = be_values[:, dim_idx].astype(str) == str(batch_val)
+
+                    # Skip if no subjects for this unique batch effect
+                    if not mask.any():
+                        continue
+
+                    # Compute MACE for this unique batch effect
+                    empirical_centiles = (
+                        centile_data[:, mask] >= y[mask]
+                    ).mean(axis=1)
+
+                    batch_mace.append(
+                        float(np.abs(centile_list - empirical_centiles).mean())
+                    )
+
+            # Average MACE across all batch effects
+            return float(np.mean(batch_mace))
+
+        else:
+            # Compute MACE if data have no batch effect
+            empirical_centiles = (centile_data >= y).mean(axis=1)
+            return float(
+                np.abs(centile_list - empirical_centiles).mean()
+            )
 
     def _evaluate_mape(self, data: NormData) -> float:
         """
