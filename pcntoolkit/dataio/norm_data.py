@@ -1336,7 +1336,7 @@ class NormData(xr.Dataset):
 
         This method creates a DataArray with dimensions 'response_vars' and 'statistics',
         where 'response_vars' corresponds to the response variables in the dataset,
-        and 'statistics' includes statistics such as Rho, RMSE, SMSE, EXPV, NLL, and ShapiroW.
+        and 'statistics' includes statistics such as Rho, RMSE, SMSE, EXPV, MLL, and ShapiroW.
         The DataArray is filled with NaN values initially.
         """
         rv = self.response_vars.to_numpy().copy().tolist()
@@ -1346,7 +1346,7 @@ class NormData(xr.Dataset):
             dims=("response_vars", "statistics"),
             coords={
                 "response_vars": np.arange(len(rv)),
-                "statistics": ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "NLL", "ShapiroW", "MACE", "MAPE", "EXPV"],
+                "statistics": ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"],
             },
         )
 

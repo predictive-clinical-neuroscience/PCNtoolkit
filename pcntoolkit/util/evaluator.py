@@ -42,7 +42,7 @@ class Evaluator:
         """
         # data["Yhat"] = data.centiles.sel(centile=0.5, method="nearest")
         assert "Yhat" in data.data_vars, "Yhat must be computed before evaluation"
-        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "NLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
+        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
         if statistics:
             self.statistics = [m for m in all_statistics if m in statistics]
 
@@ -63,8 +63,8 @@ class Evaluator:
             self.evaluate_smse(data)
         if "MSLL" in self.statistics:
             self.evaluate_msll(data)
-        if "NLL" in self.statistics:
-            self.evaluate_nll(data)
+        if "MLL" in self.statistics:
+            self.evaluate_mll(data)
         if "MACE" in self.statistics:
             self.evaluate_mace(data)
         if "MAPE" in self.statistics:
@@ -171,7 +171,7 @@ class Evaluator:
         MSLL compares the log loss of the model to that of a simple baseline predictor
         that always predicts the mean of the training data.
 
-        MSLL = MLL_model - MLL_null
+        MSLL = MLL_model - MLL_baseline
 
         Parameters
         ----------
@@ -184,11 +184,11 @@ class Evaluator:
             msll = self._evaluate_msll(resp_predict_data)
             data.statistics.loc[{"response_vars": responsevar, "statistic": "MSLL"}] = msll
 
-    def evaluate_nll(self, data: NormData) -> None:
+    def evaluate_mll(self, data: NormData) -> None:
         """
-        Evaluate Negative Log Likelihood (NLL) for model predictions.
+        Evaluate Mean Log Loss (MLL) for model predictions.
 
-        NLL statistics the probabilistic accuracy of the model's predictions, assuming
+        MLL statistics the probabilistic accuracy of the model's predictions, assuming
         binary classification targets.
 
         Parameters
@@ -199,8 +199,8 @@ class Evaluator:
         """
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
-            nll = self._evaluate_nll(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "NLL"}] = nll
+            mll = self._evaluate_mll(resp_predict_data)
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "MLL"}] = mll
 
     def evaluate_bic(self, data: NormData) -> None:
         """
@@ -374,15 +374,15 @@ class Evaluator:
 
         # Baseline Gaussian model mean log loss (negative log-likelihood)
         baseline_logp = data["baseline_logp"].values
-        mll_null = -np.mean(baseline_logp)
+        mll_baseline = -np.mean(baseline_logp)
 
         # Compute MSLL (mean standardized log loss)
-        msll = mll_model - mll_null
+        msll = mll_model - mll_baseline
         return float(msll)
 
-    def _evaluate_nll(self, data: NormData) -> float:
+    def _evaluate_mll(self, data: NormData) -> float:
         """
-        Calculate Negative Log Likelihood.
+        Calculate Mean Log Loss.
 
         Parameters
         ----------
@@ -392,11 +392,11 @@ class Evaluator:
         Returns
         -------
         float
-            Negative log likelihood of predictions
+            Mean Log Loss of predictions
         """
         logp = data["logp"].values
-        nll = -np.mean(logp)
-        return float(nll)  # Explicitly cast to float
+        mll = -np.mean(logp)
+        return float(mll)  # Explicitly cast to float
 
     def _evaluate_bic(self, data: NormData) -> float:
         """

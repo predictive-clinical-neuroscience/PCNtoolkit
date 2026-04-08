@@ -818,7 +818,7 @@ class NormativeModel:
         Computes the log-probability of the data under a simple Gaussian model.
         
         The baseline model is a Gaussian with mean and standard deviation
-        computed from the scaled Y data. This serves as a null model reference
+        computed from the scaled Y data. This serves as a baseline model
         to evaluate for example the MSLL (Mean Standardized Log Loss) of our
         fitted model.
 
