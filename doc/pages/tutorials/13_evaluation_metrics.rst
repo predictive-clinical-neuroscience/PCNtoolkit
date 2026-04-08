@@ -66,7 +66,7 @@ R² — Coefficient of determination
 .. math:: R^2 = 1 - \frac{SS_{\text{res}}}{SS_{\text{tot}}} = 1 - \frac{\sum_i (y_i - \hat{y}_i)^2}{\sum_i (y_i - \bar{y})^2}
 
 R² answers the question: *how much better is my model than simply always
-predicting the mean?*
+predicting the* **mean**\ *?*
 
 Unlike EXPV, R² is penalized by systematic mean shifts.
 
@@ -79,14 +79,17 @@ Unlike EXPV, R² is penalized by systematic mean shifts.
 EXPV — Explained variance
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. math:: \text{EXPV} = 1 - \frac{\text{Var}(y - \hat{y})}{\text{Var}(y)}
+.. math:: \text{EXPV} = 1 - \frac{\text{Var}(y - \hat{y} - \overline{(y - \hat{y})})}{\text{Var}(y)}
 
-Similar to R², but it measures the variance of the *residuals* rather
-than the sum of squared residuals. The key difference: EXPV is not
-penalized by systematic mean shifts. If your model consistently over- or
-under-predicts by a constant offset, R² will be lower than EXPV.
+Similar to R², but it measures how much of the **variance** in the true
+values is explained by the model, after removing any systematic mean
+offset from the residuals.
 
 - Range: 0 to 1 — higher is better
+- A score of 1 means the model perfectly explains the variance in the
+  data
+- A score of 0 means the model explains no more variance than simply
+  predicting the mean
 
 --------------
 
@@ -160,48 +163,63 @@ Probabilistic metrics
 
 --------------
 
-NLL — Negative log likelihood (also called mean log loss)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MLL — Mean log loss
+~~~~~~~~~~~~~~~~~~~
 
-.. math:: \text{NLL} = -\frac{1}{n} \sum_i \log p(y_i \mid \text{model})
+.. math:: \text{MLL} = -\frac{1}{n} \sum_i \log p(y \mid \mathcal{D}, x_*)
 
-Measures how “surprised” the model is by the actual data, on average.
+Where: - :math:`y`: the test or training response variable. We typically
+select the test set here, to see how well the normative model fitted on
+training data generalises to test set. - :math:`\mathcal{D}`: the
+training dataset used to fit the model - :math:`x_*`: the test covariate
+- :math:`p(y_i \mid \mathcal{D}, x_*)`: the probability the model
+assigns to the true value given the test input
+
+Measures how “surprised” the model is by the data y, on average.
 
 - Range: 0 to ∞
 - lower is better
 
-**Implementation:**
-
-.. code:: python
-
-   nll = -np.mean(data['logp'].values)
-
 ..
 
-   ⚠️ **Important:** NLL is an **absolute** quantity that is
+   ⚠️ **Important:** MLL is an **absolute** quantity that is
    scale-dependent (it depends on the units and variance of the response
    variable). This makes it difficult to interpret in isolation. To
    compare models meaningfully, use **MSLL** instead, which normalizes
-   NLL against a baseline.
+   MLL against a baseline.
+
+This metric is adopted from `Section 2.5 of Gaussian Processes for
+Machine Learning book by C. E. Rasmussen & C. K. I.
+Williams <https://gaussianprocess.org/gpml/chapters/RW.pdf#page=27>`__.
 
 --------------
 
 MSLL — Mean standardized log loss
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. math:: \text{MSLL} = \underbrace{-\frac{1}{n}\sum_i \log p(y_i \mid \text{model})}_{\text{MLL}_{\text{model}}} - \underbrace{\left(-\frac{1}{n}\sum_i \log p(y_i \mid \text{baseline})\right)}_{\text{MLL}_{\text{null}}}
+.. math:: \text{MSLL} = \underbrace{-\frac{1}{n}\sum_i \log p(y \mid \mathcal{D}, x_*)}_{\text{MLL}_{\text{model}}} - \underbrace{\left(-\frac{1}{n}\sum_i \log \mathcal{N}\!\left(y \mid \bar{y},\, \hat{\sigma}^2\right)\right)}_{\text{MLL}_{\text{Gaussian baseline}}}
 
-MSLL is a relative metric. It compares the model’s log loss against a
-Gaussian baseline. The “standardized” in the name refers to this
+where the Gaussian baseline fits a single normal distribution to the
+training responses: - :math:`\bar{y} = \frac{1}{n}\sum_i y_i` — training
+sample mean -
+:math:`\hat{\sigma}^2 = \frac{1}{n}\sum_i (y_i - \bar{y})^2` — training
+sample variance
+
+MSLL is a relative metric. It compares the model’s mean log loss against
+a Gaussian baseline. The “standardized” in the name refers to this
 subtraction.
 
-======== ==================================================
+======== ============================================
 Value    Meaning
-======== ==================================================
-MSLL < 0 Model beats the baseline
-MSLL = 0 Model is equivalent to the naive Gaussian baseline
-MSLL > 0 Model is worse than the baseline
-======== ==================================================
+======== ============================================
+MSLL < 0 Model beats the Gaussian baseline
+MSLL = 0 Model is equivalent to the Gaussian baseline
+MSLL > 0 Model is worse than the Gaussian baseline
+======== ============================================
+
+This metric is adopted from `Section 2.5 of Gaussian Processes for
+Machine Learning book by C. E. Rasmussen & C. K. I.
+Williams <https://gaussianprocess.org/gpml/chapters/RW.pdf#page=27>`__.
 
 --------------
 
@@ -228,6 +246,12 @@ of MACE. Each point on the QQ plot corresponds to MACE at a specific
 quantile level. Systematic deviations from the diagonal (e.g. an S-curve
 or U-curve) indicate where along the distribution calibration breaks
 down - information that MACE collapses into a single number.
+
+This metric is adopted from *equation 2* of this paper: > Zamanzadeh,
+M., Verduyn, Y., De Boer, A., Ros, T., Wolfers, T., Dinga, R., Šafář
+Postma, M., Marquand, A. F., Van Wingerden, M., & Kia, S. M. (2025).
+MEGaNorm: Normative Modeling of MEG Brain Oscillations Across the Human
+Lifespan. Neuroscience. https://doi.org/10.1101/2025.06.23.660997
 
 --------------
 
