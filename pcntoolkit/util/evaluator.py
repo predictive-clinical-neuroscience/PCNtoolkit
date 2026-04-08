@@ -533,7 +533,6 @@ class Evaluator:
 
         return mean_absolute_percentage_error(y, yhat)
 
-
     def empty_statistic(self) -> xr.DataArray:
         return xr.DataArray(
             np.zeros(len(self.response_vars)),
