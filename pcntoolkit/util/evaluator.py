@@ -470,7 +470,7 @@ class Evaluator:
         y = data["Y"].values
         # Nomical centile levels, E.g. [0.05, 0.1, ..., 0.95]
         centile_list = data.centile.values
-        # Predicted centile curves
+        # Predicted centile curves for each subject
         centile_data = data.centiles.values
 
         # Collect one MACE value for each unique batch effect
@@ -484,14 +484,15 @@ class Evaluator:
         )
 
         if has_batch:
-            # Get batch effects values eg [['site1', 'M'], ['site1', 'F'], ...]
+            # Get batch effects values for each subject 
+            # eg [['site1', 'M'], ['site1', 'F'], ...]
             be_values = data["batch_effects"].values
             # Get batch effect dimension names eg ['site', 'sex']
             be_dims = list(data.batch_effect_dims.values)
 
             # Iterate over each batch dimension
             for dim_idx, dim_name in enumerate(be_dims):
-                # Get unique batch effects eg 
+                # Get unique batch effects eg
                 # ['site1', 'site2', ...]
                 unique_vals = unique_batch_effects.get(dim_name, [])
 
