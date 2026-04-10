@@ -1,3 +1,4 @@
+from itertools import product
 from typing import List, Tuple
 
 import numpy as np
@@ -447,11 +448,13 @@ class Evaluator:
         centile level, the fraction of subjects whose true value falls below
         that centile curve against the nominal centile value.
 
-        Calibration is computed separately within each unique batch group
-        (i.e. each group of site and sex), and the
-        per-group MACE values are averaged to give the final score. This
-        approach prevents well-calibrated large sites from
-        masking poor calibration at smaller sites.
+        Calibration is computed separately within each
+        unique combination of batch effects (e.g.
+        site1_male, site1_female, site2_male, ...), and
+        the per-combination MACE values are averaged to give
+        the final score. This approach prevents
+        well-calibrated large groups from masking poor
+        calibration at smaller groups.
 
         This metric is adopted from Zamanzadeh et al. (2026).
 
@@ -484,38 +487,57 @@ class Evaluator:
         )
 
         if has_batch:
-            # Get batch effects values for each subject 
+            # Get batch effects values for each subject
             # eg [['site1', 'M'], ['site1', 'F'], ...]
             be_values = data["batch_effects"].values
-            # Get batch effect dimension names eg ['site', 'sex']
+            # Get batch effect dimension names
+            # eg ['site', 'sex']
             be_dims = list(data.batch_effect_dims.values)
 
-            # Iterate over each batch dimension
-            for dim_idx, dim_name in enumerate(be_dims):
-                # Get unique batch effects eg
-                # ['site1', 'site2', ...]
-                unique_vals = unique_batch_effects.get(dim_name, [])
+            # Build list of unique values per dimension
+            # eg [['site1','site2'], ['M','F']]
+            unique_per_dim = [
+                unique_batch_effects.get(dim, [])
+                for dim in be_dims
+            ]
 
-                # Compute MACE for each unique batch effect
-                for batch_val in unique_vals:
-                    # Boolean mask selecting subjects in this unique batch 
-                    # effect
-                    mask = be_values[:, dim_idx].astype(str) == str(batch_val)
-
-                    # Skip if no subjects for this unique batch effect
-                    if not mask.any():
-                        continue
-
-                    # Compute MACE for this unique batch effect
-                    empirical_centiles = (
-                        centile_data[:, mask] >= y[mask]
-                    ).mean(axis=1)
-
-                    batch_mace.append(
-                        float(np.abs(centile_list - empirical_centiles).mean())
+            # Iterate over Cartesian product of all
+            # batch effect dimensions, eg
+            # (site1,M), (site1,F), (site2,M), ...
+            for combo in product(*unique_per_dim):
+                # Initialize mask for this combination
+                mask = np.ones(
+                    be_values.shape[0], dtype=bool
+                )
+                for dim_idx, val in enumerate(combo):
+                    # mask has only subjects matching every
+                    # dimension in this combination
+                    mask &= (
+                        be_values[:, dim_idx].astype(str)
+                        == str(val)
                     )
 
-            # Average MACE across all batch effects
+                # Skip empty combinations
+                if not mask.any():
+                    continue
+
+                # Empirical centile for this combination
+                empirical_centiles = (
+                    centile_data[:, mask]
+                    >= y[mask]
+                ).mean(axis=1)
+
+                # MACE for this combination
+                batch_mace.append(
+                    float(
+                        np.abs(
+                            centile_list
+                            - empirical_centiles
+                        ).mean()
+                    )
+                )
+
+            # Average MACE across all combinations
             return float(np.mean(batch_mace))
 
         else:
