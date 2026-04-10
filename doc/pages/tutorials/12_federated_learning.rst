@@ -759,8 +759,8 @@ QQ plots and evaluation metrics
           <th>EXPV</th>
           <th>MACE</th>
           <th>MAPE</th>
+          <th>MLL</th>
           <th>MSLL</th>
-          <th>NLL</th>
           <th>R2</th>
           <th>RMSE</th>
           <th>Rho</th>
@@ -788,47 +788,47 @@ QQ plots and evaluation metrics
         <tr>
           <th>baseline</th>
           <th>WM-hypointensities</th>
-          <td>0.360218</td>
-          <td>0.037037</td>
-          <td>0.341988</td>
-          <td>-0.320961</td>
-          <td>0.798308</td>
-          <td>0.357200</td>
-          <td>485.243446</td>
-          <td>0.490306</td>
-          <td>1.828886e-14</td>
-          <td>0.642800</td>
-          <td>0.967453</td>
+          <td>0.359381</td>
+          <td>0.124935</td>
+          <td>0.342213</td>
+          <td>0.798763</td>
+          <td>-0.320506</td>
+          <td>0.356309</td>
+          <td>485.579657</td>
+          <td>0.491113</td>
+          <td>1.633169e-14</td>
+          <td>0.643691</td>
+          <td>0.967511</td>
         </tr>
         <tr>
           <th>Aggregated (extend)</th>
           <th>WM-hypointensities</th>
-          <td>0.369571</td>
-          <td>0.038889</td>
-          <td>0.322612</td>
-          <td>-0.330280</td>
-          <td>0.854522</td>
-          <td>0.369446</td>
-          <td>480.599146</td>
-          <td>0.495714</td>
-          <td>8.515981e-15</td>
-          <td>0.630554</td>
-          <td>0.961769</td>
+          <td>0.351299</td>
+          <td>0.132170</td>
+          <td>0.329932</td>
+          <td>0.868492</td>
+          <td>-0.316311</td>
+          <td>0.351281</td>
+          <td>487.472645</td>
+          <td>0.462524</td>
+          <td>7.558404e-13</td>
+          <td>0.648719</td>
+          <td>0.958050</td>
         </tr>
         <tr>
           <th>Aggregated (transfer)</th>
           <th>WM-hypointensities</th>
-          <td>0.307336</td>
-          <td>0.049630</td>
-          <td>0.354095</td>
-          <td>-0.273420</td>
-          <td>0.911382</td>
-          <td>0.307070</td>
-          <td>503.809550</td>
-          <td>0.405179</td>
-          <td>6.102418e-10</td>
-          <td>0.692930</td>
-          <td>0.946122</td>
+          <td>0.309515</td>
+          <td>0.135989</td>
+          <td>0.356217</td>
+          <td>0.909280</td>
+          <td>-0.275522</td>
+          <td>0.308878</td>
+          <td>503.151987</td>
+          <td>0.405334</td>
+          <td>6.002990e-10</td>
+          <td>0.691122</td>
+          <td>0.945963</td>
         </tr>
       </tbody>
     </table>
@@ -838,6 +838,12 @@ QQ plots and evaluation metrics
 
 Conclusions
 -----------
+
+All the models perform very similarly. So the FL workflow, where the
+data are different locations. performs as good as the baseline workflow,
+where all the data are in one location.
+
+In more detail:
 
 Centile plots
 ~~~~~~~~~~~~~

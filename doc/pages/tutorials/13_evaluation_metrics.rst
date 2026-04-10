@@ -228,7 +228,7 @@ MACE — Mean absolute centile error
 
 .. math:: \text{MACE} = \frac{1}{b} \sum_{k=1}^{b} \left( \frac{1}{m} \sum_{j=1}^{m} \left| q_j - \frac{\sum_{i=1}^{n} \mathbf{1}\{\hat{q}_{ij} \geq y_i\}}{n} \right| \right)
 
-where: - :math:`b` is the number of batch of batch effects (i.e., unique
+where: - :math:`b` is the number of batch effects (i.e., unique
 combinations of sex and site) - :math:`m` is the number of centiles used
 for calibration - :math:`q_j` is the :math:`j`-th target centile level
 (e.g. 0.05, 0.25, 0.50, 0.75, 0.95) - :math:`\hat{q}_{ij}` is the
