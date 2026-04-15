@@ -171,7 +171,6 @@ def _plot_centiles(
     if ax is None:
         fig, ax = plt.subplots()
     else:
-        # Retrieve the parent figure from the supplied axes.
         fig = ax.get_figure()
 
     filter_dict = {
@@ -501,7 +500,6 @@ def _plot_centiles_advanced(
     if ax is None:
         fig, ax = plt.subplots(**(plt_kwargs or {}))
     else:
-        # Retrieve the parent figure from the supplied axes.
         fig = ax.get_figure()
 
     filter_dict = {
