@@ -29,7 +29,7 @@ def plot_centiles(
     covariate: str | None = None,
     response_vars: list[str] | None = None,
     scatter_kwargs: dict = {},
-    show_figure: bool = False,
+    show_figure: bool = True,
     save_dir: str | None = None,
 ) -> list[Figure]:
     """
@@ -281,7 +281,7 @@ def plot_centiles_advanced(
     show_other_data: bool = False,
     show_thrivelines: bool = False,
     z_thrive: float = 0.0,
-    show_figure: bool = False,
+    show_figure: bool = True,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
@@ -717,7 +717,7 @@ def plot_qq(
     split_data: str | None = None,
     response_vars: list[str] | None = None,
     seed: int = 42,
-    show_figure: bool = False,
+    show_figure: bool = True,
     save_dir: str | None = None,
 ) -> list[Figure]:
     """
@@ -842,7 +842,6 @@ def _plot_qq(
     if ax is None:
         fig, ax = plt.subplots()
     else:
-        # Retrieve the parent figure from the supplied axes.
         fig = ax.get_figure()
 
     filter_dict = {
@@ -933,7 +932,7 @@ def plot_ridge(
     variable: Literal["Z", "Y"],
     split_by: str,
     response_vars: list[str] | None = None,
-    show_figure: bool = False,
+    show_figure: bool = True,
     save_dir: str | None = None,
     **kwargs: Any,
 ) -> list[Figure]:
