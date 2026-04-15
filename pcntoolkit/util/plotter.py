@@ -220,12 +220,9 @@ def _plot_centiles(
     plt.ylabel(response_var)
     if save_dir:
         plt.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
-    else:
-        plt.show(block=False)
+        
+    plt.show()
     plt.tight_layout()
-    plt.close()
-
-
 
 def plot_centiles_advanced(
     model: "NormativeModel",
@@ -622,9 +619,8 @@ def _plot_centiles_advanced(
     plt.ylabel(response_var)
     if save_dir:
         plt.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
-    else:
-        plt.show(block=False)
-    plt.close()
+        
+    plt.show()
 
 def plot_qq(
     data: NormData,
@@ -797,9 +793,8 @@ def _plot_qq(
         plt.axis((-bound, bound, -bound, bound))
     if save_dir:
         plt.savefig(os.path.join(save_dir, f"qq_{response_var}_{data.name}.png"), dpi=300)
-    else:
-        plt.show(block=False)
-    plt.close()
+    
+    plt.show()
 
 
 def plot_ridge(data: NormData, variable: Literal["Z", "Y"], split_by: str, response_vars: List[str] | None = None, save_dir: str | None = None, **kwargs: Any) -> None:
@@ -877,8 +872,5 @@ def _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs):
     plt.tight_layout()
     if save_dir:
         plt.savefig(os.path.join(save_dir, f"ridge_{response_var}_{variable}_{split_by}_{data.name}.png"), dpi=300)
-    else:
-        plt.show(block=False)
-    plt.close()
 
-
+    plt.show()
