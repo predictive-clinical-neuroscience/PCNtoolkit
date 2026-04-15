@@ -11,11 +11,6 @@ import xarray as xr
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.util.plotter import _plot_qq
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _make_norm_data_with_z(
     n: int = 20,
     seed: int = 0,
@@ -69,12 +64,7 @@ def _make_norm_data_with_z(
 
     return data
 
-
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
-
-def test_001_plot_qq_should_returnFigure_when_axIsInjected():
+def test_001_plot_qq_two_figures_in_subplot():
     """_plot_qq should return the parent Figure when an ax is supplied."""
     # Arrange: one shared figure with two side-by-side axes.
     data = _make_norm_data_with_z()
