@@ -8,11 +8,26 @@ from pcntoolkit.dataio.norm_data import NormData
 
 
 def load_fcon1000(save_path: str | None = None):
-    """Download and save fcon dataset to specified path, or load it from there if it is already downloaded"""
+    """Download and save fcon dataset to specified path, or load it from there
+    if it is already downloaded
+
+    Parameters
+    ----------
+    save_path : str | None
+        The path to save the dataset to, or load it from if it is already
+        downloaded
+
+    Returns
+    -------
+    NormData
+        The loaded dataset as a NormData object"""
     if not save_path:
         save_path = os.path.join("pcntoolkit_resources", "data")
     os.makedirs(save_path, exist_ok=True)
     data_path = os.path.join(save_path, "fcon1000.csv")
+
+    # If the dataset is not already downloaded, download it and save it to
+    # the specified path
     if not os.path.exists(data_path):
         data = pd.read_csv(
             "https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit-demo/refs/heads/main/data/fcon1000.csv"
@@ -255,4 +270,99 @@ def load_fcon1000(save_path: str | None = None):
         subject_ids=subject_ids,
         remove_Nan=True,
     )
+    return norm_data
+
+
+# NOTE: This dataset is not public
+def load_lifespan_big(
+        n_response_vars: int | None = None,
+        n_largest_sites: int | None = None,
+        n_subjects: int | None = None
+) -> NormData:
+    """
+    Load the lifespan_big dataset, which is a large lifespan dataset with many sites.
+
+    Parameters
+    ----------
+    n_response_vars : int | None
+        If specified, only use the first n_response_vars response
+        variables.
+    n_largest_sites : int | None
+        If specified, only keep data from the n_largest_sites largest
+        sites.
+    n_subjects : int | None
+        If specified, randomly sample n_subjects subjects.
+
+    Returns
+    -------
+    NormData
+        The loaded dataset as a NormData object.
+    """
+    # Define the variables in the dataset
+    subject_ids = ["participant_id"]
+    covariates = ["age"]
+    batch_effects = ["sex", "site"]
+
+    # Define the dtypes for loading the dataset, to ensure that categorical
+    # variables are loaded as strings and numerical variables as floats
+    dtypes = {"participant_id": str, "group": str, "group2": str}
+    for col in batch_effects:
+        dtypes[col] = str
+    for col in covariates:
+        dtypes[col] = float
+
+    # Load the lifespan dataset with 57116 subjects from the Braicharts paper:
+    # https://doi.org/10.7554/eLife.72904
+    data = pd.read_csv(
+        "/project_cephfs/3022017.06/projects/stijdboe/Data/sairut_data/"
+        "lifespan_big.csv", dtype=dtypes)
+
+    # Drop rows where all values are NaN
+    data = data.dropna(axis=0, how="all", inplace=False)
+    # Drop columns where even if 1 value is NaN
+    data = data.dropna(axis=1, how="any", inplace=False)
+
+    data["sex"] = data["sex"].map(
+        {"0.0": "Female", "1.0": "Male", "2.0": "Female"})
+    data["site"] = data["site_ID"]
+
+    # If requested, take only the n largest sites
+    if n_largest_sites is not None:
+        data = data[data["site_ID"].isin(
+            data["site_ID"].value_counts().head(n_largest_sites).index)]
+
+    # If requested, take only n subjects
+    if n_subjects is not None:
+        data = data.sample(n=n_subjects, replace=False)
+
+    # Define response variables as all variables that
+    # are not in subject_ids, covariates, batch_effects,
+    # and that have variance > 0
+    def is_response_var(col_name: str) -> bool:
+        return (
+            col_name not in subject_ids
+            and col_name not in covariates
+            and col_name not in batch_effects
+            and not col_name.startswith("site_")
+            and not col_name.startswith("group")
+            and not col_name.startswith("race")
+            and data[col_name].var() > 0
+        )
+
+    response_vars = [col for col in data.columns if is_response_var(col)]
+
+    # If requested, take only n response variables
+    if n_response_vars is not None:
+        response_vars = response_vars[:n_response_vars]
+
+    # Create NormData object
+    norm_data = NormData.from_dataframe(
+        name="lifespan_big",
+        dataframe=data,
+        covariates=covariates,
+        batch_effects=batch_effects,
+        response_vars=response_vars,
+        subject_ids=subject_ids,
+    )
+
     return norm_data
