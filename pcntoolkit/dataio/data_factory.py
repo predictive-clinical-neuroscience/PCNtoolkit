@@ -13,8 +13,14 @@ def load_fcon1000(save_path: str | None = None):
 
     Parameters
     ----------
-    save_path : str, optional
-        The path to save the dataset to, or load it from if it is already"""
+    save_path : str | None
+        The path to save the dataset to, or load it from if it is already
+        downloaded
+
+    Returns
+    -------
+    NormData
+        The loaded dataset as a NormData object"""
     if not save_path:
         save_path = os.path.join("pcntoolkit_resources", "data")
     os.makedirs(save_path, exist_ok=True)
@@ -267,27 +273,30 @@ def load_fcon1000(save_path: str | None = None):
     return norm_data
 
 
+# NOTE: This dataset is not public
 def load_lifespan_big(
-        n_response_vars=None,
-        n_largest_sites=None,
-        n_subjects=None
+        n_response_vars: int | None = None,
+        n_largest_sites: int | None = None,
+        n_subjects: int | None = None
 ) -> NormData:
     """
     Load the lifespan_big dataset, which is a large lifespan dataset with many sites.
 
     Parameters
     ----------
-    n_response_vars : int, optional
-        If specified, only take the n_response_vars response variables
-    n_largest_sites : int, optional
-        If specified, only take the n_largest_sites largest sites
-    n_subjects : int, optional
-        If specified, only take n_subjects subjects
+    n_response_vars : int | None
+        If specified, only use the first n_response_vars response
+        variables.
+    n_largest_sites : int | None
+        If specified, only keep data from the n_largest_sites largest
+        sites.
+    n_subjects : int | None
+        If specified, randomly sample n_subjects subjects.
 
     Returns
     -------
     NormData
-         The loaded dataset as a NormData object
+        The loaded dataset as a NormData object.
     """
     # Define the variables in the dataset
     subject_ids = ["participant_id"]
@@ -302,7 +311,8 @@ def load_lifespan_big(
     for col in covariates:
         dtypes[col] = float
 
-    # Load the dataset
+    # Load the lifespan dataset from the Braicharts paper:
+    # https://doi.org/10.7554/eLife.72904
     data = pd.read_csv(
         "/project_cephfs/3022017.06/projects/stijdboe/Data/sairut_data/"
         "lifespan_big.csv", dtype=dtypes)
@@ -328,20 +338,20 @@ def load_lifespan_big(
     # Define response variables as all variables that
     # are not in subject_ids, covariates, batch_effects,
     # and that have variance > 0
-    def is_response_var(str):
+    def is_response_var(col_name: str) -> bool:
         return (
-            str not in subject_ids
-            and str not in covariates
-            and str not in batch_effects
-            and not str.startswith("site_")
-            and not str.startswith("group")
-            and not str.startswith("race")
-            and data[str].var() > 0
+            col_name not in subject_ids
+            and col_name not in covariates
+            and col_name not in batch_effects
+            and not col_name.startswith("site_")
+            and not col_name.startswith("group")
+            and not col_name.startswith("race")
+            and data[col_name].var() > 0
         )
 
     response_vars = [col for col in data.columns if is_response_var(col)]
 
-    # If requested,, take only n response variables
+    # If requested, take only n response variables
     if n_response_vars is not None:
         response_vars = response_vars[:n_response_vars]
 
