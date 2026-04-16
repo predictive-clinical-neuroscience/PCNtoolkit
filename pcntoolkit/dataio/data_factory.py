@@ -8,11 +8,20 @@ from pcntoolkit.dataio.norm_data import NormData
 
 
 def load_fcon1000(save_path: str | None = None):
-    """Download and save fcon dataset to specified path, or load it from there if it is already downloaded"""
+    """Download and save fcon dataset to specified path, or load it from there
+    if it is already downloaded
+
+    Parameters
+    ----------
+    save_path : str, optional
+        The path to save the dataset to, or load it from if it is already"""
     if not save_path:
         save_path = os.path.join("pcntoolkit_resources", "data")
     os.makedirs(save_path, exist_ok=True)
     data_path = os.path.join(save_path, "fcon1000.csv")
+
+    # If the dataset is not already downloaded, download it and save it to
+    # the specified path
     if not os.path.exists(data_path):
         data = pd.read_csv(
             "https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit-demo/refs/heads/main/data/fcon1000.csv"
@@ -258,31 +267,67 @@ def load_fcon1000(save_path: str | None = None):
     return norm_data
 
 
-def load_lifespan_big(n_response_vars=None, n_largest_sites=None, n_subjects=None):
+def load_lifespan_big(
+        n_response_vars=None,
+        n_largest_sites=None,
+        n_subjects=None
+) -> NormData:
+    """
+    Load the lifespan_big dataset, which is a large lifespan dataset with many sites.
+
+    Parameters
+    ----------
+    n_response_vars : int, optional
+        If specified, only take the n_response_vars response variables
+    n_largest_sites : int, optional
+        If specified, only take the n_largest_sites largest sites
+    n_subjects : int, optional
+        If specified, only take n_subjects subjects
+
+    Returns
+    -------
+    NormData
+         The loaded dataset as a NormData object
+    """
+    # Define the variables in the dataset
     subject_ids = ["participant_id"]
     covariates = ["age"]
     batch_effects = ["sex", "site"]
+
+    # Define the dtypes for loading the dataset, to ensure that categorical
+    # variables are loaded as strings and numerical variables as floats
     dtypes = {"participant_id": str, "group": str, "group2": str}
     for col in batch_effects:
         dtypes[col] = str
     for col in covariates:
         dtypes[col] = float
-    data = pd.read_csv("/project_cephfs/3022017.06/projects/stijdboe/Data/sairut_data/lifespan_big.csv", dtype=dtypes)
 
+    # Load the dataset
+    data = pd.read_csv(
+        "/project_cephfs/3022017.06/projects/stijdboe/Data/sairut_data/"
+        "lifespan_big.csv", dtype=dtypes)
+
+    # Drop rows where all values are NaN
     data = data.dropna(axis=0, how="all", inplace=False)
+    # Drop columns where even if 1 value is NaN
     data = data.dropna(axis=1, how="any", inplace=False)
 
-    data["sex"] = data["sex"].map({"0.0": "Female", "1.0": "Male", "2.0": "Female"})
+    data["sex"] = data["sex"].map(
+        {"0.0": "Female", "1.0": "Male", "2.0": "Female"})
     data["site"] = data["site_ID"]
 
-    # Take only the n largest sites
+    # If requested, take only the n largest sites
     if n_largest_sites is not None:
-        data = data[data["site_ID"].isin(data["site_ID"].value_counts().head(n_largest_sites).index)]
+        data = data[data["site_ID"].isin(
+            data["site_ID"].value_counts().head(n_largest_sites).index)]
 
-    # Take only n subjects
+    # If requested, take only n subjects
     if n_subjects is not None:
         data = data.sample(n=n_subjects, replace=False)
 
+    # Define response variables as all variables that
+    # are not in subject_ids, covariates, batch_effects,
+    # and that have variance > 0
     def is_response_var(str):
         return (
             str not in subject_ids
@@ -296,9 +341,11 @@ def load_lifespan_big(n_response_vars=None, n_largest_sites=None, n_subjects=Non
 
     response_vars = [col for col in data.columns if is_response_var(col)]
 
+    # If requested,, take only n response variables
     if n_response_vars is not None:
         response_vars = response_vars[:n_response_vars]
 
+    # Create NormData object
     norm_data = NormData.from_dataframe(
         name="lifespan_big",
         dataframe=data,
@@ -307,4 +354,5 @@ def load_lifespan_big(n_response_vars=None, n_largest_sites=None, n_subjects=Non
         response_vars=response_vars,
         subject_ids=subject_ids,
     )
+
     return norm_data
