@@ -256,3 +256,55 @@ def load_fcon1000(save_path: str | None = None):
         remove_Nan=True,
     )
     return norm_data
+
+
+def load_lifespan_big(n_response_vars=None, n_largest_sites=None, n_subjects=None):
+    subject_ids = ["participant_id"]
+    covariates = ["age"]
+    batch_effects = ["sex", "site"]
+    dtypes = {"participant_id": str, "group": str, "group2": str}
+    for col in batch_effects:
+        dtypes[col] = str
+    for col in covariates:
+        dtypes[col] = float
+    data = pd.read_csv("/project_cephfs/3022017.06/projects/stijdboe/Data/sairut_data/lifespan_big.csv", dtype=dtypes)
+
+    data = data.dropna(axis=0, how="all", inplace=False)
+    data = data.dropna(axis=1, how="any", inplace=False)
+
+    data["sex"] = data["sex"].map({"0.0": "Female", "1.0": "Male", "2.0": "Female"})
+    data["site"] = data["site_ID"]
+
+    # Take only the n largest sites
+    if n_largest_sites is not None:
+        data = data[data["site_ID"].isin(data["site_ID"].value_counts().head(n_largest_sites).index)]
+
+    # Take only n subjects
+    if n_subjects is not None:
+        data = data.sample(n=n_subjects, replace=False)
+
+    def is_response_var(str):
+        return (
+            str not in subject_ids
+            and str not in covariates
+            and str not in batch_effects
+            and not str.startswith("site_")
+            and not str.startswith("group")
+            and not str.startswith("race")
+            and data[str].var() > 0
+        )
+
+    response_vars = [col for col in data.columns if is_response_var(col)]
+
+    if n_response_vars is not None:
+        response_vars = response_vars[:n_response_vars]
+
+    norm_data = NormData.from_dataframe(
+        name="lifespan_big",
+        dataframe=data,
+        covariates=covariates,
+        batch_effects=batch_effects,
+        response_vars=response_vars,
+        subject_ids=subject_ids,
+    )
+    return norm_data
