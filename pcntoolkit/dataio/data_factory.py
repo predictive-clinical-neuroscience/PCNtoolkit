@@ -311,7 +311,7 @@ def load_lifespan_big(
     for col in covariates:
         dtypes[col] = float
 
-    # Load the lifespan dataset from the Braicharts paper:
+    # Load the lifespan dataset with 57116 subjects from the Braicharts paper:
     # https://doi.org/10.7554/eLife.72904
     data = pd.read_csv(
         "/project_cephfs/3022017.06/projects/stijdboe/Data/sairut_data/"
