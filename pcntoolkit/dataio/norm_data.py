@@ -682,7 +682,23 @@ class NormData(xr.Dataset):
         names: Optional[Tuple[str, str]],
     ) -> Tuple[NormData, NormData]:
         """
-        Split the data into two datasets, one with the specified batch effects and one without.
+        Split the data into two datasets, one with the specified batch effects 
+        and one without.
+
+        This is useful when you want to split a dataset into two smaller ones.
+
+        Parameters
+        ----------
+        batch_effects : Dict[str, List[str]]
+            A dictionary mapping batch effect dimensions to lists of values to
+            split on.
+        names : Optional[Tuple[str, str]]
+            The names for the two splits.
+
+        Returns
+        -------
+        Tuple[NormData, NormData]
+            A tuple containing the two split NormData instances.
         """
         if names is None:
             names = ["selected", "not_selected"]  # type:ignore
@@ -1033,19 +1049,31 @@ class NormData(xr.Dataset):
 
             self.attrs["is_scaled"] = False
 
-    def select_batch_effects(self, name, batch_effects: Dict[str, List[str]], invert: bool = False) -> NormData:
+    def select_batch_effects(
+        self,
+        name: str,
+        batch_effects: Dict[str, List[str]],
+        invert: bool = False,
+    ) -> NormData:
         """
-        Select only the specified batch effects.
+        Select observations matching (or not matching) batch effects.
 
         Parameters
         ----------
+        name : str
+            Name to assign to the returned ``NormData`` instance.
         batch_effects : Dict[str, List[str]]
-            A dictionary specifying which batch effects to select.
+            A dictionary mapping batch effect dimensions to lists of values to
+            select batch effects from.
+        invert : bool, optional
+            If ``True``, return observations that do *not* match
+            any of the specified batch effect values. Default is ``False``.
 
         Returns
         -------
         NormData
-            A NormData instance with the selected batch effects.
+            A NormData instance containing observations matching
+            (or not matching) the specified batch effects.
         """
         mask = np.zeros(self.batch_effects.shape[0], dtype=bool)
         for key, values in batch_effects.items():

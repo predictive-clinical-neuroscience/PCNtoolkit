@@ -221,6 +221,12 @@ class NormativeModel:
         new_model.response_vars = respvar_intersection
 
         new_model.preprocess(transfer_data)
+
+        if self.unique_batch_effects is not None:
+            if len(transfer_data.batch_effect_dims) < len(self.batch_effect_dims):
+                Output.warning(
+                    Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS
+                )
         new_model.register_batch_effects(transfer_data)
 
         Output.print(Messages.TRANSFERRING_MODELS, n_models=len(respvar_intersection))
