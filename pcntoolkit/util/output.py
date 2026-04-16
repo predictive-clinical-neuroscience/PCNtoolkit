@@ -151,7 +151,7 @@ class Warnings:
         "Please set optimizer='l-bfgs-b' to avoid this warning."
     )
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
-        "Transfer data contains fewer batch effect levels than training data. "
+        "Transfer data contain fewer batch effect levels than training data. "
         "This may lead to biased results."
     )
 
