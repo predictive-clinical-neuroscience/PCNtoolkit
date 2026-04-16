@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
@@ -119,7 +121,7 @@ def test_003_transfer_should_warn_when_fewerBatchEffects(
     # Assert: the warning appeared
     with pytest.warns(
         UserWarning,
-        match=Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS,
+        match=re.escape(Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS),
     ):
         fitted_norm_blr_model.transfer(
             transfer_norm_data_1be,
