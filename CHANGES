@@ -157,3 +157,25 @@ Models estimated on earlier versions of PCNtoolkit (up until v0.39) are NOT COMP
 5. Improve MSLL computation
 6. Fix bug with nm.predict, it is now fully in-place on the Normdata
 7. Fix transfer bug for HBR
+
+# Version 1.2.0
+
+**Major changes:**
+1. Enforce positivity to your centiles plot using the y_transform keyword argument in NormativeModel
+3. Remove python 3.10 support 
+3. Replace "fcntl" package with "filelock" to allow Windows support
+4. Update contribution guide in the website and add a troubleshooting section
+
+
+**Minor changes:**
+1. Add copilot-instructions.md 
+2. Small fixes in plot_centiles_advanced and plot_centiles
+
+**Bug fixes**
+1. Fix MSLL computation
+2. Refactor logging for BLR: add warnings and errors related to optimizers and warping
+
+# Version 1.2.0.post1
+
+**Hotfix**
+Fix packaging issues (no missing files or folders)

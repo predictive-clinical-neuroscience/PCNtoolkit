@@ -2,8 +2,8 @@ HBR with Beta likelihood
 ========================
 
 Welcome to this tutorial notebook that will go through the fitting and
-evaluation of Normative models with a Hierarchical Bayesian Regression (HBR)
-model using a Beta likelihood.
+evaluation of Normative models with a Hierarchical Bayesian Regression
+(HBR) model using a Beta likelihood.
 
 Let’s jump right in.
 
@@ -409,7 +409,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -503,7 +503,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -596,7 +596,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -690,7 +690,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -783,7 +783,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -877,7 +877,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -970,7 +970,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -1064,7 +1064,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -1906,7 +1906,7 @@ Let’s start with the centiles.
         scatter_data=train,  # Scatter this data along with the centiles
         batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},  # Highlight these groups
         show_other_data=True,  # scatter data not in those groups as smaller black circles
-        harmonize=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
+        harmonize_data=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
     )
 
 
@@ -1996,7 +1996,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 05_HBR_Beta_files/05_HBR_Beta_22_1.png
@@ -2016,7 +2016,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 05_HBR_Beta_files/05_HBR_Beta_22_3.png
@@ -2036,7 +2036,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 05_HBR_Beta_files/05_HBR_Beta_22_5.png
@@ -2056,7 +2056,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 05_HBR_Beta_files/05_HBR_Beta_22_7.png
@@ -3242,7 +3242,7 @@ site B.
 
     /opt/anaconda3/envs/uv_refactor/lib/python3.12/site-packages/pcntoolkit/util/output.py:218: UserWarning: Process: 64750 - 2025-06-23 16:05:58 - remove_Nan is set to False. Ensure your data does not contain NaNs in critical columns, or handle them appropriately.
       warnings.warn(message)
-
+    
 
 
 .. image:: 05_HBR_Beta_files/05_HBR_Beta_32_1.png

@@ -10,8 +10,7 @@ it on a compute node. The notebook is tailored to the Slurm environment
 on the Donders HPC cluster, but can be adapted to other Slurm or Torque
 environments.
 
-IMPORTANT
-~~~~~~~~~
+**IMPORTANT**
 
 This notebook is just a demo for a small dataset. The same code can be
 applied to larger datasets, but keep in mind that the this notebook
@@ -58,7 +57,7 @@ After selecting the environment, the weird symbol in the top right
 corner should now show the environment name.
 
 Imports
-~~~~~~~
+-------
 
 .. code:: ipython3
 
@@ -101,7 +100,7 @@ Imports
 .. parsed-literal::
 
     This should be the conda environment path: /project/3022000.05/projects/stijdboe/envs/pcntoolkit_cluster_tutorial
-
+    
 
 .. code:: ipython3
 
@@ -141,7 +140,7 @@ Imports
           7     "CortexVol",
           8 ]
           9 # Select only a few features
-
+    
 
     NameError: name 'load_fcon1000' is not defined
 
@@ -276,7 +275,7 @@ Now we can just do:
     No more running jobs!
     ---------------------------------------------------------
     
-
+    
 
 
 
@@ -287,7 +286,7 @@ Now we can just do:
 
 
 Loading a fold model
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 We can load a model for a specific fold by calling ``load_model`` on the
 runner object. This will return a ``NormativeModel``, which we can
@@ -325,7 +324,7 @@ inspect and use to predict on new data.
     Process: 2343784 - 2025-05-13 18:58:23 - Harmonizing data for CortexVol.
     Process: 2343784 - 2025-05-13 18:58:23 - Harmonizing data for WM-hypointensities.
     Process: 2343784 - 2025-05-13 18:58:23 - Harmonizing data for Right-Amygdala.
-
+    
 
 
 .. image:: 08_cluster_files/08_cluster_14_1.png
@@ -378,7 +377,7 @@ BLR models can only be extended, not transferred (yet).
     No more running jobs!
     ---------------------------------------------------------
     
-
+    
 
 
 

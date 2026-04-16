@@ -322,7 +322,7 @@ class NormData(xr.Dataset):
         attrs : Mapping[str, Any] | None, optional
             Additional attributes for the dataset, by default None.
         remove_Nan: bool
-            Wheter or not to remove NAN values from the dataframe before creationg of the class object. By default False
+            Whether or not to remove NAN values from the dataframe before creating of the class object. By default False
 
         Returns
         -------

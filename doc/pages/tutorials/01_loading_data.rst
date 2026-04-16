@@ -65,7 +65,7 @@ Here are examples of both.
         	sex (2)
     	site (23)
         
-
+    
 
 
 
@@ -107,7 +107,7 @@ Here are examples of both.
         - 1 batch effects:
         	batch_effect_0 (2)
         
-
+    
 
 
 
@@ -1378,13 +1378,13 @@ values - ``statistic``: The name of the computed statistics
     Process: 75157 - 2025-11-20 13:18:58 - Computing yhat for WM-hypointensities.
     Process: 75157 - 2025-11-20 13:18:58 - Computing yhat for Left-Lateral-Ventricle.
     Process: 75157 - 2025-11-20 13:18:58 - Computing yhat for Brain-Stem.
-
+    
 
 .. parsed-literal::
 
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/dataio/norm_data.py:1094: FutureWarning: The previous implementation of stack is deprecated and will be removed in a future version of pandas. See the What's New notes for pandas 2.1.0 for details. Specify future_stack=True to adopt the new implementation and silence this warning.
       subject_ids = subject_ids.stack(level="centile")
-
+    
 
 .. parsed-literal::
 
@@ -1407,7 +1407,7 @@ values - ``statistic``: The name of the computed statistics
     Process: 75157 - 2025-11-20 13:18:58 - Harmonizing data for Brain-Stem.
     Process: 75157 - 2025-11-20 13:18:59 - Saving model to:
     	/Users/stijndeboer/.pcntoolkit/saves.
-
+    
 
 .. code:: ipython3
 
@@ -2742,7 +2742,7 @@ applicable to both of them.
         	sex (2)
     	site (18)
         
-
+    
 
 .. code:: ipython3
 
@@ -2753,7 +2753,7 @@ applicable to both of them.
 .. parsed-literal::
 
     True
-
+    
 
 .. code:: ipython3
 
