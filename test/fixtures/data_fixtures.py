@@ -47,6 +47,8 @@ def batch_effect_values():
 
 
 # ----------- Generate data-----------
+
+
 def generate_covariates(n_subjects, n_covariates):
     return np.random.rand(n_subjects, n_covariates)
 
@@ -74,6 +76,8 @@ def generate_batch_effects(n_subjects, batch_effect_values):
 
 
 # ----------- Create Arrays -----------
+
+
 def np_arrays(
         n_subjects,
         n_covariates,
@@ -121,10 +125,14 @@ def transfer_arrays(
         n_response_vars,
         batch_effect_values,
     )
+    # Re-set the second batch effects column to be different from the training and test data
+    batch_effects_transfer[:, 1] = 3
     return X_transfer, y_transfer, batch_effects_transfer
 
 
 # ----------- Create Dataframes -----------
+
+
 def dataframe(n_subjects, n_covariates, n_response_vars, batch_effect_values):
     X, y, batch_effects = np_arrays(
         n_subjects, n_covariates, n_response_vars, batch_effect_values)

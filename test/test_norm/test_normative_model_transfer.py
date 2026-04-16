@@ -12,6 +12,7 @@ from test.fixtures.path_fixtures import *  # noqa: F401,F403
 Tests for NormativeModel.transfer()
 """
 
+
 # ------- Helpers -------
 
 
@@ -22,12 +23,8 @@ def transfer_norm_data_1be(
     n_response_vars: int,
     batch_effect_values: list[list[int]],
 ) -> NormData:
-    """Build a transfer NormData with 1 batch effect column.
-
-    Slices ``batch_effect_values`` to its first entry, producing
-    a dataset with fewer batch effects than the 2-column training
-    data. Used to trigger the fewer-batch-effects warning path in
-    ``NormativeModel.transfer()``.
+    """Build a transfer NormData with 1 batch effect column which is fewer 
+    than the training data that has 2.
 
     Parameters
     ----------
@@ -61,19 +58,19 @@ def transfer_norm_data_1be(
 
 # ------- Tests -------
 
+
 def test_001_transfer_should_fit(
     fitted_norm_blr_model: NormativeModel,
     transfer_norm_data_from_arrays: NormData,
 ) -> None:
-    """Transfer must succeed when batch effect count matches training.
+    """Transfer must succeed.
 
     Parameters
     ----------
     fitted_norm_blr_model : NormativeModel
         Pre-fitted BLR normative model.
     transfer_norm_data_from_arrays : NormData
-        Transfer dataset with 2 batch effect columns, matching
-        the training data.
+        Transfer dataset
     """
     # Act: transfer
     transferred = fitted_norm_blr_model.transfer(
@@ -83,7 +80,7 @@ def test_001_transfer_should_fit(
     assert transferred.is_fitted
 
 
-def test_002_transfer_should_succeed_when_fewerBatchEffects(
+def test_002_transfer_should_fit_when_fewerBatchEffects(
     fitted_norm_blr_model: NormativeModel,
     transfer_norm_data_1be: NormData,
 ) -> None:
