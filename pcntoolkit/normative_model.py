@@ -222,8 +222,8 @@ class NormativeModel:
 
         new_model.preprocess(transfer_data)
 
-        if hasattr(self, "batch_effects") and hasattr(transfer_data, "batch_effects"):
-            if len(transfer_data.batch_effects) < len(self.batch_effects):
+        if hasattr(self, "batch_effect_dims") and hasattr(transfer_data, "batch_effect_dims"):
+            if len(transfer_data.batch_effect_dims) < len(self.batch_effect_dims):
                 Output.warning(
                     Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS
                 )
