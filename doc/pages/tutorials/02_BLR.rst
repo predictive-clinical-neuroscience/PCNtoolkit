@@ -20,7 +20,6 @@ Imports
     from pcntoolkit import (
         BLR,
         BsplineBasisFunction,
-        LinearBasisFunction,
         NormativeModel,
         NormData,
         load_fcon1000,
@@ -47,7 +46,19 @@ Imports
 Load data
 ---------
 
-First we download a small example dataset from github.
+First we download a small example dataset from GitHub. We use the
+open-source FCON1000 dataset that is included in PCNtoolkit and can be
+loaded with one command ``load_fcon1000()``.
+
+This dataset contains resting-state fMRI measurements from 1,078
+subjects collected across 23 sites. For this tutorial, we keep things
+simple and focus on four example brain-related measurements: -
+``WM-hypointensities``: a measure related to damaged or diseased tissue
+within the brain’s white matter. - ``Right-Lateral-Ventricle``: the size
+of a fluid-filled space on the right side of the brain. -
+``Right-Amygdala``: the volume of the right amygdala, which is a deep
+brain structure. - ``CortexVol``: the total volume of the cerebral
+cortex, the outer layer of the brain.
 
 .. code:: ipython3
 
@@ -65,21 +76,6 @@ First we download a small example dataset from github.
     
     # Split into train and test sets
     train, test = norm_data.train_test_split()
-
-
-.. parsed-literal::
-
-    Process: 75222 - 2025-11-20 13:13:42 - Removed 0 NANs
-    Process: 75222 - 2025-11-20 13:13:42 - Dataset "fcon1000" created.
-        - 1078 observations
-        - 1078 unique subjects
-        - 1 covariates
-        - 217 response variables
-        - 2 batch effects:
-        	sex (2)
-    	site (23)
-        
-    
 
 .. code:: ipython3
 
@@ -115,6 +111,10 @@ First we download a small example dataset from github.
 .. image:: 02_BLR_files/02_BLR_6_0.png
 
 
+The left diagram shows some sites contain more subjects than others,
+e.g., the biggest sites are in Beijing and Cambridge. The right diagram
+shows that most of the subject are between 20 and 30 years old.
+
 Creating a Normative model
 --------------------------
 
@@ -140,9 +140,9 @@ expansion to use, and more.
         basis_function_mean=BsplineBasisFunction(
             degree=3, nknots=5
         ),  # We use a B-spline basis expansion for the mean, so the predicted mean is a smooth function of the covariates
-        fixed_effect=True,  # By setting fixed_effect=True, we \model offsets in the mean for each individual batch effect,
+        fixed_effect=True,  # By setting fixed_effect=True, we \odel offsets in the mean for each individual batch effect
         fixed_effect_slope=True,  # We also model a fixed effect in the slope of the mean for each individual batch effect
-        fixed_effect_var_slope=True,
+        fixed_effect_var_slope=True, # We also model a fixed effect in the slope of the variance for each individual batch effect
         heteroskedastic=True,  # We want the variance to be a function of the covariates too
         warp_name="warpsinharcsinh",  # We configure a sinh-arcsinh warp, so we can model flexible non-gaussian distributions
     )
@@ -151,13 +151,28 @@ After specifying the regression model, we can configure a normative
 model.
 
 A normative model has a number of configuration options: -
-``savemodel``: Whether to save the model after fitting. -
-``evaluate_model``: Whether to evaluate the model after fitting. -
-``saveresults``: Whether to save the results after evaluation. -
-``saveplots``: Whether to save the plots after fitting. - ``save_dir``:
-The directory to save the model, results, and plots. - ``inscaler``: The
-scaler to use for the input data. - ``outscaler``: The scaler to use for
-the output data.
+``savemodel``: Whether to save the model after fitting. It creates a
+JSON file containing your trained model parameters. This is useful to: -
+*Avoid re-fitting*: Load the saved model later instead of training from
+scratch every time. - *Share with collaborators*: Send the file to
+colleagues, who can update it with their own data, producing a better
+model trained on more data combined. We will cover this in the federated
+learning tutorial. - ``evaluate_model``: Whether to evaluate the model
+after fitting. It computes a set of metrics are computed that tell you
+how well your model fits the data. For more information, see our
+evaluation metrics tutorial. - ``saveresults``: Whether to save the
+per-subject results after predicting. Results include: - how far the
+observed value for this subject is from the fitted model’s predicted
+typical value for someone with similar covariates and batch effects
+(``Z``) - how statistically surprising the observed value for this
+subject is under the fitted model’s predicted distribution (``logp``). -
+fitted model’s predicted distribution at selected centiles (such as the
+5th, 50th, and 95th centiles) for this subject (``centiles``) - summary
+of evaluation metrics for each response variable, when
+``evaluate_model`` is enabled. - ``saveplots``: Whether to save the
+plots after fitting. - ``save_dir``: The directory to save the model,
+results, and plots. - ``inscaler``: The scaler to use for the input
+data. - ``outscaler``: The scaler to use for the output data.
 
 .. code:: ipython3
 
@@ -199,148 +214,183 @@ All results can be found in the save directory.
 
 .. parsed-literal::
 
-    Process: 75222 - 2025-11-20 13:13:43 - Fitting models on 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:43 - Fitting model for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:44 - Fitting model for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:24 - Fitting models on 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:24 - Fitting model for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:27 - Fitting model for Right-Lateral-Ventricle.
     
 
 .. parsed-literal::
 
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.32781e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.99801e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=3.59377e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.57933e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=4.97275e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.13681e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.24046e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.33402e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.53589e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.55948e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=3.91748e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.33937e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.99954e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.32878e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.5002e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.26581e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=4.69477e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=6.90536e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.34843e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=4.95844e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=4.68778e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.45059e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.32535e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.48238e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=5.44743e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=6.36754e-17): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.9502967337237e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 7.964756254824305e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.5020237639274304e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.647872451834078e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.591835803547732e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.745280312310278e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.777604533531393e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 7.002949358357141e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.848201733680005e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.555639740029111e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.154766655819089e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.939508367720386e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.389910507543676e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.7208010703127793e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.5065613040021304e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.772837022275153e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.476134875002892e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.468899511775239e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.210491978754729e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.3714302306774655e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.622225214680008e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.384269228722581e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.4305411119785565e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.950299067567634e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 7.048895992608208e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.789032491250756e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.038446700222081e-17.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
     
 
 .. parsed-literal::
 
-    Process: 75222 - 2025-11-20 13:13:46 - Fitting model for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:30 - Fitting model for Right-Amygdala.
     
 
 .. parsed-literal::
 
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.16328e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/output.py:239: UserWarning: Process: 75222 - 2025-11-20 13:13:46 - Estimation of posterior distribution failed due to: 
-    Matrix is not positive definite
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854141299013e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:266: UserWarning: Process: 22044 - 2026-04-20 18:35:32 - Posterior estimation failed: 
+    Matrix is not positive definite. 
+    The optimizer could not find a stable solution. Retrying optimization.
       warnings.warn(message)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.95673e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.3908e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=4.14393e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=4.37e-42): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.16329e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=1.71025e-35): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.16368e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=2.97928e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
-    /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/scipy/_lib/_util.py:1226: LinAlgWarning: Ill-conditioned matrix (rcond=1.95743e-41): result may not be accurate.
-      return f(*arrays, *other_args, **kwargs)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.95672596274763e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.383412485561854e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.5435195683709543e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.143933578597161e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285543871327e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.140576045606065e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632853629035901e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855727422735e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855729300712e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854929817363e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.16328555742483e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163286153217964e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854859222148e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855290078173e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632856376007886e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.9792786990864296e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285466903053e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285476309751e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854952020879e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854263350986e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285567139869e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285569343776e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855393099296e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855739716668e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.957421929942335e-41.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
     
 
 .. parsed-literal::
 
-    Process: 75222 - 2025-11-20 13:13:46 - Fitting model for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:47 - Making predictions on 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing z-scores for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing z-scores for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing z-scores for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing z-scores for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing centiles for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing centiles for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing centiles for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing centiles for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing log-probabilities for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing log-probabilities for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing log-probabilities for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing log-probabilities for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing yhat for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:47 - Computing yhat for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:48 - Saving model to:
+    Process: 22044 - 2026-04-20 18:35:32 - Fitting model for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:34 - Saving model to:
     	resources/blr/save_dir.
-    Process: 75222 - 2025-11-20 13:13:48 - Making predictions on 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing z-scores for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing z-scores for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing z-scores for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing z-scores for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing log-probabilities for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing log-probabilities for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing log-probabilities for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing log-probabilities for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:48 - Saving model to:
-    	resources/blr/save_dir.
+    Process: 22044 - 2026-04-20 18:35:34 - Making predictions on 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing z-scores for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing z-scores for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing z-scores for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing z-scores for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing centiles for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing centiles for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing centiles for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing centiles for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing log-probabilities for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing log-probabilities for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing log-probabilities for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing log-probabilities for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing log-probabilities for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing yhat for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing yhat for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:34 - Computing yhat for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing yhat for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing yhat for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:35 - Making predictions on 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing z-scores for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing z-scores for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing z-scores for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing z-scores for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing centiles for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing centiles for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing centiles for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing centiles for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing log-probabilities for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing log-probabilities for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing log-probabilities for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing log-probabilities for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing log-probabilities for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing yhat for 4 response variables.
+    Process: 22044 - 2026-04-20 18:35:35 - Computing yhat for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:35:36 - Computing yhat for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:35:36 - Computing yhat for CortexVol.
+    Process: 22044 - 2026-04-20 18:35:36 - Computing yhat for Right-Amygdala.
     
 
 
@@ -362,9 +412,7 @@ All results can be found in the save directory.
     </symbol>
     </defs>
     </svg>
-    <style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
-     *
-     */
+    <style>/* CSS stylesheet for displaying xarray objects in notebooks */
     
     :root {
       --xr-font-color0: var(
@@ -443,6 +491,8 @@ All results can be found in the save directory.
       display: block !important;
       min-width: 300px;
       max-width: 700px;
+      line-height: 1.6;
+      padding-bottom: 4px;
     }
     
     .xr-text-repr-fallback {
@@ -453,8 +503,11 @@ All results can be found in the save directory.
     .xr-header {
       padding-top: 6px;
       padding-bottom: 6px;
-      margin-bottom: 4px;
+    }
+    
+    .xr-header {
       border-bottom: solid 1px var(--xr-border-color);
+      margin-bottom: 4px;
     }
     
     .xr-header > div,
@@ -465,46 +518,62 @@ All results can be found in the save directory.
     }
     
     .xr-obj-type,
-    .xr-array-name {
+    .xr-obj-name {
       margin-left: 2px;
       margin-right: 10px;
     }
     
-    .xr-obj-type {
+    .xr-obj-type,
+    .xr-group-box-contents > label {
       color: var(--xr-font-color2);
+      display: block;
     }
     
     .xr-sections {
       padding-left: 0 !important;
       display: grid;
       grid-template-columns: 150px auto auto 1fr 0 20px 0 20px;
+      margin-block-start: 0;
+      margin-block-end: 0;
     }
     
     .xr-section-item {
       display: contents;
     }
     
-    .xr-section-item input {
-      display: inline-block;
+    .xr-section-item > input,
+    .xr-group-box-contents > input,
+    .xr-array-wrap > input {
+      display: block;
       opacity: 0;
       height: 0;
+      margin: 0;
     }
     
-    .xr-section-item input + label {
+    .xr-section-item > input + label,
+    .xr-var-item > input + label {
       color: var(--xr-disabled-color);
-      border: 2px solid transparent !important;
     }
     
-    .xr-section-item input:enabled + label {
+    .xr-section-item > input:enabled + label,
+    .xr-var-item > input:enabled + label,
+    .xr-array-wrap > input:enabled + label,
+    .xr-group-box-contents > input:enabled + label {
       cursor: pointer;
       color: var(--xr-font-color2);
     }
     
-    .xr-section-item input:focus + label {
-      border: 2px solid var(--xr-font-color0) !important;
+    .xr-section-item > input:focus-visible + label,
+    .xr-var-item > input:focus-visible + label,
+    .xr-array-wrap > input:focus-visible + label,
+    .xr-group-box-contents > input:focus-visible + label {
+      outline: auto;
     }
     
-    .xr-section-item input:enabled + label:hover {
+    .xr-section-item > input:enabled + label:hover,
+    .xr-var-item > input:enabled + label:hover,
+    .xr-array-wrap > input:enabled + label:hover,
+    .xr-group-box-contents > input:enabled + label:hover {
       color: var(--xr-font-color0);
     }
     
@@ -512,11 +581,25 @@ All results can be found in the save directory.
       grid-column: 1;
       color: var(--xr-font-color2);
       font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .xr-section-summary > em {
+      font-weight: normal;
+    }
+    
+    .xr-span-grid {
+      grid-column-end: -1;
     }
     
     .xr-section-summary > span {
       display: inline-block;
-      padding-left: 0.5em;
+      padding-left: 0.3em;
+    }
+    
+    .xr-group-box-contents > input:checked + label > span {
+      display: inline-block;
+      padding-left: 0.6em;
     }
     
     .xr-section-summary-in:disabled + label {
@@ -544,9 +627,9 @@ All results can be found in the save directory.
     }
     
     .xr-section-summary,
-    .xr-section-inline-details {
+    .xr-section-inline-details,
+    .xr-group-box-contents > label {
       padding-top: 4px;
-      padding-bottom: 4px;
     }
     
     .xr-section-inline-details {
@@ -554,13 +637,79 @@ All results can be found in the save directory.
     }
     
     .xr-section-details {
-      display: none;
       grid-column: 1 / -1;
+      margin-top: 4px;
       margin-bottom: 5px;
+    }
+    
+    .xr-section-summary-in ~ .xr-section-details {
+      display: none;
     }
     
     .xr-section-summary-in:checked ~ .xr-section-details {
       display: contents;
+    }
+    
+    .xr-children {
+      display: inline-grid;
+      grid-template-columns: 100%;
+      grid-column: 1 / -1;
+      padding-top: 4px;
+    }
+    
+    .xr-group-box {
+      display: inline-grid;
+      grid-template-columns: 0px 30px auto;
+    }
+    
+    .xr-group-box-vline {
+      grid-column-start: 1;
+      border-right: 0.2em solid;
+      border-color: var(--xr-border-color);
+      width: 0px;
+    }
+    
+    .xr-group-box-hline {
+      grid-column-start: 2;
+      grid-row-start: 1;
+      height: 1em;
+      width: 26px;
+      border-bottom: 0.2em solid;
+      border-color: var(--xr-border-color);
+    }
+    
+    .xr-group-box-contents {
+      grid-column-start: 3;
+      padding-bottom: 4px;
+    }
+    
+    .xr-group-box-contents > label::before {
+      content: "📂";
+      padding-right: 0.3em;
+    }
+    
+    .xr-group-box-contents > input:checked + label::before {
+      content: "📁";
+    }
+    
+    .xr-group-box-contents > input:checked + label {
+      padding-bottom: 0px;
+    }
+    
+    .xr-group-box-contents > input:checked ~ .xr-sections {
+      display: none;
+    }
+    
+    .xr-group-box-contents > input + label > span {
+      display: none;
+    }
+    
+    .xr-group-box-ellipsis {
+      font-size: 1.4em;
+      font-weight: 900;
+      color: var(--xr-font-color2);
+      letter-spacing: 0.15em;
+      cursor: default;
     }
     
     .xr-array-wrap {
@@ -790,36 +939,37 @@ All results can be found in the save directory.
       filter: drop-shadow(1px 1px 5px var(--xr-font-color2));
       stroke-width: 0.8px;
     }
-    </style><pre class='xr-text-repr-fallback'>&lt;xarray.NormData&gt; Size: 98kB
+    </style><pre class='xr-text-repr-fallback'>&lt;xarray.NormData&gt; Size: 105kB
     Dimensions:            (observations: 216, response_vars: 4, covariates: 1,
-                            batch_effect_dims: 2, centile: 5, statistic: 11)
+                            batch_effect_dims: 2, statistic: 11, centile: 5)
     Coordinates:
       * observations       (observations) int64 2kB 756 769 692 616 ... 751 470 1043
       * response_vars      (response_vars) &lt;U23 368B &#x27;WM-hypointensities&#x27; ... &#x27;Co...
       * covariates         (covariates) &lt;U3 12B &#x27;age&#x27;
       * batch_effect_dims  (batch_effect_dims) &lt;U4 32B &#x27;sex&#x27; &#x27;site&#x27;
-      * centile            (centile) float64 40B 0.05 0.25 0.5 0.75 0.95
       * statistic          (statistic) &lt;U8 352B &#x27;EXPV&#x27; &#x27;MACE&#x27; ... &#x27;SMSE&#x27; &#x27;ShapiroW&#x27;
+      * centile            (centile) float64 40B 0.05 0.25 0.5 0.75 0.95
     Data variables:
         subject_ids        (observations) object 2kB &#x27;Munchen_sub96752&#x27; ... &#x27;Quee...
         Y                  (observations, response_vars) float64 7kB 2.721e+03 .....
         X                  (observations, covariates) float64 2kB 63.0 ... 23.0
         batch_effects      (observations, batch_effect_dims) &lt;U17 29kB &#x27;F&#x27; ... &#x27;Q...
         Z                  (observations, response_vars) float64 7kB 0.991 ... -1...
-        centiles           (centile, observations, response_vars) float64 35kB 57...
+        baseline_logp      (observations, response_vars) float64 7kB -3.66 ... -0...
         logp               (observations, response_vars) float64 7kB -1.869 ... -...
         Yhat               (observations, response_vars) float64 7kB 1.91e+03 ......
         statistics         (response_vars, statistic) float64 352B -2.475 ... 0.995
+        centiles           (centile, observations, response_vars) float64 35kB 57...
     Attributes:
         real_ids:                       True
         is_scaled:                      False
         name:                           fcon1000_test
-        unique_batch_effects:           {np.str_(&#x27;sex&#x27;): [np.str_(&#x27;F&#x27;), np.str_(&#x27;...
+        unique_batch_effects:           {np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;sit...
         batch_effect_counts:            defaultdict(&lt;function NormData.register_b...
-        covariate_ranges:               {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.2...
-        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {np.str_(&#x27;F&#x27;): {np.str_(...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-ee5d490d-3177-4c4f-a557-b451cfb403c7' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-ee5d490d-3177-4c4f-a557-b451cfb403c7' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 4</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>centile</span>: 5</li><li><span class='xr-has-index'>statistic</span>: 11</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-feae479c-1e0b-4c1f-a23c-7f894206c264' class='xr-section-summary-in' type='checkbox'  checked><label for='section-feae479c-1e0b-4c1f-a23c-7f894206c264' class='xr-section-summary' >Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-c7602038-e446-4df4-8172-564b86b9181c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c7602038-e446-4df4-8172-564b86b9181c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-486a45db-1810-4445-a659-5bf7536f772c' class='xr-var-data-in' type='checkbox'><label for='data-486a45db-1810-4445-a659-5bf7536f772c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U23</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; ... &#x27;Cortex...</div><input id='attrs-79fed74f-1fa4-491a-9612-a501d9c13278' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-79fed74f-1fa4-491a-9612-a501d9c13278' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5165888f-0fc6-4623-8d04-dc58df6cbecc' class='xr-var-data-in' type='checkbox'><label for='data-5165888f-0fc6-4623-8d04-dc58df6cbecc' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;, &#x27;Right-Amygdala&#x27;,
-           &#x27;CortexVol&#x27;], dtype=&#x27;&lt;U23&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-4d17eb3e-4c12-4951-9df5-6e5ad020386f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-4d17eb3e-4c12-4951-9df5-6e5ad020386f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-14230cac-332c-4f31-ac27-1d1499b6416f' class='xr-var-data-in' type='checkbox'><label for='data-14230cac-332c-4f31-ac27-1d1499b6416f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-ed52fa10-0c2c-47b8-8d9d-228848787f9c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-ed52fa10-0c2c-47b8-8d9d-228848787f9c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1ab364e5-ceb2-4827-849f-0089bdec8159' class='xr-var-data-in' type='checkbox'><label for='data-1ab364e5-ceb2-4827-849f-0089bdec8159' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-f85e1af8-ec72-4738-a534-ec4dd0a542eb' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f85e1af8-ec72-4738-a534-ec4dd0a542eb' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-fe5498db-0789-4266-8fb6-e85610a89ef0' class='xr-var-data-in' type='checkbox'><label for='data-fe5498db-0789-4266-8fb6-e85610a89ef0' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;MACE&#x27; ... &#x27;SMSE&#x27; &#x27;ShapiroW&#x27;</div><input id='attrs-4629cf4a-ab94-471d-b5c2-ee4069f277bc' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-4629cf4a-ab94-471d-b5c2-ee4069f277bc' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-eda31c7a-cfa0-4393-8eeb-ea9db6a12e9c' class='xr-var-data-in' type='checkbox'><label for='data-eda31c7a-cfa0-4393-8eeb-ea9db6a12e9c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MSLL&#x27;, &#x27;NLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;, &#x27;Rho_p&#x27;,
-           &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-7844e918-0774-4753-8655-7a0139351448' class='xr-section-summary-in' type='checkbox'  checked><label for='section-7844e918-0774-4753-8655-7a0139351448' class='xr-section-summary' >Data variables: <span>(9)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;Munchen_sub96752&#x27; ... &#x27;Queensla...</div><input id='attrs-27bbd14a-0dcc-40b4-894e-525ab59f15a4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-27bbd14a-0dcc-40b4-894e-525ab59f15a4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-a03a8193-dace-4aaa-a440-27a5b4ca10f5' class='xr-var-data-in' type='checkbox'><label for='data-a03a8193-dace-4aaa-a440-27a5b4ca10f5' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;Munchen_sub96752&#x27;, &#x27;NewYork_a_sub18638&#x27;, &#x27;Leiden_2200_sub87320&#x27;,
+        covariate_ranges:               {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}
+        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-cd23d027-4f9c-445f-9dd0-6e3168959e34' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-cd23d027-4f9c-445f-9dd0-6e3168959e34' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 4</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>statistic</span>: 11</li><li><span class='xr-has-index'>centile</span>: 5</li></ul></div></li><li class='xr-section-item'><input id='section-a3a42b8b-a29b-410a-909f-a40ca388e2b3' class='xr-section-summary-in' type='checkbox' checked /><label for='section-a3a42b8b-a29b-410a-909f-a40ca388e2b3' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-29c452a6-97b3-4885-9176-534de93e5331' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-29c452a6-97b3-4885-9176-534de93e5331' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-75ac4c43-63ca-49bc-8b0b-ec4f33eb90cb' class='xr-var-data-in' type='checkbox'><label for='data-75ac4c43-63ca-49bc-8b0b-ec4f33eb90cb' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U23</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; ... &#x27;Cortex...</div><input id='attrs-4f83b63d-21b6-4092-bcfd-bdb74991d6b1' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-4f83b63d-21b6-4092-bcfd-bdb74991d6b1' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f08990db-935a-48bb-9e25-e56e385665cf' class='xr-var-data-in' type='checkbox'><label for='data-f08990db-935a-48bb-9e25-e56e385665cf' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;, &#x27;Right-Amygdala&#x27;,
+           &#x27;CortexVol&#x27;], dtype=&#x27;&lt;U23&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-7fc2e7a3-24ba-470b-8266-aa235f608a8d' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-7fc2e7a3-24ba-470b-8266-aa235f608a8d' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-17a3c392-79f5-41da-a397-144e65c0307b' class='xr-var-data-in' type='checkbox'><label for='data-17a3c392-79f5-41da-a397-144e65c0307b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-85ec6ff3-0036-413c-90ba-f726f80fb413' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-85ec6ff3-0036-413c-90ba-f726f80fb413' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-a72fe563-ffb6-4395-bb9f-c090c4082289' class='xr-var-data-in' type='checkbox'><label for='data-a72fe563-ffb6-4395-bb9f-c090c4082289' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;MACE&#x27; ... &#x27;SMSE&#x27; &#x27;ShapiroW&#x27;</div><input id='attrs-c017581a-5406-4d0e-a46d-d64478b5eeb6' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c017581a-5406-4d0e-a46d-d64478b5eeb6' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-a02aeb26-8e2b-4a6b-9c49-b7b4724dbbb5' class='xr-var-data-in' type='checkbox'><label for='data-a02aeb26-8e2b-4a6b-9c49-b7b4724dbbb5' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MSLL&#x27;, &#x27;NLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;, &#x27;Rho_p&#x27;,
+           &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-e200dec6-71b9-4a9b-945b-ce9d88d12445' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-e200dec6-71b9-4a9b-945b-ce9d88d12445' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d790431b-31f7-4165-a0b5-437bb25b6c83' class='xr-var-data-in' type='checkbox'><label for='data-d790431b-31f7-4165-a0b5-437bb25b6c83' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-80edd0fd-8c7a-426c-9f2e-68bc8909d959' class='xr-section-summary-in' type='checkbox' checked /><label for='section-80edd0fd-8c7a-426c-9f2e-68bc8909d959' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;Munchen_sub96752&#x27; ... &#x27;Queensla...</div><input id='attrs-cab7347b-e08c-48e5-862d-361e47b6e08c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-cab7347b-e08c-48e5-862d-361e47b6e08c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-933520b7-effd-476a-9878-5c7a53655bea' class='xr-var-data-in' type='checkbox'><label for='data-933520b7-effd-476a-9878-5c7a53655bea' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;Munchen_sub96752&#x27;, &#x27;NewYork_a_sub18638&#x27;, &#x27;Leiden_2200_sub87320&#x27;,
            &#x27;ICBM_sub47658&#x27;, &#x27;AnnArbor_b_sub45569&#x27;, &#x27;Beijing_Zang_sub18960&#x27;,
            &#x27;Leiden_2200_sub18456&#x27;, &#x27;Berlin_Margulies_sub27711&#x27;,
            &#x27;Beijing_Zang_sub87776&#x27;, &#x27;Milwaukee_b_sub63196&#x27;,
@@ -859,7 +1009,7 @@ All results can be found in the save directory.
            &#x27;AnnArbor_b_sub30250&#x27;, &#x27;Berlin_Margulies_sub86111&#x27;,
            &#x27;Beijing_Zang_sub89592&#x27;, &#x27;Beijing_Zang_sub68012&#x27;,
            &#x27;NewYork_a_sub50559&#x27;, &#x27;Munchen_sub66933&#x27;,
-           &#x27;Cambridge_Buckner_sub59729&#x27;, &#x27;Queensland_sub86245&#x27;], dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.721e+03 1.289e+04 ... 5.035e+05</div><input id='attrs-2dea6f8a-baa3-456f-9868-a0f25d42d3c9' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-2dea6f8a-baa3-456f-9868-a0f25d42d3c9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-39c7b7d9-eba0-473b-b232-e28c83d0f916' class='xr-var-data-in' type='checkbox'><label for='data-39c7b7d9-eba0-473b-b232-e28c83d0f916' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[2.72140000e+03, 1.28916000e+04, 1.43940000e+03, 4.57858328e+05],
+           &#x27;Cambridge_Buckner_sub59729&#x27;, &#x27;Queensland_sub86245&#x27;], dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.721e+03 1.289e+04 ... 5.035e+05</div><input id='attrs-c8c6139b-0781-417b-975c-3de25dd11508' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c8c6139b-0781-417b-975c-3de25dd11508' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d6588f9a-de6c-4b20-9072-f351ba2fe441' class='xr-var-data-in' type='checkbox'><label for='data-d6588f9a-de6c-4b20-9072-f351ba2fe441' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[2.72140000e+03, 1.28916000e+04, 1.43940000e+03, 4.57858328e+05],
            [1.14310000e+03, 9.91910000e+03, 1.64970000e+03, 5.26780362e+05],
            [9.55800000e+02, 7.47730000e+03, 1.83850000e+03, 4.95744471e+05],
            [1.47390000e+03, 1.43021000e+04, 1.86770000e+03, 5.85303839e+05],
@@ -899,7 +1049,7 @@ All results can be found in the save directory.
            [6.04700000e+02, 7.59080000e+03, 1.69930000e+03, 5.20499663e+05],
            [2.34320000e+03, 1.71923000e+04, 1.79380000e+03, 4.86680791e+05],
            [2.72170000e+03, 6.08600000e+03, 2.32470000e+03, 6.10402006e+05],
-           [7.03500000e+02, 1.07003000e+04, 1.67620000e+03, 5.03535771e+05]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 23.27 22.0 ... 72.0 23.0 23.0</div><input id='attrs-acb3c7b3-aaa2-4606-a30c-beabadfe7c50' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-acb3c7b3-aaa2-4606-a30c-beabadfe7c50' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c7317883-0b23-4914-9bfe-97cd4431ae4d' class='xr-var-data-in' type='checkbox'><label for='data-c7317883-0b23-4914-9bfe-97cd4431ae4d' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[63.  ],
+           [7.03500000e+02, 1.07003000e+04, 1.67620000e+03, 5.03535771e+05]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 23.27 22.0 ... 72.0 23.0 23.0</div><input id='attrs-b25ea971-f9c2-4455-9a37-fb63a9adfe02' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b25ea971-f9c2-4455-9a37-fb63a9adfe02' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3d938d4d-225c-4635-871a-4326e756edbd' class='xr-var-data-in' type='checkbox'><label for='data-3d938d4d-225c-4635-871a-4326e756edbd' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[63.  ],
            [23.27],
            [22.  ],
            [42.  ],
@@ -939,7 +1089,7 @@ All results can be found in the save directory.
            [22.79],
            [72.  ],
            [23.  ],
-           [23.  ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-33fb4e80-f7f8-4fba-9f73-ff5e78ec8211' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-33fb4e80-f7f8-4fba-9f73-ff5e78ec8211' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4abdaaca-a99a-4acf-b8cd-65b7e4058051' class='xr-var-data-in' type='checkbox'><label for='data-4abdaaca-a99a-4acf-b8cd-65b7e4058051' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
+           [23.  ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-5771d8c5-8386-45c8-a4a1-f3294f5bacf6' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-5771d8c5-8386-45c8-a4a1-f3294f5bacf6' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-da4ca1df-c034-42b4-a8d4-2ed15c925473' class='xr-var-data-in' type='checkbox'><label for='data-da4ca1df-c034-42b4-a8d4-2ed15c925473' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;F&#x27;, &#x27;Leiden_2200&#x27;],
            [&#x27;M&#x27;, &#x27;ICBM&#x27;],
@@ -979,7 +1129,7 @@ All results can be found in the save directory.
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;M&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;Cambridge_Buckner&#x27;],
-           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.991 0.8183 ... -1.358 -1.272</div><input id='attrs-b8bc485c-7f00-4792-b02a-440f51ac667b' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b8bc485c-7f00-4792-b02a-440f51ac667b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-64786103-7b90-4092-aa2e-65a288252aee' class='xr-var-data-in' type='checkbox'><label for='data-64786103-7b90-4092-aa2e-65a288252aee' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 0.9910344 ,  0.81830048, -0.55018133,  0.13955562],
+           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.991 0.8183 ... -1.358 -1.272</div><input id='attrs-6f202c18-712e-4187-95f4-91ea05c6a5e3' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-6f202c18-712e-4187-95f4-91ea05c6a5e3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-91f3660b-438e-45b9-8f2b-7ffa3c652f8c' class='xr-var-data-in' type='checkbox'><label for='data-91f3660b-438e-45b9-8f2b-7ffa3c652f8c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 0.9910344 ,  0.81830048, -0.55018133,  0.13955562],
            [-0.01085574,  1.38811541, -1.28944887, -0.22201834],
            [ 0.17713812,  0.33628493,  0.61264106,  0.29792913],
            [-0.01677579,  1.60929134, -0.07031814,  1.26890505],
@@ -1019,46 +1169,47 @@ All results can be found in the save directory.
            [-1.27217678,  0.51002814, -0.96896359, -0.40012592],
            [-0.70954373,  0.38006276,  0.30542294, -0.03362917],
            [ 3.51471532, -0.12046593,  1.78738181,  2.73068326],
-           [-1.23766073,  1.11498484, -1.35814472, -1.2716136 ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>571.2 4.966e+03 ... 6.834e+05</div><input id='attrs-1a115261-8548-46de-8631-1c22999bbffc' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-1a115261-8548-46de-8631-1c22999bbffc' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-be37b42d-14ca-48ee-a89c-8f6e64c2f631' class='xr-var-data-in' type='checkbox'><label for='data-be37b42d-14ca-48ee-a89c-8f6e64c2f631' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[5.71205994e+02, 4.96564655e+03, 1.06316403e+03, 3.39817113e+05],
-            [4.13035081e+02, 2.75772941e+03, 1.58879166e+03, 4.75739503e+05],
-            [1.88662575e+01, 2.25430203e+03, 1.39579259e+03, 4.20080014e+05],
-            ...,
-            [1.61029512e+03, 8.09315163e+03, 8.95839362e+02, 3.28867059e+05],
-            [8.11465978e+02, 2.24573665e+03, 1.64014264e+03, 4.51301006e+05],
-            [4.87567573e+02, 2.43188395e+03, 1.62722821e+03, 4.91292413e+05]],
-    
-           [[1.28549504e+03, 7.46789216e+03, 1.40492724e+03, 4.16057424e+05],
-            [8.78625548e+02, 5.12157892e+03, 1.75109764e+03, 5.09359965e+05],
-            [5.81509378e+02, 5.00577241e+03, 1.60414586e+03, 4.62472246e+05],
-            ...,
-            [2.37761128e+03, 1.11499357e+04, 1.45777998e+03, 4.43279505e+05],
-            [1.12683865e+03, 4.81720018e+03, 1.77644124e+03, 4.80360983e+05],
-            [9.63991646e+02, 5.35635311e+03, 1.79273273e+03, 5.24834515e+05]],
-    
-           [[1.75209940e+03, 9.43308712e+03, 1.57379132e+03, 4.51639529e+05],
-            [1.14724224e+03, 6.57372795e+03, 1.87190499e+03, 5.36352593e+05],
-            [8.83889821e+02, 6.65314858e+03, 1.72490051e+03, 4.85862620e+05],
-            ...,
-            [3.19798573e+03, 1.44942779e+04, 1.69495484e+03, 4.88734754e+05],
-            [1.33087243e+03, 6.35496078e+03, 1.88133716e+03, 4.98844602e+05],
-            [1.24359390e+03, 7.13708261e+03, 1.92604343e+03, 5.54585499e+05]],
-    
-           [[2.35080063e+03, 1.21452946e+04, 1.71430561e+03, 4.79508558e+05],
-            [1.40141325e+03, 8.05825203e+03, 2.02563162e+03, 5.71923846e+05],
-            [1.14745824e+03, 8.35762438e+03, 1.85098455e+03, 5.08550678e+05],
-            ...,
-            [4.44734100e+03, 1.98704866e+04, 1.93281869e+03, 5.33654753e+05],
-            [1.53695703e+03, 7.89723294e+03, 2.01110742e+03, 5.18370399e+05],
-            [1.51726721e+03, 9.09267425e+03, 2.10455268e+03, 5.94956459e+05]],
-    
-           [[3.78210177e+03, 1.91696618e+04, 1.93448631e+03, 5.17064669e+05],
-            [1.79054689e+03, 1.07315286e+04, 2.36031918e+03, 6.50440908e+05],
-            [1.50816251e+03, 1.16498333e+04, 2.09934481e+03, 5.48052958e+05],
-            ...,
-            [7.51942906e+03, 3.44512783e+04, 2.62653940e+03, 6.53779222e+05],
-            [1.86198242e+03, 1.06574501e+04, 2.27537187e+03, 5.53054505e+05],
-            [1.96040026e+03, 1.33254385e+04, 2.50306886e+03, 6.83443625e+05]]],
-          shape=(5, 216, 4))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.869 -1.603 ... -1.467 -1.283</div><input id='attrs-644a912c-9e75-47d6-b28e-3710d4f0606e' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-644a912c-9e75-47d6-b28e-3710d4f0606e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5ccd9371-7ef1-49a7-9ea9-891feb42c4e1' class='xr-var-data-in' type='checkbox'><label for='data-5ccd9371-7ef1-49a7-9ea9-891feb42c4e1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-1.86906501e+00, -1.60266085e+00, -1.16872443e+00,
+           [-1.23766073,  1.11498484, -1.35814472, -1.2716136 ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-3.66 -2.043 ... -0.8989 -0.9114</div><input id='attrs-34d61737-e5b7-4851-a24a-60c04dc78244' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-34d61737-e5b7-4851-a24a-60c04dc78244' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-7991d508-55d5-446c-bf37-fde52dcab0f9' class='xr-var-data-in' type='checkbox'><label for='data-7991d508-55d5-446c-bf37-fde52dcab0f9' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -3.66025491,  -2.04288507,  -1.59126037,  -1.03593217],
+           [ -0.62929369,  -1.20018059,  -0.92636244,  -1.18228146],
+           [ -0.72099829,  -0.94007561,  -1.00621155,  -0.8710495 ],
+           [ -0.70127013,  -2.64484182,  -1.07573496,  -2.86273506],
+           [ -0.9220753 ,  -1.21898282,  -2.28658582,  -5.81179816],
+           [ -0.79391552,  -1.07037055,  -1.19449057,  -0.97178023],
+           [ -0.61989989,  -4.7455716 ,  -1.69850524,  -1.6920084 ],
+           [ -1.16758184,  -1.07345203,  -1.63737978,  -0.93572612],
+           [ -1.02678525,  -0.93617147,  -1.50847195,  -1.00917076],
+           [ -1.45761657,  -0.99208431,  -1.42505287,  -1.23698624],
+           [ -0.82816414,  -1.30256853,  -1.58817263,  -1.94337031],
+           [ -1.15416898,  -1.03674779,  -2.04242718,  -1.75597632],
+           [ -0.67590815,  -1.16228047,  -0.92497321,  -1.07782826],
+           [ -1.24932613,  -1.33291168,  -1.12032554,  -0.93484472],
+           [ -1.11921947,  -1.4058518 ,  -1.86319671,  -1.34346116],
+           [ -1.42688131,  -1.24530702,  -1.51609003,  -0.9362691 ],
+           [ -0.61975138,  -1.02388273,  -0.88162069,  -1.25389532],
+           [ -0.81939019,  -0.94201722,  -0.97390298,  -0.95820961],
+           [ -0.69375343,  -0.93464746,  -1.55727287,  -1.00986314],
+           [ -0.96861762,  -1.23948959,  -1.25635708,  -0.85592663],
+    ...
+           [ -0.88714286,  -0.9950603 ,  -1.42372768,  -1.08657625],
+           [ -2.01527752,  -1.17329719,  -1.80989117,  -1.91430013],
+           [ -0.92168968,  -0.94411669,  -1.09222585,  -0.89483328],
+           [ -0.68044429,  -0.93893952,  -3.26488221,  -3.13185767],
+           [ -0.8489441 ,  -1.10972487,  -1.42854124,  -0.90594411],
+           [ -9.4332193 ,  -3.46339473,  -0.9267297 ,  -0.989051  ],
+           [ -0.78514238,  -1.17266166,  -0.89204905,  -1.37609215],
+           [ -0.84304737,  -0.95017362,  -1.06765849,  -2.19462803],
+           [ -1.68860199,  -1.37098214,  -1.01769281,  -0.98677789],
+           [ -0.94286471,  -1.03277979,  -0.99831497,  -0.86061958],
+           [ -0.63434716,  -0.93487843,  -0.88828267,  -0.87038174],
+           [ -0.99048957,  -0.99760222,  -1.19218701,  -0.89202585],
+           [ -0.63150983,  -1.00588922,  -0.96123371,  -1.08406159],
+           [ -1.47158077,  -0.95246174,  -1.01905115,  -0.93255066],
+           [ -0.7133234 ,  -1.08525544,  -0.91573244,  -0.95662517],
+           [ -1.502708  ,  -1.14845319,  -0.8843618 ,  -1.17989111],
+           [ -1.1509269 ,  -0.94352785,  -0.88532726,  -1.08685779],
+           [ -2.31442671,  -4.28458605,  -0.92945309,  -0.85598943],
+           [ -3.66147746,  -0.96619251,  -4.15949678,  -4.02130046],
+           [ -0.99591923,  -1.36569557,  -0.89894026,  -0.91139503]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.869 -1.603 ... -1.467 -1.283</div><input id='attrs-c84de837-091e-4130-b134-f48296f43564' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c84de837-091e-4130-b134-f48296f43564' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e7d996b7-8c74-447f-9a43-cfb0e8de7008' class='xr-var-data-in' type='checkbox'><label for='data-e7d996b7-8c74-447f-9a43-cfb0e8de7008' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-1.86906501e+00, -1.60266085e+00, -1.16872443e+00,
             -7.47478268e-01],
            [-1.58469803e-01, -1.62580449e+00, -1.36632897e+00,
             -7.11132196e-01],
@@ -1098,7 +1249,7 @@ All results can be found in the save directory.
            [-6.76604624e+00, -3.82760420e-01, -2.89324088e+00,
             -4.88027805e+00],
            [-1.18852124e+00, -1.60949381e+00, -1.46708031e+00,
-            -1.28328036e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.91e+03 1.043e+04 ... 5.667e+05</div><input id='attrs-a8b5f024-5e88-4c55-a920-16e680b2d9a9' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-a8b5f024-5e88-4c55-a920-16e680b2d9a9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0fb038fa-4c96-4f49-8239-defb8e31883a' class='xr-var-data-in' type='checkbox'><label for='data-0fb038fa-4c96-4f49-8239-defb8e31883a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 1.91041133e+03,  1.04341585e+04,  1.54646809e+03,
+            -1.28328036e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.91e+03 1.043e+04 ... 5.667e+05</div><input id='attrs-9d8aa17c-fab6-4fcb-87fa-661f371ff277' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9d8aa17c-fab6-4fcb-87fa-661f371ff277' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5ab3b78e-8764-4547-b4e1-bcfcbd34d73e' class='xr-var-data-in' type='checkbox'><label for='data-5ab3b78e-8764-4547-b4e1-bcfcbd34d73e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 1.91041133e+03,  1.04341585e+04,  1.54646809e+03,
              4.43073070e+05],
            [ 1.13032022e+03,  6.64197321e+03,  1.90995371e+03,
              5.46278301e+05],
@@ -1138,31 +1289,76 @@ All results can be found in the save directory.
            [ 1.33301797e+03,  6.39661753e+03,  1.90963880e+03,
              5.00086720e+05],
            [ 1.23623232e+03,  7.42824756e+03,  1.97755494e+03,
-             5.66741543e+05]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-2.475 0.03796 ... 0.6244 0.995</div><input id='attrs-1e9dd963-8def-4323-852b-c3d69ea76aef' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-1e9dd963-8def-4323-852b-c3d69ea76aef' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f7d8d7f1-26c2-41aa-8f20-256ede5e8f9a' class='xr-var-data-in' type='checkbox'><label for='data-f7d8d7f1-26c2-41aa-8f20-256ede5e8f9a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-2.47487797e+00,  3.79629630e-02,  3.90576314e-01,
-            -6.97874850e+00,  8.45801650e-01, -2.48539139e+00,
+             5.66741543e+05]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-2.475 0.03796 ... 0.6244 0.995</div><input id='attrs-e5837977-cc59-428b-a116-fd17fd4c2d15' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-e5837977-cc59-428b-a116-fd17fd4c2d15' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4c23fd8e-133b-4263-969f-43d8a540152a' class='xr-var-data-in' type='checkbox'><label for='data-4c23fd8e-133b-4263-969f-43d8a540152a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-2.47487797e+00,  3.79629630e-02,  3.90576314e-01,
+            -2.73467389e-01,  8.45801650e-01, -2.48539140e+00,
              1.12991963e+03,  4.69792686e-01,  2.94834937e-13,
-             3.48539139e+00,  9.37601263e-01],
+             3.48539140e+00,  9.37601263e-01],
            [ 1.85347407e-01,  4.90740741e-02,  4.20342721e-01,
-            -8.40210129e+00,  1.28840444e+00,  1.84189959e-01,
+            -1.46216297e-01,  1.28840444e+00,  1.84189959e-01,
              3.53256787e+03,  2.46607074e-01,  2.52188374e-04,
              8.15810041e-01,  9.37045362e-01],
            [ 2.85233438e-01,  1.85185185e-02,  9.41622245e-02,
-            -5.63777308e+00,  1.24475296e+00,  2.84777724e-01,
+            -1.36516215e-01,  1.24475296e+00,  2.84777724e-01,
              1.99538370e+02,  5.12632996e-01,  7.12929722e-16,
              7.15222276e-01,  9.88757003e-01],
            [ 3.87191352e-01,  1.48148148e-02,  6.51500829e-02,
-            -1.10844441e+01,  1.13311599e+00,  3.75602928e-01,
+            -2.22810325e-01,  1.13311599e+00,  3.75602928e-01,
              3.86822921e+04,  6.35331704e-01,  8.11366151e-26,
-             6.24397072e-01,  9.95039182e-01]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-35fd1535-eb52-40f4-87c5-db5fd7c0fabc' class='xr-section-summary-in' type='checkbox'  ><label for='section-35fd1535-eb52-40f4-87c5-db5fd7c0fabc' class='xr-section-summary' >Indexes: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-index-name'><div>observations</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-09d32fd0-e5de-4c45-9633-288a71a1a3b8' class='xr-index-data-in' type='checkbox'/><label for='index-09d32fd0-e5de-4c45-9633-288a71a1a3b8' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([ 756,  769,  692,  616,   35,  164,  680,  331,  299,  727,
-           ...
-             27,  959,   29,  346,  304,  264,  798,  751,  470, 1043],
-          dtype=&#x27;int64&#x27;, name=&#x27;observations&#x27;, length=216))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>response_vars</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-a9a29dcc-f4df-4a25-85e3-b8aa30d13792' class='xr-index-data-in' type='checkbox'/><label for='index-a9a29dcc-f4df-4a25-85e3-b8aa30d13792' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;, &#x27;Right-Amygdala&#x27;,
-           &#x27;CortexVol&#x27;],
-          dtype=&#x27;object&#x27;, name=&#x27;response_vars&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>covariates</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-3bcffd49-7393-41ef-822e-061dd38c4410' class='xr-index-data-in' type='checkbox'/><label for='index-3bcffd49-7393-41ef-822e-061dd38c4410' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;age&#x27;], dtype=&#x27;object&#x27;, name=&#x27;covariates&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>batch_effect_dims</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-2dc16003-0f53-45e4-afc7-79e3c045fe6e' class='xr-index-data-in' type='checkbox'/><label for='index-2dc16003-0f53-45e4-afc7-79e3c045fe6e' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;object&#x27;, name=&#x27;batch_effect_dims&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>centile</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-cc3b8a59-0c13-453b-abbf-eff53c056c2e' class='xr-index-data-in' type='checkbox'/><label for='index-cc3b8a59-0c13-453b-abbf-eff53c056c2e' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([0.05, 0.25, 0.5, 0.75, 0.95], dtype=&#x27;float64&#x27;, name=&#x27;centile&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>statistic</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-9d5a87d9-9a28-4ce9-9df0-6c7febede7e6' class='xr-index-data-in' type='checkbox'/><label for='index-9d5a87d9-9a28-4ce9-9df0-6c7febede7e6' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;EXPV&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MSLL&#x27;, &#x27;NLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;, &#x27;Rho_p&#x27;,
-           &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;],
-          dtype=&#x27;object&#x27;, name=&#x27;statistic&#x27;))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-4d079e1f-6f06-4dd4-a7b7-0d01ed10e3c1' class='xr-section-summary-in' type='checkbox'  checked><label for='section-4d079e1f-6f06-4dd4-a7b7-0d01ed10e3c1' class='xr-section-summary' >Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [np.str_(&#x27;F&#x27;), np.str_(&#x27;M&#x27;)], np.str_(&#x27;site&#x27;): [np.str_(&#x27;AnnArbor_a&#x27;), np.str_(&#x27;AnnArbor_b&#x27;), np.str_(&#x27;Atlanta&#x27;), np.str_(&#x27;Baltimore&#x27;), np.str_(&#x27;Bangor&#x27;), np.str_(&#x27;Beijing_Zang&#x27;), np.str_(&#x27;Berlin_Margulies&#x27;), np.str_(&#x27;Cambridge_Buckner&#x27;), np.str_(&#x27;Cleveland&#x27;), np.str_(&#x27;ICBM&#x27;), np.str_(&#x27;Leiden_2180&#x27;), np.str_(&#x27;Leiden_2200&#x27;), np.str_(&#x27;Milwaukee_b&#x27;), np.str_(&#x27;Munchen&#x27;), np.str_(&#x27;NewYork_a&#x27;), np.str_(&#x27;NewYork_a_ADHD&#x27;), np.str_(&#x27;Newark&#x27;), np.str_(&#x27;Oulu&#x27;), np.str_(&#x27;Oxford&#x27;), np.str_(&#x27;PaloAlto&#x27;), np.str_(&#x27;Pittsburgh&#x27;), np.str_(&#x27;Queensland&#x27;), np.str_(&#x27;SaintLouis&#x27;)]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x17e771ee0&gt;, {np.str_(&#x27;sex&#x27;): {np.str_(&#x27;F&#x27;): 589, np.str_(&#x27;M&#x27;): 489}, np.str_(&#x27;site&#x27;): {np.str_(&#x27;AnnArbor_a&#x27;): 24, np.str_(&#x27;AnnArbor_b&#x27;): 32, np.str_(&#x27;Atlanta&#x27;): 28, np.str_(&#x27;Baltimore&#x27;): 23, np.str_(&#x27;Bangor&#x27;): 20, np.str_(&#x27;Beijing_Zang&#x27;): 198, np.str_(&#x27;Berlin_Margulies&#x27;): 26, np.str_(&#x27;Cambridge_Buckner&#x27;): 198, np.str_(&#x27;Cleveland&#x27;): 31, np.str_(&#x27;ICBM&#x27;): 85, np.str_(&#x27;Leiden_2180&#x27;): 12, np.str_(&#x27;Leiden_2200&#x27;): 19, np.str_(&#x27;Milwaukee_b&#x27;): 46, np.str_(&#x27;Munchen&#x27;): 15, np.str_(&#x27;NewYork_a&#x27;): 83, np.str_(&#x27;NewYork_a_ADHD&#x27;): 25, np.str_(&#x27;Newark&#x27;): 19, np.str_(&#x27;Oulu&#x27;): 102, np.str_(&#x27;Oxford&#x27;): 22, np.str_(&#x27;PaloAlto&#x27;): 17, np.str_(&#x27;Pittsburgh&#x27;): 3, np.str_(&#x27;Queensland&#x27;): 19, np.str_(&#x27;SaintLouis&#x27;): 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.251224489795916), &#x27;min&#x27;: np.float64(7.88), &#x27;max&#x27;: np.float64(85.0)}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {np.str_(&#x27;F&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.05332767402377), &#x27;min&#x27;: np.float64(7.88), &#x27;max&#x27;: np.float64(85.0)}}, np.str_(&#x27;M&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.48959100204499), &#x27;min&#x27;: np.float64(9.21), &#x27;max&#x27;: np.float64(78.0)}}}, np.str_(&#x27;site&#x27;): {np.str_(&#x27;AnnArbor_a&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.28333333333333), &#x27;min&#x27;: np.float64(13.41), &#x27;max&#x27;: np.float64(40.98)}}, np.str_(&#x27;AnnArbor_b&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(44.40625), &#x27;min&#x27;: np.float64(19.0), &#x27;max&#x27;: np.float64(79.0)}}, np.str_(&#x27;Atlanta&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(30.892857142857142), &#x27;min&#x27;: np.float64(22.0), &#x27;max&#x27;: np.float64(57.0)}}, np.str_(&#x27;Baltimore&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(29.26086956521739), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(40.0)}}, np.str_(&#x27;Bangor&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(23.4), &#x27;min&#x27;: np.float64(19.0), &#x27;max&#x27;: np.float64(38.0)}}, np.str_(&#x27;Beijing_Zang&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.161616161616163), &#x27;min&#x27;: np.float64(18.0), &#x27;max&#x27;: np.float64(26.0)}}, np.str_(&#x27;Berlin_Margulies&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(29.76923076923077), &#x27;min&#x27;: np.float64(23.0), &#x27;max&#x27;: np.float64(44.0)}}, np.str_(&#x27;Cambridge_Buckner&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.03030303030303), &#x27;min&#x27;: np.float64(18.0), &#x27;max&#x27;: np.float64(30.0)}}, np.str_(&#x27;Cleveland&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(43.54838709677419), &#x27;min&#x27;: np.float64(24.0), &#x27;max&#x27;: np.float64(60.0)}}, np.str_(&#x27;ICBM&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(44.04705882352941), &#x27;min&#x27;: np.float64(19.0), &#x27;max&#x27;: np.float64(85.0)}}, np.str_(&#x27;Leiden_2180&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(23.0), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(27.0)}}, np.str_(&#x27;Leiden_2200&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.68421052631579), &#x27;min&#x27;: np.float64(18.0), &#x27;max&#x27;: np.float64(28.0)}}, np.str_(&#x27;Milwaukee_b&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(53.58695652173913), &#x27;min&#x27;: np.float64(44.0), &#x27;max&#x27;: np.float64(65.0)}}, np.str_(&#x27;Munchen&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(68.13333333333334), &#x27;min&#x27;: np.float64(63.0), &#x27;max&#x27;: np.float64(74.0)}}, np.str_(&#x27;NewYork_a&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(24.507710843373495), &#x27;min&#x27;: np.float64(7.88), &#x27;max&#x27;: np.float64(49.16)}}, np.str_(&#x27;NewYork_a_ADHD&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(34.9952), &#x27;min&#x27;: np.float64(20.69), &#x27;max&#x27;: np.float64(50.9)}}, np.str_(&#x27;Newark&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(24.105263157894736), &#x27;min&#x27;: np.float64(21.0), &#x27;max&#x27;: np.float64(39.0)}}, np.str_(&#x27;Oulu&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.519607843137255), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(23.0)}}, np.str_(&#x27;Oxford&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(29.0), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(35.0)}}, np.str_(&#x27;PaloAlto&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(32.470588235294116), &#x27;min&#x27;: np.float64(22.0), &#x27;max&#x27;: np.float64(46.0)}}, np.str_(&#x27;Pittsburgh&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(32.333333333333336), &#x27;min&#x27;: np.float64(25.0), &#x27;max&#x27;: np.float64(47.0)}}, np.str_(&#x27;Queensland&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(25.94736842105263), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(34.0)}}, np.str_(&#x27;SaintLouis&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(25.096774193548388), &#x27;min&#x27;: np.float64(21.0), &#x27;max&#x27;: np.float64(29.0)}}}}</dd></dl></div></li></ul></div></div>
+             6.24397072e-01,  9.95039182e-01]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>571.2 4.966e+03 ... 6.834e+05</div><input id='attrs-1b134d68-9d86-4123-940f-3e62a9d53ec3' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-1b134d68-9d86-4123-940f-3e62a9d53ec3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1bc4e79c-7634-4558-b515-7169d1af0687' class='xr-var-data-in' type='checkbox'><label for='data-1bc4e79c-7634-4558-b515-7169d1af0687' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[5.71205994e+02, 4.96564655e+03, 1.06316403e+03, 3.39817113e+05],
+            [4.13035081e+02, 2.75772941e+03, 1.58879166e+03, 4.75739503e+05],
+            [1.88662575e+01, 2.25430203e+03, 1.39579259e+03, 4.20080014e+05],
+            ...,
+            [1.61029512e+03, 8.09315163e+03, 8.95839362e+02, 3.28867059e+05],
+            [8.11465978e+02, 2.24573665e+03, 1.64014264e+03, 4.51301006e+05],
+            [4.87567573e+02, 2.43188395e+03, 1.62722821e+03, 4.91292413e+05]],
+    
+           [[1.28549504e+03, 7.46789216e+03, 1.40492724e+03, 4.16057424e+05],
+            [8.78625548e+02, 5.12157892e+03, 1.75109764e+03, 5.09359965e+05],
+            [5.81509378e+02, 5.00577241e+03, 1.60414586e+03, 4.62472246e+05],
+            ...,
+            [2.37761128e+03, 1.11499357e+04, 1.45777998e+03, 4.43279505e+05],
+            [1.12683865e+03, 4.81720018e+03, 1.77644124e+03, 4.80360983e+05],
+            [9.63991646e+02, 5.35635311e+03, 1.79273273e+03, 5.24834515e+05]],
+    
+           [[1.75209940e+03, 9.43308712e+03, 1.57379132e+03, 4.51639529e+05],
+            [1.14724224e+03, 6.57372795e+03, 1.87190499e+03, 5.36352593e+05],
+            [8.83889821e+02, 6.65314858e+03, 1.72490051e+03, 4.85862620e+05],
+            ...,
+            [3.19798573e+03, 1.44942779e+04, 1.69495484e+03, 4.88734754e+05],
+            [1.33087243e+03, 6.35496078e+03, 1.88133716e+03, 4.98844602e+05],
+            [1.24359390e+03, 7.13708261e+03, 1.92604343e+03, 5.54585499e+05]],
+    
+           [[2.35080063e+03, 1.21452946e+04, 1.71430561e+03, 4.79508558e+05],
+            [1.40141325e+03, 8.05825203e+03, 2.02563162e+03, 5.71923846e+05],
+            [1.14745824e+03, 8.35762438e+03, 1.85098455e+03, 5.08550678e+05],
+            ...,
+            [4.44734100e+03, 1.98704866e+04, 1.93281869e+03, 5.33654753e+05],
+            [1.53695703e+03, 7.89723294e+03, 2.01110742e+03, 5.18370399e+05],
+            [1.51726721e+03, 9.09267425e+03, 2.10455268e+03, 5.94956459e+05]],
+    
+           [[3.78210177e+03, 1.91696618e+04, 1.93448631e+03, 5.17064669e+05],
+            [1.79054689e+03, 1.07315286e+04, 2.36031918e+03, 6.50440908e+05],
+            [1.50816251e+03, 1.16498333e+04, 2.09934481e+03, 5.48052958e+05],
+            ...,
+            [7.51942906e+03, 3.44512783e+04, 2.62653940e+03, 6.53779222e+05],
+            [1.86198242e+03, 1.06574501e+04, 2.27537187e+03, 5.53054505e+05],
+            [1.96040026e+03, 1.33254385e+04, 2.50306886e+03, 6.83443625e+05]]],
+          shape=(5, 216, 4))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-9b8e8fc7-b1fb-4ed6-8440-b0b429ff6a9c' class='xr-section-summary-in' type='checkbox' checked /><label for='section-9b8e8fc7-b1fb-4ed6-8440-b0b429ff6a9c' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x0000021C49C531A0&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}}}}</dd></dl></div></li></ul></div></div>
 
 
+
+Looking at the printed messages, we can identify three main procedures:
+
+1. | *“Fitting models on 4 response variables.”*
+   | The model is being fitted on the **training data**. PCNtoolkit fits
+     one separate regression model for each of the four selected
+     response variables.
+
+2. | *“Making predictions on 4 response variables.”*
+   | First, PCNtoolkit computes predictions on the **training data**.
+
+3. | *“Making predictions on 4 response variables.”*
+   | Then, PCNtoolkit computes predictions on the **test data**
 
 Plot the results
 ----------------
@@ -1189,7 +1385,7 @@ Let’s start with the centiles.
 
 .. parsed-literal::
 
-    Process: 75222 - 2025-11-20 13:13:48 - Dataset "centile" created.
+    Process: 22044 - 2026-04-20 18:39:17 - Dataset "centile" created.
         - 150 observations
         - 150 unique subjects
         - 1 covariates
@@ -1198,49 +1394,22 @@ Let’s start with the centiles.
         	site (1)
     	sex (1)
         
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing centiles for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:48 - Computing yhat for Right-Amygdala.
-    Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data on 4 response variables.
-    Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data for Right-Lateral-Ventricle.
-    Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data for WM-hypointensities.
-    Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data for CortexVol.
-    Process: 75222 - 2025-11-20 13:13:49 - Harmonizing data for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing centiles for 4 response variables.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing centiles for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing centiles for CortexVol.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing centiles for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing yhat for 4 response variables.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing yhat for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing yhat for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing yhat for CortexVol.
+    Process: 22044 - 2026-04-20 18:39:17 - Computing yhat for Right-Amygdala.
+    Process: 22044 - 2026-04-20 18:39:17 - Harmonizing data on 4 response variables.
+    Process: 22044 - 2026-04-20 18:39:17 - Harmonizing data for Right-Lateral-Ventricle.
+    Process: 22044 - 2026-04-20 18:39:17 - Harmonizing data for WM-hypointensities.
+    Process: 22044 - 2026-04-20 18:39:17 - Harmonizing data for CortexVol.
+    Process: 22044 - 2026-04-20 18:39:17 - Harmonizing data for Right-Amygdala.
     
-
-
-.. image:: 02_BLR_files/02_BLR_14_1.png
-
-
-
-.. image:: 02_BLR_files/02_BLR_14_2.png
-
-
-
-.. image:: 02_BLR_files/02_BLR_14_3.png
-
-
-
-.. image:: 02_BLR_files/02_BLR_14_4.png
-
-
-Now let’s see the qq plots
-
-.. code:: ipython3
-
-    plot_qq(test, plot_id_line=True)
-
-
-
-.. image:: 02_BLR_files/02_BLR_16_0.png
-
 
 
 .. image:: 02_BLR_files/02_BLR_16_1.png
@@ -1254,12 +1423,26 @@ Now let’s see the qq plots
 .. image:: 02_BLR_files/02_BLR_16_3.png
 
 
-We can also split the QQ plots by batch effects:
+
+.. image:: 02_BLR_files/02_BLR_16_4.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>,
+     <Figure size 640x480 with 1 Axes>,
+     <Figure size 640x480 with 1 Axes>,
+     <Figure size 640x480 with 1 Axes>]
+
+
+
+Now let’s see the qq plots
 
 .. code:: ipython3
 
-    plot_qq(test, plot_id_line=True, hue_data="sex", split_data="sex")
-    sns.set_theme(style="darkgrid", rc={"axes.facecolor": (0, 0, 0, 0)})
+    plot_qq(test, plot_id_line=True)
 
 
 
@@ -1276,6 +1459,30 @@ We can also split the QQ plots by batch effects:
 
 
 .. image:: 02_BLR_files/02_BLR_18_3.png
+
+
+We can also split the QQ plots by batch effects:
+
+.. code:: ipython3
+
+    plot_qq(test, plot_id_line=True, hue_data="sex", split_data="sex")
+    sns.set_theme(style="darkgrid", rc={"axes.facecolor": (0, 0, 0, 0)})
+
+
+
+.. image:: 02_BLR_files/02_BLR_20_0.png
+
+
+
+.. image:: 02_BLR_files/02_BLR_20_1.png
+
+
+
+.. image:: 02_BLR_files/02_BLR_20_2.png
+
+
+
+.. image:: 02_BLR_files/02_BLR_20_3.png
 
 
 And finally the ridge plot:
@@ -1304,7 +1511,7 @@ And finally the ridge plot:
     
 
 
-.. image:: 02_BLR_files/02_BLR_20_1.png
+.. image:: 02_BLR_files/02_BLR_22_1.png
 
 
 .. parsed-literal::
@@ -1324,7 +1531,7 @@ And finally the ridge plot:
     
 
 
-.. image:: 02_BLR_files/02_BLR_20_3.png
+.. image:: 02_BLR_files/02_BLR_22_3.png
 
 
 .. parsed-literal::
@@ -1344,7 +1551,7 @@ And finally the ridge plot:
     
 
 
-.. image:: 02_BLR_files/02_BLR_20_5.png
+.. image:: 02_BLR_files/02_BLR_22_5.png
 
 
 .. parsed-literal::
@@ -1364,7 +1571,7 @@ And finally the ridge plot:
     
 
 
-.. image:: 02_BLR_files/02_BLR_20_7.png
+.. image:: 02_BLR_files/02_BLR_22_7.png
 
 
 Model evaluation statistics
@@ -2505,7 +2712,7 @@ Harmonize
     
 
 
-.. image:: 02_BLR_files/02_BLR_27_1.png
+.. image:: 02_BLR_files/02_BLR_29_1.png
 
 
 Synthesize
@@ -2578,19 +2785,19 @@ site B.
     
 
 
-.. image:: 02_BLR_files/02_BLR_29_1.png
+.. image:: 02_BLR_files/02_BLR_31_1.png
 
 
 
-.. image:: 02_BLR_files/02_BLR_29_2.png
+.. image:: 02_BLR_files/02_BLR_31_2.png
 
 
 
-.. image:: 02_BLR_files/02_BLR_29_3.png
+.. image:: 02_BLR_files/02_BLR_31_3.png
 
 
 
-.. image:: 02_BLR_files/02_BLR_29_4.png
+.. image:: 02_BLR_files/02_BLR_31_4.png
 
 
 .. code:: ipython3
@@ -2644,19 +2851,19 @@ site B.
     
 
 
-.. image:: 02_BLR_files/02_BLR_30_1.png
+.. image:: 02_BLR_files/02_BLR_32_1.png
 
 
 
-.. image:: 02_BLR_files/02_BLR_30_2.png
+.. image:: 02_BLR_files/02_BLR_32_2.png
 
 
 
-.. image:: 02_BLR_files/02_BLR_30_3.png
+.. image:: 02_BLR_files/02_BLR_32_3.png
 
 
 
-.. image:: 02_BLR_files/02_BLR_30_4.png
+.. image:: 02_BLR_files/02_BLR_32_4.png
 
 
 Next steps
