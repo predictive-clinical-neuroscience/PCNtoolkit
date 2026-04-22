@@ -435,7 +435,7 @@ def plot_centiles_advanced(
         model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
     if scatter_data and show_thrivelines:
         model.compute_thrivelines(scatter_data, z_thrive=z_thrive)
-    if show_yhat and not hasattr(centile_data, "yhat"):
+    if show_yhat and not hasattr(centile_data, "Yhat"):
         model.compute_yhat(centile_data)
 
     if not model.has_batch_effect:
