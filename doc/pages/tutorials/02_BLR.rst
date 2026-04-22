@@ -153,31 +153,45 @@ we choose a simple BLR model with a B-spline basis function
 After specifying the regression model, we can configure a normative
 model.
 
-A normative model has a number of configuration options: -
-``savemodel``: Whether to save the model after fitting. It creates a
-JSON file containing your trained model parameters. This is useful to: -
-*Avoid re-fitting*: Load the saved model later instead of training from
-scratch every time. - *Share with collaborators*: Send the file to
-colleagues, who can update it with their own data, producing a better
-model trained on more data combined. We will cover this in the federated
-learning tutorial. - ``evaluate_model``: Whether to evaluate the model
-after fitting. It computes a set of metrics are computed that tell you
-how well your model fits the data. For more information, see our
-evaluation metrics tutorial. - ``saveresults``: Whether to save the
-per-subject results after predicting. Results include: - how far the
-observed value for this subject is from the fitted model’s predicted
-typical value for someone with similar covariates and batch effects
-(``Z``) - how statistically surprising the observed value for this
-subject is under the fitted model’s predicted distribution (``logp``). -
-fitted model’s predicted distribution at selected centiles (such as the
-5th, 50th, and 95th centiles) for this subject (``centiles``) - summary
-of evaluation metrics for each response variable, when
-``evaluate_model`` is enabled. - ``saveplots``: Whether to save the
-plots after fitting. - ``save_dir``: The directory to save the model,
-results, and plots. - ``inscaler``: The scaler to use for the input
-data. Can be either one of “standardize”, “minmax”, “robminmax”, “none”
+A normative model has a number of configuration options:
+
+- ``savemodel``: Whether to save the model after fitting. It creates a
+  JSON file containing your trained model parameters. This is useful to:
+
+  - *Avoid re-fitting*: Load the saved model later instead of training
+    from scratch every time.
+  - *Share with collaborators*: Send the file to colleagues, who can
+    update it with their own data, producing a better model trained on
+    more data combined. We will cover this in the federated learning
+    tutorial.
+
+- ``evaluate_model``: Whether to evaluate the model after fitting. It
+  computes a set of metrics are computed that tell you how well your
+  model fits the data. For more information, see our evaluation metrics
+  tutorial.
+
+- ``saveresults``: Whether to save the per-subject results after
+  predicting. Results include:
+
+  - how far the observed value for this subject is from the fitted
+    model’s predicted typical value for someone with similar covariates
+    and batch effects (``Z``)
+  - how statistically surprising the observed value for this subject is
+    under the fitted model’s predicted distribution (``logp``).
+  - fitted model’s predicted distribution at selected centiles (such as
+    the 5th, 50th, and 95th centiles) for this subject (``centiles``)
+  - summary of evaluation metrics for each response variable, when
+    ``evaluate_model`` is enabled.
+
+- ``saveplots``: Whether to save the plots after fitting.
+
+- ``save_dir``: The directory to save the model, results, and plots.
+
+- ``inscaler``: The scaler to use for the input data. Can be either one
+  of “standardize”, “minmax”, “robminmax”, “none”
+
 - ``outscaler``: The scaler to use for the output data. Can be either
-one of “standardize”, “minmax”, “robminmax”, “none”
+  one of “standardize”, “minmax”, “robminmax”, “none”
 
 .. code:: ipython3
 
@@ -596,6 +610,9 @@ Fit the model
 Plot the results
 ~~~~~~~~~~~~~~~~
 
+Centiles plot
+^^^^^^^^^^^^^
+
 Because this model includes batch effects, we can now visualize results
 not only over all data, but also separately for specific groups such as
 sites or sexes.
@@ -655,6 +672,9 @@ the function call (see ``batch_effects`` keyword argument).
    ``plot_centiles_advanced``. How does that affect your plotted
    centiles and scatter data?
 
+Inspecting the centiles plot
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 From the previous plot we see the fit is not good. In particular, the
 0.05 centile and even the 0.5 centile can become negative, even though
 the response variable here, ``Right-Amygdala``, is a volume and
@@ -680,6 +700,9 @@ It is important to *understand your data* before you select a model.
    first part of the notebook. For the comparison you can use the
    centile plots, QQ plots, or the evaluation metrics to decide which
    model fits this dataset better.
+
+QQ-plot and ridge plot
+^^^^^^^^^^^^^^^^^^^^^^
 
 Finally, we show how we can use ``plot_qq`` and ``plot_ridge``:
 
