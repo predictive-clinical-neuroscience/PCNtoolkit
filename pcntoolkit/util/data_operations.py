@@ -12,19 +12,11 @@ from typing import Iterator
 import numpy as np
 
 
-# Define a broad token type for batch-effect values.
-#
-# The helper is intentionally token-agnostic so it can work with label
-# values such as ``['siteA', 'siteB']`` and integer ids such as
-# ``[0, 1]``.
-GroupingToken = object
-
-
 def iter_batch_combinations(
     batch_values: np.ndarray,
-    unique_batch_effects: dict[str, list[GroupingToken]],
+    unique_batch_effects: dict[str, list[str | int]],
     batch_dims: list[str],
-) -> Iterator[tuple[dict[str, GroupingToken], np.ndarray]]:
+) -> Iterator[tuple[dict[str, str | int], np.ndarray]]:
     """Yield batch-effect combinations together with observation masks.
 
     Parameters
@@ -32,7 +24,7 @@ def iter_batch_combinations(
     batch_values : np.ndarray
         Observed batch-effect values with shape
         ``(n_observations, n_batch_dims)``.
-    unique_batch_effects : dict[str, list[GroupingToken]]
+    unique_batch_effects : dict[str, list[str | int]]
         Allowed values for each batch-effect dimension.
     batch_dims : list[str]
         Ordered batch-effect dimensions used to interpret both
@@ -40,7 +32,7 @@ def iter_batch_combinations(
 
     Yields
     ------
-    tuple[dict[str, GroupingToken], np.ndarray]
+    tuple[dict[str, str | int], np.ndarray]
         A dictionary describing one batch-effect combination and a
         boolean mask that selects observations in that combination.
 
@@ -53,7 +45,7 @@ def iter_batch_combinations(
 
     # Collect one ordered level list per dimension.
     # eg [['site1', 'site2'], ['M', 'F']]
-    ordered_levels: list[list[GroupingToken]] = []
+    ordered_levels: list[list[str | int]] = []
 
     for batch_dim in batch_dims:
         # Fail fast if unique_batch_effects is missing for a requested

@@ -15,10 +15,11 @@ from pcntoolkit.util.data_operations import (
     iter_batch_combinations
 )
 from pcntoolkit.util.evaluator import Evaluator
+from pcntoolkit.dataio.norm_data import NormData
 from test.fixtures.evaluator_fixtures import create_test_data
 
 
-def generate_centile_data(data):
+def generate_centile_data(data: NormData) -> NormData:
     # Select single response variable, as evaluate_mace
     # does internally before calling _evaluate_mace
     data_with_centiles = data.sel({"response_vars": "test_metric"})
@@ -40,7 +41,7 @@ def generate_centile_data(data):
     return data_with_centiles
 
 
-def test_001_mace_should_average24Combos_when_fourBatchDims() -> None:
+def test_001_mace_should_averageAllCombos_when_fourBatchDims() -> None:
     """With 4 batch dimensions (2x3x2x2 = 24 combos), MACE should
     average across all combos."""
     n_batch_effects = 4

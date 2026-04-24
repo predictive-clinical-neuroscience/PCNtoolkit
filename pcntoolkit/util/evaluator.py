@@ -476,7 +476,7 @@ class Evaluator:
         """
         # True response values
         y = data["Y"].values
-        # Nomical centile levels, E.g. [0.05, 0.1, ..., 0.95]
+        # Nominal centile levels, E.g. [0.05, 0.1, ..., 0.95]
         centile_list = data.centile.values
         # Predicted centile curves for each subject
         centile_data = data.centiles.values
