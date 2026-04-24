@@ -1,5 +1,22 @@
-Merge normative models
-======================
+Merging normative models
+========================
+
+In many real-world scenarios, normative models are trained independently
+at different sites or institutions. **Merging** allows us to combine
+these separately trained models into a single global model — without
+ever sharing the raw data.
+
+``NormativeModel.merge()`` works by: 1. **Synthesizing** data from each
+fitted model (using ``synthesize()`` internally) 2. **Pooling** the
+synthetic datasets together 3. **Refitting** a single model on the
+combined synthetic data
+
+The result is a unified normative model that covers all the batch
+effects (e.g., sites, scanners) from every contributing model.
+
+For a more in-depth, step-by-step tutorial on federated normative
+modeling with privacy guarantees, see **Tutorial 12 — Federated
+Normative Modeling**.
 
 .. code:: ipython3
 
@@ -37,6 +54,13 @@ Merge normative models
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
 
+Load and split data
+-------------------
+
+We load the FCON-1000 dataset and partition its ~21 sites into three
+random groups of roughly equal size. Each group simulates an
+independently collected dataset at a different institution.
+
 .. code:: ipython3
 
     # Download an example dataset
@@ -68,13 +92,20 @@ Merge normative models
 
 .. parsed-literal::
 
-    Group 1: ['Bangor' 'Atlanta' 'Baltimore' 'ICBM' 'Pittsburgh' 'AnnArbor_b'
-     'Berlin_Margulies']
-    Group 2: ['Cleveland' 'NewYork_a' 'Munchen' 'Newark' 'Leiden_2200' 'Queensland'
-     'Beijing_Zang']
-    Group 3: ['Milwaukee_b' 'Oxford' 'Cambridge_Buckner' 'Leiden_2180' 'PaloAlto'
-     'AnnArbor_a' 'Oulu' 'NewYork_a_ADHD' 'SaintLouis']
+    Group 1: ['Leiden_2180' 'Atlanta' 'Berlin_Margulies' 'NewYork_a' 'Munchen'
+     'AnnArbor_a' 'Leiden_2200']
+    Group 2: ['Queensland' 'SaintLouis' 'Milwaukee_b' 'Newark' 'PaloAlto'
+     'Beijing_Zang' 'Bangor']
+    Group 3: ['AnnArbor_b' 'ICBM' 'Pittsburgh' 'Cambridge_Buckner' 'Oxford' 'Cleveland'
+     'Oulu' 'NewYork_a_ADHD' 'Baltimore']
+    
 
+Configure the model template
+----------------------------
+
+We define a shared HBR model configuration that every site will use.
+This ensures that all models share the same prior structure and
+hyperparameters, so the merge is well-defined.
 
 .. code:: ipython3
 
@@ -121,6 +152,13 @@ Merge normative models
         outscaler="standardize",
     )
 
+Train separate models
+---------------------
+
+Each group trains its own model independently, as if the data lived at
+different institutions. No data is shared between groups — only the
+resulting model files will be exchanged later.
+
 .. code:: ipython3
 
     model1 = copy.deepcopy(model)
@@ -135,192 +173,14 @@ Merge normative models
     model3.fit(data_group3)
 
 
+.. parsed-literal::
 
-.. raw:: html
-
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\pytensor\link\c\cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
+    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
+    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
+      warnings.warn(
     
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>127</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>191</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>191</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>127</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-
 
 
 .. raw:: html
@@ -412,194 +272,7 @@ Merge normative models
             }
         }
     </style>
-
-
-
-
-.. raw:: html
-
     
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.18</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.16</td>
-                        <td>95</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.18</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.16</td>
-                        <td>127</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-
 
 
 
@@ -636,32 +309,6 @@ Merge normative models
                 </tr>
             </thead>
             <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.14</td>
-                        <td>127</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.14</td>
-                        <td>95</td>
-                    </tr>
     
                     <tr>
                         <td class="progress-cell">
@@ -685,367 +332,6 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.16</td>
-                        <td>63</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.17</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.16</td>
-                        <td>95</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.17</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.16</td>
-                        <td>31</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for now</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.14</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.14</td>
-                        <td>95</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
                         <td>0.14</td>
                         <td>127</td>
                     </tr>
@@ -1059,15 +345,28 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
+                        <td>0.15</td>
+                        <td>127</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>1</td>
                         <td>0.14</td>
-                        <td>63</td>
+                        <td>31</td>
                     </tr>
     
                 </tr>
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -1160,7 +459,7 @@ Merge normative models
             }
         }
     </style>
-
+    
 
 
 
@@ -1220,7 +519,7 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.16</td>
+                        <td>0.15</td>
                         <td>31</td>
                     </tr>
     
@@ -1234,6 +533,354 @@ Merge normative models
                         <td>2000</td>
                         <td>0</td>
                         <td>0.15</td>
+                        <td>31</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.17</td>
+                        <td>31</td>
+                    </tr>
+    
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+
+
+
+.. raw:: html
+
+    
+    <style>
+        :root {
+            --column-width-1: 40%; /* Progress column width */
+            --column-width-2: 15%; /* Chain column width */
+            --column-width-3: 15%; /* Divergences column width */
+            --column-width-4: 15%; /* Step Size column width */
+            --column-width-5: 15%; /* Gradients/Draw column width */
+        }
+    
+        .nutpie {
+            max-width: 800px;
+            margin: 10px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            //color: #333;
+            //background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 14px; /* Smaller font size for a more compact look */
+        }
+        .nutpie table {
+            width: 100%;
+            border-collapse: collapse; /* Remove any extra space between borders */
+        }
+        .nutpie th, .nutpie td {
+            padding: 8px 10px; /* Reduce padding to make table more compact */
+            text-align: left;
+            border-bottom: 1px solid #888;
+        }
+        .nutpie th {
+            //background-color: #f0f0f0;
+        }
+    
+        .nutpie th:nth-child(1) { width: var(--column-width-1); }
+        .nutpie th:nth-child(2) { width: var(--column-width-2); }
+        .nutpie th:nth-child(3) { width: var(--column-width-3); }
+        .nutpie th:nth-child(4) { width: var(--column-width-4); }
+        .nutpie th:nth-child(5) { width: var(--column-width-5); }
+    
+        .nutpie progress {
+            width: 100%;
+            height: 15px; /* Smaller progress bars */
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-bar {
+            background-color: #eee;
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-value {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        progress::-moz-progress-bar {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        .nutpie .progress-cell {
+            width: 100%;
+        }
+    
+        .nutpie p strong { font-size: 16px; font-weight: bold; }
+    
+        @media (prefers-color-scheme: dark) {
+            .nutpie {
+                //color: #ddd;
+                //background-color: #1e1e1e;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            }
+            .nutpie table, .nutpie th, .nutpie td {
+                border-color: #555;
+                color: #ccc;
+            }
+            .nutpie th {
+                background-color: #2a2a2a;
+            }
+            .nutpie progress::-webkit-progress-bar {
+                background-color: #444;
+            }
+            .nutpie progress::-webkit-progress-value {
+                background-color: #3178c6;
+            }
+            .nutpie progress::-moz-progress-bar {
+                background-color: #3178c6;
+            }
+        }
+    </style>
+    
+
+
+
+.. raw:: html
+
+    
+    <div class="nutpie">
+        <p><strong>Sampler Progress</strong></p>
+        <p>Total Chains: <span id="total-chains">4</span></p>
+        <p>Active Chains: <span id="active-chains">0</span></p>
+        <p>
+            Finished Chains:
+            <span id="active-chains">4</span>
+        </p>
+        <p>Sampling for now</p>
+        <p>
+            Estimated Time to Completion:
+            <span id="eta">now</span>
+        </p>
+    
+        <progress
+            id="total-progress-bar"
+            max="8000"
+            value="8000">
+        </progress>
+        <table>
+            <thead>
+                <tr>
+                    <th>Progress</th>
+                    <th>Draws</th>
+                    <th>Divergences</th>
+                    <th>Step Size</th>
+                    <th>Gradients/Draw</th>
+                </tr>
+            </thead>
+            <tbody id="chain-details">
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>3</td>
+                        <td>0.12</td>
+                        <td>63</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>1</td>
+                        <td>0.13</td>
+                        <td>63</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>1</td>
+                        <td>0.13</td>
+                        <td>63</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>9</td>
+                        <td>0.12</td>
+                        <td>63</td>
+                    </tr>
+    
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+
+
+
+.. raw:: html
+
+    
+    <style>
+        :root {
+            --column-width-1: 40%; /* Progress column width */
+            --column-width-2: 15%; /* Chain column width */
+            --column-width-3: 15%; /* Divergences column width */
+            --column-width-4: 15%; /* Step Size column width */
+            --column-width-5: 15%; /* Gradients/Draw column width */
+        }
+    
+        .nutpie {
+            max-width: 800px;
+            margin: 10px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            //color: #333;
+            //background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 14px; /* Smaller font size for a more compact look */
+        }
+        .nutpie table {
+            width: 100%;
+            border-collapse: collapse; /* Remove any extra space between borders */
+        }
+        .nutpie th, .nutpie td {
+            padding: 8px 10px; /* Reduce padding to make table more compact */
+            text-align: left;
+            border-bottom: 1px solid #888;
+        }
+        .nutpie th {
+            //background-color: #f0f0f0;
+        }
+    
+        .nutpie th:nth-child(1) { width: var(--column-width-1); }
+        .nutpie th:nth-child(2) { width: var(--column-width-2); }
+        .nutpie th:nth-child(3) { width: var(--column-width-3); }
+        .nutpie th:nth-child(4) { width: var(--column-width-4); }
+        .nutpie th:nth-child(5) { width: var(--column-width-5); }
+    
+        .nutpie progress {
+            width: 100%;
+            height: 15px; /* Smaller progress bars */
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-bar {
+            background-color: #eee;
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-value {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        progress::-moz-progress-bar {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        .nutpie .progress-cell {
+            width: 100%;
+        }
+    
+        .nutpie p strong { font-size: 16px; font-weight: bold; }
+    
+        @media (prefers-color-scheme: dark) {
+            .nutpie {
+                //color: #ddd;
+                //background-color: #1e1e1e;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            }
+            .nutpie table, .nutpie th, .nutpie td {
+                border-color: #555;
+                color: #ccc;
+            }
+            .nutpie th {
+                background-color: #2a2a2a;
+            }
+            .nutpie progress::-webkit-progress-bar {
+                background-color: #444;
+            }
+            .nutpie progress::-webkit-progress-value {
+                background-color: #3178c6;
+            }
+            .nutpie progress::-moz-progress-bar {
+                background-color: #3178c6;
+            }
+        }
+    </style>
+    
+
+
+
+.. raw:: html
+
+    
+    <div class="nutpie">
+        <p><strong>Sampler Progress</strong></p>
+        <p>Total Chains: <span id="total-chains">4</span></p>
+        <p>Active Chains: <span id="active-chains">0</span></p>
+        <p>
+            Finished Chains:
+            <span id="active-chains">4</span>
+        </p>
+        <p>Sampling for now</p>
+        <p>
+            Estimated Time to Completion:
+            <span id="eta">now</span>
+        </p>
+    
+        <progress
+            id="total-progress-bar"
+            max="8000"
+            value="8000">
+        </progress>
+        <table>
+            <thead>
+                <tr>
+                    <th>Progress</th>
+                    <th>Draws</th>
+                    <th>Divergences</th>
+                    <th>Step Size</th>
+                    <th>Gradients/Draw</th>
+                </tr>
+            </thead>
+            <tbody id="chain-details">
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.16</td>
                         <td>63</td>
                     </tr>
     
@@ -1246,15 +893,415 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.16</td>
-                        <td>127</td>
+                        <td>0.14</td>
+                        <td>31</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>1</td>
+                        <td>0.14</td>
+                        <td>31</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.14</td>
+                        <td>31</td>
                     </tr>
     
                 </tr>
             </tbody>
         </table>
     </div>
+    
 
+
+
+.. raw:: html
+
+    
+    <style>
+        :root {
+            --column-width-1: 40%; /* Progress column width */
+            --column-width-2: 15%; /* Chain column width */
+            --column-width-3: 15%; /* Divergences column width */
+            --column-width-4: 15%; /* Step Size column width */
+            --column-width-5: 15%; /* Gradients/Draw column width */
+        }
+    
+        .nutpie {
+            max-width: 800px;
+            margin: 10px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            //color: #333;
+            //background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 14px; /* Smaller font size for a more compact look */
+        }
+        .nutpie table {
+            width: 100%;
+            border-collapse: collapse; /* Remove any extra space between borders */
+        }
+        .nutpie th, .nutpie td {
+            padding: 8px 10px; /* Reduce padding to make table more compact */
+            text-align: left;
+            border-bottom: 1px solid #888;
+        }
+        .nutpie th {
+            //background-color: #f0f0f0;
+        }
+    
+        .nutpie th:nth-child(1) { width: var(--column-width-1); }
+        .nutpie th:nth-child(2) { width: var(--column-width-2); }
+        .nutpie th:nth-child(3) { width: var(--column-width-3); }
+        .nutpie th:nth-child(4) { width: var(--column-width-4); }
+        .nutpie th:nth-child(5) { width: var(--column-width-5); }
+    
+        .nutpie progress {
+            width: 100%;
+            height: 15px; /* Smaller progress bars */
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-bar {
+            background-color: #eee;
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-value {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        progress::-moz-progress-bar {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        .nutpie .progress-cell {
+            width: 100%;
+        }
+    
+        .nutpie p strong { font-size: 16px; font-weight: bold; }
+    
+        @media (prefers-color-scheme: dark) {
+            .nutpie {
+                //color: #ddd;
+                //background-color: #1e1e1e;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            }
+            .nutpie table, .nutpie th, .nutpie td {
+                border-color: #555;
+                color: #ccc;
+            }
+            .nutpie th {
+                background-color: #2a2a2a;
+            }
+            .nutpie progress::-webkit-progress-bar {
+                background-color: #444;
+            }
+            .nutpie progress::-webkit-progress-value {
+                background-color: #3178c6;
+            }
+            .nutpie progress::-moz-progress-bar {
+                background-color: #3178c6;
+            }
+        }
+    </style>
+    
+
+
+
+.. raw:: html
+
+    
+    <div class="nutpie">
+        <p><strong>Sampler Progress</strong></p>
+        <p>Total Chains: <span id="total-chains">4</span></p>
+        <p>Active Chains: <span id="active-chains">0</span></p>
+        <p>
+            Finished Chains:
+            <span id="active-chains">4</span>
+        </p>
+        <p>Sampling for 15 seconds</p>
+        <p>
+            Estimated Time to Completion:
+            <span id="eta">now</span>
+        </p>
+    
+        <progress
+            id="total-progress-bar"
+            max="8000"
+            value="8000">
+        </progress>
+        <table>
+            <thead>
+                <tr>
+                    <th>Progress</th>
+                    <th>Draws</th>
+                    <th>Divergences</th>
+                    <th>Step Size</th>
+                    <th>Gradients/Draw</th>
+                </tr>
+            </thead>
+            <tbody id="chain-details">
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.11</td>
+                        <td>255</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.09</td>
+                        <td>63</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.11</td>
+                        <td>63</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.09</td>
+                        <td>63</td>
+                    </tr>
+    
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+
+
+
+.. raw:: html
+
+    
+    <style>
+        :root {
+            --column-width-1: 40%; /* Progress column width */
+            --column-width-2: 15%; /* Chain column width */
+            --column-width-3: 15%; /* Divergences column width */
+            --column-width-4: 15%; /* Step Size column width */
+            --column-width-5: 15%; /* Gradients/Draw column width */
+        }
+    
+        .nutpie {
+            max-width: 800px;
+            margin: 10px auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            //color: #333;
+            //background-color: #fff;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-size: 14px; /* Smaller font size for a more compact look */
+        }
+        .nutpie table {
+            width: 100%;
+            border-collapse: collapse; /* Remove any extra space between borders */
+        }
+        .nutpie th, .nutpie td {
+            padding: 8px 10px; /* Reduce padding to make table more compact */
+            text-align: left;
+            border-bottom: 1px solid #888;
+        }
+        .nutpie th {
+            //background-color: #f0f0f0;
+        }
+    
+        .nutpie th:nth-child(1) { width: var(--column-width-1); }
+        .nutpie th:nth-child(2) { width: var(--column-width-2); }
+        .nutpie th:nth-child(3) { width: var(--column-width-3); }
+        .nutpie th:nth-child(4) { width: var(--column-width-4); }
+        .nutpie th:nth-child(5) { width: var(--column-width-5); }
+    
+        .nutpie progress {
+            width: 100%;
+            height: 15px; /* Smaller progress bars */
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-bar {
+            background-color: #eee;
+            border-radius: 5px;
+        }
+        progress::-webkit-progress-value {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        progress::-moz-progress-bar {
+            background-color: #5cb85c;
+            border-radius: 5px;
+        }
+        .nutpie .progress-cell {
+            width: 100%;
+        }
+    
+        .nutpie p strong { font-size: 16px; font-weight: bold; }
+    
+        @media (prefers-color-scheme: dark) {
+            .nutpie {
+                //color: #ddd;
+                //background-color: #1e1e1e;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            }
+            .nutpie table, .nutpie th, .nutpie td {
+                border-color: #555;
+                color: #ccc;
+            }
+            .nutpie th {
+                background-color: #2a2a2a;
+            }
+            .nutpie progress::-webkit-progress-bar {
+                background-color: #444;
+            }
+            .nutpie progress::-webkit-progress-value {
+                background-color: #3178c6;
+            }
+            .nutpie progress::-moz-progress-bar {
+                background-color: #3178c6;
+            }
+        }
+    </style>
+    
+
+
+
+.. raw:: html
+
+    
+    <div class="nutpie">
+        <p><strong>Sampler Progress</strong></p>
+        <p>Total Chains: <span id="total-chains">4</span></p>
+        <p>Active Chains: <span id="active-chains">0</span></p>
+        <p>
+            Finished Chains:
+            <span id="active-chains">4</span>
+        </p>
+        <p>Sampling for 12 seconds</p>
+        <p>
+            Estimated Time to Completion:
+            <span id="eta">now</span>
+        </p>
+    
+        <progress
+            id="total-progress-bar"
+            max="8000"
+            value="8000">
+        </progress>
+        <table>
+            <thead>
+                <tr>
+                    <th>Progress</th>
+                    <th>Draws</th>
+                    <th>Divergences</th>
+                    <th>Step Size</th>
+                    <th>Gradients/Draw</th>
+                </tr>
+            </thead>
+            <tbody id="chain-details">
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.14</td>
+                        <td>127</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.14</td>
+                        <td>31</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.14</td>
+                        <td>63</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.13</td>
+                        <td>63</td>
+                    </tr>
+    
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
 
 
 .. code:: ipython3
@@ -1262,6 +1309,16 @@ Merge normative models
     # model1 = NormativeModel.load(path="resources/hbr_merge/model1")
     # model2 = NormativeModel.load(path="resources/hbr_merge/model2")
     # model3 = NormativeModel.load(path="resources/hbr_merge/model3")
+
+Merge the models
+----------------
+
+``NormativeModel.merge()`` accepts a list of fitted models (or paths to
+saved models on disk). Internally it synthesizes data from each model,
+concatenates the synthetic datasets, and refits a single global model.
+
+The merged model can now predict on observations from **any** of the
+original sites.
 
 .. code:: ipython3
 
@@ -1362,7 +1419,7 @@ Merge normative models
             }
         }
     </style>
-
+    
 
 
 
@@ -1377,7 +1434,7 @@ Merge normative models
             Finished Chains:
             <span id="active-chains">4</span>
         </p>
-        <p>Sampling for 13 seconds</p>
+        <p>Sampling for a minute</p>
         <p>
             Estimated Time to Completion:
             <span id="eta">now</span>
@@ -1409,8 +1466,8 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.12</td>
-                        <td>31</td>
+                        <td>0.13</td>
+                        <td>95</td>
                     </tr>
     
                     <tr>
@@ -1422,20 +1479,7 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.12</td>
-                        <td>287</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.12</td>
+                        <td>0.10</td>
                         <td>63</td>
                     </tr>
     
@@ -1448,15 +1492,28 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.11</td>
+                        <td>0.12</td>
                         <td>127</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.10</td>
+                        <td>319</td>
                     </tr>
     
                 </tr>
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -1549,7 +1606,7 @@ Merge normative models
             }
         }
     </style>
-
+    
 
 
 
@@ -1564,7 +1621,7 @@ Merge normative models
             Finished Chains:
             <span id="active-chains">4</span>
         </p>
-        <p>Sampling for 17 seconds</p>
+        <p>Sampling for a minute</p>
         <p>
             Estimated Time to Completion:
             <span id="eta">now</span>
@@ -1596,55 +1653,61 @@ Merge normative models
                         </td>
                         <td>2000</td>
                         <td>0</td>
+                        <td>0.09</td>
+                        <td>31</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.11</td>
+                        <td>31</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.10</td>
+                        <td>319</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
                         <td>0.08</td>
-                        <td>511</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.09</td>
-                        <td>127</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.09</td>
                         <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.09</td>
-                        <td>191</td>
                     </tr>
     
                 </tr>
             </tbody>
         </table>
     </div>
+    
 
 
+Predict with the merged model
+-----------------------------
+
+We verify that the merged model can handle data from all three groups
+individually, as well as the full combined dataset.
 
 .. code:: ipython3
 
@@ -1673,9 +1736,7 @@ Merge normative models
     </symbol>
     </defs>
     </svg>
-    <style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
-     *
-     */
+    <style>/* CSS stylesheet for displaying xarray objects in notebooks */
     
     :root {
       --xr-font-color0: var(
@@ -1754,6 +1815,8 @@ Merge normative models
       display: block !important;
       min-width: 300px;
       max-width: 700px;
+      line-height: 1.6;
+      padding-bottom: 4px;
     }
     
     .xr-text-repr-fallback {
@@ -1764,8 +1827,11 @@ Merge normative models
     .xr-header {
       padding-top: 6px;
       padding-bottom: 6px;
-      margin-bottom: 4px;
+    }
+    
+    .xr-header {
       border-bottom: solid 1px var(--xr-border-color);
+      margin-bottom: 4px;
     }
     
     .xr-header > div,
@@ -1776,46 +1842,62 @@ Merge normative models
     }
     
     .xr-obj-type,
-    .xr-array-name {
+    .xr-obj-name {
       margin-left: 2px;
       margin-right: 10px;
     }
     
-    .xr-obj-type {
+    .xr-obj-type,
+    .xr-group-box-contents > label {
       color: var(--xr-font-color2);
+      display: block;
     }
     
     .xr-sections {
       padding-left: 0 !important;
       display: grid;
       grid-template-columns: 150px auto auto 1fr 0 20px 0 20px;
+      margin-block-start: 0;
+      margin-block-end: 0;
     }
     
     .xr-section-item {
       display: contents;
     }
     
-    .xr-section-item input {
-      display: inline-block;
+    .xr-section-item > input,
+    .xr-group-box-contents > input,
+    .xr-array-wrap > input {
+      display: block;
       opacity: 0;
       height: 0;
+      margin: 0;
     }
     
-    .xr-section-item input + label {
+    .xr-section-item > input + label,
+    .xr-var-item > input + label {
       color: var(--xr-disabled-color);
-      border: 2px solid transparent !important;
     }
     
-    .xr-section-item input:enabled + label {
+    .xr-section-item > input:enabled + label,
+    .xr-var-item > input:enabled + label,
+    .xr-array-wrap > input:enabled + label,
+    .xr-group-box-contents > input:enabled + label {
       cursor: pointer;
       color: var(--xr-font-color2);
     }
     
-    .xr-section-item input:focus + label {
-      border: 2px solid var(--xr-font-color0) !important;
+    .xr-section-item > input:focus-visible + label,
+    .xr-var-item > input:focus-visible + label,
+    .xr-array-wrap > input:focus-visible + label,
+    .xr-group-box-contents > input:focus-visible + label {
+      outline: auto;
     }
     
-    .xr-section-item input:enabled + label:hover {
+    .xr-section-item > input:enabled + label:hover,
+    .xr-var-item > input:enabled + label:hover,
+    .xr-array-wrap > input:enabled + label:hover,
+    .xr-group-box-contents > input:enabled + label:hover {
       color: var(--xr-font-color0);
     }
     
@@ -1823,11 +1905,25 @@ Merge normative models
       grid-column: 1;
       color: var(--xr-font-color2);
       font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .xr-section-summary > em {
+      font-weight: normal;
+    }
+    
+    .xr-span-grid {
+      grid-column-end: -1;
     }
     
     .xr-section-summary > span {
       display: inline-block;
-      padding-left: 0.5em;
+      padding-left: 0.3em;
+    }
+    
+    .xr-group-box-contents > input:checked + label > span {
+      display: inline-block;
+      padding-left: 0.6em;
     }
     
     .xr-section-summary-in:disabled + label {
@@ -1855,9 +1951,9 @@ Merge normative models
     }
     
     .xr-section-summary,
-    .xr-section-inline-details {
+    .xr-section-inline-details,
+    .xr-group-box-contents > label {
       padding-top: 4px;
-      padding-bottom: 4px;
     }
     
     .xr-section-inline-details {
@@ -1865,13 +1961,79 @@ Merge normative models
     }
     
     .xr-section-details {
-      display: none;
       grid-column: 1 / -1;
+      margin-top: 4px;
       margin-bottom: 5px;
+    }
+    
+    .xr-section-summary-in ~ .xr-section-details {
+      display: none;
     }
     
     .xr-section-summary-in:checked ~ .xr-section-details {
       display: contents;
+    }
+    
+    .xr-children {
+      display: inline-grid;
+      grid-template-columns: 100%;
+      grid-column: 1 / -1;
+      padding-top: 4px;
+    }
+    
+    .xr-group-box {
+      display: inline-grid;
+      grid-template-columns: 0px 30px auto;
+    }
+    
+    .xr-group-box-vline {
+      grid-column-start: 1;
+      border-right: 0.2em solid;
+      border-color: var(--xr-border-color);
+      width: 0px;
+    }
+    
+    .xr-group-box-hline {
+      grid-column-start: 2;
+      grid-row-start: 1;
+      height: 1em;
+      width: 26px;
+      border-bottom: 0.2em solid;
+      border-color: var(--xr-border-color);
+    }
+    
+    .xr-group-box-contents {
+      grid-column-start: 3;
+      padding-bottom: 4px;
+    }
+    
+    .xr-group-box-contents > label::before {
+      content: "📂";
+      padding-right: 0.3em;
+    }
+    
+    .xr-group-box-contents > input:checked + label::before {
+      content: "📁";
+    }
+    
+    .xr-group-box-contents > input:checked + label {
+      padding-bottom: 0px;
+    }
+    
+    .xr-group-box-contents > input:checked ~ .xr-sections {
+      display: none;
+    }
+    
+    .xr-group-box-contents > input + label > span {
+      display: none;
+    }
+    
+    .xr-group-box-ellipsis {
+      font-size: 1.4em;
+      font-weight: 900;
+      color: var(--xr-font-color2);
+      letter-spacing: 0.15em;
+      cursor: default;
     }
     
     .xr-array-wrap {
@@ -2116,116 +2278,217 @@ Merge normative models
         Y                  (observations, response_vars) float64 17kB 1.687e+03 ....
         X                  (observations, covariates) float64 9kB 25.63 ... 23.0
         batch_effects      (observations, batch_effect_dims) &lt;U17 147kB &#x27;M&#x27; ... &#x27;...
-        Z                  (observations, response_vars) float64 17kB -0.1125 ......
-        centiles           (centile, observations, response_vars) float64 86kB 1....
-        logp               (observations, response_vars) float64 17kB 0.2471 ... ...
-        Yhat               (observations, response_vars) float64 17kB 1.731e+03 ....
-        statistics         (response_vars, statistic) float64 176B 0.3449 ... 0.8868
-        Y_harmonized       (observations, response_vars) float64 17kB 1.223e+03 ....
+        Z                  (observations, response_vars) float64 17kB 0.6 ... -0....
+        centiles           (centile, observations, response_vars) float64 86kB 77...
+        baseline_logp      (observations, response_vars) float64 17kB -1.132 ... ...
+        logp               (observations, response_vars) float64 17kB -0.541 ... ...
+        Yhat               (observations, response_vars) float64 17kB 1.442e+03 ....
+        statistics         (response_vars, statistic) float64 176B 0.08027 ... 0....
     Attributes:
         real_ids:                       True
         is_scaled:                      False
         name:                           fcon1000
-        unique_batch_effects:           {np.str_(&#x27;sex&#x27;): [np.str_(&#x27;F&#x27;), np.str_(&#x27;...
+        unique_batch_effects:           {np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;sit...
         batch_effect_counts:            defaultdict(&lt;function NormData.register_b...
-        covariate_ranges:               {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.2...
-        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {np.str_(&#x27;F&#x27;): {np.str_(...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-90f50faf-af23-44f7-8f55-a179a726a3d6' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-90f50faf-af23-44f7-8f55-a179a726a3d6' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 1078</li><li><span class='xr-has-index'>response_vars</span>: 2</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>centile</span>: 5</li><li><span class='xr-has-index'>statistic</span>: 11</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-059572bf-df72-4a59-af6e-786fba819894' class='xr-section-summary-in' type='checkbox'  checked><label for='section-059572bf-df72-4a59-af6e-786fba819894' class='xr-section-summary' >Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 ... 1074 1075 1076 1077</div><input id='attrs-2f535048-93b1-4b2e-a995-c251e6a93c6e' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-2f535048-93b1-4b2e-a995-c251e6a93c6e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f2e55944-17ab-4e8b-b374-375b714372d1' class='xr-var-data-in' type='checkbox'><label for='data-f2e55944-17ab-4e8b-b374-375b714372d1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([   0,    1,    2, ..., 1075, 1076, 1077], shape=(1078,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U23</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; &#x27;Right-Late...</div><input id='attrs-8c781a1a-8f87-4018-bb39-f90c45a43d4f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-8c781a1a-8f87-4018-bb39-f90c45a43d4f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-deb21509-c3d2-4ce1-a4e7-63b72fefc6ef' class='xr-var-data-in' type='checkbox'><label for='data-deb21509-c3d2-4ce1-a4e7-63b72fefc6ef' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;], dtype=&#x27;&lt;U23&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-4f94cbbf-285e-474e-a9be-1d3b42fa8158' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-4f94cbbf-285e-474e-a9be-1d3b42fa8158' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-8bdd0fff-1217-4647-9982-c9381e092d3e' class='xr-var-data-in' type='checkbox'><label for='data-8bdd0fff-1217-4647-9982-c9381e092d3e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-e568a68b-2b09-4d41-8a26-a72e7ec4a62a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-e568a68b-2b09-4d41-8a26-a72e7ec4a62a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ad0274c4-2512-41f3-99e5-f946be2a8381' class='xr-var-data-in' type='checkbox'><label for='data-ad0274c4-2512-41f3-99e5-f946be2a8381' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-65e0c182-8aa7-4eb8-8fa6-34d050b8397a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-65e0c182-8aa7-4eb8-8fa6-34d050b8397a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-9833eecb-1575-4952-87c9-8ed3a0fb0e6c' class='xr-var-data-in' type='checkbox'><label for='data-9833eecb-1575-4952-87c9-8ed3a0fb0e6c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;MACE&#x27; ... &#x27;SMSE&#x27; &#x27;ShapiroW&#x27;</div><input id='attrs-c557cc0e-4784-439a-ac18-88f9bed21238' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c557cc0e-4784-439a-ac18-88f9bed21238' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-38140483-b0e9-4aaa-8b31-d6cdd2826c21' class='xr-var-data-in' type='checkbox'><label for='data-38140483-b0e9-4aaa-8b31-d6cdd2826c21' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MSLL&#x27;, &#x27;NLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;, &#x27;Rho_p&#x27;,
-           &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-79d8041a-ad4a-47bf-b93c-3b1b6e99855c' class='xr-section-summary-in' type='checkbox'  checked><label for='section-79d8041a-ad4a-47bf-b93c-3b1b6e99855c' class='xr-section-summary' >Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;AnnArbor_a_sub04111&#x27; ... &#x27;Saint...</div><input id='attrs-f3c13bfa-3871-4a08-b8ba-c2d6a9004229' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f3c13bfa-3871-4a08-b8ba-c2d6a9004229' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-28169989-45f0-4d07-aee3-ef1c7fa6638a' class='xr-var-data-in' type='checkbox'><label for='data-28169989-45f0-4d07-aee3-ef1c7fa6638a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;AnnArbor_a_sub04111&#x27;, &#x27;AnnArbor_a_sub04619&#x27;,
+        covariate_ranges:               {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}
+        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-dd665bfd-32b8-4238-b9ff-cf0932c56b0b' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-dd665bfd-32b8-4238-b9ff-cf0932c56b0b' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 1078</li><li><span class='xr-has-index'>response_vars</span>: 2</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>centile</span>: 5</li><li><span class='xr-has-index'>statistic</span>: 11</li></ul></div></li><li class='xr-section-item'><input id='section-d6bff35f-7600-4ef1-baef-4c0699f5e99c' class='xr-section-summary-in' type='checkbox' checked /><label for='section-d6bff35f-7600-4ef1-baef-4c0699f5e99c' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 ... 1074 1075 1076 1077</div><input id='attrs-9ae99d11-feed-4eb0-834d-0df0a7d30ad9' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9ae99d11-feed-4eb0-834d-0df0a7d30ad9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0acece72-a59d-4e4b-a94c-4fb7415aca89' class='xr-var-data-in' type='checkbox'><label for='data-0acece72-a59d-4e4b-a94c-4fb7415aca89' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([   0,    1,    2, ..., 1075, 1076, 1077], shape=(1078,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U23</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; &#x27;Right-Late...</div><input id='attrs-fdca31bb-307e-4bed-991d-4f2e47992490' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-fdca31bb-307e-4bed-991d-4f2e47992490' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-0d8a6a34-5ea2-4b4a-bab8-27220ea74440' class='xr-var-data-in' type='checkbox'><label for='data-0d8a6a34-5ea2-4b4a-bab8-27220ea74440' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;], dtype=&#x27;&lt;U23&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-05f9bfea-6aff-4bcf-badf-ed69f72372d4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-05f9bfea-6aff-4bcf-badf-ed69f72372d4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-bebb4912-c221-49ca-a855-4658507074ef' class='xr-var-data-in' type='checkbox'><label for='data-bebb4912-c221-49ca-a855-4658507074ef' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-534f33d8-192a-48a3-ad77-f2b8d0e9bd67' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-534f33d8-192a-48a3-ad77-f2b8d0e9bd67' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-69b96249-f3a4-4425-b6b8-b51d05d6ebd8' class='xr-var-data-in' type='checkbox'><label for='data-69b96249-f3a4-4425-b6b8-b51d05d6ebd8' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-16b8c5eb-5718-4f29-aceb-3b87a749da22' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-16b8c5eb-5718-4f29-aceb-3b87a749da22' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-fd350245-cca1-45d4-ace6-d9d87cd4704c' class='xr-var-data-in' type='checkbox'><label for='data-fd350245-cca1-45d4-ace6-d9d87cd4704c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;MACE&#x27; ... &#x27;SMSE&#x27; &#x27;ShapiroW&#x27;</div><input id='attrs-b194ae9b-645e-4715-8c1c-1e74ad4a82be' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b194ae9b-645e-4715-8c1c-1e74ad4a82be' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3e87b64c-cdf7-4fce-95a6-604831a764f1' class='xr-var-data-in' type='checkbox'><label for='data-3e87b64c-cdf7-4fce-95a6-604831a764f1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MSLL&#x27;, &#x27;NLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;, &#x27;Rho_p&#x27;,
+           &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-b0c0fda7-9b7a-4c45-a56f-650a237fd001' class='xr-section-summary-in' type='checkbox' checked /><label for='section-b0c0fda7-9b7a-4c45-a56f-650a237fd001' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;AnnArbor_a_sub04111&#x27; ... &#x27;Saint...</div><input id='attrs-d5b4ac15-1770-4fd5-a1a4-b5aced14df1c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-d5b4ac15-1770-4fd5-a1a4-b5aced14df1c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-74a61205-f6ed-47af-9032-c15fa94730ef' class='xr-var-data-in' type='checkbox'><label for='data-74a61205-f6ed-47af-9032-c15fa94730ef' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;AnnArbor_a_sub04111&#x27;, &#x27;AnnArbor_a_sub04619&#x27;,
            &#x27;AnnArbor_a_sub13636&#x27;, ..., &#x27;SaintLouis_sub95967&#x27;,
            &#x27;SaintLouis_sub97935&#x27;, &#x27;SaintLouis_sub99965&#x27;],
-          shape=(1078,), dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.687e+03 3.906e+03 ... 3.381e+03</div><input id='attrs-699ae8a8-c667-491a-92d8-984dbddb71bb' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-699ae8a8-c667-491a-92d8-984dbddb71bb' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5e862874-f58e-4536-b7b8-783461661b16' class='xr-var-data-in' type='checkbox'><label for='data-5e862874-f58e-4536-b7b8-783461661b16' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[1686.7, 3905.9],
+          shape=(1078,), dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.687e+03 3.906e+03 ... 3.381e+03</div><input id='attrs-4933f8e4-8f95-4416-9285-751877f0966c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-4933f8e4-8f95-4416-9285-751877f0966c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4546a09b-487f-4277-b498-b8349461b451' class='xr-var-data-in' type='checkbox'><label for='data-4546a09b-487f-4277-b498-b8349461b451' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[1686.7, 3905.9],
            [1371.1, 9503.3],
            [1414.8, 9702.4],
            ...,
            [1061. , 9092. ],
            [ 448.3, 4552.6],
-           [ 509.1, 3380.9]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>25.63 18.34 29.2 ... 27.0 29.0 23.0</div><input id='attrs-882166d6-a84e-4992-a0d3-2748851dadc3' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-882166d6-a84e-4992-a0d3-2748851dadc3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3f58de29-308e-479f-a73f-030ae34470fe' class='xr-var-data-in' type='checkbox'><label for='data-3f58de29-308e-479f-a73f-030ae34470fe' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[25.63],
+           [ 509.1, 3380.9]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>25.63 18.34 29.2 ... 27.0 29.0 23.0</div><input id='attrs-38f3ec05-7b38-40a5-b83a-79a00936ec11' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-38f3ec05-7b38-40a5-b83a-79a00936ec11' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e59f746d-8059-43bc-aa7f-6258dd043668' class='xr-var-data-in' type='checkbox'><label for='data-e59f746d-8059-43bc-aa7f-6258dd043668' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[25.63],
            [18.34],
            [29.2 ],
            ...,
            [27.  ],
            [29.  ],
-           [23.  ]], shape=(1078, 1))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;M&#x27; &#x27;AnnArbor_a&#x27; ... &#x27;SaintLouis&#x27;</div><input id='attrs-14693e89-6d91-44f0-9031-772ec0cc3d76' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-14693e89-6d91-44f0-9031-772ec0cc3d76' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-95971fec-8548-4352-b945-4ea694653044' class='xr-var-data-in' type='checkbox'><label for='data-95971fec-8548-4352-b945-4ea694653044' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;M&#x27;, &#x27;AnnArbor_a&#x27;],
+           [23.  ]], shape=(1078, 1))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;M&#x27; &#x27;AnnArbor_a&#x27; ... &#x27;SaintLouis&#x27;</div><input id='attrs-866a6e46-1b5e-4c89-9dd9-b6d7ed111f7c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-866a6e46-1b5e-4c89-9dd9-b6d7ed111f7c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-56795ef2-4207-4741-b135-f339f4313fbd' class='xr-var-data-in' type='checkbox'><label for='data-56795ef2-4207-4741-b135-f339f4313fbd' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;M&#x27;, &#x27;AnnArbor_a&#x27;],
            [&#x27;M&#x27;, &#x27;AnnArbor_a&#x27;],
            [&#x27;M&#x27;, &#x27;AnnArbor_a&#x27;],
            ...,
            [&#x27;M&#x27;, &#x27;SaintLouis&#x27;],
            [&#x27;F&#x27;, &#x27;SaintLouis&#x27;],
-           [&#x27;F&#x27;, &#x27;SaintLouis&#x27;]], shape=(1078, 2), dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-0.1125 -0.5804 ... -0.7359 -0.8012</div><input id='attrs-815e1456-3ad0-40e6-8b54-2463004e3ff6' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-815e1456-3ad0-40e6-8b54-2463004e3ff6' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-76752196-0c2f-4cb0-9d8a-98b6209a9388' class='xr-var-data-in' type='checkbox'><label for='data-76752196-0c2f-4cb0-9d8a-98b6209a9388' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-0.11253203, -0.58037701],
-           [-1.11253782,  1.45184151],
-           [-0.67085043,  1.2138837 ],
+           [&#x27;F&#x27;, &#x27;SaintLouis&#x27;]], shape=(1078, 2), dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.6 -1.327 ... -1.136 -0.7707</div><input id='attrs-373535b0-c056-45a7-ac7d-a1ffbec85822' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-373535b0-c056-45a7-ac7d-a1ffbec85822' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2fe97299-9138-4ea1-bcab-d7d1995dc9ba' class='xr-var-data-in' type='checkbox'><label for='data-2fe97299-9138-4ea1-bcab-d7d1995dc9ba' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 0.59996894, -1.32738031],
+           [-0.23246351,  0.53901168],
+           [-0.07801068,  0.44238714],
            ...,
-           [ 0.37909699,  0.58752166],
-           [-0.65659221, -0.36201385],
-           [-0.73585104, -0.80121323]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.089e+03 572.5 ... 1.07e+04</div><input id='attrs-88083334-2fa4-4465-8e8b-a9c888ce21a9' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-88083334-2fa4-4465-8e8b-a9c888ce21a9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1934d90e-14fd-4063-9b00-69a94fb88865' class='xr-var-data-in' type='checkbox'><label for='data-1934d90e-14fd-4063-9b00-69a94fb88865' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[ 1088.92994002,   572.53277583],
-            [ 1150.97107923,   803.27282757],
-            [ 1026.62022808,   201.25204528],
+           [-0.18145999,  0.48398182],
+           [-1.25245871, -0.4060487 ],
+           [-1.13553317, -0.77068801]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>770.9 2.867e+03 ... 1.108e+04</div><input id='attrs-8c38c126-4217-4f9b-a9cf-3a7ba9dcbc4c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-8c38c126-4217-4f9b-a9cf-3a7ba9dcbc4c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-bb3d4af0-84dd-45c6-87df-ea909fafab94' class='xr-var-data-in' type='checkbox'><label for='data-bb3d4af0-84dd-45c6-87df-ea909fafab94' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[  770.90459419,  2867.47227689],
+            [  763.66988729,  1904.78861818],
+            [  762.02185296,  2496.39633027],
             ...,
-            [  269.06643691,  1948.37912648],
-            [   55.35251021,   296.24162424],
-            [  151.87174343,   842.12672132]],
+            [  460.62570183,  2027.48142677],
+            [  284.6334941 ,   291.05837582],
+            [  300.98328669,   590.2626053 ]],
     
-           [[ 1467.46172412,  3606.3803496 ],
-            [ 1550.13185128,  3532.50297647],
-            [ 1412.96061822,  3428.37870112],
+           [[ 1166.87722431,  6028.02546075],
+            [ 1180.88259082,  5282.40768962],
+            [ 1166.29485366,  5846.77968567],
             ...,
-            [  648.96722634,  5053.58762422],
-            [  440.87519894,  3511.95451451],
-            [  532.7960264 ,  3750.50206505]],
+            [  858.64466185,  5248.26986463],
+            [  688.17588651,  3628.09739437],
+            [  696.55713353,  3684.91842035]],
     
-           [[ 1730.57519589,  5715.17596863],
-            [ 1827.58431615,  5429.56221935],
-            [ 1681.50177013,  5671.52058232],
+           [[ 1442.11364517,  8224.89282003],
+            [ 1470.88276387,  7630.15527001],
+            [ 1447.30077503,  8175.59600558],
             ...,
-            [  913.03227936,  7211.98547282],
-            [  708.84797517,  5747.162807  ],
-            [  797.57249904,  5772.08325336]],
+            [ 1135.30346516,  7487.006117  ],
+            [  968.67396972,  5947.63820574],
+            [  971.51636433,  5835.98120993]],
     
-           [[ 1993.68866767,  7823.97158766],
-            [ 2105.03678103,  7326.62146223],
-            [ 1950.04292203,  7914.66246352],
+           [[ 1717.35006603, 10421.76017931],
+            [ 1760.88293692,  9977.9028504 ],
+            [ 1728.3066964 , 10504.41232549],
             ...,
-            [ 1177.09733238,  9370.38332142],
-            [  976.82075141,  7982.37109949],
-            [ 1062.34897168,  7793.66444168]],
+            [ 1411.96226848,  9725.74236937],
+            [ 1249.17205293,  8267.17901711],
+            [ 1246.47559512,  7987.04399951]],
     
-           [[ 2372.22045177, 10857.81916143],
-            [ 2504.19755308, 10055.85161113],
-            [ 2336.38331217, 11141.78911937],
+           [[ 2113.32269615, 13582.31336318],
+            [ 2178.09564044, 13355.52192184],
+            [ 2132.57969711, 13854.79568089],
             ...,
-            [ 1556.99812181, 12475.59181915],
-            [ 1362.34344014, 11198.08398975],
-            [ 1443.27325465, 10702.03978541]]], shape=(5, 1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.2471 -0.6892 ... -0.7944</div><input id='attrs-0a1ddd94-6cef-499a-9e44-75fad9e4d52a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-0a1ddd94-6cef-499a-9e44-75fad9e4d52a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2b134c91-193f-4ec8-add8-48fda76602b3' class='xr-var-data-in' type='checkbox'><label for='data-2b134c91-193f-4ec8-add8-48fda76602b3' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 0.24706154, -0.68919733],
-           [-0.4152876 , -1.47779576],
-           [ 0.00887491, -1.31645186],
+            [ 1809.9812285 , 12946.53080722],
+            [ 1652.71444534, 11604.21803566],
+            [ 1642.04944196, 11081.69981457]]], shape=(5, 1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.132 -1.238 ... -1.467 -1.355</div><input id='attrs-b8075c97-2d30-435d-833f-0d163c3b8cbe' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b8075c97-2d30-435d-833f-0d163c3b8cbe' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-13365d41-fadd-4aa7-8745-5d99dc4a930d' class='xr-var-data-in' type='checkbox'><label for='data-13365d41-fadd-4aa7-8745-5d99dc4a930d' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-1.13245555, -1.23750596],
+           [-0.99798004, -1.13141145],
+           [-1.00681591, -1.16631214],
            ...,
-           [ 0.18995028, -0.7069475 ],
-           [ 0.03395348, -0.63325454],
-           [-0.00929303, -0.79438167]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.731e+03 5.715e+03 ... 5.772e+03</div><input id='attrs-5aa52c96-8bba-4028-99d7-87cc6b832532' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-5aa52c96-8bba-4028-99d7-87cc6b832532' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-7d5cc1cf-c4b6-43d4-8672-87f0524615ae' class='xr-var-data-in' type='checkbox'><label for='data-7d5cc1cf-c4b6-43d4-8672-87f0524615ae' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[1730.57519589, 5715.17596863],
-           [1827.58431615, 5429.56221935],
-           [1681.50177013, 5671.52058232],
+           [-1.02562533, -1.06772694],
+           [-1.54583607, -1.11795885],
+           [-1.46658213, -1.35516999]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-0.541 -1.646 ... -1.001 -1.038</div><input id='attrs-45966d30-cfe2-40e6-b784-4a20be5169bd' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-45966d30-cfe2-40e6-b784-4a20be5169bd' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-a653efb2-dc5d-4ae7-b0ef-3821c9978579' class='xr-var-data-in' type='checkbox'><label for='data-a653efb2-dc5d-4ae7-b0ef-3821c9978579' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-0.54095165, -1.64600437],
+           [-0.43879509, -0.97447502],
+           [-0.38378972, -0.91868467],
            ...,
-           [ 913.03227936, 7211.98547282],
-           [ 708.84797517, 5747.162807  ],
-           [ 797.57249904, 5772.08325336]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.3449 0.0462 ... 0.7874 0.8868</div><input id='attrs-88dfad01-9775-4f7a-b388-7477faae4ee4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-88dfad01-9775-4f7a-b388-7477faae4ee4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-cef4949e-fa76-4fbf-a007-6688366acfba' class='xr-var-data-in' type='checkbox'><label for='data-cef4949e-fa76-4fbf-a007-6688366acfba' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 3.44932825e-01,  4.61966605e-02,  3.29923655e-01,
-            -7.65950621e+00,  4.17728927e-01,  3.43831587e-01,
-             6.31203113e+02,  4.98472878e-01,  8.80202722e-69,
-             6.56168413e-01,  9.07454956e-01],
-           [ 2.13471314e-01,  5.06493506e-02,  4.03185496e-01,
-            -8.63084241e+00,  1.04721864e+00,  2.12572293e-01,
-             3.42765169e+03,  3.48108356e-01,  4.56730505e-32,
-             7.87427707e-01,  8.86754283e-01]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y_harmonized</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.223e+03 3.999e+03 ... 3.397e+03</div><input id='attrs-d71fb24c-16d0-425e-8f44-5089bc4e2f0b' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-d71fb24c-16d0-425e-8f44-5089bc4e2f0b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d9d0bd09-18c0-4f28-a01d-935a7b72cb62' class='xr-var-data-in' type='checkbox'><label for='data-d9d0bd09-18c0-4f28-a01d-935a7b72cb62' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[1222.65027737, 3999.20887424],
-           [ 905.91305831, 9611.57333727],
-           [ 950.38257486, 9807.10254695],
+           [-0.37765868, -0.89679867],
+           [-1.1596271 , -0.8968935 ],
+           [-1.00059388, -1.03805349]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.442e+03 8.225e+03 ... 5.836e+03</div><input id='attrs-05f19830-d802-4490-952c-18e58adb7749' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-05f19830-d802-4490-952c-18e58adb7749' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-cbd44b65-6b52-40e4-8fe4-c6636b670ee6' class='xr-var-data-in' type='checkbox'><label for='data-cbd44b65-6b52-40e4-8fe4-c6636b670ee6' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[1442.11364517, 8224.89282003],
+           [1470.88276387, 7630.15527001],
+           [1447.30077503, 8175.59600558],
            ...,
-           [1394.07946709, 7681.35120672],
-           [ 958.79004257, 4573.29652753],
-           [1019.51235175, 3396.50675107]], shape=(1078, 2))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-b109b42e-cc7a-4757-b770-e613f395a04b' class='xr-section-summary-in' type='checkbox'  ><label for='section-b109b42e-cc7a-4757-b770-e613f395a04b' class='xr-section-summary' >Indexes: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-index-name'><div>observations</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-1a4feaa9-16dd-4f99-8877-675c00f3b9fd' class='xr-index-data-in' type='checkbox'/><label for='index-1a4feaa9-16dd-4f99-8877-675c00f3b9fd' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([   0,    1,    2,    3,    4,    5,    6,    7,    8,    9,
-           ...
-           1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077],
-          dtype=&#x27;int64&#x27;, name=&#x27;observations&#x27;, length=1078))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>response_vars</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-7e654ba5-e3ad-4283-b0df-f00657f4db94' class='xr-index-data-in' type='checkbox'/><label for='index-7e654ba5-e3ad-4283-b0df-f00657f4db94' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;], dtype=&#x27;object&#x27;, name=&#x27;response_vars&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>covariates</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-c6053066-dc7b-4771-9038-52fa670cb77c' class='xr-index-data-in' type='checkbox'/><label for='index-c6053066-dc7b-4771-9038-52fa670cb77c' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;age&#x27;], dtype=&#x27;object&#x27;, name=&#x27;covariates&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>batch_effect_dims</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-cec0969b-5f16-4ce3-8010-993c6f4f514c' class='xr-index-data-in' type='checkbox'/><label for='index-cec0969b-5f16-4ce3-8010-993c6f4f514c' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;object&#x27;, name=&#x27;batch_effect_dims&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>centile</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-e2025ca9-5ece-43a3-946e-ea3815b1cf20' class='xr-index-data-in' type='checkbox'/><label for='index-e2025ca9-5ece-43a3-946e-ea3815b1cf20' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([0.05, 0.25, 0.5, 0.75, 0.95], dtype=&#x27;float64&#x27;, name=&#x27;centile&#x27;))</pre></div></li><li class='xr-var-item'><div class='xr-index-name'><div>statistic</div></div><div class='xr-index-preview'>PandasIndex</div><input type='checkbox' disabled/><label></label><input id='index-74ee7540-7d95-4f9e-98da-e4ca29837cf5' class='xr-index-data-in' type='checkbox'/><label for='index-74ee7540-7d95-4f9e-98da-e4ca29837cf5' title='Show/Hide index repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-index-data'><pre>PandasIndex(Index([&#x27;EXPV&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MSLL&#x27;, &#x27;NLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;, &#x27;Rho_p&#x27;,
-           &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;],
-          dtype=&#x27;object&#x27;, name=&#x27;statistic&#x27;))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-f862c3db-e0e7-40c9-babf-5fcfaac118e5' class='xr-section-summary-in' type='checkbox'  checked><label for='section-f862c3db-e0e7-40c9-babf-5fcfaac118e5' class='xr-section-summary' >Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [np.str_(&#x27;F&#x27;), np.str_(&#x27;M&#x27;)], np.str_(&#x27;site&#x27;): [np.str_(&#x27;AnnArbor_a&#x27;), np.str_(&#x27;AnnArbor_b&#x27;), np.str_(&#x27;Atlanta&#x27;), np.str_(&#x27;Baltimore&#x27;), np.str_(&#x27;Bangor&#x27;), np.str_(&#x27;Beijing_Zang&#x27;), np.str_(&#x27;Berlin_Margulies&#x27;), np.str_(&#x27;Cambridge_Buckner&#x27;), np.str_(&#x27;Cleveland&#x27;), np.str_(&#x27;ICBM&#x27;), np.str_(&#x27;Leiden_2180&#x27;), np.str_(&#x27;Leiden_2200&#x27;), np.str_(&#x27;Milwaukee_b&#x27;), np.str_(&#x27;Munchen&#x27;), np.str_(&#x27;NewYork_a&#x27;), np.str_(&#x27;NewYork_a_ADHD&#x27;), np.str_(&#x27;Newark&#x27;), np.str_(&#x27;Oulu&#x27;), np.str_(&#x27;Oxford&#x27;), np.str_(&#x27;PaloAlto&#x27;), np.str_(&#x27;Pittsburgh&#x27;), np.str_(&#x27;Queensland&#x27;), np.str_(&#x27;SaintLouis&#x27;)]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x110a62700&gt;, {np.str_(&#x27;sex&#x27;): {np.str_(&#x27;F&#x27;): 589, np.str_(&#x27;M&#x27;): 489}, np.str_(&#x27;site&#x27;): {np.str_(&#x27;AnnArbor_a&#x27;): 24, np.str_(&#x27;AnnArbor_b&#x27;): 32, np.str_(&#x27;Atlanta&#x27;): 28, np.str_(&#x27;Baltimore&#x27;): 23, np.str_(&#x27;Bangor&#x27;): 20, np.str_(&#x27;Beijing_Zang&#x27;): 198, np.str_(&#x27;Berlin_Margulies&#x27;): 26, np.str_(&#x27;Cambridge_Buckner&#x27;): 198, np.str_(&#x27;Cleveland&#x27;): 31, np.str_(&#x27;ICBM&#x27;): 85, np.str_(&#x27;Leiden_2180&#x27;): 12, np.str_(&#x27;Leiden_2200&#x27;): 19, np.str_(&#x27;Milwaukee_b&#x27;): 46, np.str_(&#x27;Munchen&#x27;): 15, np.str_(&#x27;NewYork_a&#x27;): 83, np.str_(&#x27;NewYork_a_ADHD&#x27;): 25, np.str_(&#x27;Newark&#x27;): 19, np.str_(&#x27;Oulu&#x27;): 102, np.str_(&#x27;Oxford&#x27;): 22, np.str_(&#x27;PaloAlto&#x27;): 17, np.str_(&#x27;Pittsburgh&#x27;): 3, np.str_(&#x27;Queensland&#x27;): 19, np.str_(&#x27;SaintLouis&#x27;): 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.251224489795916), &#x27;min&#x27;: np.float64(7.88), &#x27;max&#x27;: np.float64(85.0)}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {np.str_(&#x27;F&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.05332767402377), &#x27;min&#x27;: np.float64(7.88), &#x27;max&#x27;: np.float64(85.0)}}, np.str_(&#x27;M&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(28.48959100204499), &#x27;min&#x27;: np.float64(9.21), &#x27;max&#x27;: np.float64(78.0)}}}, np.str_(&#x27;site&#x27;): {np.str_(&#x27;AnnArbor_a&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.28333333333333), &#x27;min&#x27;: np.float64(13.41), &#x27;max&#x27;: np.float64(40.98)}}, np.str_(&#x27;AnnArbor_b&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(44.40625), &#x27;min&#x27;: np.float64(19.0), &#x27;max&#x27;: np.float64(79.0)}}, np.str_(&#x27;Atlanta&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(30.892857142857142), &#x27;min&#x27;: np.float64(22.0), &#x27;max&#x27;: np.float64(57.0)}}, np.str_(&#x27;Baltimore&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(29.26086956521739), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(40.0)}}, np.str_(&#x27;Bangor&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(23.4), &#x27;min&#x27;: np.float64(19.0), &#x27;max&#x27;: np.float64(38.0)}}, np.str_(&#x27;Beijing_Zang&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.161616161616163), &#x27;min&#x27;: np.float64(18.0), &#x27;max&#x27;: np.float64(26.0)}}, np.str_(&#x27;Berlin_Margulies&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(29.76923076923077), &#x27;min&#x27;: np.float64(23.0), &#x27;max&#x27;: np.float64(44.0)}}, np.str_(&#x27;Cambridge_Buckner&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.03030303030303), &#x27;min&#x27;: np.float64(18.0), &#x27;max&#x27;: np.float64(30.0)}}, np.str_(&#x27;Cleveland&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(43.54838709677419), &#x27;min&#x27;: np.float64(24.0), &#x27;max&#x27;: np.float64(60.0)}}, np.str_(&#x27;ICBM&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(44.04705882352941), &#x27;min&#x27;: np.float64(19.0), &#x27;max&#x27;: np.float64(85.0)}}, np.str_(&#x27;Leiden_2180&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(23.0), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(27.0)}}, np.str_(&#x27;Leiden_2200&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.68421052631579), &#x27;min&#x27;: np.float64(18.0), &#x27;max&#x27;: np.float64(28.0)}}, np.str_(&#x27;Milwaukee_b&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(53.58695652173913), &#x27;min&#x27;: np.float64(44.0), &#x27;max&#x27;: np.float64(65.0)}}, np.str_(&#x27;Munchen&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(68.13333333333334), &#x27;min&#x27;: np.float64(63.0), &#x27;max&#x27;: np.float64(74.0)}}, np.str_(&#x27;NewYork_a&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(24.507710843373495), &#x27;min&#x27;: np.float64(7.88), &#x27;max&#x27;: np.float64(49.16)}}, np.str_(&#x27;NewYork_a_ADHD&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(34.9952), &#x27;min&#x27;: np.float64(20.69), &#x27;max&#x27;: np.float64(50.9)}}, np.str_(&#x27;Newark&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(24.105263157894736), &#x27;min&#x27;: np.float64(21.0), &#x27;max&#x27;: np.float64(39.0)}}, np.str_(&#x27;Oulu&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(21.519607843137255), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(23.0)}}, np.str_(&#x27;Oxford&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(29.0), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(35.0)}}, np.str_(&#x27;PaloAlto&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(32.470588235294116), &#x27;min&#x27;: np.float64(22.0), &#x27;max&#x27;: np.float64(46.0)}}, np.str_(&#x27;Pittsburgh&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(32.333333333333336), &#x27;min&#x27;: np.float64(25.0), &#x27;max&#x27;: np.float64(47.0)}}, np.str_(&#x27;Queensland&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(25.94736842105263), &#x27;min&#x27;: np.float64(20.0), &#x27;max&#x27;: np.float64(34.0)}}, np.str_(&#x27;SaintLouis&#x27;): {np.str_(&#x27;age&#x27;): {&#x27;mean&#x27;: np.float64(25.096774193548388), &#x27;min&#x27;: np.float64(21.0), &#x27;max&#x27;: np.float64(29.0)}}}}</dd></dl></div></li></ul></div></div>
+           [1135.30346516, 7487.006117  ],
+           [ 968.67396972, 5947.63820574],
+           [ 971.51636433, 5835.98120993]], shape=(1078, 2))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.08027 0.03358 ... 1.029 0.8742</div><input id='attrs-f9c67c35-0b41-49e5-b946-a64364e2f607' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f9c67c35-0b41-49e5-b946-a64364e2f607' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-40be1c7f-6c1e-4611-9d21-fea2f538c9f5' class='xr-var-data-in' type='checkbox'><label for='data-40be1c7f-6c1e-4611-9d21-fea2f538c9f5' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 8.02685370e-02,  3.35807050e-02,  3.36475883e-01,
+            -4.54967641e-01,  1.03462559e+00,  7.33853207e-02,
+             7.50086001e+02,  3.82270641e-01,  7.75840812e-39,
+             9.26614679e-01,  9.08901448e-01],
+           [-9.79633651e-03,  6.60111317e-02,  4.59191121e-01,
+            -1.16739706e-01,  1.30255651e+00, -2.94670769e-02,
+             3.91920128e+03,  3.01905478e-01,  3.73023255e-24,
+             1.02946708e+00,  8.74183498e-01]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-7a511d65-f62d-4f10-9d9b-a625b94e3436' class='xr-section-summary-in' type='checkbox' checked /><label for='section-7a511d65-f62d-4f10-9d9b-a625b94e3436' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x0000018CD84714E0&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}}}}</dd></dl></div></li></ul></div></div>
 
 
 
+Evaluate
+--------
+
+We can inspect the evaluation metrics and visualize the merged model’s
+centiles to confirm it has learned across all contributing sites.
+
+.. code:: ipython3
+
+    from pcntoolkit import plot_centiles_advanced
+    
+    # Show evaluation metrics on the full dataset
+    norm_data.get_statistics_df()
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th>statistic</th>
+          <th>EXPV</th>
+          <th>MACE</th>
+          <th>MAPE</th>
+          <th>MSLL</th>
+          <th>NLL</th>
+          <th>R2</th>
+          <th>RMSE</th>
+          <th>Rho</th>
+          <th>Rho_p</th>
+          <th>SMSE</th>
+          <th>ShapiroW</th>
+        </tr>
+        <tr>
+          <th>response_vars</th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Right-Lateral-Ventricle</th>
+          <td>-0.009796</td>
+          <td>0.066011</td>
+          <td>0.459191</td>
+          <td>-0.116740</td>
+          <td>1.302557</td>
+          <td>-0.029467</td>
+          <td>3919.201278</td>
+          <td>0.301905</td>
+          <td>3.730233e-24</td>
+          <td>1.029467</td>
+          <td>0.874183</td>
+        </tr>
+        <tr>
+          <th>WM-hypointensities</th>
+          <td>0.080269</td>
+          <td>0.033581</td>
+          <td>0.336476</td>
+          <td>-0.454968</td>
+          <td>1.034626</td>
+          <td>0.073385</td>
+          <td>750.086001</td>
+          <td>0.382271</td>
+          <td>7.758408e-39</td>
+          <td>0.926615</td>
+          <td>0.908901</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    # Visualize centile curves from the merged model
+    plot_centiles_advanced(
+        merged_model,
+        scatter_data=norm_data,
+        batch_effects="all",
+    )
