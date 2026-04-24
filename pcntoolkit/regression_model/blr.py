@@ -14,7 +14,7 @@ and supports both homoskedastic and heteroskedastic noise models.
 from __future__ import annotations
 
 import copy
-from typing import Literal, Optional
+from typing import Iterator, Literal, Optional
 
 import numpy as np
 import xarray as xr
@@ -24,9 +24,8 @@ from scipy.linalg import LinAlgError  # type: ignore
 from pcntoolkit.math_functions.basis_function import BasisFunction, create_basis_function
 from pcntoolkit.math_functions.warp import *
 from pcntoolkit.regression_model.regression_model import RegressionModel
+from pcntoolkit.util.data_operations import iter_batch_combinations
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
-from itertools import product
-from functools import reduce
 
 
 class BLR(RegressionModel):
@@ -254,28 +253,49 @@ class BLR(RegressionModel):
         _, self.beta, self.gamma = self.parse_hyps(self.hyp, Phi, Phi_var)
         self.is_fitted = True
 
-    def be_idx_gen(self, be, be_maps):
-        # Loop over the unique batch effects:
-        # This creates a list of dictionaries
-        # Each dictionary contains a unique combination of batch effects:
-        # [{"sex":"F", "site":"A"}, {"sex":"F", "site":"B"}, {"sex":"M", "site":"A"}, {"sex":"M", "site":"B"}]
-        unique_batch_effect_dict = list(
-            map(
-                lambda f: reduce(lambda p, q: p | q, f),
-                product(
-                    *[
-                        [{str(k): be_maps[k][str(v)]} for v in v1]
-                        for k, v1 in dict(sorted(be_maps.items(), key=lambda v: v[0])).items()
-                    ]
-                ),
+    def be_idx_gen(
+        self,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+    ) -> Iterator[tuple[dict[str, object], np.ndarray]]:
+        """Yield encoded batch-effect combinations and their masks.
+
+        Parameters
+        ----------
+        be : xr.DataArray
+            Encoded batch-effect values for each observation.
+        be_maps : dict[str, dict[str, int]]
+            Mapping from batch-effect labels to encoded integer ids.
+
+        Yields
+        ------
+        tuple[dict[str, object], np.ndarray]
+            Encoded batch-effect combination together with its mask.
+        """
+        # Preserve the DataArray dimension order used by the caller.
+        # eg ['site', 'sex']
+        batch_dims = [str(batch_dim) for batch_dim in
+                      be.batch_effect_dims.values]
+
+        # Build the integer batch-effect levels expected by the shared
+        # helper.
+        # eg {'site': [0, 1], 'sex': [0, 1, 2]}
+        unique_batch_effects: dict[str, list[int]] = {}
+
+        # Iterate in the same order used by the batch-effect DataArray.
+        # eg ['site', 'sex']
+        for batch_dim in batch_dims:
+            # Collect the encoded ids for this batch-effect dimension.
+            # eg {'site': [0, 1], 'sex': [0, 1, 2]}
+            unique_batch_effects[batch_dim] = list(
+                be_maps[batch_dim].values()
             )
+
+        yield from iter_batch_combinations(
+            be.values,
+            unique_batch_effects,
+            batch_dims,
         )
-        for t in unique_batch_effect_dict:
-            mask = np.full(be.values.shape, False)
-            for i, be_dim in enumerate(be.batch_effect_dims):
-                mask[np.where(be.sel(batch_effect_dims=be_dim).values == t[str(be_dim.to_numpy().item())]), i] = True
-            mask = np.all(mask, axis=1)
-            yield t, mask
 
     def forward(self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray) -> xr.DataArray:
         """Map Y values to Z space using BLR.

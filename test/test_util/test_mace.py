@@ -6,15 +6,16 @@ batch-effect dimensions (Cartesian product), not per
 individual batch-effect level.
 """
 
-from itertools import product as real_product
 from unittest.mock import patch
 
 import numpy as np
 import xarray as xr
 
+from pcntoolkit.util.data_operations import (
+    iter_batch_combinations
+)
 from pcntoolkit.util.evaluator import Evaluator
 from test.fixtures.evaluator_fixtures import create_test_data
-from test.fixtures.evaluator_fixtures import BATCH_CONFIGS
 
 
 def generate_centile_data(data):
@@ -40,7 +41,7 @@ def generate_centile_data(data):
 
 
 def test_001_mace_should_average24Combos_when_fourBatchDims() -> None:
-    """With 4 batch dimensions (2x3x2x2 = 24 combos), MACE should 
+    """With 4 batch dimensions (2x3x2x2 = 24 combos), MACE should
     average across all combos."""
     n_batch_effects = 4
 
@@ -50,34 +51,54 @@ def test_001_mace_should_average24Combos_when_fourBatchDims() -> None:
     # Add synthetic centile curves to the data
     data_with_centiles = generate_centile_data(data)
 
-    # Expected combos: sorted Cartesian product of all
-    # level lists in the 4-dimension config
-    expected_combos = sorted(
-        real_product(
-            *[vals for _, vals in BATCH_CONFIGS[n_batch_effects]]
+    # Expected combos from the shared utility.
+    # eg ('site1', 'M', 'sc1', 'p1')
+    expected_combos = [
+        combo
+        for combo, _ in iter_batch_combinations(
+            data_with_centiles["batch_effects"].values,
+            data_with_centiles.unique_batch_effects,
+            list(data_with_centiles.batch_effect_dims.values),
         )
-    )
+    ]
 
-    # Spy on combos
-    visited: list[tuple] = []
+    # Spy on the combinations
+    visited: list[tuple[object, ...]] = []
 
-    def recording_product(*iterables):
-        """Record every combo produced by product."""
-        combos = list(real_product(*iterables))
-        visited.extend(combos)
-        return combos
+    def recording_iter_batch_combinations(
+        batch_values,
+        unique_batch_effects,
+        batch_dims,
+    ):
+        """Record every combination produced by the shared helper."""
+        combinations = list(
+            iter_batch_combinations(
+                batch_values,
+                unique_batch_effects,
+                batch_dims,
+            )
+        )
+        visited.extend(
+            tuple(combination.values())
+            for combination, _ in combinations
+        )
+        return iter(combinations)
 
-    # Run _evaluate_macet
+    # Run _evaluate_mace
     evaluator = Evaluator()
     with patch(
-        "pcntoolkit.util.evaluator.product",
-        side_effect=recording_product,
+        "pcntoolkit.util.evaluator.iter_batch_combinations",
+        side_effect=recording_iter_batch_combinations,
     ):
         actual = evaluator._evaluate_mace(data_with_centiles)
 
-    # Check that all 24 combos were averaged
-    assert sorted(visited) == expected_combos
-    # Check MACE value
+    # Check that all helper combinations were averaged.
+    assert visited == [
+        tuple(combination.values())
+        for combination in expected_combos
+    ]
+
+    # Check MACE value.
     assert 0.0 <= actual <= 1.0
 
 

@@ -1,4 +1,3 @@
-from itertools import product
 from typing import List, Tuple
 
 import numpy as np
@@ -7,6 +6,7 @@ from scipy import stats  # type: ignore
 from sklearn.metrics import explained_variance_score, r2_score,mean_absolute_percentage_error
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.util.data_operations import iter_batch_combinations
 
 
 class Evaluator:
@@ -499,34 +499,16 @@ class Evaluator:
             # eg ['site', 'sex']
             be_dims = list(data.batch_effect_dims.values)
 
-            # Build list of unique values per dimension
-            # eg [['site1','site2'], ['M','F']]
-            unique_per_dim = [
-                unique_batch_effects.get(dim, [])
-                for dim in be_dims
-            ]
+            # Iterate over the non-empty batch combinations provided by
+            # shared utility.
+            # eg {'site': 'site1', 'sex': 'M'}
+            for _, mask in iter_batch_combinations(
+                be_values,
+                unique_batch_effects,
+                be_dims,
+            ):
 
-            # Iterate over Cartesian product of all
-            # batch effect dimensions, eg
-            # (site1,M), (site1,F), (site2,M), ...
-            for combo in product(*unique_per_dim):
-                # Initialize mask for this combination
-                mask = np.ones(
-                    be_values.shape[0], dtype=bool
-                )
-                for dim_idx, val in enumerate(combo):
-                    # mask has only subjects matching every
-                    # dimension in this combination
-                    mask &= (
-                        be_values[:, dim_idx].astype(str)
-                        == str(val)
-                    )
-
-                # Skip empty combinations
-                if not mask.any():
-                    continue
-
-                # Empirical centile for this combination
+                # Compute the empirical centile for this batch group.
                 empirical_centiles = (
                     centile_data[:, mask]
                     >= y[mask]
