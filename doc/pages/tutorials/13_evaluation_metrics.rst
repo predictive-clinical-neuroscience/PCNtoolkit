@@ -17,7 +17,7 @@ Two families of metrics
 |                        | (median         | EXPV, Rho                 |
 |                        | prediction)     |                           |
 +------------------------+-----------------+---------------------------+
-| **Probabilistic**      | Full predicted  | MACE, MSLL, NLL, ShapiroW |
+| **Probabilistic**      | Full predicted  | MACE, MSLL, MLL, ShapiroW |
 |                        | distribution    |                           |
 |                        | (``logp``,      |                           |
 |                        | centiles,       |                           |
@@ -168,6 +168,11 @@ MLL — Mean log loss
 
 .. math:: \text{MLL} = -\frac{1}{n} \sum_i \log p(y \mid \mathcal{D}, x_*)
 
+Note: In earlier PCNtoolkit releases, this metric was called ``NLL``
+(Negative Log Likelihood). It is now named ``MLL`` to match the
+literature and avoid confusion with the different ``NLL`` used
+internally for BLR hyperparameter estimation.
+
 Where: - :math:`y`: the test or training response variable. We typically
 select the test set here, to see how well the normative model fitted on
 training data generalises to test set. - :math:`\mathcal{D}`: the
@@ -228,17 +233,16 @@ MACE — Mean absolute centile error
 
 .. math:: \text{MACE} = \frac{1}{b} \sum_{k=1}^{b} \left( \frac{1}{m} \sum_{j=1}^{m} \left| q_j - \frac{\sum_{i=1}^{n} \mathbf{1}\{\hat{q}_{ij} \geq y_i\}}{n} \right| \right)
 
-where: - :math:`b` is the number of batch effects (i.e., unique
-combinations of sex and site) - :math:`m` is the number of centiles used
-for calibration - :math:`q_j` is the :math:`j`-th target centile level
-(e.g. 0.05, 0.25, 0.50, 0.75, 0.95) - :math:`\hat{q}_{ij}` is the
-predicted :math:`j`-th centile value for the :math:`i`-th subject -
-:math:`y_i` is the true value for the :math:`i`-th subject - :math:`n`
-is the number of subjects in the batch group -
-:math:`\mathbf{1}\{\hat{q}_{ij} \geq y_i\}` is an indicator function
-that outputs 1 or 0, depending on whether :math:`y_i` lies below or
-above its predicted :math:`j`-th centile value, respectively. So,
-:math:`\frac{\sum_i \mathbf{1}\{\hat{q}_{ij} \geq y_i\}}{n}` is the
+where: - :math:`b` are the unique combinations of batch effects -
+:math:`m` is the number of centiles used for calibration - :math:`q_j`
+is the :math:`j`-th target centile level (e.g. 0.05, 0.25, 0.50, 0.75,
+0.95) - :math:`\hat{q}_{ij}` is the predicted :math:`j`-th centile value
+for the :math:`i`-th subject - :math:`y_i` is the true value for the
+:math:`i`-th subject - :math:`n` is the number of subjects in the batch
+group - :math:`\mathbf{1}\{\hat{q}_{ij} \geq y_i\}` is an indicator
+function that outputs 1 or 0, depending on whether :math:`y_i` lies
+below or above its predicted :math:`j`-th centile value, respectively.
+So, :math:`\frac{\sum_i \mathbf{1}\{\hat{q}_{ij} \geq y_i\}}{n}` is the
 empirical fraction of subjects below the :math:`j`-th centile curve
 
 The maths above might seem complicated. To put simply, the MACE checks,
@@ -248,6 +252,11 @@ data. A perfectly calibrated model has exactly 10% of subjects below its
 10th centile, 25% below its 25th centile, and so on. MACE averages the
 absolute deviation from this perfectly calibrated model across all
 centile levels.
+
+Important: MACE is averaged across unique combinations of batch effects
+(e.g., site and sex combinations) and each combination contributes
+equally. This means small groups have the same influence as large
+groups, and hence they may add disproportionate amount of noise to MACE.
 
 - MACE values close to 0 indicate the predicted centile curves closely
   match the distribution of the data.
@@ -328,7 +337,7 @@ Summary table
 +------------+-----------------+---------------+--------------+-----------+
 | MAPE       | Point           | Y, Yhat       | Lower        | ≥ 0       |
 +------------+-----------------+---------------+--------------+-----------+
-| NLL        | Probabilistic   | logp          | Lower        | ≥ 0       |
+| MLL        | Probabilistic   | logp          | Lower        | ≥ 0       |
 +------------+-----------------+---------------+--------------+-----------+
 | MSLL       | Probabilistic   | logp,         | Lower        | unbounded |
 |            |                 | baseline_logp | (negative)   |           |
