@@ -2,7 +2,6 @@ import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
 from test.fixtures.data_fixtures import *
-
 """
 This file contains pytest fixtures for generating NormData objects in the PCNtoolkit.
 
@@ -27,9 +26,24 @@ def test_norm_data_from_arrays(test_arrays):
 
 
 @pytest.fixture(scope="module")
-def transfer_norm_data_from_arrays(transfer_arrays):
+def transfer_norm_data_from_arrays(transfer_arrays) -> NormData:
+    """Build transfer NormData from the transfer_arrays fixture.
+
+    Parameters
+    ----------
+    transfer_arrays : tuple
+        ``(X, y, batch_effects)`` arrays from data_fixtures.
+
+    Returns
+    -------
+    NormData
+        Transfer dataset.
+    """
+    # Unpack the tuple returned by the transfer_arrays fixture
     X, y, batch_effects = transfer_arrays
-    return NormData.from_ndarrays("from_arrays_transfer", X, y, batch_effects)
+    return NormData.from_ndarrays(
+        "from_arrays_transfer", X, y, batch_effects
+    )
 
 
 @pytest.fixture(scope="module")

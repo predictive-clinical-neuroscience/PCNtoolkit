@@ -14,6 +14,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import scipy.stats as stats
 import xarray as xr
+import matplotlib.pyplot as plt
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.math_functions.scaler import Scaler
@@ -162,12 +163,27 @@ class NormativeModel:
             data.save_results(resultsdir)
         if self.saveplots:
             plotdir = os.path.join(self.save_dir, "plots")
-            plot_qq(data, plot_id_line=True, save_dir=plotdir)
-            plot_centiles(
+
+            # QQ plots
+            for fig in plot_qq(
+                data,
+                plot_id_line=True,
+                save_dir=plotdir,
+                show_figure=False
+            ):
+                # Close all the figures after saving it to disk
+                plt.close(fig)
+
+            # Centiles plots
+            for fig in plot_centiles(
                 self,
                 data,
                 save_dir=plotdir,
-            )
+                show_figure=False,
+            ):
+                # Close all the figures after saving it to disk
+                plt.close(fig)
+
         return data
 
     def fit_predict(self, fit_data: NormData, predict_data: NormData) -> NormData:
@@ -205,6 +221,12 @@ class NormativeModel:
         new_model.response_vars = respvar_intersection
 
         new_model.preprocess(transfer_data)
+
+        if self.unique_batch_effects is not None:
+            if len(transfer_data.batch_effect_dims) < len(self.batch_effect_dims):
+                Output.warning(
+                    Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS
+                )
         new_model.register_batch_effects(transfer_data)
 
         Output.print(Messages.TRANSFERRING_MODELS, n_models=len(respvar_intersection))

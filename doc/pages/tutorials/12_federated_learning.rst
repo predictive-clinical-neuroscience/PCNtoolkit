@@ -118,9 +118,14 @@ Load data
 
 We use the
 `fcon1000 <https://fcon_1000.projects.nitrc.org/fcpClassic/FcpTable.html>`__
-dataset that is included in PCNtoolkit, which contains resting state
-fMRI from 1078 subjects across 23 sites. We select a single response
-variable (``WM-hypointensities``) to keep the tutorial fast.
+dataset that is included in PCNtoolkit. This dataset contains derived
+structural MRI phenotypes from 1,078 subjects collected across 23 sites,
+including cortical thickness measures, subcortical and ventricular
+volumes, and global brain-volume estimates.
+
+For this tutorial, we select a single response variable: the
+``WM-hypointensities``\ which is a measure related to damaged or
+diseased tissue within the brain’s white matter.
 
 .. code:: ipython3
 

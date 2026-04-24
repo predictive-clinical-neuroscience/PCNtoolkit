@@ -1,36 +1,37 @@
 """A module for plotting functions."""
 
+import copy
+import os
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  # type: ignore
 import seaborn as sns  # type: ignore
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
-from typing import Optional
 
-# from xarray.core.common import P
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.util.autoscale_plot import autoscale
+
 if TYPE_CHECKING:
     from pcntoolkit.normative_model import NormativeModel
-import os
-import copy
-from collections import defaultdict
+
 sns.set_theme(style="darkgrid")
 
 
 def plot_centiles(
     model: "NormativeModel",
-    scatter_data: Optional[NormData] = None,
-    centiles: List[float] = [0.05, 0.25, 0.5, 0.75, 0.95],
+    scatter_data: NormData | None = None,
+    centiles: list[float] = [0.05, 0.25, 0.5, 0.75, 0.95],
     covariate: str | None = None,
-    response_vars: List[str] | None = None,
+    response_vars: list[str] | None = None,
     scatter_kwargs: dict = {},
+    show_figure: bool = True,
     save_dir: str | None = None,
-    
-):
+) -> list[Figure]:
     """
     Plot the centiles of the model.
 
@@ -53,8 +54,20 @@ def plot_centiles(
         - alpha: The transparency of the scatter points. Between 0 and 1.
         - s: The size of the scatter points.
         - marker: The marker of the scatter points. Uses matplotlib marker syntax: https://matplotlib.org/stable/api/markers_api.html
-        - edgecolor: The edge color of the scatter points. Hex code or matplotlib color name.
-        - linewidth: The width of the edge of the scatter points. 0 for no edge.
+        - edgecolor: The edge color of the scatter points. Hex code or
+          matplotlib color name.
+        - linewidth: The width of the edge of the scatter points.
+          0 for no edge.
+    show_figure: bool, optional
+        If True, call plt.show() after all figures are created.
+        Defaults to True.
+    save_dir: str | None, optional
+        Directory to save the figures. Defaults to None.
+
+    Returns
+    -------
+    list[Figure]
+        One matplotlib Figure per response variable.
     """
     complete_scatter_kwargs: dict = {}
     if scatter_data is not None:
@@ -126,20 +139,39 @@ def plot_centiles(
 
         model.harmonize(scatter_data, reference_batch_effect=batch_effects)
 
+    figs: list[Figure] = []
     for response_var in response_vars:
-        _plot_centiles(centile_data=centile_data, response_var=response_var, covariate=covariate, scatter_data=scatter_data, scatter_kwargs=complete_scatter_kwargs, save_dir=save_dir)
+        # Collect the Figure returned by each per-variable plot call.
+        fig = _plot_centiles(
+            centile_data=centile_data,
+            response_var=response_var,
+            covariate=covariate,
+            scatter_data=scatter_data,
+            scatter_kwargs=complete_scatter_kwargs,
+            save_dir=save_dir,
+        )
+        figs.append(fig)
+    # Show all figures at once when requested.
+    if show_figure:
+        plt.show()
+    return figs
 
 
 def _plot_centiles(
     centile_data: NormData,
     response_var: str,
-    covariate: str = None,  # type: ignore
-    scatter_data: Optional[NormData] = None,
+    covariate: str | None = None,
+    scatter_data: NormData | None = None,
     scatter_kwargs: dict = {},
     save_dir: str | None = None,
-) -> None:
+    ax: Axes | None = None,
+) -> Figure:
     sns.set_style("whitegrid")
-    plt.figure()
+    # Use the provided axes or create a new figure and axes.
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     filter_dict = {
         "covariates": covariate,
@@ -169,11 +201,12 @@ def _plot_centiles(
             linewidth=thickness,
             zorder=2,
             legend="brief",
+            ax=ax,
         )
 
         font = FontProperties()
         font.set_weight("bold")
-        plt.text(
+        ax.text(
             s=centile.item(),
             x=filtered.X[0] - 1,
             y=filtered.centiles.sel(centile=centile)[0],
@@ -182,7 +215,7 @@ def _plot_centiles(
             verticalalignment="center",
             fontproperties=font,
         )
-        plt.text(
+        ax.text(
             s=centile.item(),
             x=filtered.X[-1] + 1,
             y=filtered.centiles.sel(centile=centile)[-1],
@@ -192,49 +225,54 @@ def _plot_centiles(
             fontproperties=font,
         )
 
-    minx, maxx = plt.xlim()
-    plt.xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    minx, maxx = ax.get_xlim()
+    ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
         data_name = "Y_harmonized"
         columns = [("X", covariate), (data_name, response_var)]
-        columns.extend([("batch_effects", be.item()) for be in scatter_data.batch_effect_dims])
+        columns.extend(
+            [("batch_effects", be.item()) for be in scatter_data.batch_effect_dims]
+        )
         df = df[columns]
         df.columns = [c[1] for c in df.columns]
         sns.scatterplot(
             data=df,
             x=covariate,
             y=response_var,
-            **scatter_kwargs
+            ax=ax,
+            **scatter_kwargs,
         )
 
-        plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
-        title = f"Centiles of {response_var}\n With harmonized {scatter_data.name} data"
+        plotname = (
+            f"centiles_{response_var}_{scatter_data.name}_harmonized"
+        )
+        title = (
+            f"Centiles of {response_var}"
+            f"\n With harmonized {scatter_data.name} data"
+        )
     else:
         plotname = f"centiles_{response_var}"
         title = f"Centiles of {response_var}"
 
-    plt.title(title)
-    plt.xlabel(covariate)
-    plt.ylabel(response_var)
+    ax.set_title(title)
+    ax.set_xlabel(covariate)
+    ax.set_ylabel(response_var)
+    # Apply tight layout before saving so it takes effect.
+    fig.tight_layout()
     if save_dir:
-        plt.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
-    else:
-        plt.show(block=False)
-    plt.tight_layout()
-    plt.close()
-
-
+        fig.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
+    return fig
 
 def plot_centiles_advanced(
     model: "NormativeModel",
-    centiles: List[float] | np.ndarray | None = None,
-    conditionals: List[float] | np.ndarray | None = None,
+    centiles: list[float] | np.ndarray | None = None,
+    conditionals: list[float] | np.ndarray | None = None,
     covariate: str | None = None,
-    covariate_ranges: dict[str, tuple[float, float]] = None,  # type: ignore
-    response_vars: List[str] | None = None,
-    batch_effects: Dict[str, List[str]] | None | Literal["all"] = None,
+    covariate_ranges: dict[str, tuple[float, float]] | None = None,
+    response_vars: list[str] | None = None,
+    batch_effects: dict[str, list[str]] | None | Literal["all"] = None,
     scatter_data: NormData | None = None,
     harmonize_data: bool = True,
     hue_data: str = "site",
@@ -242,13 +280,14 @@ def plot_centiles_advanced(
     show_other_data: bool = False,
     show_thrivelines: bool = False,
     z_thrive: float = 0.0,
+    show_figure: bool = True,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
     show_yhat: bool = False,
     plt_kwargs: dict | None = None,
     **kwargs: Any,
-) -> None:
+) -> list[Figure]:
     """Generate centile plots for response variables with optional data overlay.
 
     This function creates visualization of centile curves for all response variables
@@ -281,21 +320,25 @@ def plot_centiles_advanced(
         The column to use for marker styling the data. If None, the data will not be marker styled.
     show_other_data: bool, optional
         Whether to scatter data belonging to groups not in batch_effects.
+    show_figure: bool, optional
+        If True, call plt.show() after all figures are created.
+        Defaults to True.
     save_dir: str | None, optional
-        The directory to save the plot to. If None, the plot will not be saved.
+        The directory to save the plot to. If None, the plot will not
+        be saved.
     show_centile_labels: bool, optional
         Whether to show the centile labels on the plot.
     show_legend: bool, optional
         Whether to show the legend on the plot.
     plt_kwargs: dict, optional
-        Additional keyword arguments for the plot.
+        Additional keyword arguments passed to plt.subplots().
     **kwargs: Any, optional
         Additional keyword arguments for the model.compute_centiles method.
 
     Returns
     -------
-    None
-        Displays the plot using matplotlib.
+    list[Figure]
+        One matplotlib Figure per response variable.
     """
     if covariate is None:
         covariate = model.covariates[0]
@@ -367,9 +410,9 @@ def plot_centiles_advanced(
         covariates=model.covariates,
         response_vars=response_vars,
         batch_effects=list(batch_effects.keys()),
-    )  # type:ignore
+    )  # type: ignore
 
-    conditionals_data = []
+    conditionals_data: list[NormData] = []
     if conditionals is not None:
         for c in conditionals:
             # Compute the endpoints of the conditional curve (0.01th and 0.99th centile)
@@ -392,7 +435,7 @@ def plot_centiles_advanced(
         model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
     if scatter_data and show_thrivelines:
         model.compute_thrivelines(scatter_data, z_thrive=z_thrive)
-    if show_yhat and not hasattr(centile_data, "yhat"):
+    if show_yhat and not hasattr(centile_data, "Yhat"):
         model.compute_yhat(centile_data)
 
     if not model.has_batch_effect:
@@ -405,8 +448,10 @@ def plot_centiles_advanced(
         else:
             model.harmonize(scatter_data)
 
+    figs: list[Figure] = []
     for response_var in response_vars:
-        _plot_centiles_advanced(
+        # Collect the Figure returned by each per-variable plot call.
+        fig = _plot_centiles_advanced(
             centile_data=centile_data,
             response_var=response_var,
             covariate=covariate,
@@ -424,14 +469,19 @@ def plot_centiles_advanced(
             show_yhat=show_yhat,
             plt_kwargs=plt_kwargs,
         )
+        figs.append(fig)
+    # Show all figures at once when requested.
+    if show_figure:
+        plt.show()
+    return figs
 
 
 def _plot_centiles_advanced(
     centile_data: NormData,
     response_var: str,
-    covariate: str = None,  # type: ignore
-    conditionals_data: List[NormData] | None = None,
-    batch_effects: Dict[str, List[str]] = None,  # type: ignore
+    covariate: str | None = None,
+    conditionals_data: list[NormData] | None = None,
+    batch_effects: dict[str, list[str]] | None = None,
     scatter_data: NormData | None = None,
     harmonize_data: bool = True,
     hue_data: str = "site",
@@ -442,10 +492,15 @@ def _plot_centiles_advanced(
     show_centile_labels: bool = True,
     show_legend: bool = True,
     show_yhat: bool = False,
-    plt_kwargs: dict = None,  # type: ignore
-) -> None:
+    plt_kwargs: dict | None = None,
+    ax: Axes | None = None,
+) -> Figure:
     sns.set_style("whitegrid")
-    plt.figure(**plt_kwargs)
+    # Use provided axes or create a new figure with optional Figure kwargs.
+    if ax is None:
+        fig, ax = plt.subplots(**(plt_kwargs or {}))
+    else:
+        fig = ax.get_figure()
 
     filter_dict = {
         "covariates": covariate,
@@ -476,12 +531,13 @@ def _plot_centiles_advanced(
             linewidth=thickness,
             zorder=2,
             legend="brief",
+            ax=ax,
         )
 
         font = FontProperties()
         font.set_weight("bold")
         if show_centile_labels:
-            plt.text(
+            ax.text(
                 s=centile.item(),
                 x=filtered.X[0] - 1,
                 y=filtered.centiles.sel(centile=centile)[0],
@@ -490,7 +546,7 @@ def _plot_centiles_advanced(
                 verticalalignment="center",
                 fontproperties=font,
             )
-            plt.text(
+            ax.text(
                 s=centile.item(),
                 x=filtered.X[-1] + 1,
                 y=filtered.centiles.sel(centile=centile)[-1],
@@ -500,17 +556,29 @@ def _plot_centiles_advanced(
                 fontproperties=font,
             )
     if show_yhat:
-        plt.plot(filtered.X, filtered.Yhat, color="red", linestyle="--", linewidth=thickness, zorder=2, label="$\\hat{Y}$")
+        ax.plot(
+            filtered.X,
+            filtered.Yhat,
+            color="red",
+            linestyle="--",
+            linewidth=thickness,
+            zorder=2,
+            label="$\\hat{Y}$",
+        )
 
-    minx, maxx = plt.xlim()
-    plt.xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    minx, maxx = ax.get_xlim()
+    ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
         scatter_data_name = "Y_harmonized" if harmonize_data else "Y"
-        thriveline_data_name = "thrive_Y_harmonized" if harmonize_data else "thrive_Y"
+        thriveline_data_name = (
+            "thrive_Y_harmonized" if harmonize_data else "thrive_Y"
+        )
         columns = [("X", covariate), (scatter_data_name, response_var)]
-        columns.extend([("batch_effects", be.item()) for be in scatter_data.batch_effect_dims])
+        columns.extend(
+            [("batch_effects", be.item()) for be in scatter_data.batch_effect_dims]
+        )
         df = df[columns]
         df.columns = [c[1] for c in df.columns]
         if batch_effects == {}:
@@ -525,9 +593,13 @@ def _plot_centiles_advanced(
                 marker="o",
                 edgecolor="black",
                 linewidth=0,
+                ax=ax,
             )
             if show_thrivelines:
-                plt.plot(scatter_filter.thrive_X.to_numpy().T, scatter_filter[thriveline_data_name].to_numpy().T)
+                ax.plot(
+                    scatter_filter.thrive_X.to_numpy().T,
+                    scatter_filter[thriveline_data_name].to_numpy().T,
+                )
         else:
             idx = np.full(len(df), True)
             for j in batch_effects:
@@ -546,9 +618,13 @@ def _plot_centiles_advanced(
                 alpha=0.8,
                 zorder=1,
                 linewidth=0,
+                ax=ax,
             )
             if show_thrivelines:
-                plt.plot(scatter_filter.thrive_X.to_numpy().T, scatter_filter[thriveline_data_name].to_numpy().T)
+                ax.plot(
+                    scatter_filter.thrive_X.to_numpy().T,
+                    scatter_filter[thriveline_data_name].to_numpy().T,
+                )
 
             if show_other_data:
                 non_be_df = df[~idx]
@@ -565,6 +641,7 @@ def _plot_centiles_advanced(
                     alpha=0.4,
                     zorder=0,
                     legend=False,
+                    ax=ax,
                 )
 
             if show_legend:
@@ -572,19 +649,21 @@ def _plot_centiles_advanced(
                 if legend:
                     handles = legend.legend_handles
                     labels = [t.get_text() for t in legend.get_texts()]
-                    plt.legend(
+                    ax.legend(
                         handles,
                         labels,
                         title_fontsize=10,
                     )
             else:
-                plt.legend().remove()
+                ax.get_legend().remove()
 
     title = f"Centiles of {response_var}"
     plotname = f"centiles_{response_var}"
     if scatter_data:
         if harmonize_data:
-            plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
+            plotname = (
+                f"centiles_{response_var}_{scatter_data.name}_harmonized"
+            )
             title = f"{title}\n With harmonized {scatter_data.name} data"
         else:
             plotname = f"centiles_{response_var}_{scatter_data.name}"
@@ -596,7 +675,7 @@ def _plot_centiles_advanced(
             x = filter_cond.X
             p = np.exp(filter_cond.logp.values) * 30 + x
             y = filter_cond.Y.values
-            plt.plot(
+            ax.plot(
                 p,
                 y,
                 color="#1fbde0",
@@ -606,7 +685,7 @@ def _plot_centiles_advanced(
             )
             x = [x[0], x[-1]]
             y = [y[0], y[-1]]
-            plt.plot(
+            ax.plot(
                 x,
                 y,
                 color="#1fbde0",
@@ -615,16 +694,16 @@ def _plot_centiles_advanced(
                 alpha=0.2,
             )
 
-    autoscale(ax=plt.gca())
+    autoscale(ax=ax)
 
-    plt.title(title)
-    plt.xlabel(covariate)
-    plt.ylabel(response_var)
+    ax.set_title(title)
+    ax.set_xlabel(covariate)
+    ax.set_ylabel(response_var)
+    # Apply tight layout before saving so it takes effect.
+    fig.tight_layout()
     if save_dir:
-        plt.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
-    else:
-        plt.show(block=False)
-    plt.close()
+        fig.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
+    return fig
 
 def plot_qq(
     data: NormData,
@@ -634,10 +713,11 @@ def plot_qq(
     hue_data: str | None = None,
     markers_data: str | None = None,
     split_data: str | None = None,
-    response_vars: List[str] | None = None,
+    response_vars: list[str] | None = None,
     seed: int = 42,
+    show_figure: bool = True,
     save_dir: str | None = None,
-) -> None:
+) -> list[Figure]:
     """
     Plot QQ plots for each response variable in the data.
 
@@ -661,10 +741,14 @@ def plot_qq(
         The response vars for which to make the plots. All are plotted if this is None, which is default.
     seed : int, optional
         Random seed for reproducibility. Defaults to 42.
+    show_figure : bool, optional
+        If True, call plt.show() after all figures are created.
+        Defaults to True.
 
     Returns
     -------
-    None
+    list[Figure]
+        One matplotlib Figure per response variable.
 
     Examples
     --------
@@ -673,10 +757,14 @@ def plot_qq(
     plt_kwargs = plt_kwargs or {}
     if response_vars is None:
         response_vars = data.response_vars.values
-    response_vars = list(set(data.response_vars.values).intersection(set(response_vars)))
-    data = data.sel(response_vars = response_vars)
+    response_vars = list(
+        set(data.response_vars.values).intersection(set(response_vars))
+    )
+    data = data.sel(response_vars=response_vars)
+    figs: list[Figure] = []
     for response_var in response_vars:
-        _plot_qq(
+        # Collect the Figure returned by each per-variable plot call.
+        fig = _plot_qq(
             data,
             response_var,
             plt_kwargs,
@@ -688,6 +776,11 @@ def plot_qq(
             seed,
             save_dir,
         )
+        figs.append(fig)
+    # Show all figures at once when requested.
+    if show_figure:
+        plt.show()
+    return figs
 
 
 def _plot_qq(
@@ -701,7 +794,8 @@ def _plot_qq(
     split_data: str | None = None,
     seed: int = 42,
     save_dir: str | None = None,
-) -> None:
+    ax: Axes | None = None,
+) -> Figure:
     """
     Plot a QQ plot for a single response variable.
 
@@ -722,14 +816,19 @@ def _plot_qq(
     markers_data : str or None, optional
         Column to use for marker styling. Defaults to None.
     split_data : str or None, optional
-        Column to use for splitting data. Defaults to None. All split data will be offset by 1.
+        Column to use for splitting data. Defaults to None.
+        All split data will be offset by 1.
     seed : int, optional
         Random seed for reproducibility. Defaults to 42.
-    save_dir: str | None = None,
+    save_dir : str or None, optional
+        Directory to save the figure. Defaults to None.
+    ax : Axes or None, optional
+        Existing axes to draw into. Creates a new figure when None.
 
     Returns
     -------
-    None
+    Figure
+        The matplotlib Figure containing the QQ plot.
 
     Examples
     --------
@@ -737,6 +836,12 @@ def _plot_qq(
     """
     np.random.seed(seed)
     sns.set_style("whitegrid")
+    # Use provided axes or create a new figure and axes.
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
     filter_dict = {
         "response_vars": response_var,
     }
@@ -770,7 +875,7 @@ def _plot_qq(
             rand = np.random.randn(g[1].shape[0])
             rand.sort()
             df.loc[my_id, tq] = rand
-    alpha = min(1, 20/np.sqrt(len(df.index)))
+    alpha = min(1, 20 / np.sqrt(len(df.index)))
     # Plot the QQ-plot
     sns.scatterplot(
         data=df,
@@ -781,28 +886,54 @@ def _plot_qq(
         **plt_kwargs,
         linewidth=0,
         alpha=alpha,
+        ax=ax,
     )
     if plot_id_line:
         if split_data:
             for i, g in enumerate(df.groupby(split_data, sort=False)):
                 my_offset = i * 1.0
                 my_id = g[1].index
-                plt.plot(
-                    [-3, 3], [-3 + my_offset, 3 + my_offset], color="black", linestyle="--", linewidth=1, alpha=0.8, zorder=0
+                ax.plot(
+                    [-3, 3],
+                    [-3 + my_offset, 3 + my_offset],
+                    color="black",
+                    linestyle="--",
+                    linewidth=1,
+                    alpha=0.8,
+                    zorder=0,
                 )
         else:
-            plt.plot([-3, 3], [-3, 3], color="black", linestyle="--", linewidth=1, alpha=0.8, zorder=3)
+            ax.plot(
+                [-3, 3],
+                [-3, 3],
+                color="black",
+                linestyle="--",
+                linewidth=1,
+                alpha=0.8,
+                zorder=3,
+            )
 
     if bound != 0:
-        plt.axis((-bound, bound, -bound, bound))
+        ax.axis((-bound, bound, -bound, bound))
+    # Apply tight layout before saving so it takes effect.
+    fig.tight_layout()
     if save_dir:
-        plt.savefig(os.path.join(save_dir, f"qq_{response_var}_{data.name}.png"), dpi=300)
-    else:
-        plt.show(block=False)
-    plt.close()
+        fig.savefig(
+            os.path.join(save_dir, f"qq_{response_var}_{data.name}.png"),
+            dpi=300,
+        )
+    return fig
 
 
-def plot_ridge(data: NormData, variable: Literal["Z", "Y"], split_by: str, response_vars: List[str] | None = None, save_dir: str | None = None, **kwargs: Any) -> None:
+def plot_ridge(
+    data: NormData,
+    variable: Literal["Z", "Y"],
+    split_by: str,
+    response_vars: list[str] | None = None,
+    show_figure: bool = True,
+    save_dir: str | None = None,
+    **kwargs: Any,
+) -> list[Figure]:
     """
     Plot a ridge plot for each response variable in the data.
 
@@ -820,29 +951,51 @@ def plot_ridge(data: NormData, variable: Literal["Z", "Y"], split_by: str, respo
         The variable to plot on the x-axis. (Z or Y)
     split_by : str
         The variable to split the data by.
-    save_dir : str | None, optional
+    response_vars : list[str] or None, optional
+        The response vars for which to make the plots.
+        All are plotted if this is None, which is default.
+    show_figure : bool, optional
+        If True, call plt.show() after all figures are created.
+        Defaults to True.
+    save_dir : str or None, optional
         The directory to save the plot to. Defaults to None.
-    response_vars: List[str] | None = None,
-        The response vars for which to make the plots. All are plotted if this is None, which is default.
     **kwargs : Any, optional
         Additional keyword arguments for the plot.
 
     Returns
     -------
-    None
+    list[Figure]
+        One matplotlib Figure per response variable.
     """
-
     sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
 
     if response_vars is None:
         response_vars = data.response_vars.values
-    response_vars = list(set(data.response_vars.values).intersection(set(response_vars)))
-    data = data.sel(response_vars = response_vars)
+    response_vars = list(
+        set(data.response_vars.values).intersection(set(response_vars))
+    )
+    data = data.sel(response_vars=response_vars)
+    figs: list[Figure] = []
     for response_var in response_vars:
-        _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs)
+        # Collect the Figure returned by each per-variable plot call.
+        fig = _plot_ridge(
+            data, variable, response_var, split_by, save_dir, **kwargs
+        )
+        figs.append(fig)
+    # Show all figures at once when requested.
+    if show_figure:
+        plt.show()
+    return figs
 
 
-def _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs):
+def _plot_ridge(
+    data: NormData,
+    variable: str,
+    response_var: str,
+    split_by: str,
+    save_dir: str | None,
+    **kwargs: Any,
+) -> Figure:
     df = data.to_dataframe()
     # Select only the Z and batch_effects columns
     df = df[[(variable, response_var), ("batch_effects", split_by)]]
@@ -850,20 +1003,34 @@ def _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs):
     df.columns = [df.columns[0][0], df.columns[1][1]]
 
     # Initialize the FacetGrid object
-    palette = kwargs.get("palette", sns.cubehelix_palette(n_colors=len(df[split_by].unique()), rot=1.5, light=0.7))
-    g = sns.FacetGrid(df, row=split_by, hue=split_by, aspect=15, height=0.5, palette=palette)
+    palette = kwargs.get(
+        "palette",
+        sns.cubehelix_palette(
+            n_colors=len(df[split_by].unique()), rot=1.5, light=0.7
+        ),
+    )
+    g = sns.FacetGrid(
+        df, row=split_by, hue=split_by, aspect=15, height=0.5, palette=palette
+    )
 
     # Draw the densities in a few steps
-    g.map(sns.kdeplot, variable, bw_adjust=0.5, clip_on=False, fill=True, alpha=1, linewidth=1.5)
+    g.map(
+        sns.kdeplot, variable, bw_adjust=0.5, clip_on=False, fill=True,
+        alpha=1, linewidth=1.5,
+    )
     g.map(sns.kdeplot, variable, clip_on=False, color="w", lw=2, bw_adjust=0.5)
 
     # passing color=None to refline() uses the hue mapping
     g.refline(y=0, linewidth=2, linestyle="-", color=None, clip_on=False)
 
     # Define and use a simple function to label the plot in axes coordinates
-    def label(x, color, label):
+    def label(x: Any, color: Any, label: str) -> None:
         ax = plt.gca()
-        ax.text(0, 0.2, label, fontweight="bold", color=color, ha="left", va="center", transform=ax.transAxes)
+        ax.text(
+            0, 0.2, label,
+            fontweight="bold", color=color,
+            ha="left", va="center", transform=ax.transAxes,
+        )
 
     g.map(label, variable)
 
@@ -874,11 +1041,14 @@ def _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs):
     g.set_titles("")
     g.set(yticks=[], ylabel="")
     g.despine(bottom=True, left=True)
-    plt.tight_layout()
+    # Apply tight layout before saving so it takes effect.
+    g.figure.tight_layout()
     if save_dir:
-        plt.savefig(os.path.join(save_dir, f"ridge_{response_var}_{variable}_{split_by}_{data.name}.png"), dpi=300)
-    else:
-        plt.show(block=False)
-    plt.close()
-
-
+        g.figure.savefig(
+            os.path.join(
+                save_dir,
+                f"ridge_{response_var}_{variable}_{split_by}_{data.name}.png",
+            ),
+            dpi=300,
+        )
+    return g.figure
