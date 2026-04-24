@@ -189,14 +189,18 @@ class Evaluator:
         """
         Evaluate Mean Log Loss (MLL) for model predictions.
 
-        MLL statistics the probabilistic accuracy of the model's predictions, assuming
-        binary classification targets.
+        MLL measures the probabilistic accuracy of the model's predictions.
+
+        Note: In earlier PCNtoolkit releases, this metric was called `NLL`
+        (Negative Log Likelihood). It is now named `MLL` to match the
+        literature and avoid confusion with the different `NLL` used internally
+        for BLR hyperparameter estimation.
 
         Parameters
         ----------
         data : NormData
-            Data container with predictions and actual values. Must contain 'y' and 'Yhat' variables.
-            'y' should contain binary values (0 or 1).
+                Data container with predictions and actual values. Must contain
+                'logp' values for the evaluated response variable.
         """
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
@@ -388,7 +392,8 @@ class Evaluator:
         Parameters
         ----------
         data : NormData
-            Data container with predictions and actual values. Assumes binary targets (0 or 1).
+            Data container with predictions and actual values. Must
+            contain per-observation log-probabilities.
 
         Returns
         -------
@@ -397,7 +402,7 @@ class Evaluator:
         """
         logp = data["logp"].values
         mll = -np.mean(logp)
-        return float(mll)  # Explicitly cast to float
+        return float(mll)
 
     def _evaluate_bic(self, data: NormData) -> float:
         """
