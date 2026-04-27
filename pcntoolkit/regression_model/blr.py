@@ -14,7 +14,7 @@ and supports both homoskedastic and heteroskedastic noise models.
 from __future__ import annotations
 
 import copy
-from typing import Iterator, Literal, Optional
+from typing import Generator, Literal, Optional
 
 import numpy as np
 import xarray as xr
@@ -257,7 +257,7 @@ class BLR(RegressionModel):
         self,
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
-    ) -> Iterator[tuple[dict[str, object], np.ndarray]]:
+    ) -> Generator[tuple[dict[str, object], np.ndarray]]:
         """Yield encoded batch-effect combinations and their masks.
 
         Parameters

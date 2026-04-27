@@ -1,4 +1,4 @@
-"""Utilities for reusable array and iterator operations.
+"""Utilities for reusable array.
 
 This module is the shared home for programming operations (e.g., from NumPy,
 pandas, xarray, itertools packages). The goal is to keep the main codebase
@@ -8,7 +8,7 @@ like these to a shared utility module.
 
 from __future__ import annotations
 from itertools import product
-from typing import Iterator
+from typing import Generator
 import numpy as np
 
 
@@ -16,7 +16,7 @@ def iter_batch_combinations(
     batch_values: np.ndarray,
     unique_batch_effects: dict[str, list[str | int]],
     batch_dims: list[str],
-) -> Iterator[tuple[dict[str, str | int], np.ndarray]]:
+) -> Generator[tuple[dict[str, str | int], np.ndarray]]:
     """Yield batch-effect combinations together with observation masks.
 
     Parameters
@@ -75,4 +75,6 @@ def iter_batch_combinations(
         # eg {'site': 'site1', 'sex': 'M'}
         combination = dict(zip(batch_dims, combo_values))
 
+        # Yield: return one combination at a time (memory-efficient) 
+        # instead of returning all of them in a list.
         yield combination, mask
