@@ -8,58 +8,9 @@ was computed on scaled Y values.
 The fix ensures both are computed on the same (scaled) data.
 """
 
-import numpy as np
-
-from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
-
-
-def create_test_data(n_samples: int = 100, scale_factor: float = 1.0, seed: int = 42):
-    """Create synthetic test data with a specified scale factor.
-
-    Parameters
-    ----------
-    n_samples : int
-        Number of samples to generate
-    scale_factor : float
-        Factor to scale the response variable by
-    seed : int
-        Random seed for reproducibility
-
-    Returns
-    -------
-    NormData
-        Synthetic dataset with scaled response variables
-    """
-    np.random.seed(seed)
-
-    # Create covariates (age-like)
-    X = np.random.uniform(20, 80, (n_samples, 1))
-
-    # Create response variable with linear relationship + noise
-    # Scale the response by scale_factor
-    Y_base = 0.5 * X[:, 0] + np.random.normal(0, 5, n_samples)
-    Y = (Y_base * scale_factor).reshape(-1, 1)
-
-    # Create batch effects
-    batch_effects = np.random.choice([0, 1], size=(n_samples, 1)).astype(str)
-
-    # Create NormData
-    data = NormData.from_ndarrays(
-        name="test_data",
-        X=X,
-        Y=Y,
-        batch_effects=batch_effects,
-        subject_ids=np.arange(n_samples),
-        attrs={
-            "covariates": ["age"],
-            "response_vars": ["test_metric"],
-            "batch_effect_dims": ["site"],
-        },
-    )
-
-    return data
+from test.fixtures.evaluator_fixtures import create_test_data
 
 
 def test_msll_remains_similar_when_scale_changes(tmp_path):

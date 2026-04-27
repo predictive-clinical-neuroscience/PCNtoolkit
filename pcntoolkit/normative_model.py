@@ -840,7 +840,7 @@ class NormativeModel:
         Computes the log-probability of the data under a simple Gaussian model.
         
         The baseline model is a Gaussian with mean and standard deviation
-        computed from the scaled Y data. This serves as a null model reference
+        computed from the scaled Y data. This serves as a baseline model
         to evaluate for example the MSLL (Mean Standardized Log Loss) of our
         fitted model.
 
@@ -875,18 +875,18 @@ class NormativeModel:
 
         self.postprocess(data)
         return data
-    
+
     @staticmethod
     def elemwise_logp_baseline_model(y_scaled: np.ndarray) -> np.ndarray:
         """
-        Compute log-probability for each observation under a baseline 
+        Compute log-probability for each observation under a baseline
         Gaussian model.
-        
+
         Parameters
         ----------
         y_scaled : np.ndarray
             Scaled response variable values.
-            
+
         Returns
         -------
         np.ndarray

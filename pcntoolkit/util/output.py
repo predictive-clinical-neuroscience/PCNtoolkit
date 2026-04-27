@@ -140,6 +140,7 @@ class Warnings:
     LOADING_DATA_NOT_SUPPORTED_FOR_CROSS_VALIDATION = (
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
+    RENAMED = "'{old_name}' has been renamed to '{new_name}'."
     BLR_CG_NOT_SUPPORTED_WITH_WARP = (
         "The 'cg' optimizer requires analytical gradients, which are not implemented for warped models. "
         "Falling back to the default 'l-bfgs-b' optimizer. "
@@ -255,15 +256,28 @@ class Output:
             print(message)
 
     @classmethod
-    def warning(cls, message: str, *args, **kwargs) -> None:
-        """Print warning message only if show_warnings mode is enabled"""
+    def warning(
+        cls,
+        message: str,
+        *args,
+        category: type = UserWarning,
+        **kwargs,
+    ) -> None:
+        """Print warning only if show_warnings mode is enabled."""
         if cls._show_warnings:
             message = message.format(*args, **kwargs)
             if cls._show_timestamp:
-                message = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " - " + message
+                message = (
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    + " - "
+                    + message
+                )
             if cls._show_pid:
-                message = "Process: " + str(os.getpid()) + " - " + message
-            warnings.warn(message)
+                message = (
+                    "Process: " + str(os.getpid()) + " - " + message
+                )
+            # Emit with the requested warning category
+            warnings.warn(message, category)
 
     @classmethod
     def error(cls, message: str, *args, **kwargs) -> str:

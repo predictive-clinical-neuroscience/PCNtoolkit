@@ -3,9 +3,12 @@ from typing import List, Tuple
 import numpy as np
 import xarray as xr
 from scipy import stats  # type: ignore
-from sklearn.metrics import explained_variance_score, r2_score,mean_absolute_percentage_error
+from sklearn.metrics import (explained_variance_score, r2_score,
+                             mean_absolute_percentage_error)
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.util.data_utils import iter_batch_combinations
+from pcntoolkit.util.output import Output, Warnings
 
 
 class Evaluator:
@@ -42,7 +45,8 @@ class Evaluator:
         """
         # data["Yhat"] = data.centiles.sel(centile=0.5, method="nearest")
         assert "Yhat" in data.data_vars, "Yhat must be computed before evaluation"
-        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "NLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
+        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE",
+                          "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
         if statistics:
             self.statistics = [m for m in all_statistics if m in statistics]
 
@@ -63,8 +67,8 @@ class Evaluator:
             self.evaluate_smse(data)
         if "MSLL" in self.statistics:
             self.evaluate_msll(data)
-        if "NLL" in self.statistics:
-            self.evaluate_nll(data)
+        if "MLL" in self.statistics:
+            self.evaluate_mll(data)
         if "MACE" in self.statistics:
             self.evaluate_mace(data)
         if "MAPE" in self.statistics:
@@ -84,7 +88,8 @@ class Evaluator:
         """
         self.statistics = sorted(self.statistics)
         data["statistics"] = xr.DataArray(
-            np.nan * np.ones((len(data.response_var_list), len(self.statistics))),
+            np.nan * np.ones((len(data.response_var_list),
+                             len(self.statistics))),
             dims=("response_vars", "statistic"),
             coords={
                 "response_vars": data.response_var_list,
@@ -104,8 +109,10 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             rho, p_rho = self._evaluate_rho(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "Rho"}] = float(rho)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "Rho_p"}] = float(p_rho)
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "Rho"}] = float(rho)
+            data.statistics.loc[{"response_vars": responsevar,
+                                 "statistic": "Rho_p"}] = float(p_rho)
 
     def evaluate_R2(self, data: NormData) -> None:
         """
@@ -114,7 +121,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             r2 = self._evaluate_R2(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "R2"}] = r2
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "R2"}] = r2
 
     def evaluate_rmse(self, data: NormData) -> None:
         """
@@ -128,7 +136,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             rmse = self._evaluate_rmse(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "RMSE"}] = rmse
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "RMSE"}] = rmse
 
     def evaluate_smse(self, data: NormData) -> None:
         """
@@ -145,7 +154,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             smse = self._evaluate_smse(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "SMSE"}] = smse
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "SMSE"}] = smse
 
     def evaluate_expv(self, data: NormData) -> None:
         """
@@ -162,7 +172,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             expv = self._evaluate_expv(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "EXPV"}] = expv
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "EXPV"}] = expv
 
     def evaluate_msll(self, data: NormData) -> None:
         """
@@ -171,7 +182,7 @@ class Evaluator:
         MSLL compares the log loss of the model to that of a simple baseline predictor
         that always predicts the mean of the training data.
 
-        MSLL = MLL_model - MLL_null
+        MSLL = MLL_model - MLL_baseline
 
         Parameters
         ----------
@@ -182,25 +193,31 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             msll = self._evaluate_msll(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "MSLL"}] = msll
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MSLL"}] = msll
 
-    def evaluate_nll(self, data: NormData) -> None:
+    def evaluate_mll(self, data: NormData) -> None:
         """
-        Evaluate Negative Log Likelihood (NLL) for model predictions.
+        Evaluate Mean Log Loss (MLL) for model predictions.
 
-        NLL statistics the probabilistic accuracy of the model's predictions, assuming
-        binary classification targets.
+        MLL measures the probabilistic accuracy of the model's predictions.
+
+        Note: In earlier PCNtoolkit releases, this metric was called `NLL`
+        (Negative Log Likelihood). It is now named `MLL` to match the
+        literature and avoid confusion with the different `NLL` used internally
+        for BLR hyperparameter estimation.
 
         Parameters
         ----------
         data : NormData
-            Data container with predictions and actual values. Must contain 'y' and 'Yhat' variables.
-            'y' should contain binary values (0 or 1).
+                Data container with predictions and actual values. Must contain
+                'logp' values for the evaluated response variable.
         """
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
-            nll = self._evaluate_nll(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "NLL"}] = nll
+            mll = self._evaluate_mll(resp_predict_data)
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MLL"}] = mll
 
     def evaluate_bic(self, data: NormData) -> None:
         """
@@ -218,7 +235,8 @@ class Evaluator:
             resp_predict_data = data.sel(response_vars=responsevar)
             bic = self._evaluate_bic(resp_predict_data)
             self.prepare(responsevar)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "BIC"}] = bic
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "BIC"}] = bic
             self.reset()
 
     def evaluate_shapiro_w(self, data: NormData) -> None:
@@ -236,7 +254,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             shapiro_w = self._evaluate_shapiro_w(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "ShapiroW"}] = shapiro_w
+            data.statistics.loc[{"response_vars": responsevar,
+                                 "statistic": "ShapiroW"}] = shapiro_w
 
     def evaluate_mace(self, data: NormData) -> None:
         """
@@ -245,7 +264,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             mace = self._evaluate_mace(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "MACE"}] = mace
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MACE"}] = mace
 
     def evaluate_mape(self, data: NormData) -> None:
         """
@@ -254,7 +274,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             mape = self._evaluate_mape(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "MAPE"}] = mape
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MAPE"}] = mape
 
     def _evaluate_rho(self, data: NormData) -> Tuple[float, float]:
         """
@@ -374,29 +395,38 @@ class Evaluator:
 
         # Baseline Gaussian model mean log loss (negative log-likelihood)
         baseline_logp = data["baseline_logp"].values
-        mll_null = -np.mean(baseline_logp)
+        mll_baseline = -np.mean(baseline_logp)
 
         # Compute MSLL (mean standardized log loss)
-        msll = mll_model - mll_null
+        msll = mll_model - mll_baseline
         return float(msll)
 
-    def _evaluate_nll(self, data: NormData) -> float:
+    def _evaluate_mll(self, data: NormData) -> float:
         """
-        Calculate Negative Log Likelihood.
+        Calculate Mean Log Loss.
 
         Parameters
         ----------
         data : NormData
-            Data container with predictions and actual values. Assumes binary targets (0 or 1).
+            Data container with predictions and actual values. Must
+            contain per-observation log-probabilities.
 
         Returns
         -------
         float
-            Negative log likelihood of predictions
+            Mean Log Loss of predictions
         """
+        # Emit a deprecation warning using the shared renamed template
+        Output.warning(
+            Warnings.RENAMED,
+            old_name="NLL",
+            new_name="MLL",
+            category=DeprecationWarning,
+        )
+
         logp = data["logp"].values
-        nll = -np.mean(logp)
-        return float(nll)  # Explicitly cast to float
+        mll = -np.mean(logp)
+        return float(mll)
 
     def _evaluate_bic(self, data: NormData) -> float:
         """
@@ -418,7 +448,8 @@ class Evaluator:
 
         rss = np.sum((y - yhat) ** 2)
         n = len(y)
-        bic = float(n * np.log(rss / n) + n_params * np.log(n))  # Explicitly cast to float
+        bic = float(n * np.log(rss / n) + n_params *
+                    np.log(n))  # Explicitly cast to float
         return bic
 
     def _evaluate_shapiro_w(self, data: NormData) -> float:
@@ -441,14 +472,92 @@ class Evaluator:
 
     def _evaluate_mace(self, data: NormData) -> float:
         """
-        Calculate Mean Absolute Centile Error.
+        Calculate Mean Absolute Centile Error (MACE).
+
+        MACE measures centile calibration by comparing, for each predicted
+        centile level, the fraction of subjects whose true value falls below
+        that centile curve against the nominal centile value.
+
+        Calibration is computed separately within each
+        unique combination of batch effects (e.g.
+        site1_male, site1_female, site2_male, ...), and
+        the per-combination MACE values are averaged to give
+        the final score. This approach prevents
+        well-calibrated large groups from masking poor
+        calibration at smaller groups.
+
+        This metric is adopted from Zamanzadeh et al. (2026).
+
+        Parameters
+        ----------
+        data : NormData
+            Data container for a single response variable, containing
+            Y, centiles, and batch_effects.
+
+        Returns
+        -------
+        float
+            Mean absolute centile error, averaged over all batch groups.
         """
+        # True response values
         y = data["Y"].values
+        # Nominal centile levels, E.g. [0.05, 0.1, ..., 0.95]
         centile_list = data.centile.values
+        # Predicted centile curves for each subject
         centile_data = data.centiles.values
-        empirical_centiles = (centile_data >= y).mean(axis=1)
-        mace = np.abs(centile_list - empirical_centiles).mean()
-        return float(mace)
+
+        # Collect one MACE value for each unique batch effect
+        batch_mace: list[float] = []
+
+        # Check if there are batch effects
+        unique_batch_effects: dict = data.attrs.get("unique_batch_effects", {})
+        has_batch = (
+            "batch_effects" in data.data_vars
+            and len(unique_batch_effects) > 0
+        )
+
+        if has_batch:
+            # Get batch effects values for each subject
+            # eg [['site1', 'M'], ['site1', 'F'], ...]
+            be_values = data["batch_effects"].values
+            # Get batch effect dimension names
+            # eg ['site', 'sex']
+            be_dims = list(data.batch_effect_dims.values)
+
+            # Iterate over the non-empty batch combinations provided by
+            # shared utility.
+            # eg {'site': 'site1', 'sex': 'M'}
+            for _, mask in iter_batch_combinations(
+                be_values,
+                unique_batch_effects,
+                be_dims,
+            ):
+
+                # Compute the empirical centile for this batch group.
+                empirical_centiles = (
+                    centile_data[:, mask]
+                    >= y[mask]
+                ).mean(axis=1)
+
+                # MACE for this combination
+                batch_mace.append(
+                    float(
+                        np.abs(
+                            centile_list
+                            - empirical_centiles
+                        ).mean()
+                    )
+                )
+
+            # Average MACE across all combinations
+            return float(np.mean(batch_mace))
+
+        else:
+            # Compute MACE if data have no batch effect
+            empirical_centiles = (centile_data >= y).mean(axis=1)
+            return float(
+                np.abs(centile_list - empirical_centiles).mean()
+            )
 
     def _evaluate_mape(self, data: NormData) -> float:
         """
@@ -458,7 +567,6 @@ class Evaluator:
         yhat = data["Yhat"].values
 
         return mean_absolute_percentage_error(y, yhat)
-
 
     def empty_statistic(self) -> xr.DataArray:
         return xr.DataArray(
