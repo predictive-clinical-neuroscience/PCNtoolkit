@@ -5,6 +5,7 @@ import xarray as xr
 from scipy import stats  # type: ignore
 from sklearn.metrics import (explained_variance_score, r2_score,
                              mean_absolute_percentage_error)
+import warnings
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.util.data_utils import iter_batch_combinations
@@ -44,7 +45,8 @@ class Evaluator:
         """
         # data["Yhat"] = data.centiles.sel(centile=0.5, method="nearest")
         assert "Yhat" in data.data_vars, "Yhat must be computed before evaluation"
-        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
+        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE",
+                          "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
         if statistics:
             self.statistics = [m for m in all_statistics if m in statistics]
 
@@ -86,7 +88,8 @@ class Evaluator:
         """
         self.statistics = sorted(self.statistics)
         data["statistics"] = xr.DataArray(
-            np.nan * np.ones((len(data.response_var_list), len(self.statistics))),
+            np.nan * np.ones((len(data.response_var_list),
+                             len(self.statistics))),
             dims=("response_vars", "statistic"),
             coords={
                 "response_vars": data.response_var_list,
@@ -106,8 +109,10 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             rho, p_rho = self._evaluate_rho(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "Rho"}] = float(rho)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "Rho_p"}] = float(p_rho)
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "Rho"}] = float(rho)
+            data.statistics.loc[{"response_vars": responsevar,
+                                 "statistic": "Rho_p"}] = float(p_rho)
 
     def evaluate_R2(self, data: NormData) -> None:
         """
@@ -116,7 +121,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             r2 = self._evaluate_R2(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "R2"}] = r2
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "R2"}] = r2
 
     def evaluate_rmse(self, data: NormData) -> None:
         """
@@ -130,7 +136,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             rmse = self._evaluate_rmse(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "RMSE"}] = rmse
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "RMSE"}] = rmse
 
     def evaluate_smse(self, data: NormData) -> None:
         """
@@ -147,7 +154,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             smse = self._evaluate_smse(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "SMSE"}] = smse
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "SMSE"}] = smse
 
     def evaluate_expv(self, data: NormData) -> None:
         """
@@ -164,7 +172,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             expv = self._evaluate_expv(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "EXPV"}] = expv
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "EXPV"}] = expv
 
     def evaluate_msll(self, data: NormData) -> None:
         """
@@ -184,7 +193,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             msll = self._evaluate_msll(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "MSLL"}] = msll
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MSLL"}] = msll
 
     def evaluate_mll(self, data: NormData) -> None:
         """
@@ -206,7 +216,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             mll = self._evaluate_mll(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "MLL"}] = mll
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MLL"}] = mll
 
     def evaluate_bic(self, data: NormData) -> None:
         """
@@ -224,7 +235,8 @@ class Evaluator:
             resp_predict_data = data.sel(response_vars=responsevar)
             bic = self._evaluate_bic(resp_predict_data)
             self.prepare(responsevar)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "BIC"}] = bic
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "BIC"}] = bic
             self.reset()
 
     def evaluate_shapiro_w(self, data: NormData) -> None:
@@ -242,7 +254,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             shapiro_w = self._evaluate_shapiro_w(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "ShapiroW"}] = shapiro_w
+            data.statistics.loc[{"response_vars": responsevar,
+                                 "statistic": "ShapiroW"}] = shapiro_w
 
     def evaluate_mace(self, data: NormData) -> None:
         """
@@ -251,7 +264,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             mace = self._evaluate_mace(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "MACE"}] = mace
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MACE"}] = mace
 
     def evaluate_mape(self, data: NormData) -> None:
         """
@@ -260,7 +274,8 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             mape = self._evaluate_mape(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar, "statistic": "MAPE"}] = mape
+            data.statistics.loc[{
+                "response_vars": responsevar, "statistic": "MAPE"}] = mape
 
     def _evaluate_rho(self, data: NormData) -> Tuple[float, float]:
         """
@@ -401,6 +416,11 @@ class Evaluator:
         float
             Mean Log Loss of predictions
         """
+        # Deprecation warning: NLL has been renamed to MLL
+        warnings.warn(
+            "The 'NLL' statistic has been renamed to 'MLL'",
+            DeprecationWarning)
+
         logp = data["logp"].values
         mll = -np.mean(logp)
         return float(mll)
@@ -425,7 +445,8 @@ class Evaluator:
 
         rss = np.sum((y - yhat) ** 2)
         n = len(y)
-        bic = float(n * np.log(rss / n) + n_params * np.log(n))  # Explicitly cast to float
+        bic = float(n * np.log(rss / n) + n_params *
+                    np.log(n))  # Explicitly cast to float
         return bic
 
     def _evaluate_shapiro_w(self, data: NormData) -> float:
