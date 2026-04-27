@@ -1,13 +1,9 @@
-# Execute all tutorial notebooks and commit the results.
+# Manually execute all tutorial notebooks and commit the results.
 #
-# Trigger options:
-# - Open the Actions tab, select "Run Notebooks", click
-#   "Run workflow".
-# - Add a pull request comment `/run-notebooks` to run on the PR
-#   branch, or `/run-notebooks --dry-run` to skip the commit.
-#
-# Comment-triggered runs are limited to maintainers and branches in
-# this repository.
+# Trigger: manual only.
+# - Open the Actions tab, select "Run Notebooks", click "Run workflow".
+# - Pick the branch you want to run against (e.g. your PR branch).
+# - Tick "Dry run" to execute notebooks without committing anything.
 #
 # The workflow stops immediately if any notebook fails.
 # The failing notebook name and cell error are printed in the log.
@@ -26,98 +22,15 @@ on:
         required: false
         type: boolean
         default: false
-  issue_comment:
-    types:
-      - created
 
 permissions:
   contents: write   # required to push committed outputs back
-  pull-requests: read
 
 jobs:
   run-notebooks:
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'issue_comment' &&
-        github.event.issue.pull_request &&
-        startsWith(github.event.comment.body, '/run-notebooks')
-      )
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Resolve branch + trigger settings ──────────────────
-      - name: Resolve run context
-        id: context
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const workflowDryRun =
-              context.payload.inputs?.dry_run === true ||
-              context.payload.inputs?.dry_run === "true";
-
-            if (context.eventName === "workflow_dispatch") {
-              const branchName = context.ref.replace(
-                "refs/heads/",
-                "",
-              );
-
-              core.setOutput("checkout_ref", branchName);
-              core.setOutput("push_ref", branchName);
-              core.setOutput(
-                "dry_run",
-                workflowDryRun ? "true" : "false",
-              );
-              return;
-            }
-
-            const commentBody =
-              context.payload.comment?.body?.trim() ?? "";
-            const allowedAssociations = new Set([
-              "COLLABORATOR",
-              "MEMBER",
-              "OWNER",
-            ]);
-
-            if (!allowedAssociations.has(
-              context.payload.comment.author_association,
-            )) {
-              core.setFailed(
-                "Only repository maintainers may trigger " +
-                "/run-notebooks.",
-              );
-              return;
-            }
-
-            const { data: pullRequest } =
-              await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.issue.number,
-              });
-
-            const repositoryFullName = [
-              context.repo.owner,
-              context.repo.repo,
-            ].join("/");
-
-            if (
-              pullRequest.head.repo.full_name !== repositoryFullName
-            ) {
-              core.setFailed(
-                "Comment-triggered notebook runs are limited to " +
-                "same-repository pull requests.",
-              );
-              return;
-            }
-
-            const dryRun =
-              /(?:^|\s)--dry-run(?:\s|$)/.test(commentBody);
-
-            core.setOutput("checkout_ref", pullRequest.head.sha);
-            core.setOutput("push_ref", pullRequest.head.ref);
-            core.setOutput("dry_run", dryRun ? "true" : "false");
-
       # ── 1. Checkout ────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -125,7 +38,6 @@ jobs:
           # persist-credentials lets the final push step use the
           # built-in GITHUB_TOKEN — no personal access token needed.
           persist-credentials: true
-          ref: ${{ steps.context.outputs.checkout_ref }}
 
       # ── 2. Python ──────────────────────────────────────────────
       - name: Set up Python 3.12
@@ -184,7 +96,7 @@ jobs:
 
       # ── 7. Commit and push ─────────────────────────────────────
       - name: Commit generated outputs
-        if: ${{ steps.context.outputs.dry_run == 'false' }}
+        if: ${{ github.event.inputs.dry_run == 'false' }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email \
@@ -200,5 +112,5 @@ jobs:
           else
             git commit -m \
               "chore: update executed notebook outputs [skip ci]"
-            git push origin HEAD:${{ steps.context.outputs.push_ref }}
+            git push
           fi
