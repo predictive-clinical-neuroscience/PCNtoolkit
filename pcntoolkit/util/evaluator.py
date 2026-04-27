@@ -5,10 +5,10 @@ import xarray as xr
 from scipy import stats  # type: ignore
 from sklearn.metrics import (explained_variance_score, r2_score,
                              mean_absolute_percentage_error)
-import warnings
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.util.data_utils import iter_batch_combinations
+from pcntoolkit.util.output import Output, Warnings
 
 
 class Evaluator:
@@ -416,10 +416,13 @@ class Evaluator:
         float
             Mean Log Loss of predictions
         """
-        # Deprecation warning: NLL has been renamed to MLL
-        warnings.warn(
-            "The 'NLL' statistic has been renamed to 'MLL'",
-            DeprecationWarning)
+        # Emit a deprecation warning using the shared renamed template
+        Output.warning(
+            Warnings.RENAMED,
+            old_name="NLL",
+            new_name="MLL",
+            category=DeprecationWarning,
+        )
 
         logp = data["logp"].values
         mll = -np.mean(logp)
