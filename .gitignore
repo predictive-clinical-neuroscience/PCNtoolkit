@@ -72,6 +72,9 @@ pcntoolkit.egg-info
 # Overrule for github folder
 !.github
 
+# ignore agent skills for copilot
+.github/skills/
+
 # Dist folder
 dist/pcntoolkit-0.30.post2-py3.12.egg
 dist/*
