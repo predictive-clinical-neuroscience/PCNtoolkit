@@ -7,7 +7,7 @@ from sklearn.metrics import (explained_variance_score, r2_score,
                              mean_absolute_percentage_error)
 
 from pcntoolkit.dataio.norm_data import NormData
-from pcntoolkit.util.data_operations import iter_batch_combinations
+from pcntoolkit.util.data_utils import iter_batch_combinations
 
 
 class Evaluator:

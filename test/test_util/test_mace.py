@@ -11,7 +11,7 @@ from unittest.mock import patch
 import numpy as np
 import xarray as xr
 
-from pcntoolkit.util.data_operations import (
+from pcntoolkit.util.data_utils import (
     iter_batch_combinations
 )
 from pcntoolkit.util.evaluator import Evaluator

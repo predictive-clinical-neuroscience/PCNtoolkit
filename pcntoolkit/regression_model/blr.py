@@ -24,7 +24,7 @@ from scipy.linalg import LinAlgError  # type: ignore
 from pcntoolkit.math_functions.basis_function import BasisFunction, create_basis_function
 from pcntoolkit.math_functions.warp import *
 from pcntoolkit.regression_model.regression_model import RegressionModel
-from pcntoolkit.util.data_operations import iter_batch_combinations
+from pcntoolkit.util.data_utils import iter_batch_combinations
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 
 
