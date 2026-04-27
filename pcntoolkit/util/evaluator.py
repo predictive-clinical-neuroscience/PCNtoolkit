@@ -3,7 +3,8 @@ from typing import List, Tuple
 import numpy as np
 import xarray as xr
 from scipy import stats  # type: ignore
-from sklearn.metrics import explained_variance_score, r2_score,mean_absolute_percentage_error
+from sklearn.metrics import (explained_variance_score, r2_score,
+                             mean_absolute_percentage_error)
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.util.data_operations import iter_batch_combinations

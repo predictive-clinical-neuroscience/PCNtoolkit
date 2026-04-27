@@ -1,9 +1,9 @@
-"""Utilities for reusable array.
+"""Utilities for data operations.
 
 This module is the shared home for programming operations (e.g., from NumPy,
 pandas, xarray, itertools packages). The goal is to keep the main codebase
-focused on Bayesian statistics while moving reusable programming operations
-like these to a shared utility module.
+focused on Bayesian statistics while moving reusable programming operations 
+to a shared utility module.
 """
 
 from __future__ import annotations
