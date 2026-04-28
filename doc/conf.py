@@ -48,6 +48,8 @@ napoleon_preprocess_types = True
 
 # Theme settings
 html_theme = "pydata_sphinx_theme"
+# Enable the title of the home page when navigating with previous/next buttons
+html_title = ""
 html_theme_options = {
     # Maximum depth of the sidebar navigation tree
     "navigation_depth": 4,
