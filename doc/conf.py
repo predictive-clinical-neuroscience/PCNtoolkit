@@ -61,8 +61,13 @@ html_theme_options = {
     # and "Built with PyData Sphinx Theme" text
     "footer_start": [],
     "footer_end": [],
-    # Version switcher shown in the top navbar
-    "navbar_end": ["version-switcher", "navbar-icon-links"],
+    # Version switcher shown in the top navbar, followed by
+    # the dark/light toggle, then the GitHub icon link
+    "navbar_end": [
+        "version-switcher",
+        "theme-switcher",
+        "navbar-icon-links",
+    ],
     "switcher": {
         # Stable URL so every deployed version can load the JSON list
         "json_url": (
@@ -75,9 +80,12 @@ html_theme_options = {
             "READTHEDOCS_VERSION", "dev"
         ),
     },
-    # Display the project name as text instead of a logo image
+    # Logo: icon image on the left, bold text on the right.
+    # image_light / image_dark are relative to doc/ (the conf dir).
     "logo": {
         "text": "PCNtoolkit",
+        "image_light": "_static/pcn-icon.png",
+        "image_dark": "_static/pcn-icon.png",
     },
 }
 # Directory that holds static files (logo, custom CSS, etc.)
