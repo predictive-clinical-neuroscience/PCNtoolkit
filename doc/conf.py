@@ -31,7 +31,9 @@ autoapi_options = [
 ]
 autoapi_python_class_content = "both"  # Include both class and __init__ docstrings
 autoapi_member_order = "groupwise"  # Group members by type (methods, attributes, etc.)
-autoapi_add_toctree_entry = True  # Add to table of contents
+# Disable automatic toctree injection — we place the API
+# Reference section manually in developers/index.rst
+autoapi_add_toctree_entry = False
 autoapi_template_dir = "_templates/autoapi"  # Custom templates location
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
@@ -45,14 +47,26 @@ napoleon_use_rtype = True
 napoleon_preprocess_types = True
 
 # Theme settings
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 html_theme_options = {
+    # Maximum depth of the sidebar navigation tree
     "navigation_depth": 4,
-    "collapse_navigation": True,
-    "sticky_navigation": True,
-    "titles_only": False,
-    "prev_next_buttons_location": "both",
+    # GitHub icon in the top-right header
+    "github_url": (
+        "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
+    ),
+    # Do not show the "Edit this page" button
+    "use_edit_page_button": False,
+    # Logo shown in the top-left of every page
+    "logo": {
+        "image_light": "pcn-logo.png",
+        "image_dark": "pcn-logo.png",
+    },
 }
+# Directory that holds static files (logo, custom CSS, etc.)
+html_static_path = ["_static"]
+# Apply custom CSS to hide breadcrumbs and other overrides
+html_css_files = ["custom.css"]
 
 # Intersphinx mapping
 intersphinx_mapping = {

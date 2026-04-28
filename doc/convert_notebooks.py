@@ -11,7 +11,7 @@ EXAMPLES_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "examples")
 )
 TUTORIALS_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "pages", "tutorials")
+    os.path.join(os.path.dirname(__file__), "tutorials")
 )
 
 os.makedirs(TUTORIALS_DIR, exist_ok=True)

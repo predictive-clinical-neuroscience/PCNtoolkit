@@ -1,0 +1,5 @@
+/* Hide the "Docs > Section > Page" breadcrumb trail that appears
+   above every page title in the pydata-sphinx-theme layout. */
+.bd-breadcrumbs {
+    display: none;
+}
