@@ -68,3 +68,8 @@ html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre 
     border-left: 4px solid #c8861f !important;
     color: #e8e0c0 !important;
 }
+/* Ensure the text color inside the notebook output box is white in dark mode. */
+html[data-theme="dark"] .bd-article .highlight-default .highlight pre *,
+html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre * {
+    color: #ffffff !important;
+}
