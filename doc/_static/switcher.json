@@ -1,0 +1,17 @@
+[
+    {
+        "name": "dev",
+        "version": "dev",
+        "url": "https://pcntoolkit.readthedocs.io/en/latest/"
+    },
+    {
+        "name": "stable",
+        "version": "stable",
+        "url": "https://pcntoolkit.readthedocs.io/en/stable/"
+    },
+    {
+        "name": "v0.35",
+        "version": "v0.35",
+        "url": "https://pcntoolkit.readthedocs.io/en/v0.35/"
+    }
+]

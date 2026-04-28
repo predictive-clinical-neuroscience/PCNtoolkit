@@ -57,16 +57,39 @@ html_theme_options = {
     ),
     # Do not show the "Edit this page" button
     "use_edit_page_button": False,
-    # Logo shown in the top-left of every page
+    # Clear the footer: removes copyright, Sphinx version,
+    # and "Built with PyData Sphinx Theme" text
+    "footer_start": [],
+    "footer_end": [],
+    # Version switcher shown in the top navbar
+    "navbar_end": ["version-switcher", "navbar-icon-links"],
+    "switcher": {
+        # Stable URL so every deployed version can load the JSON list
+        "json_url": (
+            "https://pcntoolkit.readthedocs.io"
+            "/en/latest/_static/switcher.json"
+        ),
+        # ReadTheDocs sets READTHEDOCS_VERSION automatically;
+        # fall back to "dev" when building locally
+        "version_match": os.environ.get(
+            "READTHEDOCS_VERSION", "dev"
+        ),
+    },
+    # Display the project name as text instead of a logo image
     "logo": {
-        "image_light": "pcn-logo.png",
-        "image_dark": "pcn-logo.png",
+        "text": "PCNtoolkit",
     },
 }
 # Directory that holds static files (logo, custom CSS, etc.)
 html_static_path = ["_static"]
 # Apply custom CSS to hide breadcrumbs and other overrides
 html_css_files = ["custom.css"]
+# Remove the copyright notice from the page footer
+html_show_copyright = False
+# Remove the "Created using Sphinx X.X.X" footer message
+html_show_sphinx = False
+# Remove the "Show Source" link from the right sidebar
+html_show_sourcelink = False
 
 # Intersphinx mapping
 intersphinx_mapping = {
