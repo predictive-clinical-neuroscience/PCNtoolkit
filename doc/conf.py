@@ -15,7 +15,7 @@ extensions = [
     "autoapi.extension",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    "sphinx.ext.linkcode",
+    "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
 ]
