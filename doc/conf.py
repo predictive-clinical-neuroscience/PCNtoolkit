@@ -29,10 +29,12 @@ autoapi_options = [
     "show-module-summary",  # Include module docstring summaries
     "special-members",  # Include special methods (__init__, etc.)
 ]
-autoapi_python_class_content = "both"  # Include both class and __init__ docstrings
-autoapi_member_order = "groupwise"  # Group members by type (methods, attributes, etc.)
-# Disable automatic toctree injection — we place the API
-# Reference section manually in developers/index.rst
+# Include both class and __init__ docstrings
+autoapi_python_class_content = "both"
+# Group members by type (methods, attributes, etc.)
+autoapi_member_order = "groupwise"
+# Disable automatic autoapi injection. Instead we place the autoapi
+# section manually in developers/index.rst
 autoapi_add_toctree_entry = False
 autoapi_template_dir = "_templates/autoapi"  # Custom templates location
 autoapi_keep_files = True  # Keep generated RST files for debugging
