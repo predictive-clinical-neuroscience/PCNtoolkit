@@ -35,7 +35,7 @@ autoapi_python_class_content = "both"
 autoapi_member_order = "groupwise"
 # Disable automatic autoapi injection. Instead we place the autoapi
 # section manually in developers/index.rst
-autoapi_add_toctree_entry = True
+autoapi_add_toctree_entry = False
 autoapi_template_dir = "_templates/autoapi"  # Custom templates location
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
