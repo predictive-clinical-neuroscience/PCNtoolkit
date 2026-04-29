@@ -59,7 +59,8 @@ html_theme_options = {
     "github_url": (
         "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
     ),
-    # Do not show the "Edit this page" button on the right sidebar
+    # Do not show the "Edit this page" button on the right sidebar (links to
+    # GitHub editor)
     "use_edit_page_button": False,
     # Clear the footer: remove copyright, Sphinx version,
     # and "Built with PyData Sphinx Theme" text
@@ -94,13 +95,10 @@ html_theme_options = {
 }
 # Directory that holds static files (logo, custom CSS, etc.)
 html_static_path = ["_static"]
-# Apply custom CSS to hide breadcrumbs and other overrides
+# Apply custom CSS to add our own colours
 html_css_files = ["custom.css"]
-# Remove the copyright notice from the page footer
-html_show_copyright = False
-# Remove the "Created using Sphinx X.X.X" footer message
-html_show_sphinx = False
-# Remove the "Show Source" link from the right sidebar
+# Remove the "Show Source" link from the right sidebar (links to 
+# the raw .rst source file of that page)
 html_show_sourcelink = False
 
 # Intersphinx mapping
