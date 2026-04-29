@@ -9,7 +9,6 @@ Welcome to PCNToolkit's documentation!
    tutorials/index
    support/index
    development/index
-   API <autoapi/index>
 
 
       
