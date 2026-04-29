@@ -83,6 +83,7 @@ build/*
 
 # docs
 doc/autoapi/*
+doc/development/autoapi/*
 doc/_build/*
 docs
 

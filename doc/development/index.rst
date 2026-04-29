@@ -5,3 +5,4 @@ Development
    :maxdepth: 1
 
    contributing
+   autoapi/index

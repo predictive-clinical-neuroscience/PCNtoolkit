@@ -2,6 +2,10 @@
 import os
 import sys
 
+# linkcode_resolve is the function that sphinx.ext.linkcode uses to create
+# GitHub links in the api documentaion
+from github_link import linkcode_resolve 
+
 sys.path.insert(0, os.path.abspath(".."))
 
 # Project information
@@ -15,7 +19,7 @@ extensions = [
     "autoapi.extension",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    "sphinx.ext.viewcode",
+    "sphinx.ext.linkcode",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
 ]
