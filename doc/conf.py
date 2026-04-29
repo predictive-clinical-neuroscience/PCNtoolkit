@@ -74,7 +74,7 @@ html_theme_options = {
         # Stable URL so every deployed version can load the JSON list
         "json_url": (
             "https://pcntoolkit.readthedocs.io"
-            "/en/latest/_static/switcher.json"
+            "/en/dev/_static/switcher.json"
         ),
         # ReadTheDocs sets READTHEDOCS_VERSION automatically;
         # fall back to "dev" when building locally
