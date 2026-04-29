@@ -1,4 +1,4 @@
-Miscellaneous
+Support
 =============
 
 .. toctree::

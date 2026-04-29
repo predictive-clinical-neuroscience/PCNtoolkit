@@ -7,8 +7,8 @@ Welcome to PCNToolkit's documentation!
 
    getting_started/index
    tutorials/index
-   miscellaneous/index
-   developers/index
+   support/index
+   development/index
 
 
       
