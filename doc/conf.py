@@ -26,6 +26,9 @@ extensions = [
 
 # AutoAPI settings
 autoapi_dirs = ["../pcntoolkit"]  # Directory to scan
+# Output path relative to conf.py; places generated RST files
+# inside the Development section so they appear in that sidebar
+autoapi_root = "development/autoapi"
 autoapi_options = [
     "members",  # Include class/module members
     "undoc-members",  # Include items without docstrings
@@ -37,8 +40,10 @@ autoapi_options = [
 autoapi_python_class_content = "both"
 # Group members by type (methods, attributes, etc.)
 autoapi_member_order = "groupwise"
-# Show autoapi in the website
-autoapi_add_toctree_entry = True
+# Do not auto-inject into root toctree; we add api/index manually
+# inside development/index.rst so it appears under the
+# Development section in the sidebar
+autoapi_add_toctree_entry = False
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
 # Napoleon settings
@@ -99,7 +104,7 @@ html_theme_options = {
 html_static_path = ["_static"]
 # Apply custom CSS to add our own colours
 html_css_files = ["custom.css"]
-# Remove the "Show Source" link from the right sidebar (links to 
+# Remove the "Show Source" link from the right sidebar (links to
 # the raw .rst source file of that page)
 html_show_sourcelink = False
 
