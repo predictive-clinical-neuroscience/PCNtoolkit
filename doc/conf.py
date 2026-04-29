@@ -2,9 +2,16 @@
 import os
 import sys
 
+# Ensure doc/ (the folder containing conf.py) is on sys.path so that
+# github_link.py is importable regardless of the working directory
+# from which Sphinx is invoked (e.g. make livehtml vs. absolute path)
+_conf_dir = os.path.dirname(os.path.abspath(__file__))
+if _conf_dir not in sys.path:
+    sys.path.insert(0, _conf_dir)
+
 # linkcode_resolve is the function that sphinx.ext.linkcode uses to create
 # GitHub links in the api documentaion
-from github_link import linkcode_resolve 
+from github_link import linkcode_resolve  # noqa: F401
 
 sys.path.insert(0, os.path.abspath(".."))
 
