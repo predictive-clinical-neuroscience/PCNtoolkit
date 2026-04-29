@@ -40,10 +40,8 @@ autoapi_options = [
 autoapi_python_class_content = "both"
 # Group members by type (methods, attributes, etc.)
 autoapi_member_order = "groupwise"
-# Do not auto-inject into root toctree; we add api/index manually
-# inside development/index.rst so it appears under the
-# Development section in the sidebar
-autoapi_add_toctree_entry = False
+# Add autoapi to the website
+autoapi_add_toctree_entry = True
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
 # Napoleon settings
