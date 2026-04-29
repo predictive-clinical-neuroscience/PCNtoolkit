@@ -13,10 +13,5 @@
         "name": "v0.35",
         "version": "v0.35",
         "url": "https://pcntoolkit.readthedocs.io/en/v0.35/"
-    },
-    {
-    "name": "maint-revamp_website",
-    "version": "maint-revamp_website",
-    "url": "https://pcntoolkit.readthedocs.io/en/maint-revamp_website/"
     }
 ]
