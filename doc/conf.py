@@ -2,9 +2,7 @@
 import os
 import sys
 
-# Ensure doc/ (the folder containing conf.py) is on sys.path so that
-# github_link.py is importable regardless of the working directory
-# from which Sphinx is invoked (e.g. make livehtml vs. absolute path)
+# Let "make livehtml" work when called outside the doc/ folder
 _conf_dir = os.path.dirname(os.path.abspath(__file__))
 if _conf_dir not in sys.path:
     sys.path.insert(0, _conf_dir)
@@ -44,8 +42,9 @@ autoapi_options = [
 autoapi_python_class_content = "both"
 # Group members by type (methods, attributes, etc.)
 autoapi_member_order = "groupwise"
-# Add autoapi to the website
-autoapi_add_toctree_entry = True
+# I want to add a manual title to the API reference page, so I disable the
+# default one
+autoapi_add_toctree_entry = False
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
 # Napoleon settings
