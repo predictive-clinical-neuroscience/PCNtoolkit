@@ -6,3 +6,4 @@ Getting Started
 
    quickstart
    background
+   citing
