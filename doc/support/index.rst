@@ -4,5 +4,4 @@ Support
 .. toctree::
    :maxdepth: 1
 
-   troubleshooting
-   citing
+   get_help
