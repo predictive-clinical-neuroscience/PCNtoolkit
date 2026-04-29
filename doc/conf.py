@@ -33,8 +33,7 @@ autoapi_options = [
 autoapi_python_class_content = "both"
 # Group members by type (methods, attributes, etc.)
 autoapi_member_order = "groupwise"
-# I want to add a manual title to the API reference page, so I disable the
-# default one
+# Automatically add generated API docs to the topbar
 autoapi_add_toctree_entry = True
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
