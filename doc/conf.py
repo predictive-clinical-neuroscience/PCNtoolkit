@@ -35,7 +35,7 @@ autoapi_python_class_content = "both"
 autoapi_member_order = "groupwise"
 # I want to add a manual title to the API reference page, so I disable the
 # default one
-autoapi_add_toctree_entry = False
+autoapi_add_toctree_entry = True
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
 # Napoleon settings
