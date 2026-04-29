@@ -26,9 +26,6 @@ extensions = [
 
 # AutoAPI settings
 autoapi_dirs = ["../pcntoolkit"]  # Directory to scan
-# Output path relative to conf.py; places generated RST files
-# inside the Development section so they appear in that sidebar
-autoapi_root = "development/autoapi"
 autoapi_options = [
     "members",  # Include class/module members
     "undoc-members",  # Include items without docstrings
