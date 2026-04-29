@@ -2,15 +2,6 @@
 import os
 import sys
 
-# Let "make livehtml" work when called outside the doc/ folder
-_conf_dir = os.path.dirname(os.path.abspath(__file__))
-if _conf_dir not in sys.path:
-    sys.path.insert(0, _conf_dir)
-
-# linkcode_resolve is the function that sphinx.ext.linkcode uses to create
-# GitHub links in the api documentaion
-from github_link import linkcode_resolve  # noqa: F401
-
 sys.path.insert(0, os.path.abspath(".."))
 
 # Project information
