@@ -59,9 +59,9 @@ html_theme_options = {
     "github_url": (
         "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
     ),
-    # Do not show the "Edit this page" button
+    # Do not show the "Edit this page" button on the right sidebar
     "use_edit_page_button": False,
-    # Clear the footer: removes copyright, Sphinx version,
+    # Clear the footer: remove copyright, Sphinx version,
     # and "Built with PyData Sphinx Theme" text
     "footer_start": [],
     "footer_end": [],
@@ -76,7 +76,7 @@ html_theme_options = {
         # Stable URL so every deployed version can load the JSON list
         "json_url": (
             "https://pcntoolkit.readthedocs.io"
-            "/en/dev/_static/switcher.json"
+            "/en/stable/_static/switcher.json"
         ),
         # ReadTheDocs sets READTHEDOCS_VERSION automatically;
         # fall back to "dev" when building locally
