@@ -33,10 +33,8 @@ autoapi_options = [
 autoapi_python_class_content = "both"
 # Group members by type (methods, attributes, etc.)
 autoapi_member_order = "groupwise"
-# Disable automatic autoapi injection. Instead we place the autoapi
-# section manually in developers/index.rst
-autoapi_add_toctree_entry = False
-autoapi_template_dir = "_templates/autoapi"  # Custom templates location
+# Show autoapi in the website
+autoapi_add_toctree_entry = True
 autoapi_keep_files = True  # Keep generated RST files for debugging
 
 # Napoleon settings
