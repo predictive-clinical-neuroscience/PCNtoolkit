@@ -79,10 +79,8 @@ class Evaluator:
         if "EXPV" in self.statistics:
             self.evaluate_expv(data)
         if "Skew" in self.statistics:
-            # Evaluate skewness of the z-score distribution
             self.evaluate_skew(data)
         if "Kurt" in self.statistics:
-            # Evaluate excess kurtosis of the z-score distribution
             self.evaluate_kurt(data)
         return data
 
@@ -293,6 +291,9 @@ class Evaluator:
         Skewness measures asymmetry of the z-score distribution.
         For a well-calibrated normative model the z-scores follow
         a standard normal distribution, so the ideal value is 0.
+        
+        Positive values indicate a longer right tail.
+        Negative values indicate a longer left tail.
 
         Parameters
         ----------
@@ -320,8 +321,9 @@ class Evaluator:
         distribution relative to a normal distribution. For a
         well-calibrated normative model the z-scores follow a
         standard normal distribution, so the ideal value is 0.
-        Positive values indicate heavier tails (leptokurtic);
-        negative values indicate lighter tails (platykurtic).
+        
+        Positive values indicate fatter tails (more outliers).
+        Negative values indicate thinner tails (less outliers).
 
         Parameters
         ----------
@@ -638,8 +640,7 @@ class Evaluator:
 
         Uses the adjusted Fisher-Pearson standardised moment
         coefficient (``bias=False``), which corrects for small-
-        sample bias and matches the formula provided by the
-        colleague::
+        sample bias and matches the formula:
 
             skew = n * m3 / (n-1) / (n-2) / s1**3
 
@@ -672,9 +673,7 @@ class Evaluator:
         Calculate the excess kurtosis of the z-score distribution.
 
         Uses the adjusted estimator (``bias=False``) and returns
-        **excess** kurtosis (normal distribution = 0), which
-        matches the small-sample-corrected formula provided by the
-        colleague::
+        **excess** kurtosis, which matches the formula:
 
             kurt = (n*(n+1)*m4) / ((n-1)*(n-2)*(n-3)*s1**4)
                    - 3*(n-1)**2 / ((n-2)*(n-3))
@@ -693,15 +692,14 @@ class Evaluator:
         Returns
         -------
         float
-            Adjusted excess kurtosis of the z-scores (normal = 0).
+            Adjusted excess kurtosis of the z-scores.
         """
         # Extract raw z-score values as a 1-D float array
         z = data["Z"].values.ravel().astype(np.float64)
         # Replace ±Inf with NaN so they are excluded from the
         # calculation rather than distorting the result
         z[np.isinf(z)] = np.nan
-        # Compute adjusted excess kurtosis (Fisher's definition,
-        # normal distribution = 0), skipping NaNs
+        # Compute adjusted excess kurtosis, skipping NaNs
         return float(
             stats.kurtosis(z, bias=False, nan_policy="omit")
         )
