@@ -13,46 +13,7 @@ import numpy as np
 import xarray as xr
 
 from pcntoolkit.util.evaluator import Evaluator
-from test.fixtures.evaluator_fixtures import create_test_data
-
-
-# ── helpers ──────────────────────────────────────────────────
-
-def _add_z_scores(
-    data,
-    z_values: np.ndarray,
-) -> object:
-    """
-    Add a Z variable to a NormData object.
-
-    Parameters
-    ----------
-    data : NormData
-        Dataset returned by create_test_data.
-    z_values : np.ndarray
-        1-D array of z-scores with length equal to
-        the number of observations in *data*.
-
-    Returns
-    -------
-    NormData
-        Slice for response variable 'test_metric' with
-        Z values assigned.
-    """
-    # Reshape to (n_observations, n_response_vars=1)
-    z_2d = z_values.reshape(-1, 1)
-    # Assign Z as an xarray DataArray with matching dims
-    data["Z"] = xr.DataArray(
-        z_2d,
-        dims=("observations", "response_vars"),
-        coords={
-            "observations": data.coords["observations"],
-            "response_vars": data.coords["response_vars"],
-        },
-    )
-    # Select the single response variable so _evaluate_*
-    # receives a 1-D-compatible slice
-    return data.sel({"response_vars": "test_metric"})
+from test.fixtures.plotter_fixtures import create_test_data_with_z
 
 
 # ── tests for Skew ───────────────────────────────────────────
@@ -67,11 +28,11 @@ def test_001_skew_should_beNearZero_when_zscoresAreNormal() -> (
     Act: call _evaluate_skew.
     Assert: result is within 0.1 of zero.
     """
-    # Arrange
-    rng = np.random.default_rng(0)
-    z = rng.standard_normal(5000)
-    data = create_test_data(n_samples=5000, seed=0)
-    sliced = _add_z_scores(data, z)
+    # Arrange: create_test_data_with_z already injects
+    # standard-normal Z-scores, so no overwrite needed
+    data = create_test_data_with_z(n=5000, seed=0)
+    # Slice to the single response variable
+    sliced = data.sel({"response_vars": "metric"})
     evaluator = Evaluator()
 
     # Act
@@ -91,11 +52,11 @@ def test_002_kurt_should_beNearZero_when_zscoresAreNormal() -> (
     Act: call _evaluate_kurt.
     Assert: result is within 0.1 of zero.
     """
-    # Arrange
-    rng = np.random.default_rng(1)
-    z = rng.standard_normal(5000)
-    data = create_test_data(n_samples=5000, seed=1)
-    sliced = _add_z_scores(data, z)
+    # Arrange: create_test_data_with_z already injects
+    # standard-normal Z-scores, so no overwrite needed
+    data = create_test_data_with_z(n=5000, seed=1)
+    # Slice to the single response variable
+    sliced = data.sel({"response_vars": "metric"})
     evaluator = Evaluator()
 
     # Act
@@ -121,8 +82,18 @@ def test_003_skew_should_bePositive_when_zscoresAreRightSkewed() -> (
     z = rng.lognormal(mean=0.0, sigma=1.0, size=5000)
     # Centre around 0 to keep it as a z-score analogue
     z = z - z.mean()
-    data = create_test_data(n_samples=5000, seed=2)
-    sliced = _add_z_scores(data, z)
+    data = create_test_data_with_z(n=5000, seed=2)
+    # Overwrite Z with the right-skewed distribution
+    data["Z"] = xr.DataArray(
+        z.reshape(-1, 1),
+        dims=("observations", "response_vars"),
+        coords={
+            "observations": data.coords["observations"],
+            "response_vars": data.coords["response_vars"],
+        },
+    )
+    # Slice to the single response variable
+    sliced = data.sel({"response_vars": "metric"})
     evaluator = Evaluator()
 
     # Act
@@ -146,8 +117,18 @@ def test_004_kurt_should_bePositive_when_zscoresAreLeptokurtic() -> (
     # Arrange: t(3) has excess kurtosis = 6 — heavy tails
     rng = np.random.default_rng(3)
     z = rng.standard_t(df=3, size=5000)
-    data = create_test_data(n_samples=5000, seed=3)
-    sliced = _add_z_scores(data, z)
+    data = create_test_data_with_z(n=5000, seed=3)
+    # Overwrite Z with the heavy-tailed t-distribution
+    data["Z"] = xr.DataArray(
+        z.reshape(-1, 1),
+        dims=("observations", "response_vars"),
+        coords={
+            "observations": data.coords["observations"],
+            "response_vars": data.coords["response_vars"],
+        },
+    )
+    # Slice to the single response variable
+    sliced = data.sel({"response_vars": "metric"})
     evaluator = Evaluator()
 
     # Act
@@ -174,8 +155,18 @@ def test_005_skew_should_handleNanAndInf_when_zscoresContainInvalidValues() -> (
     # Inject invalid values
     z[0:5] = np.inf
     z[5:10] = np.nan
-    data = create_test_data(n_samples=500, seed=4)
-    sliced = _add_z_scores(data, z)
+    data = create_test_data_with_z(n=500, seed=4)
+    # Overwrite Z with the array containing Inf and NaN
+    data["Z"] = xr.DataArray(
+        z.reshape(-1, 1),
+        dims=("observations", "response_vars"),
+        coords={
+            "observations": data.coords["observations"],
+            "response_vars": data.coords["response_vars"],
+        },
+    )
+    # Slice to the single response variable
+    sliced = data.sel({"response_vars": "metric"})
     evaluator = Evaluator()
 
     # Act
@@ -202,8 +193,18 @@ def test_006_kurt_should_handleNanAndInf_when_zscoresContainInvalidValues() -> (
     # Inject invalid values
     z[0:5] = np.inf
     z[5:10] = np.nan
-    data = create_test_data(n_samples=500, seed=5)
-    sliced = _add_z_scores(data, z)
+    data = create_test_data_with_z(n=500, seed=5)
+    # Overwrite Z with the array containing Inf and NaN
+    data["Z"] = xr.DataArray(
+        z.reshape(-1, 1),
+        dims=("observations", "response_vars"),
+        coords={
+            "observations": data.coords["observations"],
+            "response_vars": data.coords["response_vars"],
+        },
+    )
+    # Slice to the single response variable
+    sliced = data.sel({"response_vars": "metric"})
     evaluator = Evaluator()
 
     # Act
