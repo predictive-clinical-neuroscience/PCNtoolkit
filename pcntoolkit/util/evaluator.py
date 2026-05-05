@@ -45,8 +45,11 @@ class Evaluator:
         """
         # data["Yhat"] = data.centiles.sel(centile=0.5, method="nearest")
         assert "Yhat" in data.data_vars, "Yhat must be computed before evaluation"
-        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE",
-                          "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
+        all_statistics = [
+            "Rho", "Rho_p", "R2", "RMSE", "SMSE",
+            "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV",
+            "Skew", "Kurt",
+        ]
         if statistics:
             self.statistics = [m for m in all_statistics if m in statistics]
 
@@ -75,6 +78,12 @@ class Evaluator:
             self.evaluate_mape(data)
         if "EXPV" in self.statistics:
             self.evaluate_expv(data)
+        if "Skew" in self.statistics:
+            # Evaluate skewness of the z-score distribution
+            self.evaluate_skew(data)
+        if "Kurt" in self.statistics:
+            # Evaluate excess kurtosis of the z-score distribution
+            self.evaluate_kurt(data)
         return data
 
     def create_statistics_group(self, data: NormData) -> None:
@@ -276,6 +285,61 @@ class Evaluator:
             mape = self._evaluate_mape(resp_predict_data)
             data.statistics.loc[{
                 "response_vars": responsevar, "statistic": "MAPE"}] = mape
+
+    def evaluate_skew(self, data: NormData) -> None:
+        """
+        Evaluate the skewness of the z-score distribution.
+
+        Skewness measures asymmetry of the z-score distribution.
+        For a well-calibrated normative model the z-scores follow
+        a standard normal distribution, so the ideal value is 0.
+
+        Parameters
+        ----------
+        data : NormData
+            Data container with z-scores. Must contain the 'Z'
+            variable.
+        """
+        for responsevar in data.response_var_list:
+            # Select data for the current response variable
+            resp_predict_data = data.sel(
+                {"response_vars": responsevar}
+            )
+            # Compute skewness and store in the statistics array
+            skew = self._evaluate_skew(resp_predict_data)
+            data.statistics.loc[{
+                "response_vars": responsevar,
+                "statistic": "Skew",
+            }] = skew
+
+    def evaluate_kurt(self, data: NormData) -> None:
+        """
+        Evaluate the excess kurtosis of the z-score distribution.
+
+        Excess kurtosis measures the tail heaviness of the z-score
+        distribution relative to a normal distribution. For a
+        well-calibrated normative model the z-scores follow a
+        standard normal distribution, so the ideal value is 0.
+        Positive values indicate heavier tails (leptokurtic);
+        negative values indicate lighter tails (platykurtic).
+
+        Parameters
+        ----------
+        data : NormData
+            Data container with z-scores. Must contain the 'Z'
+            variable.
+        """
+        for responsevar in data.response_var_list:
+            # Select data for the current response variable
+            resp_predict_data = data.sel(
+                {"response_vars": responsevar}
+            )
+            # Compute excess kurtosis and store in the statistics array
+            kurt = self._evaluate_kurt(resp_predict_data)
+            data.statistics.loc[{
+                "response_vars": responsevar,
+                "statistic": "Kurt",
+            }] = kurt
 
     def _evaluate_rho(self, data: NormData) -> Tuple[float, float]:
         """
@@ -567,6 +631,80 @@ class Evaluator:
         yhat = data["Yhat"].values
 
         return mean_absolute_percentage_error(y, yhat)
+
+    def _evaluate_skew(self, data: NormData) -> float:
+        """
+        Calculate the skewness of the z-score distribution.
+
+        Uses the adjusted Fisher-Pearson standardised moment
+        coefficient (``bias=False``), which corrects for small-
+        sample bias and matches the formula provided by the
+        colleague::
+
+            skew = n * m3 / (n-1) / (n-2) / s1**3
+
+        Infinite values in the z-scores are replaced with NaN
+        before computation and excluded via ``nan_policy='omit'``.
+        Returns NaN if fewer than 3 valid observations are
+        available.
+
+        Parameters
+        ----------
+        data : NormData
+            Data container for a single response variable.
+            Must contain the 'Z' variable.
+
+        Returns
+        -------
+        float
+            Adjusted sample skewness of the z-scores.
+        """
+        # Extract raw z-score values as a 1-D float array
+        z = data["Z"].values.ravel().astype(np.float64)
+        # Replace ±Inf with NaN so they are excluded from the
+        # calculation rather than distorting the result
+        z[np.isinf(z)] = np.nan
+        # Compute adjusted (unbiased) skewness, skipping NaNs
+        return float(stats.skew(z, bias=False, nan_policy="omit"))
+
+    def _evaluate_kurt(self, data: NormData) -> float:
+        """
+        Calculate the excess kurtosis of the z-score distribution.
+
+        Uses the adjusted estimator (``bias=False``) and returns
+        **excess** kurtosis (normal distribution = 0), which
+        matches the small-sample-corrected formula provided by the
+        colleague::
+
+            kurt = (n*(n+1)*m4) / ((n-1)*(n-2)*(n-3)*s1**4)
+                   - 3*(n-1)**2 / ((n-2)*(n-3))
+
+        Infinite values in the z-scores are replaced with NaN
+        before computation and excluded via ``nan_policy='omit'``.
+        Returns NaN if fewer than 4 valid observations are
+        available.
+
+        Parameters
+        ----------
+        data : NormData
+            Data container for a single response variable.
+            Must contain the 'Z' variable.
+
+        Returns
+        -------
+        float
+            Adjusted excess kurtosis of the z-scores (normal = 0).
+        """
+        # Extract raw z-score values as a 1-D float array
+        z = data["Z"].values.ravel().astype(np.float64)
+        # Replace ±Inf with NaN so they are excluded from the
+        # calculation rather than distorting the result
+        z[np.isinf(z)] = np.nan
+        # Compute adjusted excess kurtosis (Fisher's definition,
+        # normal distribution = 0), skipping NaNs
+        return float(
+            stats.kurtosis(z, bias=False, nan_policy="omit")
+        )
 
     def empty_statistic(self) -> xr.DataArray:
         return xr.DataArray(
