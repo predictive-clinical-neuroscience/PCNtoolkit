@@ -54,13 +54,6 @@ class NormativeModel:
         Input (X/covariates) scaler to use.
     outscaler: str
         Output (Y/response_vars) scaler to use.
-    y_transform : str or None
-        Optional transform applied to Y before fitting and inverted
-        after prediction. Currently supported:
-        - ``"log1p"`` applies log(Y+1)
-        - ``"log"`` applies natural log(Y)
-        This is useful for phenotypes that cannot be negative.
-        Default is ``None`` (no transform).
     name: str
         Name of the model
     """
@@ -75,7 +68,6 @@ class NormativeModel:
         save_dir: Optional[str] = None,
         inscaler: str = "standardize",
         outscaler: str = "standardize",
-        y_transform: Optional[str] = None,
         name: Optional[str] = None,
     ):
         self.savemodel: bool = savemodel
@@ -85,7 +77,6 @@ class NormativeModel:
         self._save_dir = save_dir if save_dir is not None else get_default_save_dir()
         self.inscaler: str = inscaler
         self.outscaler: str = outscaler
-        self.y_transform: Optional[str] = y_transform
         self.name: Optional[str] = name
         self.response_vars: list[str] = None  # type: ignore
         self.template_regression_model: RegressionModel = template_regression_model
@@ -143,16 +134,16 @@ class NormativeModel:
             self[responsevar].fit(X, be, be_maps, Y)
         self.is_fitted = True
         self.postprocess(data)
+        self.predict(data)  # Make sure everything is evaluated and saved
+        # self.compute_correlation_matrix(data)
         if self.savemodel:  # Make sure model is saved
             self.save()
-        self.predict(data)  # Make sure everything is evaluated and saved
 
     def predict(self, data: NormData) -> NormData:
         """Computes Z-scores, centiles, logp, yhat for each observation using fitted regression models."""
         self.set_ensure_save_dirs()
         self.compute_zscores(data)
         self.compute_centiles(data, recompute=True)
-        self.compute_baseline_logp(data)
         self.compute_logp(data)
         self.compute_yhat(data)
         if self.evaluate_model:
@@ -176,6 +167,8 @@ class NormativeModel:
         """
         self.fit(fit_data)
         self.predict(predict_data)
+        if self.savemodel:  # Make sure model is saved
+            self.save()
         return predict_data
 
     def transfer(self, transfer_data: NormData, save_dir: str | None = None, **kwargs) -> NormativeModel:
@@ -190,7 +183,6 @@ class NormativeModel:
             saveplots=True,
             inscaler=self.inscaler,
             outscaler=self.outscaler,
-            y_transform=self.y_transform,
             save_dir=self.save_dir,
         )
         if save_dir is not None:
@@ -216,9 +208,9 @@ class NormativeModel:
             #new_model[responsevar].be_maps = copy.deepcopy(be_maps)
         new_model.is_fitted = True
         new_model.postprocess(transfer_data)
+        new_model.predict(transfer_data)  # Make sure everything is evaluated and saved
         if new_model.savemodel:
             new_model.save()
-        new_model.predict(transfer_data)  # Make sure everything is evaluated and saved
         return new_model
 
     def transfer_predict(
@@ -250,7 +242,6 @@ class NormativeModel:
             saveplots=True,
             inscaler=self.inscaler,
             outscaler=self.outscaler,
-            y_transform=self.y_transform,
             save_dir=save_dir,
         )
 
@@ -384,7 +375,7 @@ class NormativeModel:
             ref_be_array.loc[{"batch_effect_dims": k}] = v
         ref_be_array = self.map_batch_effects(ref_be_array)
 
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        respvar_intersection = list(set(self.response_vars).intersection(data.response_vars.values))
         n_vars = len(respvar_intersection)
         Output.print(Messages.HARMONIZING_DATA, n_models=n_vars)
 
@@ -393,11 +384,12 @@ class NormativeModel:
             dims=("observations", "response_vars"),
             coords={"observations": data.observations, "response_vars": data.response_vars},
         )
+        #TODO make sure to differentiate between data thrive and thrive_line grid.
         if hasattr(data, "thrive_Y"):
             data["thrive_Y_harmonized"] = xr.DataArray(
-                np.zeros(data.thrive_Y.shape),
-                dims=("observations", "response_vars", "offset"),
-                coords={"observations": data.observations, "response_vars": data.response_vars},
+                np.zeros((data.thrive_Y.sizes["dummy_obs"], len(respvar_intersection), data.thrive_Y.sizes["offset"])),
+                dims=("dummy_obs", "response_vars", "offset"),
+                coords={"dummy_obs": data.thrive_Y.dummy_obs, "response_vars": respvar_intersection, "offset": data.thrive_Y.offset},
             )
         for responsevar in respvar_intersection:
             Output.print(Messages.HARMONIZING_DATA_MODEL, model_name=responsevar)
@@ -471,7 +463,6 @@ class NormativeModel:
         outscaler = metadata["outscaler"]
         saveplots = metadata["saveplots"]
         evaluate_model = metadata["evaluate_model"]
-        y_transform = metadata.get("y_transform", None)
         name = metadata["name"]
 
         response_vars = []
@@ -504,7 +495,6 @@ class NormativeModel:
                 save_dir=save_dir,
                 inscaler=inscaler,
                 outscaler=outscaler,
-                y_transform=y_transform,
                 name=name,
             )
         else:
@@ -562,13 +552,9 @@ class NormativeModel:
         """
         Applies preprocessing transformations to the input data.
 
-        First applies an optional response transform (e.g. log1p), then scales.
-
         Args:
             data (NormData): Data to preprocess.
         """
-        # Enforce positivity if necessary
-        self._apply_y_transform(data)
         self.scale_forward(data)
 
     def scale_forward(self, data: NormData, overwrite: bool = False) -> None:
@@ -603,15 +589,10 @@ class NormativeModel:
     def postprocess(self, data: NormData) -> None:
         """Apply postprocessing to the data.
 
-        First unscales, then applies the inverse response transform (e.g. expm1).
-
         Args:
             data (NormData): Data to postprocess.
         """
         self.scale_backward(data)
-        # Invert Y to its original space if positivity was enforced during 
-        # preprocessing
-        self._invert_y_transform(data)
 
     def scale_backward(self, data: NormData) -> None:
         """
@@ -628,80 +609,6 @@ class NormativeModel:
         """
         data.scale_backward(self.inscalers, self.outscalers)
 
-    def _apply_y_transform(self, data: NormData) -> None:
-        """
-        Apply the forward response transform (e.g. log1p) to Y-like variables 
-        in the data.
-        
-        Parameters
-        ----------
-        data : NormData
-            Data object containing response variable arrays (Y, Yhat, 
-            centiles, thrive_Y) to which the transform should be applied.
-        
-        """
-        if self.y_transform is None:
-            return
-      
-        # TODO: Check if we need to track if transform has already been 
-        # applied to avoid double-inverting. Normally I dont expect any issues 
-        # as every process() is followed by a postprocess(). The only issues can
-        # be if users call postprocess() multiple times manually or with
-        # compute_thrivelines() that has a preprocess() call without a postprocess().
-            
-        if self.y_transform == "log1p":
-            # Apply log1p transform to the response variable Y
-            for var in ["Y"]:
-                if (data[var] < -1).any():
-                    raise ValueError("Cannot apply log1p transform to variable "
-                                     f"'{var}' because it contains values less "
-                                     "than -1."
-                                     )
-                else:
-                    data[var] = np.log1p(data[var])
-                    
-        elif self.y_transform == "log":
-            # Apply natural log transform to the response variable Y
-            for var in ["Y"]:
-                if (data[var] <= 0).any():
-                    raise ValueError(
-                        f"Cannot apply log transform to variable '{var}' "
-                        "because it contains non-positive values. "
-                        "Consider using 'log1p' transform or ensuring "
-                        "all values are positive."
-                    )
-                else:
-                    data[var] = np.log(data[var])
-
-    def _invert_y_transform(self, data: NormData) -> None:
-        """
-        Apply the inverse response transform (e.g. expm1) to Y-like variables
-        in the data.
-        
-        Parameters
-        ----------
-        data : NormData
-            Data object containing response variable arrays (Y, Yhat,
-            centiles, thrive_Y) to which the inverse transform should be applied.
-        """
-        if self.y_transform is None:
-            return
-        
-        # TODO: Check if we need to track if inverse transform has already been 
-        # applied to avoid double-inverting. Normally I dont expect any issues 
-        # as every process() is followed by a postprocess(). The only issues can
-        # be if users call postprocess() multiple times manually or with
-        # compute_thrivelines() that has a preprocess() call without a postprocess().
-            
-        if self.y_transform == "log1p":
-            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
-                if var in data.data_vars:
-                    data[var] = np.expm1(data[var])
-        elif self.y_transform == "log":
-            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
-                if var in data.data_vars:
-                    data[var] = np.exp(data[var])
-            
     def evaluate(self, data: NormData) -> None:
         """
         Evaluates the model performance on the data.
@@ -813,70 +720,9 @@ class NormativeModel:
         self.postprocess(data)
         return data
 
-    def compute_baseline_logp(self, data: NormData) -> NormData:
-        """
-        Computes the log-probability of the data under a simple Gaussian model.
-        
-        The baseline model is a Gaussian with mean and standard deviation
-        computed from the scaled Y data. This serves as a null model reference
-        to evaluate for example the MSLL (Mean Standardized Log Loss) of our
-        fitted model.
-
-        Parameters
-        ----------
-        data : NormData
-            Test data containing response variables (Y).
-
-        Returns
-        -------
-        NormData
-            Data with baseline_logp computed for each response variable.
-        """
-        self.preprocess(data)
-
-        # Initialize logp array for a baseline Gaussian model with mean/std of the data
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
-        data["baseline_logp"] = xr.DataArray(
-            np.zeros((data.X.shape[0], len(respvar_intersection))),
-            dims=("observations", "response_vars"),
-            coords={"observations": data.observations},
-        )
-
-        # Compute the baseline Gaussian's model logp on scaled Y data
-        Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
-        for responsevar in respvar_intersection:
-            resp_predict_data = data.sel({"response_vars": responsevar})
-            _, _, _, Y, _ = self.extract_data(resp_predict_data)
-            y_scaled = Y.values
-            baseline_logp = self.elemwise_logp_baseline_model(y_scaled)
-            data["baseline_logp"].loc[{"response_vars": responsevar}] = baseline_logp
-
-        self.postprocess(data)
-        return data
-    
-    @staticmethod
-    def elemwise_logp_baseline_model(y_scaled: np.ndarray) -> np.ndarray:
-        """
-        Compute log-probability for each observation under a baseline 
-        Gaussian model.
-        
-        Parameters
-        ----------
-        y_scaled : np.ndarray
-            Scaled response variable values.
-            
-        Returns
-        -------
-        np.ndarray
-            Log-probability
-        """
-        baseline_mu = np.mean(y_scaled)
-        baseline_sigma = np.std(y_scaled)
-        return -0.5 * np.log(2 * np.pi * baseline_sigma**2) - ((y_scaled - baseline_mu) ** 2) / (2 * baseline_sigma**2)
-
     def compute_logp(self, data: NormData) -> NormData:
         """
-        Computes the log-probability of the data under the fitted model.
+        Computes the log-probability of the data under the model.
 
         Parameters
         ----------
@@ -887,11 +733,10 @@ class NormativeModel:
         -------
         NormData
             Prediction results containing:
-            - logp: log-probability of the response variables per datapoint under the fitted model
+            - Logp: log-probability of the response variables per datapoint
         """
         self.preprocess(data)
 
-        # Initialise logp array with the correct dimensions and coordinates
         respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
         data["logp"] = xr.DataArray(
             np.zeros((data.X.shape[0], len(respvar_intersection))),
@@ -899,7 +744,6 @@ class NormativeModel:
             coords={"observations": data.observations},
         )
 
-        # Compute the fitted model's logp on scaled Y data
         Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
         for responsevar in respvar_intersection:
             resp_predict_data = data.sel({"response_vars": responsevar})
@@ -930,13 +774,75 @@ class NormativeModel:
             )
         self.postprocess(data)
         return data
+    
+    # This function is not needed for the main functionality of the model and is quite specific, so I have commented it out for now. We can always add it back in later if we want to expose this functionality to users.
+    # def make_grid_data(
+    #     self,
+    #     covariate: str | None = None,
+    #     covariate_range: tuple[float, float] | None = None,
+    #     batch_effects: dict | None = None,
+    #     n_points: int = 150,
+    # ) -> "NormData":
+    #     """Create the synthetic grid dataset used for centile and thriveline plotting.
 
-    def compute_correlation_matrix(self, data, bandwidth=5, covariate="age"):
+    #     Parameters
+    #     ----------
+    #     covariate : str, optional
+    #         The covariate to use as the x-axis. Defaults to the first covariate.
+    #     covariate_range : tuple[float, float], optional
+    #         (min, max) range for the covariate. Defaults to the observed range.
+    #     batch_effects : dict, optional
+    #         Batch effects to assign. Keys are batch effect names, values are the
+    #         chosen level. Defaults to the most frequent level per batch effect.
+    #     n_points : int, optional
+    #         Number of evenly-spaced grid points. Defaults to 150.
+
+    #     Returns
+    #     -------
+    #     NormData
+    #         Grid dataset identical to the one used internally by plot_centiles_advanced.
+    #     """
+    #     import pandas as pd
+    #     from pcntoolkit.dataio.norm_data import NormData
+
+    #     if covariate is None:
+    #         covariate = self.covariates[0]
+
+    #     cov_min = (covariate_range[0] if covariate_range else None) or self.covariate_ranges[covariate]["min"]
+    #     cov_max = (covariate_range[1] if covariate_range else None) or self.covariate_ranges[covariate]["max"]
+
+    #     if batch_effects is None:
+    #         batch_effects = {k: [max(v.items(), key=lambda x: x[1])[0]] for k, v in self.batch_effect_counts.items()}
+
+    #     grid_covariates = np.linspace(cov_min, cov_max, n_points)
+    #     df = pd.DataFrame({covariate: grid_covariates})
+
+    #     for cov in self.covariates:
+    #         if cov != covariate:
+    #             minc = self.covariate_ranges[cov]["min"]
+    #             maxc = self.covariate_ranges[cov]["max"]
+    #             df[cov] = (minc + maxc) / 2
+
+    #     for be, v in batch_effects.items():
+    #         df[be] = v[0] if isinstance(v, list) else v
+
+    #     for rv in [str(rv) for rv in self.response_vars]:
+    #         df[rv] = 0
+
+    #     return NormData.from_dataframe(
+    #         "centile",
+    #         dataframe=df,
+    #         covariates=self.covariates,
+    #         response_vars=self.response_vars,
+    #         batch_effects=list(batch_effects.keys()),
+    #     )
+
+    def compute_correlation_matrix(self, data, bandwidth=5, covariate="age", matrix_path=None):
         self.thrive_covariate = covariate
-        self.correlation_matrix = get_correlation_matrix(data, bandwidth, covariate)
+        self.correlation_matrix = get_correlation_matrix(data, bandwidth, covariate, matrix_path=matrix_path)
 
     def compute_thrivelines(
-        self: NormativeModel, data: NormData, span: int = 5, step: int = 1, z_thrive: float = 0.0, covariate="age", **kwargs
+        self: NormativeModel, data: NormData, span: int = 3, step: int = 1, z_thrive: float = 0.0, covariate="age", grid_data: NormData = None, reference_batch_effect: dict = None, **kwargs
     ) -> NormData:
         """
         Computes the thrivelines for each responsevar in the data
@@ -944,7 +850,7 @@ class NormativeModel:
         data.attrs["thrive_covariate"] = self.thrive_covariate
         self.preprocess(data)
         # TODO: Write utility function to create a normdata object for easy thriveline creation (with appropriate Z scores)
-        offsets = np.arange(0, span + 1, step=step)
+        offsets = np.array([0, span]) 
         # Compute the thrivelines
         # Add them to the dataset, label them correctly
 
@@ -963,49 +869,109 @@ class NormativeModel:
             del data.dims.mapping["offset"]
         data.attrs["z_thrive"] = z_thrive
 
-        # Make Z-score predictions if needed
-        if not hasattr(data, "Z"):
-            self.predict(data)
+        import itertools
+
+        # Phase 1: get Z scores from grid_data (no batch effects needed here)
+        # or predict Z from data if no grid_data is given.
+        if grid_data is not None:
+            self.preprocess(grid_data)
+            if not hasattr(grid_data, "Z") or grid_data.Z is None:
+                raise ValueError("grid_data must include precomputed Z scores when passed to compute_thrivelines")
+       
+
+        source_data = grid_data if grid_data is not None else data
+        n_dummy = source_data.X.shape[0]
+        dummy_obs_coord = source_data.coords["observations"].values
 
         respvar_intersection = list(set(self.response_vars).intersection(data.response_vars.values))
 
         # Get the covariate matrix that was derived during fit
         cormat = self.correlation_matrix
 
-        # Create X, Y, and Z for thrivelines data
+        # Build batch effect combo list: one specific combo or all of them
+        be_keys = sorted(self.unique_batch_effects.keys())
+        if reference_batch_effect is not None:
+            be_combos = [{k: reference_batch_effect.get(k, self.unique_batch_effects[k][0]) for k in be_keys}]
+        else:
+            be_combos = [
+                dict(zip(be_keys, combo))
+                for combo in itertools.product(*[self.unique_batch_effects[k] for k in be_keys])
+            ]
+        multi_combo = reference_batch_effect is None
+
+        # Phase 1 output: thrive_Z and thrive_X — purely in Z-space, no batch effects
         data["thrive_Z"] = xr.DataArray(
-            np.zeros((data.X.shape[0], len(respvar_intersection), offsets.shape[0])),
-            dims=("observations", "response_vars", "offset"),
-            coords={"offset": offsets},
+            np.zeros((n_dummy, len(respvar_intersection), 2)),
+            dims=("dummy_obs", "response_vars", "offset"),
+            coords={"offset": offsets,
+                    "dummy_obs": dummy_obs_coord,
+                    "response_vars": respvar_intersection},
         )
-        data["thrive_Y"] = xr.DataArray(
-            np.zeros((data.X.shape[0], len(respvar_intersection), offsets.shape[0])),
-            dims=("observations", "response_vars", "offset"),
-            coords={"offset": offsets},
-        )
+
+        # Phase 2 output: thrive_Y — backward transform per batch effect combo
+        # 3-D for a single combo, 4-D (with "be_combo" dim) for all combos.
+        # Each batch effect key gets its own coordinate on be_combo so you can
+        # select with e.g. data.thrive_Y.sel(sex="0.0", site_id="2.0").
+        if multi_combo:
+            be_combo_coords = {"be_combo": np.arange(len(be_combos))}
+            for k in be_keys:
+                be_combo_coords[k] = ("be_combo", [str(combo[k]) for combo in be_combos])
+            data["thrive_Y"] = xr.DataArray(
+                np.zeros((n_dummy, len(respvar_intersection), 2, len(be_combos))),
+                dims=("dummy_obs", "response_vars", "offset", "be_combo"),
+                coords={**{"offset": offsets,
+                           "dummy_obs": dummy_obs_coord,
+                           "response_vars": respvar_intersection},
+                        **be_combo_coords},
+            )
+        else:
+            data["thrive_Y"] = xr.DataArray(
+                np.zeros((n_dummy, len(respvar_intersection), 2)),
+                dims=("dummy_obs", "response_vars", "offset"),
+                coords={"offset": offsets,
+                        "dummy_obs": dummy_obs_coord,
+                        "response_vars": respvar_intersection},
+            )
+
         for responsevar in respvar_intersection:
-            resp_predict_data = data.sel({"response_vars": responsevar})
-            X, be, _, m, Z = self.extract_data(resp_predict_data)
+            # Phase 1: compute thrive_Z from X and Z in source_data (no batch effects)
+            X = source_data.X
+            Z = source_data.Z.sel({"response_vars": responsevar})
+
             X_cov = self.inscalers[covariate].inverse_transform(X.sel({"covariates": covariate}, drop=False))
             thrive_Z, thrive_X = get_thrive_Z_X(cormat.sel({"response_vars": responsevar}), X_cov, Z, span, z_thrive=z_thrive)
+
             data["thrive_X"] = xr.DataArray(
                 self.inscalers[covariate].transform(thrive_X),
-                dims=("observations", "offset"),
-                coords={"offset": offsets},
+                dims=("dummy_obs", "offset"),
+                coords={"offset": offsets,
+                        "dummy_obs": dummy_obs_coord},
             )
             data["thrive_Z"].loc[{"response_vars": responsevar}] = thrive_Z
-            for io, o in enumerate(offsets):
-                this_Z = thrive_Z[:, io]
-                offset_X = X.copy()
-                offset_X.loc[{"covariates": self.thrive_covariate}] = data.thrive_X.sel({"offset": o})
-                scaled_thrive_Y = self[responsevar].backward(X, be, this_Z)
-                data["thrive_Y"].loc[{"response_vars": responsevar, "offset": o}] = scaled_thrive_Y
-        # self.postprocess(data)
+
+            # Phase 2: backward transform thrive_Z → thrive_Y for each batch effect combo
+            for ibe, be_combo in enumerate(be_combos):
+                raw_be = xr.DataArray(
+                    np.tile([str(be_combo[k]) for k in be_keys], (n_dummy, 1)),
+                    dims=("observations", "batch_effect_dims"),
+                    coords={"observations": dummy_obs_coord, "batch_effect_dims": be_keys},
+                )
+                be_for_combo = self.map_batch_effects(raw_be)
+                for io, o in enumerate(offsets):
+                    this_Z = thrive_Z[:, io]
+                    scaled_thrive_Y = self[responsevar].backward(X, be_for_combo, this_Z).values
+                    if multi_combo:
+                        data["thrive_Y"].loc[{"response_vars": responsevar, "offset": o, "be_combo": ibe}] = scaled_thrive_Y
+                    else:
+                        data["thrive_Y"].loc[{"response_vars": responsevar, "offset": o}] = scaled_thrive_Y
+        #self.postprocess(data)
         return data
 
     def register_data_info(self, data: NormData) -> None:
-        self.covariates = data.covariates.to_numpy().copy().tolist()
-        self.response_vars = data.response_vars.to_numpy().copy().tolist()
+        self.covariates = [str(v) for v in data.covariates.to_numpy()]
+        self.response_vars = [str(v) for v in data.response_vars.to_numpy()]
+       #self.covariates = data.covariates.to_numpy().copy().tolist()
+        #self.response_vars = data.response_vars.to_numpy().copy().tolist()
         self.register_batch_effects(data)
 
     def register_batch_effects(self, data: NormData) -> None:
@@ -1087,7 +1053,6 @@ class NormativeModel:
             "is_fitted": self.is_fitted,
             "inscaler": self.inscaler,
             "outscaler": self.outscaler,
-            "y_transform": self.y_transform,
             "ptk_version": importlib.metadata.version("pcntoolkit"),
         }
 
@@ -1147,7 +1112,6 @@ class NormativeModel:
         inscaler = kwargs.get("inscaler", "none")
         outscaler = kwargs.get("outscaler", "none")
         name = kwargs.get("name", None)
-        y_transform = kwargs.get("y_transform", None)
         assert "alg" in kwargs, "Algorithm must be specified"
         if kwargs["alg"] == "blr":
             template_regression_model = BLR.from_args("template", kwargs)
@@ -1166,7 +1130,6 @@ class NormativeModel:
             save_dir=save_dir,
             inscaler=inscaler,
             outscaler=outscaler,
-            y_transform=y_transform,
             name=name,
         )
 
