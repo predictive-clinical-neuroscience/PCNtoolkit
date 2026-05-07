@@ -1,6 +1,5 @@
 """A module for plotting functions."""
 
-from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Literal
 
 import matplotlib.pyplot as plt
@@ -9,15 +8,13 @@ import pandas as pd  # type: ignore
 import seaborn as sns  # type: ignore
 from matplotlib.font_manager import FontProperties
 from typing import Optional
-
-# from xarray.core.common import P
 from pcntoolkit.dataio.norm_data import NormData
-from pcntoolkit.util.autoscale_plot import autoscale
+
 if TYPE_CHECKING:
     from pcntoolkit.normative_model import NormativeModel
 import os
 import copy
-from collections import defaultdict
+
 sns.set_theme(style="darkgrid")
 
 
@@ -26,10 +23,8 @@ def plot_centiles(
     scatter_data: Optional[NormData] = None,
     centiles: List[float] = [0.05, 0.25, 0.5, 0.75, 0.95],
     covariate: str | None = None,
-    response_vars: List[str] | None = None,
     scatter_kwargs: dict = {},
     save_dir: str | None = None,
-    
 ):
     """
     Plot the centiles of the model.
@@ -44,8 +39,6 @@ def plot_centiles(
         The centiles to plot.
     covariate: str, optional
         The covariate to plot on the x-axis.
-    response_vars: List[str] | None
-        The response vars for which to make the plots. All are plotted if this is None, which is default.        
     scatter_kwargs: dict, optional
         Keyword arguments for the scatter plot.
         May include:
@@ -56,17 +49,15 @@ def plot_centiles(
         - edgecolor: The edge color of the scatter points. Hex code or matplotlib color name.
         - linewidth: The width of the edge of the scatter points. 0 for no edge.
     """
-    complete_scatter_kwargs: dict = {}
-    if scatter_data is not None:
-        default_scatter_kwargs = {
-            "color": "#f7932f",
-            "alpha": min(1, 20 / np.sqrt(len(scatter_data.X))),
-            "s": 30,
-            "marker": "o",
-            "edgecolor": "black",
-            "linewidth": 0,
-        }
-        complete_scatter_kwargs = default_scatter_kwargs | scatter_kwargs
+    default_scatter_kwargs = {
+        "color": "#f7932f",
+        "alpha": min(1, 20/np.sqrt(len(scatter_data.X))),
+        "s": 30,
+        "marker": "o",
+        "edgecolor": "black",
+        "linewidth": 0,
+    }
+    complete_scatter_kwargs = default_scatter_kwargs | scatter_kwargs
 
 
     if covariate is None:
@@ -78,10 +69,6 @@ def plot_centiles(
     cov_max = model.covariate_ranges[covariate]["max"]
     covariate_range = (cov_min, cov_max)
 
-    if response_vars is None:
-        response_vars = model.response_vars
-    response_vars = list(set(model.response_vars).intersection(set(response_vars)))
-    # Select the batch effect that has the most data in the scatter data
     batch_effects = {k: max(v.items(), key=lambda x: x[1])[0] for k, v in model.batch_effect_counts.items()}
 
     # Create some synthetic data with a single batch effect
@@ -89,29 +76,26 @@ def plot_centiles(
     centile_covariates = np.linspace(covariate_range[0], covariate_range[1], 150)
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
-    # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
+    # TODO: use the mean here
+    # Any other covariates are taken to be the midpoint between the observed min and max
     for cov in model.covariates:
         if cov != covariate:
             minc = model.covariate_ranges[cov]["min"]
             maxc = model.covariate_ranges[cov]["max"]
-            if scatter_data is not None:
-                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
-            else:
-                centile_df[cov] = (minc + maxc) / 2
+            centile_df[cov] = (minc + maxc) / 2
 
     # Batch effects are the first ones in the highlighted batch effects
     for be, v in batch_effects.items():
         centile_df[be] = v
-    # Assign random values for response vars because they are not needed.
-    # They must be > 0 to satisfy later checks that require response_vars > 0.
-    for rv in response_vars:
-        centile_df[rv] = 1e-6
+    # Response vars are all 0, we don't need them
+    for rv in model.response_vars:
+        centile_df[rv] = 0
 
     centile_data = NormData.from_dataframe(
         "centile",
         dataframe=centile_df,
         covariates=model.covariates,
-        response_vars=response_vars,
+        response_vars=model.response_vars,
         batch_effects=list(batch_effects.keys()),
     )  # type:ignore
 
@@ -122,11 +106,9 @@ def plot_centiles(
         batch_effects = {}
 
     if scatter_data:
-        scatter_data = scatter_data.sel(response_vars = response_vars)
-
         model.harmonize(scatter_data, reference_batch_effect=batch_effects)
 
-    for response_var in response_vars:
+    for response_var in model.response_vars:
         _plot_centiles(centile_data=centile_data, response_var=response_var, covariate=covariate, scatter_data=scatter_data, scatter_kwargs=complete_scatter_kwargs, save_dir=save_dir)
 
 
@@ -194,6 +176,7 @@ def _plot_centiles(
 
     minx, maxx = plt.xlim()
     plt.xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
@@ -209,11 +192,12 @@ def _plot_centiles(
             **scatter_kwargs
         )
 
-        plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
-        title = f"Centiles of {response_var}\n With harmonized {scatter_data.name} data"
-    else:
-        plotname = f"centiles_{response_var}"
-        title = f"Centiles of {response_var}"
+        if scatter_data:
+            plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
+            title = f"Centiles of {response_var}\n With harmonized {scatter_data.name} data"
+        else:
+            plotname = f"centiles_{response_var}"
+            title = f"Centiles of {response_var}"
 
     plt.title(title)
     plt.xlabel(covariate)
@@ -226,14 +210,12 @@ def _plot_centiles(
     plt.close()
 
 
-
 def plot_centiles_advanced(
     model: "NormativeModel",
     centiles: List[float] | np.ndarray | None = None,
     conditionals: List[float] | np.ndarray | None = None,
     covariate: str | None = None,
-    covariate_ranges: dict[str, tuple[float, float]] = None,  # type: ignore
-    response_vars: List[str] | None = None,
+    covariate_range: tuple[float, float] = (None, None),  # type: ignore
     batch_effects: Dict[str, List[str]] | None | Literal["all"] = None,
     scatter_data: NormData | None = None,
     harmonize_data: bool = True,
@@ -241,7 +223,7 @@ def plot_centiles_advanced(
     markers_data: str = "sex",
     show_other_data: bool = False,
     show_thrivelines: bool = False,
-    z_thrive: float = 0.0,
+    thriveline_data: "NormData | None" = None,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
@@ -265,10 +247,8 @@ def plot_centiles_advanced(
         A list of x-coordinates for which to plot the conditionals
     covariate: str | None, optional
         The covariate to plot on the x-axis. If None, the first covariate in the model will be used.
-    covariate_ranges: tuple[float, float], optional
+    covariate_range: tuple[float, float], optional
         The range of the covariate to plot on the x-axis. If None, the range of the covariate that was in the train data will be used.
-    response_vars: List[str] | None
-        The response vars for which to make the plots. All are plotted if this is None, which is default.
     batch_effects: Dict[str, List[str]] | None | Literal["all"], optional
         The batch effects to plot the centiles for. If None, the batch effect that appears first in alphabetical order will be used.
     scatter_data: NormData | None, optional
@@ -301,29 +281,9 @@ def plot_centiles_advanced(
         covariate = model.covariates[0]
         assert isinstance(covariate, str)
 
-    if not covariate_ranges:
-        covariate_ranges = {c:defaultdict(lambda: None) for c in model.covariates}
-    for c in model.covariates:
-        if not covariate_ranges[c]:
-            covariate_ranges[c] = (model.covariate_ranges[c]["min"],model.covariate_ranges[c]["max"])
-        # cov_min = covariate_ranges[c] or model.covariate_ranges[c]["min"]
-        # cov_max = covariate_ranges[c] or model.covariate_ranges[c]["max"]
-        # covariate_ranges[c] = (cov_min, cov_max)
-
-    if response_vars is None:
-        response_vars = model.response_vars
-    response_vars = list(set(model.response_vars).intersection(set(response_vars)))
-
-    if scatter_data:
-        # Filter scatter data
-        scatter_data = scatter_data.sel(response_vars=response_vars)
-        for c in model.covariates:
-            cov = scatter_data.X.sel(covariates=c).values
-            min, max = covariate_ranges[c]
-            idx = np.where((cov >= min) & (cov <= max))[0]
-            scatter_data = scatter_data.sel(
-                observations=scatter_data.observations[idx]
-            )
+    cov_min = covariate_range[0] or model.covariate_ranges[covariate]["min"]
+    cov_max = covariate_range[1] or model.covariate_ranges[covariate]["max"]
+    covariate_range = (cov_min, cov_max)
 
     if batch_effects == "all":
         if scatter_data:
@@ -332,7 +292,6 @@ def plot_centiles_advanced(
             batch_effects = model.unique_batch_effects
     elif batch_effects is None:
         if scatter_data:
-            # Select the first batch effect based on alphabetical order
             batch_effects = {k: [v[0]] for k, v in scatter_data.unique_batch_effects.items()}
         else:
             batch_effects = {k: [v[0]] for k, v in model.unique_batch_effects.items()}
@@ -342,30 +301,29 @@ def plot_centiles_advanced(
 
     # Create some synthetic data with a single batch effect
     # The plotted covariate is just a linspace
-    centile_covariates = np.linspace(covariate_ranges[covariate][0], covariate_ranges[covariate][1], 150)
+    centile_covariates = np.linspace(covariate_range[0], covariate_range[1], 150)
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
-    # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
+    # TODO: use the mean here
+    # Any other covariates are taken to be the midpoint between the observed min and max
     for cov in model.covariates:
         if cov != covariate:
-            minc, maxc = covariate_ranges[cov]
-            if scatter_data is not None:
-                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
-            else:
-                centile_df[cov] = (minc + maxc) / 2
+            minc = model.covariate_ranges[cov]["min"]
+            maxc = model.covariate_ranges[cov]["max"]
+            centile_df[cov] = (minc + maxc) / 2
 
     # Batch effects are the first ones in the highlighted batch effects
     for be, v in batch_effects.items():
         centile_df[be] = v[0]
-    # Assign random values for response vars because they are not needed.
-    # They must be > 0 to satisfy later checks that require response_vars > 0.
-    for rv in model.response_vars:
-        centile_df[rv] = 1e-6
+    # Response vars are all 0, we don't need them
+    #for rv in model.response_vars:
+    for rv in [str(rv) for rv in model.response_vars]:
+        centile_df[rv] = 0
     centile_data = NormData.from_dataframe(
         "centile",
         dataframe=centile_df,
         covariates=model.covariates,
-        response_vars=response_vars,
+        response_vars=model.response_vars,
         batch_effects=list(batch_effects.keys()),
     )  # type:ignore
 
@@ -380,7 +338,7 @@ def plot_centiles_advanced(
             # Compute the curve in between the endpoints
             conditional_d = copy.deepcopy(centile_data)
             conditional_d.X.loc[{"covariates": covariate}] = c
-            for rv in response_vars:
+            for rv in model.response_vars:
                 conditional_d.Y.loc[{"response_vars": rv}] = np.linspace(
                     *(centile.centiles.sel(observations=0, response_vars=rv).values.tolist()), 150
                 )
@@ -389,9 +347,7 @@ def plot_centiles_advanced(
             conditionals_data.append(conditional_d)
 
     if not hasattr(centile_data, "centiles"):
-        model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
-    if scatter_data and show_thrivelines:
-        model.compute_thrivelines(scatter_data, z_thrive=z_thrive)
+        model.compute_centiles(centile_data, centiles=centiles, recompute=False,**kwargs)
     if show_yhat and not hasattr(centile_data, "yhat"):
         model.compute_yhat(centile_data)
 
@@ -405,7 +361,7 @@ def plot_centiles_advanced(
         else:
             model.harmonize(scatter_data)
 
-    for response_var in response_vars:
+    for response_var in model.response_vars:
         _plot_centiles_advanced(
             centile_data=centile_data,
             response_var=response_var,
@@ -418,6 +374,8 @@ def plot_centiles_advanced(
             markers_data=markers_data,
             show_other_data=show_other_data,
             show_thrivelines=show_thrivelines,
+            thriveline_data=thriveline_data,
+            model=model,
             save_dir=save_dir,
             show_centile_labels=show_centile_labels,
             show_legend=show_legend,
@@ -438,6 +396,8 @@ def _plot_centiles_advanced(
     markers_data: str = "sex",
     show_other_data: bool = False,
     show_thrivelines: bool = False,
+    thriveline_data: "NormData | None" = None,
+    model: "NormativeModel | None" = None,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
@@ -504,6 +464,7 @@ def _plot_centiles_advanced(
 
     minx, maxx = plt.xlim()
     plt.xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
@@ -519,14 +480,14 @@ def _plot_centiles_advanced(
                 x=covariate,
                 y=response_var,
                 label=scatter_data.name,
-                color="#f7932f",
-                alpha=min(1, 20 / np.sqrt(len(scatter_data.X))),
-                s=30,
+                color = "#f7932f",
+                alpha = min(1, 20/np.sqrt(len(scatter_data.X))),
+                s = 30,
                 marker="o",
                 edgecolor="black",
-                linewidth=0,
+                linewidth=0
             )
-            if show_thrivelines:
+            if show_thrivelines and thriveline_data is None:
                 plt.plot(scatter_filter.thrive_X.to_numpy().T, scatter_filter[thriveline_data_name].to_numpy().T)
         else:
             idx = np.full(len(df), True)
@@ -547,7 +508,7 @@ def _plot_centiles_advanced(
                 zorder=1,
                 linewidth=0,
             )
-            if show_thrivelines:
+            if show_thrivelines and thriveline_data is None:
                 plt.plot(scatter_filter.thrive_X.to_numpy().T, scatter_filter[thriveline_data_name].to_numpy().T)
 
             if show_other_data:
@@ -559,12 +520,11 @@ def _plot_centiles_advanced(
                     y=response_var,
                     color="#696969",
                     style=markers,
-                    markers={"Other data": "s"},
+                    markers={"Other data":"s"},
                     linewidth=0,
-                    s=10,
+                    s=20,
                     alpha=0.4,
                     zorder=0,
-                    legend=False,
                 )
 
             if show_legend:
@@ -580,8 +540,39 @@ def _plot_centiles_advanced(
             else:
                 plt.legend().remove()
 
+    if show_thrivelines and thriveline_data is not None and model is not None and hasattr(thriveline_data, "thrive_Z"):
+        tx = thriveline_data.thrive_X.to_numpy()  # (n_obs, 2)
+        offsets = thriveline_data.coords["offset"].values
+        dummy_obs_coord = thriveline_data.coords["observations"].values
+        n_obs = thriveline_data.X.shape[0]
+
+        # Build batch effect combo matching the centile plot's batch_effects
+        be_keys = sorted(model.unique_batch_effects.keys())
+        be_combo_vals = {
+            k: (batch_effects[k][0] if batch_effects and k in batch_effects else model.unique_batch_effects[k][0])
+            for k in be_keys
+        }
+        raw_be = xr.DataArray(
+            np.tile([str(be_combo_vals[k]) for k in be_keys], (n_obs, 1)),
+            dims=("observations", "batch_effect_dims"),
+            coords={"observations": dummy_obs_coord, "batch_effect_dims": be_keys},
+        )
+        be_encoded = model.map_batch_effects(raw_be)
+
+        # Backward-transform thrive_Z → Y for this batch effect combo
+        thrive_Z_rv = thriveline_data.thrive_Z.sel({"response_vars": response_var})
+        X = thriveline_data.X
+        ty_list = []
+        for io in range(len(offsets)):
+            this_Z = thrive_Z_rv.isel(offset=io)
+            scaled_y = model[response_var].backward(X, be_encoded, this_Z).values.ravel()
+            ty_list.append(scaled_y)
+        ty = np.stack(ty_list, axis=1)  # (n_obs, 2)
+        if response_var in model.outscalers:
+            ty = model.outscalers[response_var].inverse_transform(ty)
+        plt.plot(tx.T, ty.T, color="steelblue", alpha=0.4, linewidth=0.8, zorder=1)
+
     title = f"Centiles of {response_var}"
-    plotname = f"centiles_{response_var}"
     if scatter_data:
         if harmonize_data:
             plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
@@ -593,29 +584,26 @@ def _plot_centiles_advanced(
     if conditionals_data:
         for conditional_d in conditionals_data:
             filter_cond = conditional_d.sel(filter_dict)
-            x = filter_cond.X
-            p = np.exp(filter_cond.logp.values) * 30 + x
-            y = filter_cond.Y.values
             plt.plot(
-                p,
-                y,
-                color="#1fbde0",
-                linewidth=2,
-                zorder=4,
+                np.exp(filter_cond.logp.values) * 10 + filter_cond.X,
+                filter_cond.Y,
+                color="blue",
+                linestyle="--",
+                linewidth=1,
+                zorder=2,
                 label="Conditional",
             )
-            x = [x[0], x[-1]]
-            y = [y[0], y[-1]]
-            plt.plot(
-                x,
-                y,
-                color="#1fbde0",
-                linewidth=2,
-                zorder=4,
-                alpha=0.2,
+            # Put a text annotation on top of the plot, rotate the text 90 degrees
+            plt.text(
+                filter_cond.X[-1],
+                filter_cond.Y[-1],
+                f"{filter_cond.X[-1].values.item():.2f}",
+                color="black",
+                fontsize=10,
+                ha="right",
+                va="bottom",
+                rotation=-90,
             )
-
-    autoscale(ax=plt.gca())
 
     plt.title(title)
     plt.xlabel(covariate)
@@ -626,6 +614,7 @@ def _plot_centiles_advanced(
         plt.show(block=False)
     plt.close()
 
+
 def plot_qq(
     data: NormData,
     plt_kwargs: dict | None = None,
@@ -634,7 +623,6 @@ def plot_qq(
     hue_data: str | None = None,
     markers_data: str | None = None,
     split_data: str | None = None,
-    response_vars: List[str] | None = None,
     seed: int = 42,
     save_dir: str | None = None,
 ) -> None:
@@ -657,8 +645,6 @@ def plot_qq(
         Column to use for marker styling. Defaults to None.
     split_data : str or None, optional
         Column to use for splitting data. Defaults to None.
-    response_vars: List[str] | None = None,
-        The response vars for which to make the plots. All are plotted if this is None, which is default.
     seed : int, optional
         Random seed for reproducibility. Defaults to 42.
 
@@ -671,11 +657,7 @@ def plot_qq(
     >>> plot_qq(data, plt_kwargs={"figsize": (10, 6)}, bound=3)
     """
     plt_kwargs = plt_kwargs or {}
-    if response_vars is None:
-        response_vars = data.response_vars.values
-    response_vars = list(set(data.response_vars.values).intersection(set(response_vars)))
-    data = data.sel(response_vars = response_vars)
-    for response_var in response_vars:
+    for response_var in data.coords["response_vars"].to_numpy():
         _plot_qq(
             data,
             response_var,
@@ -770,7 +752,7 @@ def _plot_qq(
             rand = np.random.randn(g[1].shape[0])
             rand.sort()
             df.loc[my_id, tq] = rand
-    alpha = min(1, 20/np.sqrt(len(df.index)))
+
     # Plot the QQ-plot
     sns.scatterplot(
         data=df,
@@ -780,7 +762,6 @@ def _plot_qq(
         style=markers_data if markers_data in df else None,
         **plt_kwargs,
         linewidth=0,
-        alpha=alpha,
     )
     if plot_id_line:
         if split_data:
@@ -791,7 +772,7 @@ def _plot_qq(
                     [-3, 3], [-3 + my_offset, 3 + my_offset], color="black", linestyle="--", linewidth=1, alpha=0.8, zorder=0
                 )
         else:
-            plt.plot([-3, 3], [-3, 3], color="black", linestyle="--", linewidth=1, alpha=0.8, zorder=3)
+            plt.plot([-3, 3], [-3, 3], color="black", linestyle="--", linewidth=1, alpha=0.8, zorder=0)
 
     if bound != 0:
         plt.axis((-bound, bound, -bound, bound))
@@ -802,7 +783,7 @@ def _plot_qq(
     plt.close()
 
 
-def plot_ridge(data: NormData, variable: Literal["Z", "Y"], split_by: str, response_vars: List[str] | None = None, save_dir: str | None = None, **kwargs: Any) -> None:
+def plot_ridge(data: NormData, variable: Literal["Z", "Y"], split_by: str, save_dir: str | None = None, **kwargs: Any) -> None:
     """
     Plot a ridge plot for each response variable in the data.
 
@@ -822,8 +803,6 @@ def plot_ridge(data: NormData, variable: Literal["Z", "Y"], split_by: str, respo
         The variable to split the data by.
     save_dir : str | None, optional
         The directory to save the plot to. Defaults to None.
-    response_vars: List[str] | None = None,
-        The response vars for which to make the plots. All are plotted if this is None, which is default.
     **kwargs : Any, optional
         Additional keyword arguments for the plot.
 
@@ -834,11 +813,7 @@ def plot_ridge(data: NormData, variable: Literal["Z", "Y"], split_by: str, respo
 
     sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
 
-    if response_vars is None:
-        response_vars = data.response_vars.values
-    response_vars = list(set(data.response_vars.values).intersection(set(response_vars)))
-    data = data.sel(response_vars = response_vars)
-    for response_var in response_vars:
+    for response_var in data.coords["response_vars"].to_numpy():
         _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs)
 
 
@@ -880,5 +855,3 @@ def _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs):
     else:
         plt.show(block=False)
     plt.close()
-
-
