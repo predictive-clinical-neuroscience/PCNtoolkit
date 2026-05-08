@@ -638,16 +638,14 @@ class Evaluator:
         """
         Calculate the skewness of the z-score distribution.
 
-        Uses the adjusted Fisher-Pearson standardised moment
-        coefficient (``bias=False``), which corrects for small-
+        Uses the adjusted estimator (``bias=False``), which corrects for small-
         sample bias and matches the formula:
 
             skew = n * m3 / (n-1) / (n-2) / s1**3
 
         Infinite values in the z-scores are replaced with NaN
         before computation and excluded via ``nan_policy='omit'``.
-        Returns NaN if fewer than 3 valid observations are
-        available.
+        
 
         Parameters
         ----------
@@ -658,13 +656,37 @@ class Evaluator:
         Returns
         -------
         float
-            Adjusted sample skewness of the z-scores.
+            Adjusted sample skewness of the z-scores. Returns NaN if fewer 
+            than 3 valid observations are available.
+            
+        References
+        ----------
+        .. [1] Zwillinger, D. and Kokoska, S. (2000). CRC Standard
+        Probability and Statistics Tables and Formulae. Chapman & Hall: New
+        York. 2000.
+        Section 2.2.24.1
         """
         # Extract raw z-score values as a 1-D float array
         z = data["Z"].values.ravel().astype(np.float64)
         # Replace ±Inf with NaN so they are excluded from the
         # calculation rather than distorting the result
         z[np.isinf(z)] = np.nan
+        
+        # Count valid (non-NaN) observations remaining
+        n_valid = int(np.sum(~np.isnan(z)))
+        # Skewness denominator contains (n-1)(n-2), so n>=3 is
+        # required
+        n_required = 3
+        # warn and return NaN early
+        if n_valid < n_required:
+            Output.warning(
+                Warnings.TOO_FEW_OBSERVATIONS,
+                statistic="Skewness",
+                n_valid=n_valid,
+                n_required=n_required,
+            )
+            return float("nan")
+        
         # Compute adjusted (unbiased) skewness, skipping NaNs
         return float(stats.skew(z, bias=False, nan_policy="omit"))
 
@@ -680,8 +702,7 @@ class Evaluator:
 
         Infinite values in the z-scores are replaced with NaN
         before computation and excluded via ``nan_policy='omit'``.
-        Returns NaN if fewer than 4 valid observations are
-        available.
+
 
         Parameters
         ----------
@@ -692,14 +713,38 @@ class Evaluator:
         Returns
         -------
         float
-            Adjusted excess kurtosis of the z-scores.
+            Adjusted excess kurtosis of the z-scores. Returns NaN if fewer 
+            than 4 valid observations are available.
+            
+        References
+        ----------
+        .. [1] Zwillinger, D. and Kokoska, S. (2000). CRC Standard
+        Probability and Statistics Tables and Formulae. Chapman & Hall: New
+        York. 2000.
         """
         # Extract raw z-score values as a 1-D float array
         z = data["Z"].values.ravel().astype(np.float64)
         # Replace ±Inf with NaN so they are excluded from the
         # calculation rather than distorting the result
         z[np.isinf(z)] = np.nan
-        # Compute adjusted excess kurtosis, skipping NaNs
+        
+        # Count valid (non-NaN) observations remaining
+        n_valid = int(np.sum(~np.isnan(z)))
+        # Kurtosis denominator contains (n-1)*(n-2)*(n-3), so n>=4 is
+        # required
+        n_required = 4
+        # warn and return NaN early
+        if n_valid < n_required:
+            Output.warning(
+                Warnings.TOO_FEW_OBSERVATIONS,
+                statistic="Kurtosis",
+                n_valid=n_valid,
+                n_required=n_required,
+            )
+            return float("nan")
+        
+        # Compute adjusted excess kurtosis, skipping NaNs,
+        # Fisher's definition is used (normal ==> 0.0)
         return float(
             stats.kurtosis(z, bias=False, nan_policy="omit")
         )

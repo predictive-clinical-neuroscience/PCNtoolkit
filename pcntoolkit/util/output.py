@@ -141,6 +141,11 @@ class Warnings:
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
     RENAMED = "'{old_name}' has been renamed to '{new_name}'."
+    TOO_FEW_OBSERVATIONS = (
+        "Cannot compute {statistic}: {n_valid} valid observation(s) "
+        "found after removing NaN/Inf values, but at least "
+        "{n_required} are required. Returning NaN."
+    )
     BLR_CG_NOT_SUPPORTED_WITH_WARP = (
         "The 'cg' optimizer requires analytical gradients, which are not implemented for warped models. "
         "Falling back to the default 'l-bfgs-b' optimizer. "
