@@ -48,7 +48,7 @@ class Evaluator:
         all_statistics = [
             "Rho", "Rho_p", "R2", "RMSE", "SMSE",
             "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV",
-            "Skew", "Kurt",
+            "Skewness", "Kurtosis",
         ]
         if statistics:
             self.statistics = [m for m in all_statistics if m in statistics]
@@ -78,9 +78,9 @@ class Evaluator:
             self.evaluate_mape(data)
         if "EXPV" in self.statistics:
             self.evaluate_expv(data)
-        if "Skew" in self.statistics:
+        if "Skewness" in self.statistics:
             self.evaluate_skew(data)
-        if "Kurt" in self.statistics:
+        if "Kurtosis" in self.statistics:
             self.evaluate_kurt(data)
         return data
 
@@ -310,15 +310,15 @@ class Evaluator:
             skew = self._evaluate_skew(resp_predict_data)
             data.statistics.loc[{
                 "response_vars": responsevar,
-                "statistic": "Skew",
+                "statistic": "Skewness",
             }] = skew
 
     def evaluate_kurt(self, data: NormData) -> None:
         """
         Evaluate the excess kurtosis of the z-score distribution.
 
-        Excess kurtosis measures the tail heaviness of the z-score
-        distribution relative to a normal distribution. For a
+        Excess kurtosis measures how fat the tails of the z-score
+        distribution are relative to a normal distribution. For a
         well-calibrated normative model the z-scores follow a
         standard normal distribution, so the ideal value is 0.
         
@@ -340,7 +340,7 @@ class Evaluator:
             kurt = self._evaluate_kurt(resp_predict_data)
             data.statistics.loc[{
                 "response_vars": responsevar,
-                "statistic": "Kurt",
+                "statistic": "Kurtosis",
             }] = kurt
 
     def _evaluate_rho(self, data: NormData) -> Tuple[float, float]:
