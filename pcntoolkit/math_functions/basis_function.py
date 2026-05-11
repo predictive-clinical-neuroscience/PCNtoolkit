@@ -51,7 +51,6 @@ class BasisFunction(ABC):
         my_dict = registry.migrate(
             "BasisFunction", my_dict, version=version
         )
-        # Dispatch to the correct subclass based on basis_function type.
         basis_function_type = my_dict["basis_function"]
         basis_function = create_basis_function(basis_function_type, **my_dict)
         return basis_function
