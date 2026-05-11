@@ -1,13 +1,28 @@
 """
-Registers and applies updates required to load models
-saved with previous PCNtoolkit versions. This process we call "migraton".
+The saved model JSON file can change structure across PCNtoolkit versions as 
+new features are added. This module is one central place to register
+and apply migrations required to load these changed models files.
 
-When the structure of a saved model changes in a new release,
-older saved models can be updated automatically during loading.
+This module does two things:
+1. It updates older saved models during loading.
 
-This class also warns if a model was created with a newer
-PCNtoolkit version than the one currently installed by the user.
+2. It warns if a model was created with a newer PCNtoolkit version than 
+the one currently installed by the user.
+
+In simple:
+version_model < version_pcntoolkit  →  APPLY MIGRATIONS
+version_model = version_pcntoolkit  →  DO NOTHING
+version_model > version_pcntoolkit  →  WARN USER
 """
+# ---------------------------------------------------------------------------
+# Add migration functions below
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# MigrationRegistry class to apply the migration functions defined above.
+# ---------------------------------------------------------------------------
+
 from __future__ import annotations
 
 import importlib.metadata
@@ -191,7 +206,5 @@ def check_forward_compatibility(
 registry: MigrationRegistry = MigrationRegistry()
 
 
-# ---------------------------------------------------------------------------
-# Add migration functions below
-# ---------------------------------------------------------------------------
+
 
