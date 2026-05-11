@@ -339,7 +339,9 @@ class HBR(RegressionModel):
         my_dict = self.regmodel_dict
         my_dict["likelihood"] = self.likelihood.to_dict()
         for key, value in self.__dict__.items():
-            if key not in ["likelihood", "pymc_model", "idata"]:
+            # Save the ptk_version currently 
+            # used by the user
+            if key not in ["likelihood", "pymc_model", "idata", "ptk_version"]:
                 my_dict[key] = value
         if self.is_fitted and (path is not None):
             idata_path = os.path.join(path, "idata.nc")

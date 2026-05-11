@@ -995,7 +995,12 @@ class BLR(RegressionModel):
     def to_dict(self, path: str | None = None) -> dict:
         my_dict = self.regmodel_dict
         for key, value in self.__dict__.items():
-            if key not in ["warp", "lambda_n_vec", "beta", "ys", "s2"]:
+            # Save the ptk_version currently 
+            # used by the user
+            if key not in [
+                "warp", "lambda_n_vec", "beta",
+                "ys", "s2", "ptk_version",
+            ]:
                 if isinstance(value, np.ndarray):
                     my_dict[key] = value.tolist()
                 elif key in ["basis_function_mean", "basis_function_var"]:
