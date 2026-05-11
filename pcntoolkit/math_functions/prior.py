@@ -392,21 +392,21 @@ class RandomPrior(BasePrior):
 
     @classmethod
     def from_dict(
-        cls, dct: dict, version: str | None = None
+        cls, dict: dict, version: str | None = None
     ) -> "RandomPrior":
-        mu = BasePrior.from_dict(dct["mu"], version=version)
-        sigma = BasePrior.from_dict(dct["sigma"], version=version)
+        mu = BasePrior.from_dict(dict["mu"], version=version)
+        sigma = BasePrior.from_dict(dict["sigma"], version=version)
         instance = cls(
             mu=mu,
             sigma=sigma,
-            **{k: v for k, v in dct.items() if k in ["name", "dims", "mapping", "mapping_params"]},
+            **{k: v for k, v in dict.items() if k in ["name", "dims", "mapping", "mapping_params"]},
         )
         instance.sigmas = {
             k.split("_")[0]: BasePrior.from_dict(v, version=version)
-            for k, v in dct.items()
+            for k, v in dict.items()
             if k.endswith("_sigma")
         }
-        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dct.items() if k.endswith("_offset")}
+        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dict.items() if k.endswith("_offset")}
         return instance
 
 
@@ -510,21 +510,21 @@ class CenteredRandomPrior(BasePrior):
 
     @classmethod
     def from_dict(
-        cls, dct: dict, version: str | None = None
+        cls, dict: dict, version: str | None = None
     ) -> "CenteredRandomPrior":
-        mu = BasePrior.from_dict(dct["mu"], version=version)
-        sigma = BasePrior.from_dict(dct["sigma"], version=version)
+        mu = BasePrior.from_dict(dict["mu"], version=version)
+        sigma = BasePrior.from_dict(dict["sigma"], version=version)
         instance = cls(
             mu=mu,
             sigma=sigma,
-            **{k: v for k, v in dct.items() if k in ["name", "dims", "mapping", "mapping_params"]},
+            **{k: v for k, v in dict.items() if k in ["name", "dims", "mapping", "mapping_params"]},
         )
         instance.sigmas = {
             k.split("_")[0]: BasePrior.from_dict(v, version=version)
-            for k, v in dct.items()
+            for k, v in dict.items()
             if k.endswith("_sigma")
         }
-        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dct.items() if k.endswith("_offset")}
+        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dict.items() if k.endswith("_offset")}
         return instance
 
 
@@ -615,14 +615,14 @@ class LinearPrior(BasePrior):
 
     @classmethod
     def from_dict(
-        cls, dct: dict, version: str | None = None
+        cls, dict: dict, version: str | None = None
     ) -> "LinearPrior":
-        slope = BasePrior.from_dict(dct["slope"], version=version)
+        slope = BasePrior.from_dict(dict["slope"], version=version)
         intercept = BasePrior.from_dict(
-            dct["intercept"], version=version
+            dict["intercept"], version=version
         )
         basis_function = BasisFunction.from_dict(
-            dct["basis_function"], version=version
+            dict["basis_function"], version=version
         )
         return cls(
             slope=slope,
@@ -630,7 +630,7 @@ class LinearPrior(BasePrior):
             basis_function=basis_function,
             **{
                 k: v
-                for k, v in dct.items()
+                for k, v in dict.items()
                 if k in ["name", "dims", "mapping", "mapping_params"]
             },
         )
