@@ -15,7 +15,7 @@ from pcntoolkit.util.migration import (
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Helpers: Create test migrations
 # ---------------------------------------------------------------------------
 
 def _make_registry_with_two_migrations() -> MigrationRegistry:
@@ -30,10 +30,10 @@ def _make_registry_with_two_migrations() -> MigrationRegistry:
             d["new_key"] = d.pop("old_key")
         return d
 
-    # Migration introduced in 1.2.0. It adds a default field.
+    # Migration introduced in 1.2.0. It updates new_key to 42.
     @reg.register("TestComp", introduced_in="1.2.0")
     def _migrate_1_2_0(d: dict) -> dict:
-        d.setdefault("new_key", 42)
+        d["new_key"] = 42
         return d
 
     return reg
