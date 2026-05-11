@@ -1,88 +1,82 @@
 """
-Model migration registry for PCNtoolkit.
+Registers and applies updates required to load models
+saved with previous PCNtoolkit versions. This process we call "migraton".
 
-When a saved model's serialized dict format changes between
-versions, a migration function can be registered here to
-automatically upgrade old dicts to the current format when
-loading.
+When the structure of a saved model changes in a new release,
+older saved models can be updated automatically during loading.
 
-Usage for developers
---------------------
-To add a migration for a breaking change introduced in version
-X.Y.Z, decorate a function with:
-
-    @registry.register("ComponentName", introduced_in="X.Y.Z")
-    def migrate_componentname_x_y_z(d: dict) -> dict:
-        # Transform d from the old format to the new format.
-        # Example: rename a key
-        if "old_key" in d:
-            d["new_key"] = d.pop("old_key")
-        return d
-
-"ComponentName" must match the string passed to
-registry.migrate(...) in the corresponding from_dict() method.
+This class also warns if a model was created with a newer
+PCNtoolkit version than the one currently installed by the user.
 """
 from __future__ import annotations
 
 import importlib.metadata
-from typing import Callable
+from typing import Callable, Literal
 
+# Use the "packaging" module to read also "post1" versions
 from packaging.version import Version
 
 from pcntoolkit.util.output import Output, Warnings
 
+# All components that are saved in the model file and may require migrations.
+ComponentName = Literal[
+    "BLR",
+    "HBR",
+    "BasisFunction",
+    "Scaler",
+    "Likelihood",
+    "Prior",
+]
+
 
 class MigrationRegistry:
     """
-    Central registry of dict-migration functions.
+    Registers and applies model migration functions.
 
-    Migration functions are keyed by (component, introduced_in)
-    and are applied in version order when loading a saved dict
-    whose ptk_version is older than the current code.
+    Migration functions update older saved model dictionaries to
+    the format expected by the current PCNtoolkit version.
+
+    Migrations are applied automatically in version order when a
+    model is loaded.
 
     Attributes
     ----------
-    _migrations : dict[str, list[tuple[Version, Callable]]]
+    _migrations : dict[ComponentName, list[tuple[Version, Callable]]]
         Maps component name -> sorted list of
         (introduced_in_version, migration_fn) tuples.
     """
 
     def __init__(self) -> None:
-        # Maps component name to list of (version, fn) tuples.
+        # Maps component name -> sorted list of
+        # (introduced_in_version, migration_fn) tuples.
         self._migrations: dict[
-            str, list[tuple[Version, Callable[[dict], dict]]]
+            ComponentName, list[tuple[Version, Callable[[dict], dict]]]
         ] = {}
 
     def register(
         self,
-        component: str,
+        component: ComponentName,
         introduced_in: str,
     ) -> Callable[[Callable[[dict], dict]], Callable[[dict], dict]]:
         """
-        Decorator that registers a migration for a component.
+        Decorator used to register a migration function for a component.
+
+        When a function is decorated with @registry.register(...), it is
+        automatically added to self._migrations.
 
         Parameters
         ----------
-        component : str
-            Name of the component being migrated (e.g. "BLR",
-            "BasisFunction", "Scaler").
+        component : ComponentName
+            Name of the component being migrated
+            (e.g. "BLR", "BasisFunction", "Scaler").
         introduced_in : str
             The PCNtoolkit version in which the new format was
-            introduced. Models saved with an older version than
-            this will have the migration applied.
+            introduced.
 
         Returns
         -------
         Callable
-            The original function, unchanged.
-
-        Examples
-        --------
-        @registry.register("BLR", introduced_in="1.3.0")
-        def migrate_blr_1_3_0(d: dict) -> dict:
-            if "old_key" in d:
-                d["new_key"] = d.pop("old_key")
-            return d
+            The migration function.
         """
         # Convert the version string to a comparable Version object.
         target_version: Version = Version(introduced_in)
@@ -102,36 +96,33 @@ class MigrationRegistry:
 
     def migrate(
         self,
-        component: str,
+        component: ComponentName,
         d: dict,
         version: str | None = None,
     ) -> dict:
         """
-        Apply all pending migrations to a dict.
+        Apply all migrations specified in self._migrations when loading models
+        saved with previous PCNtoolkit versions.
 
-        Reads the saved version from d["ptk_version"] (or uses
-        version if provided, defaulting to "0.0.0" if absent).
-        Applies every registered migration for this component
-        where saved_version < introduced_in, in ascending order.
-
-        This method is always safe to call: it is a no-op when no
-        migrations are registered or the dict is already current.
+        Called by from_dict() methods that exist in the components being 
+        migrated (e.g. BasisFunction.from_dict()).
 
         Parameters
         ----------
-        component : str
+        component : ComponentName
             Name of the component (must match what was used in
             register()).
         d : dict
             The raw dict read from a saved JSON file.
         version : str | None, optional
-            Explicit version override. If None, reads
-            d.get("ptk_version", "0.0.0").
+            Explicit version override. If no version is exists in the JSON 
+            file, it defaults to 0.0.0
 
         Returns
         -------
         dict
-            The (potentially updated) dict.
+            The dict, updated to the format expected by the current 
+            PCNtoolkit version.
         """
         # Determine the version of the saved dict.
         raw_version: str = (
@@ -166,12 +157,10 @@ def check_forward_compatibility(
     current_version: str,
 ) -> None:
     """
-    Warn the user if a saved model was created with a newer
-    version of PCNtoolkit than the currently installed one.
+    Warn if a model was created with a newer PCNtoolkit version.
 
-    Models created with a newer version may use features that
-    are not present in the running code. The user should update
-    PCNtoolkit to avoid potential errors.
+    Newer model files may contain features or formats that are not
+    supported by the older installed version.
 
     Parameters
     ----------
@@ -197,26 +186,12 @@ def check_forward_compatibility(
         )
 
 
-# ---------------------------------------------------------------------------
-# Module-level singleton registry — import this in from_dict() methods.
-# ---------------------------------------------------------------------------
+# Singleton: All components import this same instance of registry which
+# holds all registered migration functions.
 registry: MigrationRegistry = MigrationRegistry()
 
 
 # ---------------------------------------------------------------------------
-# Registered migrations
+# Add migration functions below
 # ---------------------------------------------------------------------------
-# Add migration functions below using the @registry.register decorator.
-# Each function must accept a dict and return a (modified) dict.
-# Keep one function per breaking change; name it clearly.
-#
-# Example:
-#
-#   @registry.register("BasisFunction", introduced_in="1.3.0")
-#   def _migrate_basis_function_1_3_0(d: dict) -> dict:
-#       """Rename 'knot_positions' to 'knots' (changed in 1.3.0)."""
-#       if "knot_positions" in d:
-#           d["knots"] = d.pop("knot_positions")
-#       return d
-#
-# ---------------------------------------------------------------------------
+
