@@ -103,7 +103,6 @@ class Likelihood(ABC):
     ) -> "Likelihood":
         # Apply any registered Likelihood migrations for this version.
         dct = registry.migrate("Likelihood", dct, version=version)
-        # Pop the likelihood name to determine the concrete class.
         likelihood = dct.pop("name", "Normal")
         match likelihood:
             case "Normal":
@@ -111,9 +110,9 @@ class Likelihood(ABC):
             case "SHASHb":
                 return SHASHbLikelihood._from_dict(dct, version=version)
             # case "SHASHo":
-            #     return SHASHoLikelihood._from_dict(dct)
+            #     return SHASHoLikelihood._from_dict(dct, version=version)
             # case "SHASHo2":
-            #     return SHASHo2Likelihood._from_dict(dct)
+            #     return SHASHo2Likelihood._from_dict(dct, version=version)
             case "beta":
                 return BetaLikelihood._from_dict(dct, version=version)
             case _:
@@ -228,7 +227,6 @@ class NormalLikelihood(Likelihood):
         dct: Dict[str, Any],
         version: str | None = None,
     ) -> "NormalLikelihood":
-        # Pass version to BasePrior so prior migrations are applied.
         return cls(
             mu=BasePrior.from_dict(dct["mu"], version=version),
             sigma=BasePrior.from_dict(dct["sigma"], version=version),
@@ -321,7 +319,6 @@ class SHASHbLikelihood(Likelihood):
         dct: Dict[str, Any],
         version: str | None = None,
     ) -> "SHASHbLikelihood":
-        # Pass version to BasePrior so prior migrations are applied.
         return cls(
             mu=BasePrior.from_dict(dct["mu"], version=version),
             sigma=BasePrior.from_dict(dct["sigma"], version=version),
@@ -431,7 +428,6 @@ class SHASHoLikelihood(Likelihood):
         dct: Dict[str, Any],
         version: str | None = None,
     ) -> "SHASHoLikelihood":
-        # Pass version to BasePrior so prior migrations are applied.
         return cls(
             mu=BasePrior.from_dict(dct["mu"], version=version),
             sigma=BasePrior.from_dict(dct["sigma"], version=version),
@@ -529,7 +525,6 @@ class SHASHo2Likelihood(Likelihood):
         dct: Dict[str, Any],
         version: str | None = None,
     ) -> "SHASHo2Likelihood":
-        # Pass version to BasePrior so prior migrations are applied.
         return cls(
             mu=BasePrior.from_dict(dct["mu"], version=version),
             sigma=BasePrior.from_dict(dct["sigma"], version=version),
@@ -647,7 +642,6 @@ class BetaLikelihood(Likelihood):
         dct: Dict[str, Any],
         version: str | None = None,
     ) -> "BetaLikelihood":
-        # Pass version to BasePrior so prior migrations are applied.
         return cls(
             alpha=BasePrior.from_dict(dct["alpha"], version=version),
             beta=BasePrior.from_dict(dct["beta"], version=version),

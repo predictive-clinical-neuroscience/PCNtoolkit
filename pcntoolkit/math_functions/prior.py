@@ -185,11 +185,8 @@ class BasePrior(ABC):
     def from_dict(
         cls, dict: dict, version: str | None = None
     ) -> "BasePrior":
-        # Apply any registered Prior migrations BEFORE popping
-        # "type", because pop() is destructive and migrations
-        # may need the full dict to be intact.
+        # Apply any registered Prior migrations for this version
         dict = registry.migrate("Prior", dict, version=version)
-        # Dispatch to the correct subclass using the "type" key.
         return globals()[dict.pop("type")].from_dict(
             dict, version=version
         )
@@ -271,10 +268,7 @@ class Prior(BasePrior):
         return dct
 
     @classmethod
-    def from_dict(
-        cls, dct: dict, version: str | None = None
-    ) -> "Prior":
-        # Prior has no nested BasePrior children; just unpack fields.
+    def from_dict(cls, dct: dict):
         return cls(
             **{
                 k: v
@@ -400,7 +394,6 @@ class RandomPrior(BasePrior):
     def from_dict(
         cls, dct: dict, version: str | None = None
     ) -> "RandomPrior":
-        # Pass version down so nested BasePrior migrations apply.
         mu = BasePrior.from_dict(dct["mu"], version=version)
         sigma = BasePrior.from_dict(dct["sigma"], version=version)
         instance = cls(
@@ -408,7 +401,6 @@ class RandomPrior(BasePrior):
             sigma=sigma,
             **{k: v for k, v in dct.items() if k in ["name", "dims", "mapping", "mapping_params"]},
         )
-        # Restore any per-batch-effect sigma priors.
         instance.sigmas = {
             k.split("_")[0]: BasePrior.from_dict(v, version=version)
             for k, v in dct.items()
@@ -416,6 +408,9 @@ class RandomPrior(BasePrior):
         }
         # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dct.items() if k.endswith("_offset")}
         return instance
+
+
+class CenteredRandomPrior(BasePrior):
     def __init__(
         self,
         mu: Optional[BasePrior] = None,
@@ -517,7 +512,6 @@ class RandomPrior(BasePrior):
     def from_dict(
         cls, dct: dict, version: str | None = None
     ) -> "CenteredRandomPrior":
-        # Pass version down so nested BasePrior migrations apply.
         mu = BasePrior.from_dict(dct["mu"], version=version)
         sigma = BasePrior.from_dict(dct["sigma"], version=version)
         instance = cls(
@@ -525,7 +519,6 @@ class RandomPrior(BasePrior):
             sigma=sigma,
             **{k: v for k, v in dct.items() if k in ["name", "dims", "mapping", "mapping_params"]},
         )
-        # Restore any per-batch-effect sigma priors.
         instance.sigmas = {
             k.split("_")[0]: BasePrior.from_dict(v, version=version)
             for k, v in dct.items()
@@ -624,8 +617,6 @@ class LinearPrior(BasePrior):
     def from_dict(
         cls, dct: dict, version: str | None = None
     ) -> "LinearPrior":
-        # Pass version down so nested BasePrior and BasisFunction
-        # migrations are both applied.
         slope = BasePrior.from_dict(dct["slope"], version=version)
         intercept = BasePrior.from_dict(
             dct["intercept"], version=version

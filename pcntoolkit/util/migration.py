@@ -158,9 +158,8 @@ class MigrationRegistry:
                 # Emit an informational message that migration is running.
                 Output.warning(
                     Warnings.MODEL_MIGRATION_APPLIED,
-                    component=component,
-                    from_version=str(saved_version),
-                    to_version=str(introduced_in),
+                    saved_version=str(saved_version),
+                    current_version=str(introduced_in),
                 )
                 d = fn(d)
 
