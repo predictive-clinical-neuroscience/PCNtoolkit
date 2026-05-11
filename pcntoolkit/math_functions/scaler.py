@@ -57,6 +57,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from pcntoolkit.util.output import Errors, Output
+from pcntoolkit.util.migration import registry
 
 
 class Scaler(ABC):
@@ -156,13 +157,21 @@ class Scaler(ABC):
         """Convert scaler instance to dictionary."""
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "Scaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "Scaler":
         """Create a scaler instance from a dictionary.
 
         Parameters
         ----------
         my_dict : Dict[str, Union[bool, str, float, List[float]]]
-            Dictionary containing scaler parameters. Must include 'scaler_type' key.
+            Dictionary containing scaler parameters.
+            Must include 'scaler_type' key.
+        version : str | None, optional
+            The ptk_version of the saved model, by default None.
+            Used to apply any registered Scaler migrations.
 
         Returns
         -------
@@ -174,6 +183,9 @@ class Scaler(ABC):
         ValueError
             If scaler_type is missing or invalid
         """
+        # Apply any registered Scaler migrations for this version.
+        my_dict = registry.migrate("Scaler", my_dict, version=version)
+
         if "scaler_type" not in my_dict:
             raise ValueError(Output.error(Errors.ERROR_SCALER_TYPE_NOT_FOUND))
 
