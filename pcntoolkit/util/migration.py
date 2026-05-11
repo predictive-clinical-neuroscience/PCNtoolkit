@@ -199,9 +199,8 @@ def check_forward_compatibility(
             current_version=str(parsed_current),
         )
 
-
-# Singleton: All components import this same instance of registry which
-# holds all registered migration functions.
+# MigrationRegistry is a singleton: All components import this same instance 
+# of registry which holds all registered migration functions.
 registry: MigrationRegistry = MigrationRegistry()
 
 
