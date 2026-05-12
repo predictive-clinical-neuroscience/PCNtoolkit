@@ -42,6 +42,7 @@ dependencies = [
     "ipykernel>=6.29.5",
     "dask>=2025.11.0",
     "filelock>=3.13.0",
+    "packaging>=21.3",
     "arviz>=0.21.0,<1.0.0"
 ]
 

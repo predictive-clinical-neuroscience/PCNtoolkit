@@ -26,6 +26,7 @@ from pcntoolkit.regression_model.hbr import HBR  # noqa: F401 # type: ignore
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.regression_model.test_model import TestModel  # noqa: F401 # type: ignore
 from pcntoolkit.util.evaluator import Evaluator
+from pcntoolkit.util.migration import check_forward_compatibility
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 from pcntoolkit.util.paths import ensure_dir_exists, get_default_save_dir, get_save_subdirs
 from pcntoolkit.util.plotter import plot_centiles, plot_qq
@@ -486,6 +487,11 @@ class NormativeModel:
         with open(model_path, mode="r", encoding="utf-8") as f:
             metadata = json.load(f)
 
+        # Warn if model was saved with a newer pcntoolkit version.
+        norm_version: str = metadata.get("ptk_version", "0.0.0")
+        current_version: str = importlib.metadata.version("pcntoolkit")
+        check_forward_compatibility(norm_version, current_version)
+
         savemodel = metadata["savemodel"]
         saveresults = metadata["saveresults"]
         save_dir = metadata["save_dir"]
@@ -512,7 +518,15 @@ class NormativeModel:
                     response_vars.append(responsevar)
                     regression_model_type = globals()[reg_model_dict["model"]["type"]]
                     regression_models[responsevar] = regression_model_type.from_dict(reg_model_dict["model"], path)
-                    outscalers[responsevar] = Scaler.from_dict(reg_model_dict["outscaler"])
+                    # Use the version stored in the regression model dict so
+                    # that the outscaler migration uses the correct version.
+                    reg_version: str = reg_model_dict["model"].get(
+                        "ptk_version", "0.0.0"
+                    )
+                    outscalers[responsevar] = Scaler.from_dict(
+                        reg_model_dict["outscaler"],
+                        version=reg_version,
+                    )
         template_regression_model = type(regression_models[response_vars[0]]).from_dict(
             metadata["template_regression_model"], None
         )
@@ -535,7 +549,12 @@ class NormativeModel:
         self.regression_models = regression_models
         self.outscalers = outscalers
         self.response_vars = response_vars
-        self.inscalers = {k: Scaler.from_dict(v) for k, v in metadata["inscalers"].items()}
+        # Pass the top-level normative_model.json version to inscaler
+        # migration so that Scaler.from_dict() can apply upgrades.
+        self.inscalers = {
+            k: Scaler.from_dict(v, version=norm_version)
+            for k, v in metadata["inscalers"].items()
+        }
 
         if "batch_effects_maps" in metadata:
             self.batch_effects_maps = {

@@ -13,6 +13,7 @@ from pymc import math
 from pcntoolkit.math_functions.basis_function import BasisFunction, LinearBasisFunction
 from pcntoolkit.math_functions.factorize import *
 from pcntoolkit.util.output import Errors, Output
+from pcntoolkit.util.migration import registry
 
 PM_DISTMAP = {
     "Normal": pm.Normal,
@@ -181,8 +182,14 @@ class BasePrior(ABC):
         return dct | {"type": self.__class__.__name__}
 
     @classmethod
-    def from_dict(cls, dict: dict) -> BasePrior:
-        return globals()[dict.pop("type")].from_dict(dict)
+    def from_dict(
+        cls, dict: dict, version: str | None = None
+    ) -> "BasePrior":
+        # Apply any registered Prior migrations for this version
+        dict = registry.migrate("Prior", dict, version=version)
+        return globals()[dict.pop("type")].from_dict(
+            dict, version=version
+        )
 
     def __eq__(self, other: BasePrior):
         return self.to_dict() == other.to_dict()
@@ -384,16 +391,22 @@ class RandomPrior(BasePrior):
         return dct
 
     @classmethod
-    def from_dict(cls, dct):
-        mu = BasePrior.from_dict(dct["mu"])
-        sigma = BasePrior.from_dict(dct["sigma"])
+    def from_dict(
+        cls, dict: dict, version: str | None = None
+    ) -> "RandomPrior":
+        mu = BasePrior.from_dict(dict["mu"], version=version)
+        sigma = BasePrior.from_dict(dict["sigma"], version=version)
         instance = cls(
             mu=mu,
             sigma=sigma,
-            **{k: v for k, v in dct.items() if k in ["name", "dims", "mapping", "mapping_params"]},
+            **{k: v for k, v in dict.items() if k in ["name", "dims", "mapping", "mapping_params"]},
         )
-        instance.sigmas = {k.split("_")[0]: BasePrior.from_dict(v) for k, v in dct.items() if k.endswith("_sigma")}
-        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dct.items() if k.endswith("_offset")}
+        instance.sigmas = {
+            k.split("_")[0]: BasePrior.from_dict(v, version=version)
+            for k, v in dict.items()
+            if k.endswith("_sigma")
+        }
+        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dict.items() if k.endswith("_offset")}
         return instance
 
 
@@ -496,16 +509,22 @@ class CenteredRandomPrior(BasePrior):
         return dct
 
     @classmethod
-    def from_dict(cls, dct):
-        mu = BasePrior.from_dict(dct["mu"])
-        sigma = BasePrior.from_dict(dct["sigma"])
+    def from_dict(
+        cls, dict: dict, version: str | None = None
+    ) -> "CenteredRandomPrior":
+        mu = BasePrior.from_dict(dict["mu"], version=version)
+        sigma = BasePrior.from_dict(dict["sigma"], version=version)
         instance = cls(
             mu=mu,
             sigma=sigma,
-            **{k: v for k, v in dct.items() if k in ["name", "dims", "mapping", "mapping_params"]},
+            **{k: v for k, v in dict.items() if k in ["name", "dims", "mapping", "mapping_params"]},
         )
-        instance.sigmas = {k.split("_")[0]: BasePrior.from_dict(v) for k, v in dct.items() if k.endswith("_sigma")}
-        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dct.items() if k.endswith("_offset")}
+        instance.sigmas = {
+            k.split("_")[0]: BasePrior.from_dict(v, version=version)
+            for k, v in dict.items()
+            if k.endswith("_sigma")
+        }
+        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dict.items() if k.endswith("_offset")}
         return instance
 
 
@@ -595,15 +614,25 @@ class LinearPrior(BasePrior):
         return dct
 
     @classmethod
-    def from_dict(cls, dct):
-        slope = BasePrior.from_dict(dct["slope"])
-        intercept = BasePrior.from_dict(dct["intercept"])
-        basis_function = BasisFunction.from_dict(dct["basis_function"])
+    def from_dict(
+        cls, dict: dict, version: str | None = None
+    ) -> "LinearPrior":
+        slope = BasePrior.from_dict(dict["slope"], version=version)
+        intercept = BasePrior.from_dict(
+            dict["intercept"], version=version
+        )
+        basis_function = BasisFunction.from_dict(
+            dict["basis_function"], version=version
+        )
         return cls(
             slope=slope,
             intercept=intercept,
             basis_function=basis_function,
-            **{k: v for k, v in dct.items() if k in ["name", "dims", "mapping", "mapping_params"]},
+            **{
+                k: v
+                for k, v in dict.items()
+                if k in ["name", "dims", "mapping", "mapping_params"]
+            },
         )
 
     @property

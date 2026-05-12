@@ -7,6 +7,7 @@ import numpy as np
 from scipy.interpolate import BSpline
 
 from pcntoolkit.util.output import Errors, Output
+from pcntoolkit.util.migration import registry
 
 def create_basis_function(
     basis_type: str | dict | None,
@@ -37,13 +38,19 @@ class BasisFunction(ABC):
         self.basis_column = basis_column
         self.is_fitted: bool = kwargs.get("is_fitted", False)
         self.basis_name: str = kwargs.get("basis_name", "basis")
-        self.min: float = kwargs.get("min", 0)
-        self.max: float = kwargs.get("max", 1)
-        self.compute_min: bool = self.min == 0
-        self.compute_max: bool = self.max == 1
+        self.min: float | None = kwargs.get("min", None)
+        self.max: float | None = kwargs.get("max", None)
+        self.compute_min: bool = self.min is None
+        self.compute_max: bool = self.max is None
 
     @classmethod
-    def from_dict(cls, my_dict: dict) -> BasisFunction:
+    def from_dict(
+        cls, my_dict: dict, version: str | None = None
+    ) -> "BasisFunction":
+        # Apply any registered BasisFunction migrations for this version.
+        my_dict = registry.migrate(
+            "BasisFunction", my_dict, version=version
+        )
         basis_function_type = my_dict["basis_function"]
         basis_function = create_basis_function(basis_function_type, **my_dict)
         return basis_function

@@ -25,6 +25,7 @@ from pcntoolkit.math_functions.basis_function import BasisFunction, create_basis
 from pcntoolkit.math_functions.warp import *
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.util.data_utils import iter_batch_combinations
+from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 
 
@@ -994,7 +995,12 @@ class BLR(RegressionModel):
     def to_dict(self, path: str | None = None) -> dict:
         my_dict = self.regmodel_dict
         for key, value in self.__dict__.items():
-            if key not in ["warp", "lambda_n_vec", "beta", "ys", "s2"]:
+            # Save the ptk_version currently 
+            # used by the user
+            if key not in [
+                "warp", "lambda_n_vec", "beta",
+                "ys", "s2", "ptk_version",
+            ]:
                 if isinstance(value, np.ndarray):
                     my_dict[key] = value.tolist()
                 elif key in ["basis_function_mean", "basis_function_var"]:
@@ -1008,6 +1014,10 @@ class BLR(RegressionModel):
         """
         Creates a configuration from a dictionary.
         """
+        # Extract the saved version; default to "0.0.0" for old models.
+        version: str = my_dict.get("ptk_version", "0.0.0")
+        # Apply any registered BLR migrations for this version.
+        my_dict = registry.migrate("BLR", my_dict, version=version)
         self = cls(my_dict["name"])
         for key, value in my_dict.items():
             if isinstance(value, list):
@@ -1016,8 +1026,13 @@ class BLR(RegressionModel):
                 object.__setattr__(self, key, value)
         self.initialize_warp()
         self.is_from_dict = True
-        self.basis_function_mean = BasisFunction.from_dict(my_dict["basis_function_mean"])
-        self.basis_function_var = BasisFunction.from_dict(my_dict["basis_function_var"])
+        # Pass version down so basis function migrations are applied.
+        self.basis_function_mean = BasisFunction.from_dict(
+            my_dict["basis_function_mean"], version=version
+        )
+        self.basis_function_var = BasisFunction.from_dict(
+            my_dict["basis_function_var"], version=version
+        )
         return self
 
     @classmethod

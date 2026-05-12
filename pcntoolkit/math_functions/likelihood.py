@@ -13,6 +13,7 @@ from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
 from pcntoolkit.math_functions.factorize import *
 from pcntoolkit.math_functions.prior import BasePrior, make_prior, prior_from_args
 from pcntoolkit.math_functions.shash import S, S_inv, SHASHb, SHASHo, SHASHo2, m, m1m2
+from pcntoolkit.util.migration import registry
 
 
 class Likelihood(ABC):
@@ -97,19 +98,23 @@ class Likelihood(ABC):
         pass
 
     @staticmethod
-    def from_dict(dct: Dict[str, Any]) -> "Likelihood":
+    def from_dict(
+        dct: Dict[str, Any], version: str | None = None
+    ) -> "Likelihood":
+        # Apply any registered Likelihood migrations for this version.
+        dct = registry.migrate("Likelihood", dct, version=version)
         likelihood = dct.pop("name", "Normal")
         match likelihood:
             case "Normal":
-                return NormalLikelihood._from_dict(dct)
+                return NormalLikelihood._from_dict(dct, version=version)
             case "SHASHb":
-                return SHASHbLikelihood._from_dict(dct)
+                return SHASHbLikelihood._from_dict(dct, version=version)
             # case "SHASHo":
-            #     return SHASHoLikelihood._from_dict(dct)
+            #     return SHASHoLikelihood._from_dict(dct, version=version)
             # case "SHASHo2":
-            #     return SHASHo2Likelihood._from_dict(dct)
+            #     return SHASHo2Likelihood._from_dict(dct, version=version)
             case "beta":
-                return BetaLikelihood._from_dict(dct)
+                return BetaLikelihood._from_dict(dct, version=version)
             case _:
                 raise ValueError(f"Unknown likelihood: {likelihood}")
 
@@ -136,7 +141,11 @@ class Likelihood(ABC):
 
     @classmethod
     @abstractmethod
-    def _from_dict(cls, dct: Dict[str, Any]) -> "Likelihood":
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "Likelihood":
         pass
 
     @classmethod
@@ -213,8 +222,15 @@ class NormalLikelihood(Likelihood):
         return {"name": self.name, "mu": self.mu.to_dict(), "sigma": self.sigma.to_dict()}
 
     @classmethod
-    def _from_dict(cls, dct: Dict[str, Any]) -> "NormalLikelihood":
-        return cls(mu=BasePrior.from_dict(dct["mu"]), sigma=BasePrior.from_dict(dct["sigma"]))
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "NormalLikelihood":
+        return cls(
+            mu=BasePrior.from_dict(dct["mu"], version=version),
+            sigma=BasePrior.from_dict(dct["sigma"], version=version),
+        )
 
     @classmethod
     def _from_args(cls, args: Dict[str, Any]) -> "NormalLikelihood":
@@ -298,12 +314,16 @@ class SHASHbLikelihood(Likelihood):
         }
 
     @classmethod
-    def _from_dict(cls, dct: Dict[str, Any]) -> "SHASHbLikelihood":
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "SHASHbLikelihood":
         return cls(
-            mu=BasePrior.from_dict(dct["mu"]),
-            sigma=BasePrior.from_dict(dct["sigma"]),
-            epsilon=BasePrior.from_dict(dct["epsilon"]),
-            delta=BasePrior.from_dict(dct["delta"]),
+            mu=BasePrior.from_dict(dct["mu"], version=version),
+            sigma=BasePrior.from_dict(dct["sigma"], version=version),
+            epsilon=BasePrior.from_dict(dct["epsilon"], version=version),
+            delta=BasePrior.from_dict(dct["delta"], version=version),
         )
 
     @classmethod
@@ -403,12 +423,16 @@ class SHASHoLikelihood(Likelihood):
         }
 
     @classmethod
-    def _from_dict(cls, dct: Dict[str, Any]) -> "SHASHoLikelihood":
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "SHASHoLikelihood":
         return cls(
-            mu=BasePrior.from_dict(dct["mu"]),
-            sigma=BasePrior.from_dict(dct["sigma"]),
-            epsilon=BasePrior.from_dict(dct["epsilon"]),
-            delta=BasePrior.from_dict(dct["delta"]),
+            mu=BasePrior.from_dict(dct["mu"], version=version),
+            sigma=BasePrior.from_dict(dct["sigma"], version=version),
+            epsilon=BasePrior.from_dict(dct["epsilon"], version=version),
+            delta=BasePrior.from_dict(dct["delta"], version=version),
         )
 
     @classmethod
@@ -496,12 +520,16 @@ class SHASHo2Likelihood(Likelihood):
         }
 
     @classmethod
-    def _from_dict(cls, dct: Dict[str, Any]) -> "SHASHo2Likelihood":
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "SHASHo2Likelihood":
         return cls(
-            mu=BasePrior.from_dict(dct["mu"]),
-            sigma=BasePrior.from_dict(dct["sigma"]),
-            epsilon=BasePrior.from_dict(dct["epsilon"]),
-            delta=BasePrior.from_dict(dct["delta"]),
+            mu=BasePrior.from_dict(dct["mu"], version=version),
+            sigma=BasePrior.from_dict(dct["sigma"], version=version),
+            epsilon=BasePrior.from_dict(dct["epsilon"], version=version),
+            delta=BasePrior.from_dict(dct["delta"], version=version),
         )
 
     @classmethod
@@ -609,8 +637,15 @@ class BetaLikelihood(Likelihood):
         return {"name": self.name, "alpha": self.alpha.to_dict(), "beta": self.beta.to_dict()}
 
     @classmethod
-    def _from_dict(cls, dct: Dict[str, Any]) -> "BetaLikelihood":
-        return cls(alpha=BasePrior.from_dict(dct["alpha"]), beta=BasePrior.from_dict(dct["beta"]))
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "BetaLikelihood":
+        return cls(
+            alpha=BasePrior.from_dict(dct["alpha"], version=version),
+            beta=BasePrior.from_dict(dct["beta"], version=version),
+        )
 
     @classmethod
     def _from_args(cls, args: Dict[str, Any]) -> "BetaLikelihood":

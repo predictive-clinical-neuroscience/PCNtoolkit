@@ -155,6 +155,17 @@ class Warnings:
         "Transfer data contain fewer batch effect levels than training data. "
         "This may lead to biased results."
     )
+    MODEL_SAVED_WITH_NEWER_VERSION = (
+        "This model was saved with PCNtoolkit v{saved_version}, "
+        "but you are running v{current_version}. "
+        "Some features may not load correctly. "
+        "Please update PCNtoolkit: pip install --upgrade pcntoolkit"
+    )
+    MODEL_MIGRATION_APPLIED = (
+        "This model was saved with PCNtoolkit v{saved_version}, "
+        "but you are running v{current_version}. "
+        "Loading this model in v{current_version}..."
+    )
 
 
 class Errors:
