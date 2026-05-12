@@ -205,8 +205,9 @@ registry: MigrationRegistry = MigrationRegistry()
 
 @registry.register("BasisFunction", introduced_in="1.2.0post1")
 def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
-    """Three parameters changed their python representation from v1.1.2 to 
-    v1.2.0post1. See issue #435.
+    """Migrate a BasisFunction dict from v1.1.2 to v1.2.0post1.
+
+    Three parameters changed representation. See issue #435.
 
     | Parameter    | v1.1.2               | v1.2.0post1                   |
     |--------------|----------------------|-------------------------------|
@@ -214,6 +215,14 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
     | min / max    | `{"0": -2.74}` (dict)| `-2.74` (float)               |
     | knots        | `{"0": [...]}` (dict)| `[...]` (list)                |
 
+    Not implemented
+    -------------
+    Basis functions with multiple basis columns saved before v1.2.0post1 
+    could store knots, min and max as multi-key dicts 
+    (e.g. ``{"0": [...], "1": [...]}``). 
+    Migrating these to version higher than v1.2.0post1 is not yet supported.
+    A ``NotImplementedError`` is raised when such a model is loaded.
+    
     Parameters
     ----------
     d : dict
@@ -222,8 +231,17 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
     Returns
     -------
     dict
-        Dict with all three parameters changed to the v1.2.0post1 format.
+        Dict with all three parameters changed to the v1.2.0post1
+        format.
     """
+    # Raise an error if this is a basis function with multiple basis columns
+    for key in ("min", "max", "knots"):
+        if isinstance(d.get(key), dict) and len(d[key]) > 1:
+            raise NotImplementedError(
+                "Loading a basis function with multiple basis columns saved "
+                "with PCNtoolkit v1.1.2 or earlier is not supported."
+            )
+
     # Fix 1: basis_column: list -> int
     if isinstance(d.get("basis_column"), list):
         d["basis_column"] = d["basis_column"][0]
