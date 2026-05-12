@@ -262,6 +262,10 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
 
     # Fix 3: knots: {"0": [...]} dict -> list.
     if isinstance(d.get("knots"), dict):
-        d["knots"] = next(iter(d["knots"].values()))
+        if d["knots"]:
+            d["knots"] = next(iter(d["knots"].values()))
+        else:
+            # default to None if the dict is empty (e.g. {} in JSON).
+            d["knots"] = None
 
     return d
