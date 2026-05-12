@@ -1105,21 +1105,28 @@ class NormData(xr.Dataset):
         """
         acc = []
         x_columns = [col for col in ["X"] if hasattr(self, col)]
-        y_columns = [col for col in ["Y", "Y_harmonized", "Z"] if hasattr(self, col)]
+        y_columns = [col for col in ["Y", "Y_harmonized", "Z", "logp", "Yhat"] 
+                     if hasattr(self, col)]
         acc.append(
             xr.Dataset.to_dataframe(self[x_columns], dim_order)
             .reset_index(drop=False)
-            .pivot(index="observations", columns="covariates", values=x_columns)
+            .pivot(index="observations", 
+                   columns="covariates", 
+                   values=x_columns)
         )
         acc.append(
             xr.Dataset.to_dataframe(self[y_columns], dim_order)
             .reset_index(drop=False)
-            .pivot(index="observations", columns="response_vars", values=y_columns)
+            .pivot(index="observations", 
+                   columns="response_vars", 
+                   values=y_columns)
         )
         be = (
             xr.DataArray.to_dataframe(self.batch_effects, dim_order)
             .reset_index(drop=False)
-            .pivot(index="observations", columns="batch_effect_dims", values="batch_effects")
+            .pivot(index="observations", 
+                   columns="batch_effect_dims", 
+                   values="batch_effects")
         )
         be.columns = [("batch_effects", col) for col in be.columns]
 
