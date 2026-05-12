@@ -38,10 +38,10 @@ class BasisFunction(ABC):
         self.basis_column = basis_column
         self.is_fitted: bool = kwargs.get("is_fitted", False)
         self.basis_name: str = kwargs.get("basis_name", "basis")
-        self.min: float = kwargs.get("min", 0)
-        self.max: float = kwargs.get("max", 1)
-        self.compute_min: bool = self.min == 0
-        self.compute_max: bool = self.max == 1
+        self.min: float | None = kwargs.get("min", None)
+        self.max: float | None = kwargs.get("max", None)
+        self.compute_min: bool = self.min is None
+        self.compute_max: bool = self.max is None
 
     @classmethod
     def from_dict(

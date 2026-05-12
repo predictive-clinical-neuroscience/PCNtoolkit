@@ -229,11 +229,18 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
         d["basis_column"] = d["basis_column"][0]
 
     # Fix 2: min / max: {"0": value} dicts -> floats.
-    # Use BasisFunction.__init__ defaults (0 / 1) if the dict is empty.
     if isinstance(d.get("min"), dict):
-        d["min"] = next(iter(d["min"].values()), 0)
+        if d["min"]:
+            d["min"] = next(iter(d["min"].values()))
+        else:
+            # default to None if the dict is empty (e.g. {} in JSON).
+            d["min"] = None
     if isinstance(d.get("max"), dict):
-        d["max"] = next(iter(d["max"].values()), 1)
+        if d["max"]:
+            d["max"] = next(iter(d["max"].values()))
+        else:
+            # default to None if the dict is empty (e.g. {} in JSON).
+            d["max"] = None
 
     # Fix 3: knots: {"0": [...]} dict -> list.
     if isinstance(d.get("knots"), dict):
