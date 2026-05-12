@@ -41,7 +41,8 @@ dependencies = [
     "ipywidgets>=8.1.5",
     "ipykernel>=6.29.5",
     "dask>=2025.11.0",
-    "filelock>=3.13.0"
+    "filelock>=3.13.0",
+    "arviz>=0.21.0,<1.0.0"
 ]
 
 [project.optional-dependencies]
