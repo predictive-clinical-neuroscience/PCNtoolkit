@@ -205,21 +205,14 @@ registry: MigrationRegistry = MigrationRegistry()
 
 @registry.register("BasisFunction", introduced_in="1.2.0post1")
 def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
-    """Fix three field-type regressions introduced in v1.2.0.
+    """Three parameters changed their python representation from v1.1.2 to 
+    v1.2.0post1. See issue #435.
 
-    Commit 7e9ce29 changed the serialization format of BasisFunction.
-    Loading a v1.1.2 JSON with v1.2.0+ code breaks in three ways:
-
-    1. ``basis_column`` was saved as a single-element list ``[0]``
-       but is now expected to be a plain int ``0``.
-       The equality check ``i == self.basis_column`` was always
-       False, so the B-spline transform was silently skipped.
-
-    2. ``min`` / ``max`` were saved as a single-key dict
-       ``{"0": -2.74}`` but are now expected to be plain floats.
-
-    3. ``knots`` was saved as a single-key dict ``{"0": [...]}``
-       but is now expected to be a plain list.
+    | Parameter    | v1.1.2               | v1.2.0post1                   |
+    |--------------|----------------------|-------------------------------|
+    | basis_column | `[0]` (list)         | `0` (int)                     |
+    | min / max    | `{"0": -2.74}` (dict)| `-2.74` (float)               |
+    | knots        | `{"0": [...]}` (dict)| `[...]` (list)                |
 
     Parameters
     ----------
@@ -229,29 +222,21 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
     Returns
     -------
     dict
-        Dict with all three fields normalised to the v1.2.0 format.
+        Dict with all three parameters changed to the v1.2.0post1 format.
     """
-    # Fix 1: unwrap basis_column from a single-element list to int.
+    # Fix 1: basis_column: list -> int
     if isinstance(d.get("basis_column"), list):
         d["basis_column"] = d["basis_column"][0]
 
-    # Fix 2: unwrap min / max from {"0": value} dicts to floats.
+    # Fix 2: min / max: {"0": value} dicts -> floats.
     # Use BasisFunction.__init__ defaults (0 / 1) if the dict is empty.
     if isinstance(d.get("min"), dict):
         d["min"] = next(iter(d["min"].values()), 0)
     if isinstance(d.get("max"), dict):
         d["max"] = next(iter(d["max"].values()), 1)
 
-    # Fix 3: unwrap knots from {"0": [...]} dict to a plain list.
-    # Use an empty list if the dict is empty.
+    # Fix 3: knots: {"0": [...]} dict -> list.
     if isinstance(d.get("knots"), dict):
-        d["knots"] = next(iter(d["knots"].values()), [])
+        d["knots"] = next(iter(d["knots"].values()))
 
-    # CompositeBasis stores nested BasisFunction dicts in "parts".
-    # Recursively apply the same fixes to every nested part.
-    if "parts" in d:
-        d["parts"] = [
-            _migrate_basis_function_1_2_0post1(part)
-            for part in d["parts"]
-        ]
     return d
