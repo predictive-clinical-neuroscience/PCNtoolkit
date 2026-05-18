@@ -268,11 +268,11 @@ class Prior(BasePrior):
         return dct
 
     @classmethod
-    def from_dict(cls, dct: dict):
+    def from_dict(cls, dict: dict, version: str | None = None):
         return cls(
             **{
                 k: v
-                for k, v in dct.items()
+                for k, v in dict.items()
                 if k
                 in [
                     "name",
