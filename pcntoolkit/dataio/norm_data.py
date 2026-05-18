@@ -510,7 +510,7 @@ class NormData(xr.Dataset):
             new_data_vars["Z"] = (["observations", "response_vars"], new_Z.data)
 
         if hasattr(self, "centiles") and hasattr(other, "centiles"):
-            if self.centile.to_numpy() == other.centile.to_numpy():
+            if np.array_equal(self.centile.to_numpy(), other.centile.to_numpy()):
                 new_centiles = xr.DataArray(
                     np.zeros((new_X.shape[0], len(respvar_intersection), len(self.centile.to_numpy()))),
                     dims=["observations", "response_vars", "centile"],
