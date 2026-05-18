@@ -1,8 +1,11 @@
+PCNtoolkit homepage
+===================
+
 .. raw:: html
 
-   <div class="pcn-hero">
-     <h1 class="pcn-hero-title">PCNtoolkit</h1>
-     <p class="pcn-hero-subtitle">
+   <div class="pcn-homepage">
+     <h1 class="pcn-homepage-title">PCNtoolkit</h1>
+     <p class="pcn-homepage-subtitle">
        Open source Python software for normative modelling
      </p>
    </div>
