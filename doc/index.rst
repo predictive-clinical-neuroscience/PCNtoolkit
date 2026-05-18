@@ -1,5 +1,24 @@
-Welcome to PCNToolkit's documentation!
-======================================
+.. raw:: html
+
+   <div class="pcn-hero">
+     <h1 class="pcn-hero-title">PCNtoolkit</h1>
+     <p class="pcn-hero-subtitle">
+       Open source Python software for normative modelling
+     </p>
+   </div>
+
+PCNtoolkit implements normative modelling, a statistical
+and machine learning framework that shifts away from
+traditional case-control comparisons (healthy vs. patient
+groups) and instead focuses on the individual. Rather than
+asking how patient groups differ on average, normative
+modelling asks: *"How does this specific individual deviate
+from a large healthy reference population?"*
+
+.. image:: _static/nm.png
+   :alt: Normative modelling illustration
+   :align: center
+   :width: 80%
 
 .. toctree::
    :maxdepth: 2

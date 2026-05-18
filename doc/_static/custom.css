@@ -73,3 +73,22 @@ html[data-theme="dark"] .bd-article .highlight-default .highlight pre *,
 html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre * {
     color: #ffffff !important;
 }
+
+/* Homepage hero section. */
+.pcn-hero {
+    text-align: center;
+    padding: 2rem 0 1rem;
+}
+/* "PCNtoolkit" — large bold heading. */
+.pcn-hero-title {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 0.4rem;
+}
+/* Subtitle line — blue, large. */
+.pcn-hero-subtitle {
+    font-size: 2rem;
+    color: #5ea8cb;
+    font-weight: bold;
+    margin-top: 0;
+}
