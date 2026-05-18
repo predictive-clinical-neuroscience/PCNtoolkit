@@ -201,7 +201,7 @@ class Scaler(ABC):
         if scaler_type not in scalers:
             raise ValueError(Output.error(Errors.ERROR_UNKNOWN_SCALER_TYPE, scaler_type=scaler_type))
 
-        return scalers[scaler_type].from_dict(my_dict)
+        return scalers[scaler_type].from_dict(my_dict, version=version)
 
     @staticmethod
     def from_string(scaler_type: str, **kwargs: Any) -> "Scaler":
@@ -304,7 +304,11 @@ class StandardScaler(Scaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "StandardScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "StandardScaler":
         instance = cls(adjust_outliers=bool(my_dict["adjust_outliers"]))
         instance.m = np.array(my_dict["m"])
         instance.s = np.array(my_dict["s"])
@@ -385,7 +389,11 @@ class MinMaxScaler(Scaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "MinMaxScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "MinMaxScaler":
         instance = cls(adjust_outliers=bool(my_dict["adjust_outliers"]))
         instance.min = np.array(my_dict["min"])
         instance.max = np.array(my_dict["max"])
@@ -455,7 +463,11 @@ class RobustMinMaxScaler(MinMaxScaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "RobustMinMaxScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "RobustMinMaxScaler":
         instance = cls(
             adjust_outliers=bool(my_dict["adjust_outliers"]),
             tail=float(my_dict["tail"]),  # type: ignore
@@ -507,7 +519,11 @@ class IdentityScaler(Scaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "IdentityScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "IdentityScaler":
         instance = cls(adjust_outliers=bool(my_dict["adjust_outliers"]))
         instance.min = np.array(my_dict["min"])
         instance.max = np.array(my_dict["max"])
