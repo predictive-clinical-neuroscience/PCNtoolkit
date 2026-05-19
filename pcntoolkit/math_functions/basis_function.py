@@ -9,11 +9,12 @@ from scipy.interpolate import BSpline
 from pcntoolkit.util.output import Errors, Output
 from pcntoolkit.util.migration import registry
 
+
 def create_basis_function(
-    basis_type: str | dict | None,
-    basis_column: int = 0,
-    **kwargs,
-) -> BasisFunction:
+        basis_type: str | dict | None,
+        basis_column: int = 0,
+        **kwargs,
+        ) -> BasisFunction:
     if isinstance(basis_type, dict):
         return BasisFunction.from_dict(basis_type)
     elif basis_type in ["polynomial", "PolynomialBasisFunction"]:
@@ -26,6 +27,12 @@ def create_basis_function(
     elif basis_type in ["Composite", "CompositeBasis"]:
         parts = [BasisFunction.from_dict(p) for p in kwargs['parts']]
         return CompositeBasisFunction(parts)
+    elif basis_type in [
+            "fractional_polynomial",
+            "FractionalPolynomialBasisFunction"]:
+        return FractionalPolynomialBasisFunction(
+            basis_column, **kwargs
+        )
     else:
         return LinearBasisFunction(basis_column)
 
