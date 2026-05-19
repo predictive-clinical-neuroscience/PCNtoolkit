@@ -1,6 +1,6 @@
 from .dataio.data_factory import load_fcon1000
 from .dataio.norm_data import NormData
-from .math_functions.basis_function import BsplineBasisFunction, LinearBasisFunction, PolynomialBasisFunction, CompositeBasisFunction
+from .math_functions.basis_function import BsplineBasisFunction, LinearBasisFunction, PolynomialBasisFunction, CompositeBasisFunction, FractionalPolynomialBasisFunction
 from .math_functions.likelihood import BetaLikelihood, NormalLikelihood, SHASHbLikelihood
 from .math_functions.prior import make_prior
 from .normative_model import NormativeModel
@@ -14,6 +14,7 @@ __version__ = version("pcntoolkit")
 __all__ = [
     "NormData",
     "BsplineBasisFunction",
+    "FractionalPolynomialBasisFunction",
     "LinearBasisFunction",
     "PolynomialBasisFunction",
     "CompositeBasisFunction",
