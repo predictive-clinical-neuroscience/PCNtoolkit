@@ -28,14 +28,15 @@ requires-python = ">=3.11,<3.13"
 
 dependencies = [
     "nibabel>=5.3.1",
-    "pymc>=5.19.1",
+    "pymc>=5.19.1,<6.0.0",
+    "pytensor>=2.22.0,<3.0.0",
     "scikit-learn>=1.5.2",
     "six>=1.16.0",
     "scipy>=1.12",
     "matplotlib>=3.9.2",
     "seaborn>=0.13.2",
     "numba>=0.60.0",
-    "nutpie>=0.16.5",
+    "nutpie>=0.16.5,<0.16.9",
     "joblib>=1.4.2",
     "dill>=0.3.9",
     "ipywidgets>=8.1.5",
