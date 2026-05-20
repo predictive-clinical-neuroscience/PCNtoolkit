@@ -9,11 +9,12 @@ from scipy.interpolate import BSpline
 from pcntoolkit.util.output import Errors, Output
 from pcntoolkit.util.migration import registry
 
+
 def create_basis_function(
-    basis_type: str | dict | None,
-    basis_column: int = 0,
-    **kwargs,
-) -> BasisFunction:
+        basis_type: str | dict | None,
+        basis_column: int = 0,
+        **kwargs,
+        ) -> BasisFunction:
     if isinstance(basis_type, dict):
         return BasisFunction.from_dict(basis_type)
     elif basis_type in ["polynomial", "PolynomialBasisFunction"]:
@@ -26,6 +27,12 @@ def create_basis_function(
     elif basis_type in ["Composite", "CompositeBasis"]:
         parts = [BasisFunction.from_dict(p) for p in kwargs['parts']]
         return CompositeBasisFunction(parts)
+    elif basis_type in [
+            "fractional_polynomial",
+            "FractionalPolynomialBasisFunction"]:
+        return FractionalPolynomialBasisFunction(
+            basis_column, **kwargs
+        )
     else:
         return LinearBasisFunction(basis_column)
 
@@ -272,3 +279,187 @@ class CompositeBasisFunction(BasisFunction):
     @property
     def dimension(self):
         return sum([p.dimension for p in self.parts])
+
+
+class FractionalPolynomialBasisFunction(BasisFunction):
+    """
+    Fractional polynomial basis function for modelling smooth nonlinear
+    effects.
+
+    The input must be strictly positive (do not standardize the covariates).  
+    Power convention:
+        p = 0      -> log(x)
+        p != 0     -> x**p
+
+    Repeated powers:
+        [p, p, p]  -> x**p, x**p * log(x), x**p * log(x)**2
+    """
+
+    DEFAULT_POWER_SET = [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0, 3.0]
+
+    AGE_FP_POWER_PRESETS = {
+        1: {
+            "default": [0.5],
+        },
+        2: {
+            "default": [0.5, 1.0],
+        },
+        3: {
+            "default": [0.5, 1.0, 2.0],
+        },
+    }
+
+    def __init__(
+        self,
+        basis_column: int = 0,
+        order: int = 3,
+        powers: list | tuple | str | None = "default",
+        power_set: list | tuple | None = None,
+        eps: float = 1e-8,
+        **kwargs,
+    ):
+        """
+        Initialise the fractional polynomial basis function.
+
+        Parameters
+        ----------
+        basis_column : int, default=0
+            Column index to transform.
+
+        order : int, default=3
+            Fractional polynomial order. Must be 1, 2, or 3.
+
+        powers : list, tuple, str, or None, default="default"
+
+        power_set : list, tuple, or None, default=None
+            Allowed fractional polynomial powers.
+
+        eps : float, default=1e-8
+            Numerical stability constant.
+        """
+        super().__init__(basis_column, **kwargs)
+
+        if order not in [1, 2, 3]:
+            raise ValueError("Fractional polynomial order must be 1, 2, or 3.")
+
+        self.basis_name = "fractional_polynomial"
+        self.order = int(order)
+        self.eps = float(eps)
+
+        self.power_set = (
+            list(self.DEFAULT_POWER_SET)
+            if power_set is None
+            else [float(p) for p in power_set]
+        )
+
+        if powers is None:
+            powers = "default"
+
+        if isinstance(powers, str):
+            presets = self.AGE_FP_POWER_PRESETS[self.order]
+
+            if powers not in presets:
+                raise ValueError(
+                    f"Unknown preset '{powers}' for FP order {self.order}. "
+                    f"Available presets are: {list(presets.keys())}"
+                )
+
+            self.powers = list(presets[powers])
+        else:
+            self.powers = [float(p) for p in powers]
+
+        if len(self.powers) != self.order:
+            raise ValueError(
+                f"FP order {self.order} requires exactly {self.order} powers, "
+                f"but received {len(self.powers)}: {self.powers}"
+            )
+
+        for power in self.powers:
+            if power not in self.power_set:
+                raise ValueError(
+                    f"Power {power} is not in the allowed FP power set: "
+                    f"{self.power_set}"
+                )
+
+    def _validate_positive_finite_input(self, data: np.ndarray) -> np.ndarray:
+        """
+        Validate that input values are finite and strictly positive.
+
+        Returns
+        -------
+        np.ndarray
+            One-dimensional validated input array.
+        """
+        x = np.asarray(data, dtype=float).reshape(-1)
+
+        if not np.all(np.isfinite(x)):
+            raise ValueError(
+                "FractionalPolynomialBasisFunction received non-finite values."
+            )
+
+        if np.any(x <= 0):
+            raise ValueError(
+                "FractionalPolynomialBasisFunction requires strictly positive "
+                "input values. Please shift or rescale the covariate before "
+                "applying this basis function."
+            )
+
+        return np.maximum(x, self.eps)
+
+    def _fit(self, data: np.ndarray) -> None:
+        """
+        This function is added just for compatibility with parent class.
+        It only validates training data without computing or storing any
+        parameters.
+        """
+        self._validate_positive_finite_input(data)
+
+    def _transform(self, data: np.ndarray) -> np.ndarray:
+        """
+        Transform data into the fractional polynomial basis matrix.
+
+        Returns
+        -------
+        np.ndarray
+            Basis matrix of shape `(n_samples, order)`.
+        """
+        x = self._validate_positive_finite_input(data)
+        log_x = np.log(x)
+
+        columns = []
+        power_counts = {}
+
+        for power in self.powers:
+            repeat_index = power_counts.get(power, 0)
+
+            if power == 0.0:
+                column = log_x.copy()
+            else:
+                column = np.power(x, power)
+
+            if repeat_index > 0:
+                column = column * np.power(log_x, repeat_index)
+
+            columns.append(column)
+            power_counts[power] = repeat_index + 1
+
+        return np.column_stack(columns)
+
+    @property
+    def dimension(self) -> int:
+        """
+        Number of generated basis columns.
+        """
+        return self.order
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the basis function configuration.
+        """
+        mydict = super().to_dict()
+        mydict["order"] = self.order
+        mydict["powers"] = list(self.powers)
+        mydict["power_set"] = list(self.power_set)
+        mydict["eps"] = self.eps
+        return mydict
+    
