@@ -408,7 +408,8 @@ class FractionalPolynomialBasisFunction(BasisFunction):
     def _fit(self, data: np.ndarray) -> None:
         """
         This function is added just for comaptibility with parent class.
-        It only validates training data without computing or storing any parameters.
+        It only validates training data without computing or storing any
+        parameters.
         """
         self._validate_positive_finite_input(data)
 
