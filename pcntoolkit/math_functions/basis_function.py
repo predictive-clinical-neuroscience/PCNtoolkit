@@ -283,7 +283,8 @@ class CompositeBasisFunction(BasisFunction):
 
 class FractionalPolynomialBasisFunction(BasisFunction):
     """
-    Fractional polynomial basis function for modelling smooth nonlinear effects.
+    Fractional polynomial basis function for modelling smooth nonlinear
+    effects.
 
     The input must be strictly positive (do not standardize the covariates).  
     Power convention:
