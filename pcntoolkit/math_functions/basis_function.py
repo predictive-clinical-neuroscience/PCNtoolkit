@@ -446,7 +446,7 @@ class FractionalPolynomialBasisFunction(BasisFunction):
         return np.column_stack(columns)
 
     @property
-    def dimension(self):
+    def dimension(self) -> int:
         """
         Number of generated basis columns.
         """
