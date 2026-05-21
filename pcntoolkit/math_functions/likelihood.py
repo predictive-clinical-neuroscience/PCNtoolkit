@@ -343,7 +343,7 @@ class SHASHbLikelihood(Likelihood):
         Y = kwargs.get("Y", None)
         m1, m2 = m1m2(epsilon, delta)
         true_mu = m1
-        true_sigma = np.sqrt((m2 - true_mu**2))
+        true_sigma = np.sqrt(m2 - true_mu**2)
         SHASH_centered = (Y - mu) / sigma
         SHASH_uncentered = SHASH_centered * true_sigma + true_mu
         Z = S(SHASH_uncentered, epsilon, delta)
@@ -354,7 +354,7 @@ class SHASHbLikelihood(Likelihood):
         Z = kwargs.get("Z", None)
         m1, m2 = m1m2(epsilon, delta)
         true_mu = m1
-        true_sigma = np.sqrt((m2 - true_mu**2))
+        true_sigma = np.sqrt(m2 - true_mu**2)
         SHASH_uncentered = S_inv(Z, epsilon, delta)
         SHASH_centered = (SHASH_uncentered - true_mu) / true_sigma
         Y = SHASH_centered * sigma + mu
