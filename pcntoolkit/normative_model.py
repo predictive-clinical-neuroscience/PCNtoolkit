@@ -14,7 +14,6 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import scipy.stats as stats
 import xarray as xr
-import matplotlib.pyplot as plt
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.math_functions.scaler import Scaler
@@ -166,24 +165,20 @@ class NormativeModel:
             plotdir = os.path.join(self.save_dir, "plots")
 
             # QQ plots
-            for fig in plot_qq(
+            plot_qq(
                 data,
                 plot_id_line=True,
                 save_dir=plotdir,
-                show_figure=False
-            ):
-                # Close all the figures after saving it to disk
-                plt.close(fig)
+                show_figure=False,
+            )
 
-            # Centiles plots
-            for fig in plot_centiles(
+            # Centile plots
+            plot_centiles(
                 self,
                 data,
                 save_dir=plotdir,
                 show_figure=False,
-            ):
-                # Close all the figures after saving it to disk
-                plt.close(fig)
+            )
 
         return data
 

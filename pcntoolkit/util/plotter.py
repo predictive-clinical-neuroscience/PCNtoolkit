@@ -263,6 +263,8 @@ def _plot_centiles(
     fig.tight_layout()
     if save_dir:
         fig.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
+        # Close the figure immediately after writing to disk
+        plt.close(fig)
     return fig
 
 def plot_centiles_advanced(
@@ -922,6 +924,8 @@ def _plot_qq(
             os.path.join(save_dir, f"qq_{response_var}_{data.name}.png"),
             dpi=300,
         )
+        # Close the figure immediately after writing to disk
+        plt.close(fig)
     return fig
 
 
