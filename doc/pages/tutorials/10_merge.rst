@@ -1,5 +1,5 @@
-Federated normative modelling (model merging)
-=============================================
+Merge normative model
+=====================
 
 Suppose two remote locations independently train a normative model on
 their own patient population. These remote locations do not want to
