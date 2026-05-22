@@ -1181,7 +1181,7 @@ class NormData(xr.Dataset):
                     else None
                 )
                 if old_results is not None:
-                    # Ensure index is string 
+                    # Ensure index is string
                     old_results.index = old_results.index.astype(str)
                     # combine_first fills NaN columns in old_results with
                     # values from the new batch's response vars
@@ -1190,11 +1190,10 @@ class NormData(xr.Dataset):
                     new_results = zdf
                 f.seek(0)
                 f.truncate()
-                # Sort by observations using numeric key so "9" < "10".
+                # Sort by observations using numeric key ("9" < "10").
                 new_results = new_results.sort_index(
                     key=lambda idx: pd.to_numeric(idx, errors="coerce")
                 )
-                # Persist index (observations) and all data columns.
                 new_results.to_csv(f, index=True)
 
     def load_zscores(self, save_dir) -> None:
@@ -1203,8 +1202,7 @@ class NormData(xr.Dataset):
             # Read with observations as the index so it is never treated as
             # a response-variable column.
             df = pd.read_csv(Z_path, index_col="observations")
-            # Exclude the subject_ids metadata column; only keep actual
-            # response-variable columns for the Z DataArray.
+            # Response variable columns are all columns except subject_ids
             rv_columns = [
                 i for i in df.columns if i != "subject_ids"
             ]
