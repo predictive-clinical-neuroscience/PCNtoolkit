@@ -1154,51 +1154,37 @@ class NormData(xr.Dataset):
         return pandas_df
 
     def save_zscores(self, save_dir: str) -> None:
-        # Build wide-format z-score DataFrame with observations as index.
+        # Build z-score DataFrame with observations as index.
         zdf = self.Z.to_dataframe().unstack(level="response_vars")
-        # Drop the redundant top-level MultiIndex label ("Z").
+        # Drop the redundant top-level label (this is probably the label="Z").
         zdf.columns = zdf.columns.droplevel(0)
-        # Join subject IDs on the shared "observations" index rather than
-        # merging on a column.  Using .join() avoids pandas resetting the
-        # index, which would turn "observations" into a regular column and
-        # cause a str/int type-mismatch on subsequent batch writes.
+        # Join subject IDs based on the observations
         zdf = zdf.join(self.subject_ids.to_dataframe(), how="left")
-        # Collect sorted response-variable column names (exclude metadata).
+        # Collect sorted response-variable column names
         rv_cols = sorted(
             c for c in zdf.columns if c != "subject_ids"
         )
         # Put subject_ids first, then response vars alphabetically.
         zdf = zdf[["subject_ids", *rv_cols]]
-        # Convert the observations index to str so every read/write cycle
-        # uses the same type and merge keys always compare equal.
         zdf.index = zdf.index.astype(str)
         # Ensure the index retains its label after astype conversion.
         zdf.index.name = "observations"
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(
-                res_path,
-                mode="a+" if os.path.exists(res_path) else "w",
-                encoding="utf-8",
-            ) as f:
+            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
-                # Read back any results already written by earlier batches.
-                # Use index_col="observations" so the index type is always
-                # str and matches zdf.index — preventing the outer-join
-                # type-mismatch that previously doubled every row.
+                # Read back results written by earlier batches
                 old_results = (
                     pd.read_csv(f, index_col="observations")
                     if os.path.getsize(res_path) > 0
                     else None
                 )
                 if old_results is not None:
-                    # Ensure index is string for consistent comparison.
+                    # Ensure index is string 
                     old_results.index = old_results.index.astype(str)
                     # combine_first fills NaN columns in old_results with
-                    # values from zdf (new batch's response vars) without
-                    # duplicating rows.  New observations in zdf are also
-                    # appended.
+                    # values from the new batch's response vars
                     new_results = old_results.combine_first(zdf)
                 else:
                     new_results = zdf
@@ -1220,7 +1206,7 @@ class NormData(xr.Dataset):
             # Exclude the subject_ids metadata column; only keep actual
             # response-variable columns for the Z DataArray.
             rv_columns = [
-                c for c in df.columns if c != "subject_ids"
+                i for i in df.columns if i != "subject_ids"
             ]
             self["Z"] = xr.DataArray(
                 df[rv_columns].values,
