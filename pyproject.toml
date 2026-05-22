@@ -43,10 +43,15 @@ dependencies = [
     "dill>=0.3.9",
     "ipywidgets>=8.1.5",
     "ipykernel>=6.29.5",
+    "ipython>=8.0.0",
     "dask>=2025.11.0",
     "filelock>=3.13.0",
     "packaging>=21.3",
-    "arviz>=0.21.0,<1.0.0"
+    "arviz>=0.21.0,<1.0.0",
+    "numpy>=2.0.0",
+    "pandas>=2.2.0",
+    "xarray>=2024.1.0",
+    "cloudpickle>=3.0.0",
 ]
 
 [project.optional-dependencies]
