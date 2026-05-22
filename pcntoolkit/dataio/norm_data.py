@@ -1214,12 +1214,21 @@ class NormData(xr.Dataset):
     def load_zscores(self, save_dir) -> None:
         Z_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         if os.path.isfile(Z_path):
-            df = pd.read_csv(Z_path)
-            non_index_columns = [i for i in list(df.columns) if not i == "observations"]
+            # Read with observations as the index so it is never treated as
+            # a response-variable column.
+            df = pd.read_csv(Z_path, index_col="observations")
+            # Exclude the subject_ids metadata column; only keep actual
+            # response-variable columns for the Z DataArray.
+            rv_columns = [
+                c for c in df.columns if c != "subject_ids"
+            ]
             self["Z"] = xr.DataArray(
-                df[non_index_columns],
+                df[rv_columns].values,
                 dims=("observations", "response_vars"),
-                coords={"observations": df["observations"], "response_vars": non_index_columns},
+                coords={
+                    "observations": df.index.astype(str),
+                    "response_vars": rv_columns,
+                },
             )
 
     def save_centiles(self, save_dir: str) -> None:
