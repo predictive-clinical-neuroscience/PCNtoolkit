@@ -1177,7 +1177,11 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(
+                res_path,
+                mode="a+" if os.path.exists(res_path) else "w",
+                encoding="utf-8",
+            ) as f:
                 f.seek(0)
                 # Read back any results already written by earlier batches.
                 # Use index_col="observations" so the index type is always
@@ -1189,28 +1193,23 @@ class NormData(xr.Dataset):
                     else None
                 )
                 if old_results is not None:
-                    old_results["observations"] = old_results["observations"].astype(str)
-                    old_results.set_index(["observations"], inplace=True)
-                    # Merge on observations, keeping right (new) values for overlapping columns
-                    new_results = old_results.merge(zdf, on="observations", how="outer", suffixes=("_old", ""))
-                    # Drop columns ending with '_old' as they're the duplicates from old_results
-                    new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
+                    # Ensure index is string for consistent comparison.
+                    old_results.index = old_results.index.astype(str)
+                    # combine_first fills NaN columns in old_results with
+                    # values from zdf (new batch's response vars) without
+                    # duplicating rows.  New observations in zdf are also
+                    # appended.
+                    new_results = old_results.combine_first(zdf)
                 else:
                     new_results = zdf
                 f.seek(0)
                 f.truncate()
-                if "observations" in new_results.columns:
-                    new_results = new_results.sort_values(
-                        by="observations",
-                        key=lambda col: pd.to_numeric(col, errors="coerce"),
-                    )
-                    new_results["observations"] = new_results["observations"].astype(str)
-                else:
-                    new_results = new_results.sort_index(
-                        key=lambda idx: pd.to_numeric(idx, errors="coerce")
-                    )
-                    new_results.index = new_results.index.astype(str)
-                new_results.to_csv(f)
+                # Sort by observations using numeric key so "9" < "10".
+                new_results = new_results.sort_index(
+                    key=lambda idx: pd.to_numeric(idx, errors="coerce")
+                )
+                # Persist index (observations) and all data columns.
+                new_results.to_csv(f, index=True)
 
     def load_zscores(self, save_dir) -> None:
         Z_path = os.path.join(save_dir, f"Z_{self.name}.csv")
