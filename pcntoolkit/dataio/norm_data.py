@@ -1154,17 +1154,40 @@ class NormData(xr.Dataset):
         return pandas_df
 
     def save_zscores(self, save_dir: str) -> None:
+        # Build wide-format z-score DataFrame with observations as index.
         zdf = self.Z.to_dataframe().unstack(level="response_vars")
+        # Drop the redundant top-level MultiIndex label ("Z").
         zdf.columns = zdf.columns.droplevel(0)
-        zdf = zdf.merge(self.subject_ids.to_dataframe(), on="observations", how="left")
-        zdf = zdf[["subject_ids", *[z for z in sorted(zdf.columns.tolist()) if z not in ["subject_ids"]]]]
+        # Join subject IDs on the shared "observations" index rather than
+        # merging on a column.  Using .join() avoids pandas resetting the
+        # index, which would turn "observations" into a regular column and
+        # cause a str/int type-mismatch on subsequent batch writes.
+        zdf = zdf.join(self.subject_ids.to_dataframe(), how="left")
+        # Collect sorted response-variable column names (exclude metadata).
+        rv_cols = sorted(
+            c for c in zdf.columns if c != "subject_ids"
+        )
+        # Put subject_ids first, then response vars alphabetically.
+        zdf = zdf[["subject_ids", *rv_cols]]
+        # Convert the observations index to str so every read/write cycle
+        # uses the same type and merge keys always compare equal.
         zdf.index = zdf.index.astype(str)
+        # Ensure the index retains its label after astype conversion.
+        zdf.index.name = "observations"
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
             with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
-                old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
+                # Read back any results already written by earlier batches.
+                # Use index_col="observations" so the index type is always
+                # str and matches zdf.index — preventing the outer-join
+                # type-mismatch that previously doubled every row.
+                old_results = (
+                    pd.read_csv(f, index_col="observations")
+                    if os.path.getsize(res_path) > 0
+                    else None
+                )
                 if old_results is not None:
                     old_results["observations"] = old_results["observations"].astype(str)
                     old_results.set_index(["observations"], inplace=True)
