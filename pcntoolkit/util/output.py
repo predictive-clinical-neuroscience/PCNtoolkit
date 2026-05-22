@@ -141,6 +141,11 @@ class Warnings:
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
     RENAMED = "'{old_name}' has been renamed to '{new_name}'."
+    TOO_FEW_OBSERVATIONS = (
+        "Cannot compute {statistic}: {n_valid} valid observation(s) "
+        "found after removing NaN/Inf values, but at least "
+        "{n_required} are required. Returning NaN."
+    )
     BLR_CG_NOT_SUPPORTED_WITH_WARP = (
         "The 'cg' optimizer requires analytical gradients, which are not implemented for warped models. "
         "Falling back to the default 'l-bfgs-b' optimizer. "
@@ -154,6 +159,17 @@ class Warnings:
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
         "Transfer data contain fewer batch effect levels than training data. "
         "This may lead to biased results."
+    )
+    MODEL_SAVED_WITH_NEWER_VERSION = (
+        "This model was saved with PCNtoolkit v{saved_version}, "
+        "but you are running v{current_version}. "
+        "Some features may not load correctly. "
+        "Please update PCNtoolkit: pip install --upgrade pcntoolkit"
+    )
+    MODEL_MIGRATION_APPLIED = (
+        "This model was saved with PCNtoolkit v{saved_version}, "
+        "but you are running v{current_version}. "
+        "Loading this model in v{current_version}..."
     )
 
 

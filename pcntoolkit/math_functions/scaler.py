@@ -57,6 +57,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from pcntoolkit.util.output import Errors, Output
+from pcntoolkit.util.migration import registry
 
 
 class Scaler(ABC):
@@ -156,13 +157,21 @@ class Scaler(ABC):
         """Convert scaler instance to dictionary."""
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "Scaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "Scaler":
         """Create a scaler instance from a dictionary.
 
         Parameters
         ----------
         my_dict : Dict[str, Union[bool, str, float, List[float]]]
-            Dictionary containing scaler parameters. Must include 'scaler_type' key.
+            Dictionary containing scaler parameters.
+            Must include 'scaler_type' key.
+        version : str | None, optional
+            The ptk_version of the saved model, by default None.
+            Used to apply any registered Scaler migrations.
 
         Returns
         -------
@@ -174,6 +183,9 @@ class Scaler(ABC):
         ValueError
             If scaler_type is missing or invalid
         """
+        # Apply any registered Scaler migrations for this version.
+        my_dict = registry.migrate("Scaler", my_dict, version=version)
+
         if "scaler_type" not in my_dict:
             raise ValueError(Output.error(Errors.ERROR_SCALER_TYPE_NOT_FOUND))
 
@@ -189,7 +201,7 @@ class Scaler(ABC):
         if scaler_type not in scalers:
             raise ValueError(Output.error(Errors.ERROR_UNKNOWN_SCALER_TYPE, scaler_type=scaler_type))
 
-        return scalers[scaler_type].from_dict(my_dict)
+        return scalers[scaler_type].from_dict(my_dict, version=version)
 
     @staticmethod
     def from_string(scaler_type: str, **kwargs: Any) -> "Scaler":
@@ -292,7 +304,11 @@ class StandardScaler(Scaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "StandardScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "StandardScaler":
         instance = cls(adjust_outliers=bool(my_dict["adjust_outliers"]))
         instance.m = np.array(my_dict["m"])
         instance.s = np.array(my_dict["s"])
@@ -373,7 +389,11 @@ class MinMaxScaler(Scaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "MinMaxScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "MinMaxScaler":
         instance = cls(adjust_outliers=bool(my_dict["adjust_outliers"]))
         instance.min = np.array(my_dict["min"])
         instance.max = np.array(my_dict["max"])
@@ -443,7 +463,11 @@ class RobustMinMaxScaler(MinMaxScaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "RobustMinMaxScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "RobustMinMaxScaler":
         instance = cls(
             adjust_outliers=bool(my_dict["adjust_outliers"]),
             tail=float(my_dict["tail"]),  # type: ignore
@@ -495,7 +519,11 @@ class IdentityScaler(Scaler):
         }
 
     @classmethod
-    def from_dict(cls, my_dict: Dict[str, Union[bool, str, float, List[float]]]) -> "IdentityScaler":
+    def from_dict(
+        cls,
+        my_dict: Dict[str, Union[bool, str, float, List[float]]],
+        version: str | None = None,
+    ) -> "IdentityScaler":
         instance = cls(adjust_outliers=bool(my_dict["adjust_outliers"]))
         instance.min = np.array(my_dict["min"])
         instance.max = np.array(my_dict["max"])

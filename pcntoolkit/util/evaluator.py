@@ -45,8 +45,11 @@ class Evaluator:
         """
         # data["Yhat"] = data.centiles.sel(centile=0.5, method="nearest")
         assert "Yhat" in data.data_vars, "Yhat must be computed before evaluation"
-        all_statistics = ["Rho", "Rho_p", "R2", "RMSE", "SMSE",
-                          "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"]
+        all_statistics = [
+            "Rho", "Rho_p", "R2", "RMSE", "SMSE",
+            "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV",
+            "Skewness", "Kurtosis",
+        ]
         if statistics:
             self.statistics = [m for m in all_statistics if m in statistics]
 
@@ -75,6 +78,10 @@ class Evaluator:
             self.evaluate_mape(data)
         if "EXPV" in self.statistics:
             self.evaluate_expv(data)
+        if "Skewness" in self.statistics:
+            self.evaluate_skew(data)
+        if "Kurtosis" in self.statistics:
+            self.evaluate_kurt(data)
         return data
 
     def create_statistics_group(self, data: NormData) -> None:
@@ -276,6 +283,65 @@ class Evaluator:
             mape = self._evaluate_mape(resp_predict_data)
             data.statistics.loc[{
                 "response_vars": responsevar, "statistic": "MAPE"}] = mape
+
+    def evaluate_skew(self, data: NormData) -> None:
+        """
+        Evaluate the skewness of the z-score distribution.
+
+        Skewness measures asymmetry of the z-score distribution.
+        For a well-calibrated normative model the z-scores follow
+        a standard normal distribution, so the ideal value is 0.
+        
+        Positive values indicate a longer right tail.
+        Negative values indicate a longer left tail.
+
+        Parameters
+        ----------
+        data : NormData
+            Data container with z-scores. Must contain the 'Z'
+            variable.
+        """
+        for responsevar in data.response_var_list:
+            # Select data for the current response variable
+            resp_predict_data = data.sel(
+                {"response_vars": responsevar}
+            )
+            # Compute skewness and store in the statistics array
+            skew = self._evaluate_skew(resp_predict_data)
+            data.statistics.loc[{
+                "response_vars": responsevar,
+                "statistic": "Skewness",
+            }] = skew
+
+    def evaluate_kurt(self, data: NormData) -> None:
+        """
+        Evaluate the excess kurtosis of the z-score distribution.
+
+        Excess kurtosis measures how fat the tails of the z-score
+        distribution are relative to a normal distribution. For a
+        well-calibrated normative model the z-scores follow a
+        standard normal distribution, so the ideal value is 0.
+        
+        Positive values indicate fatter tails (more outliers).
+        Negative values indicate thinner tails (less outliers).
+
+        Parameters
+        ----------
+        data : NormData
+            Data container with z-scores. Must contain the 'Z'
+            variable.
+        """
+        for responsevar in data.response_var_list:
+            # Select data for the current response variable
+            resp_predict_data = data.sel(
+                {"response_vars": responsevar}
+            )
+            # Compute excess kurtosis and store in the statistics array
+            kurt = self._evaluate_kurt(resp_predict_data)
+            data.statistics.loc[{
+                "response_vars": responsevar,
+                "statistic": "Kurtosis",
+            }] = kurt
 
     def _evaluate_rho(self, data: NormData) -> Tuple[float, float]:
         """
@@ -567,6 +633,121 @@ class Evaluator:
         yhat = data["Yhat"].values
 
         return mean_absolute_percentage_error(y, yhat)
+
+    def _evaluate_skew(self, data: NormData) -> float:
+        """
+        Calculate the skewness of the z-score distribution.
+
+        Uses the adjusted estimator (``bias=False``), which corrects for small-
+        sample bias and matches the formula:
+
+            skew = n * m3 / (n-1) / (n-2) / s1**3
+
+        Infinite values in the z-scores are replaced with NaN
+        before computation and excluded via ``nan_policy='omit'``.
+        
+
+        Parameters
+        ----------
+        data : NormData
+            Data container for a single response variable.
+            Must contain the 'Z' variable.
+
+        Returns
+        -------
+        float
+            Adjusted sample skewness of the z-scores. Returns NaN if fewer 
+            than 3 valid observations are available.
+            
+        References
+        ----------
+        .. [1] Zwillinger, D. and Kokoska, S. (2000). CRC Standard
+        Probability and Statistics Tables and Formulae. Chapman & Hall: New
+        York. 2000.
+        Section 2.2.24.1
+        """
+        # Extract raw z-score values as a 1-D float array
+        z = data["Z"].values.ravel().astype(np.float64)
+        # Replace ±Inf with NaN so they are excluded from the
+        # calculation rather than distorting the result
+        z[np.isinf(z)] = np.nan
+        
+        # Count valid (non-NaN) observations remaining
+        n_valid = int(np.sum(~np.isnan(z)))
+        # Skewness denominator contains (n-1)(n-2), so n>=3 is
+        # required
+        n_required = 3
+        # warn and return NaN early
+        if n_valid < n_required:
+            Output.warning(
+                Warnings.TOO_FEW_OBSERVATIONS,
+                statistic="Skewness",
+                n_valid=n_valid,
+                n_required=n_required,
+            )
+            return float("nan")
+        
+        # Compute adjusted (unbiased) skewness, skipping NaNs
+        return float(stats.skew(z, bias=False, nan_policy="omit"))
+
+    def _evaluate_kurt(self, data: NormData) -> float:
+        """
+        Calculate the excess kurtosis of the z-score distribution.
+
+        Uses the adjusted estimator (``bias=False``) and returns
+        **excess** kurtosis, which matches the formula:
+
+            kurt = (n*(n+1)*m4) / ((n-1)*(n-2)*(n-3)*s1**4)
+                   - 3*(n-1)**2 / ((n-2)*(n-3))
+
+        Infinite values in the z-scores are replaced with NaN
+        before computation and excluded via ``nan_policy='omit'``.
+
+
+        Parameters
+        ----------
+        data : NormData
+            Data container for a single response variable.
+            Must contain the 'Z' variable.
+
+        Returns
+        -------
+        float
+            Adjusted excess kurtosis of the z-scores. Returns NaN if fewer 
+            than 4 valid observations are available.
+            
+        References
+        ----------
+        .. [1] Zwillinger, D. and Kokoska, S. (2000). CRC Standard
+        Probability and Statistics Tables and Formulae. Chapman & Hall: New
+        York. 2000.
+        """
+        # Extract raw z-score values as a 1-D float array
+        z = data["Z"].values.ravel().astype(np.float64)
+        # Replace ±Inf with NaN so they are excluded from the
+        # calculation rather than distorting the result
+        z[np.isinf(z)] = np.nan
+        
+        # Count valid (non-NaN) observations remaining
+        n_valid = int(np.sum(~np.isnan(z)))
+        # Kurtosis denominator contains (n-1)*(n-2)*(n-3), so n>=4 is
+        # required
+        n_required = 4
+        # warn and return NaN early
+        if n_valid < n_required:
+            Output.warning(
+                Warnings.TOO_FEW_OBSERVATIONS,
+                statistic="Kurtosis",
+                n_valid=n_valid,
+                n_required=n_required,
+            )
+            return float("nan")
+        
+        # Compute adjusted excess kurtosis, skipping NaNs,
+        # Fisher's definition is used (normal ==> 0.0)
+        return float(
+            stats.kurtosis(z, bias=False, nan_policy="omit")
+        )
 
     def empty_statistic(self) -> xr.DataArray:
         return xr.DataArray(
