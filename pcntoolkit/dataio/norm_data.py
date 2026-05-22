@@ -1162,8 +1162,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            # Read old content by path inside the lock — no other
-            # job can modify the file between the read and write.
+            # Read old content first
             old_results = pd.read_csv(res_path) if os.path.exists(res_path) and os.path.getsize(res_path) > 0 else None
             if old_results is not None:
                 old_results["observations"] = old_results["observations"].astype(str)
@@ -1185,9 +1184,7 @@ class NormData(xr.Dataset):
                     key=lambda idx: pd.to_numeric(idx, errors="coerce")
                 )
                 new_results.index = new_results.index.astype(str)
-            # Open with mode="w": creates or truncates, then writes
-            # once at position 0.  No seek+truncate sequence needed —
-            # simpler and safe on NFS.
+            # Write new content
             with open(res_path, mode="w", encoding="utf-8") as f:
                 new_results.to_csv(f)
 
@@ -1218,8 +1215,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            # Read old content by path inside the lock — no other
-            # job can modify the file between the read and write.
+            # Read old content first
             old_results = pd.read_csv(res_path) if os.path.exists(res_path) and os.path.getsize(res_path) > 0 else None
             if old_results is not None:
                 old_results["observations"] = old_results["observations"].astype(str)
@@ -1241,9 +1237,7 @@ class NormData(xr.Dataset):
                     key=lambda idx: pd.to_numeric(idx, errors="coerce")
                 )
                 # new_results.index = new_results.index.astype(str)
-            # Open with mode="w": creates or truncates, then writes
-            # once at position 0.  No seek+truncate sequence needed —
-            # simpler and safe on NFS.
+            # Write new content
             with open(res_path, mode="w", encoding="utf-8") as f:
                 new_results.to_csv(f)
 
@@ -1277,8 +1271,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"logp_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            # Read old content by path inside the lock — no other
-            # job can modify the file between the read and write.
+            # Read old content first
             old_results = pd.read_csv(res_path) if os.path.exists(res_path) and os.path.getsize(res_path) > 0 else None
             if old_results is not None:
                 old_results["observations"] = old_results["observations"].astype(str)
@@ -1300,9 +1293,7 @@ class NormData(xr.Dataset):
                     key=lambda idx: pd.to_numeric(idx, errors="coerce")
                 )
                 new_results.index = new_results.index.astype(str)
-            # Open with mode="w": creates or truncates, then writes
-            # once at position 0.  No seek+truncate sequence needed —
-            # simpler and safe on NFS.
+            # Write new content
             with open(res_path, mode="w", encoding="utf-8") as f:
                 new_results.to_csv(f)
 
@@ -1323,8 +1314,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            # Read old content by path inside the lock — no other
-            # job can modify the file between the read and write.
+            # Read old content first
             old_results = pd.read_csv(res_path, index_col=0) if os.path.exists(res_path) and os.path.getsize(res_path) > 0 else None
             if old_results is not None:
                 # Merge on statistic, keeping right (new) values for overlapping columns
@@ -1333,9 +1323,7 @@ class NormData(xr.Dataset):
                 new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
             else:
                 new_results = mdf
-            # Open with mode="w": creates or truncates, then writes
-            # once at position 0.  No seek+truncate sequence needed —
-            # simpler and safe on NFS.
+            # Write new content
             with open(res_path, mode="w", encoding="utf-8") as f:
                 new_results.to_csv(f)
 
