@@ -79,8 +79,8 @@ right amygdala, a deep brain structure.
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:16 - Removed 0 NANs
-    Process: 29780 - 2026-04-22 16:03:16 - Dataset "fcon1000" created.
+    Process: 2617 - 2026-05-22 16:06:48 - Removed 0 NANs
+    Process: 2617 - 2026-05-22 16:06:48 - Dataset "fcon1000" created.
         - 1078 observations
         - 1078 unique subjects
         - 1 covariates
@@ -89,7 +89,7 @@ right amygdala, a deep brain structure.
         	sex (2)
     	site (23)
         
-    
+
 
 .. code:: ipython3
 
@@ -155,43 +155,45 @@ model.
 
 A normative model has a number of configuration options:
 
-- ``savemodel``: Whether to save the model after fitting. It creates a
-  JSON file containing your trained model parameters. This is useful to:
+-  ``savemodel``: Whether to save the model after fitting. It creates a
+   JSON file containing your trained model parameters. This is useful
+   to:
 
-  - *Avoid re-fitting*: Load the saved model later instead of training
-    from scratch every time.
-  - *Share with collaborators*: Send the file to colleagues, who can
-    update it with their own data, producing a better model trained on
-    more data combined. We will cover this in the federated learning
-    tutorial.
+   -  *Avoid re-fitting*: Load the saved model later instead of training
+      from scratch every time.
+   -  *Share with collaborators*: Send the file to colleagues, who can
+      update it with their own data, producing a better model trained on
+      more data combined. We will cover this in the federated learning
+      tutorial.
 
-- ``evaluate_model``: Whether to evaluate the model after fitting. It
-  computes a set of metrics are computed that tell you how well your
-  model fits the data. For more information, see our evaluation metrics
-  tutorial.
+-  ``evaluate_model``: Whether to evaluate the model after fitting. It
+   computes a set of metrics are computed that tell you how well your
+   model fits the data. For more information, see our evaluation metrics
+   tutorial.
 
-- ``saveresults``: Whether to save the per-subject results after
-  predicting. Results include:
+-  ``saveresults``: Whether to save the per-subject results after
+   predicting. Results include:
 
-  - how far the observed value for this subject is from the fitted
-    model’s predicted typical value for someone with similar covariates
-    and batch effects (``Z``)
-  - how statistically surprising the observed value for this subject is
-    under the fitted model’s predicted distribution (``logp``).
-  - fitted model’s predicted distribution at selected centiles (such as
-    the 5th, 50th, and 95th centiles) for this subject (``centiles``)
-  - summary of evaluation metrics for each response variable, when
-    ``evaluate_model`` is enabled.
+   -  how far the observed value for this subject is from the fitted
+      model’s predicted typical value for someone with similar
+      covariates and batch effects (``Z``)
+   -  how statistically surprising the observed value for this subject
+      is under the fitted model’s predicted distribution (``logp``).
+   -  fitted model’s predicted distribution at selected centiles (such
+      as the 5th, 50th, and 95th centiles) for this subject
+      (``centiles``)
+   -  summary of evaluation metrics for each response variable, when
+      ``evaluate_model`` is enabled.
 
-- ``saveplots``: Whether to save the plots after fitting.
+-  ``saveplots``: Whether to save the plots after fitting.
 
-- ``save_dir``: The directory to save the model, results, and plots.
+-  ``save_dir``: The directory to save the model, results, and plots.
 
-- ``inscaler``: The scaler to use for the input data. Can be either one
-  of “standardize”, “minmax”, “robminmax”, “none”
+-  ``inscaler``: The scaler to use for the input data. Can be either one
+   of “standardize”, “minmax”, “robminmax”, “none”
 
-- ``outscaler``: The scaler to use for the output data. Can be either
-  one of “standardize”, “minmax”, “robminmax”, “none”
+-  ``outscaler``: The scaler to use for the output data. Can be either
+   one of “standardize”, “minmax”, “robminmax”, “none”
 
 .. code:: ipython3
 
@@ -225,29 +227,29 @@ All results can be found in the save directory.
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:16 - Fitting models on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:16 - Fitting model for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:16 - Making predictions on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing z-scores for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing z-scores for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing log-probabilities for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing yhat for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:16 - Computing yhat for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:17 - Making predictions on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing z-scores for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing z-scores for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing log-probabilities for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing yhat for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing yhat for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:06:49 - Fitting models on 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Fitting model for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Making predictions on 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing z-scores for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing z-scores for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing log-probabilities for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing yhat for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing yhat for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Making predictions on 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing z-scores for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing z-scores for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing log-probabilities for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing yhat for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing yhat for Right-Amygdala.
+
 
 Looking at the printed messages, we can identify three main steps:
 
@@ -277,7 +279,7 @@ Let’s start with the centiles plot:
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:17 - Dataset "centile" created.
+    Process: 2617 - 2026-05-22 16:06:49 - Dataset "centile" created.
         - 150 observations
         - 150 unique subjects
         - 1 covariates
@@ -286,11 +288,11 @@ Let’s start with the centiles plot:
         	sex (1)
     	site (1)
         
-    Process: 29780 - 2026-04-22 16:03:17 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:17 - Harmonizing data on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Harmonizing data for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:06:49 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:06:49 - Harmonizing data on 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:49 - Harmonizing data for Right-Amygdala.
+
 
 
 .. image:: 02_BLR_files/02_BLR_16_1.png
@@ -343,19 +345,23 @@ separate tutorial for detailed explanations of each metric.
         <tr style="text-align: right;">
           <th>statistic</th>
           <th>EXPV</th>
+          <th>Kurtosis</th>
           <th>MACE</th>
           <th>MAPE</th>
+          <th>MLL</th>
           <th>MSLL</th>
-          <th>NLL</th>
           <th>R2</th>
           <th>RMSE</th>
           <th>Rho</th>
           <th>Rho_p</th>
           <th>SMSE</th>
           <th>ShapiroW</th>
+          <th>Skewness</th>
         </tr>
         <tr>
           <th>response_vars</th>
+          <th></th>
+          <th></th>
           <th></th>
           <th></th>
           <th></th>
@@ -373,16 +379,18 @@ separate tutorial for detailed explanations of each metric.
         <tr>
           <th>Right-Amygdala</th>
           <td>0.050108</td>
-          <td>0.014153</td>
+          <td>0.362789</td>
+          <td>0.166481</td>
           <td>0.112855</td>
-          <td>-0.025123</td>
           <td>1.393816</td>
+          <td>-0.025123</td>
           <td>0.050108</td>
           <td>238.782623</td>
           <td>0.103329</td>
           <td>0.002386</td>
           <td>0.949892</td>
           <td>0.989231</td>
+          <td>0.390056</td>
         </tr>
       </tbody>
     </table>
@@ -411,19 +419,23 @@ separate tutorial for detailed explanations of each metric.
         <tr style="text-align: right;">
           <th>statistic</th>
           <th>EXPV</th>
+          <th>Kurtosis</th>
           <th>MACE</th>
           <th>MAPE</th>
+          <th>MLL</th>
           <th>MSLL</th>
-          <th>NLL</th>
           <th>R2</th>
           <th>RMSE</th>
           <th>Rho</th>
           <th>Rho_p</th>
           <th>SMSE</th>
           <th>ShapiroW</th>
+          <th>Skewness</th>
         </tr>
         <tr>
           <th>response_vars</th>
+          <th></th>
+          <th></th>
           <th></th>
           <th></th>
           <th></th>
@@ -441,16 +453,18 @@ separate tutorial for detailed explanations of each metric.
         <tr>
           <th>Right-Amygdala</th>
           <td>0.023886</td>
-          <td>0.022778</td>
+          <td>-0.119202</td>
+          <td>0.191629</td>
           <td>0.115624</td>
-          <td>-0.009888</td>
           <td>1.371381</td>
+          <td>-0.009888</td>
           <td>0.023159</td>
           <td>233.194296</td>
           <td>0.061853</td>
           <td>0.365652</td>
           <td>0.976841</td>
           <td>0.991958</td>
+          <td>0.0534</td>
         </tr>
       </tbody>
     </table>
@@ -519,93 +533,97 @@ Fit the model
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:17 - Fitting models on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:17 - Fitting model for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:06:50 - Fitting models on 1 response variables.
+    Process: 2617 - 2026-05-22 16:06:50 - Fitting model for Right-Amygdala.
+
 
 .. parsed-literal::
 
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854141299013e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553100480988225e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:266: UserWarning: Process: 29780 - 2026-04-22 16:03:19 - Posterior estimation failed: 
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:296: UserWarning: Process: 2617 - 2026-05-22 16:07:06 - Posterior estimation failed: 
     Matrix is not positive definite. 
     The optimizer could not find a stable solution. Retrying optimization.
-      warnings.warn(message)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.95672596274763e-41.
+      warnings.warn(message, category)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.9899944098769437e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.383412485561854e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.939893454445029e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.5435195683709543e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.0361998051206722e-44.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.143933578597161e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 3.36284632541132e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285543871327e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553100480988572e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.140576045606065e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.03773263174331e-42.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632853629035901e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.260666069837561e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855727422735e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553103346043406e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855729300712e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553102034007003e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854929817363e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.75531033373041e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.16328555742483e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:296: UserWarning: Process: 2617 - 2026-05-22 16:07:07 - Posterior estimation failed: 
+    Matrix is not positive definite. 
+    The optimizer could not find a stable solution. Retrying optimization.
+      warnings.warn(message, category)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.755310261819347e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163286153217964e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553105033879259e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854859222148e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 7.982765221415766e-42.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855290078173e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7552936471355131e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632856376007886e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553100922350528e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.9792786990864296e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.944978346180824e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285466903053e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 9.854050412855395e-43.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285476309751e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7779270793950462e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854952020879e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.754933988558462e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632854263350986e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.755310256099162e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285567139869e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553104230476875e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.163285569343776e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553101870027942e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855393099296e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553103216402893e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.1632855739716668e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553102777732048e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:695: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.957421929942335e-41.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:716: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.588536185279474e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    
+
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:19 - Making predictions on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing z-scores for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing z-scores for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing log-probabilities for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing yhat for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing yhat for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Making predictions on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing z-scores for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing z-scores for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing log-probabilities for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing yhat for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing yhat for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:07:07 - Making predictions on 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing z-scores for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing z-scores for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing log-probabilities for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing yhat for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:07 - Computing yhat for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:08 - Making predictions on 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing z-scores for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing z-scores for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing log-probabilities for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing yhat for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing yhat for Right-Amygdala.
+
 
 Plot the results
 ~~~~~~~~~~~~~~~~
@@ -643,7 +661,7 @@ distribution of responses or Z-scores across batch effects.
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:19 - Dataset "centile" created.
+    Process: 2617 - 2026-05-22 16:07:08 - Dataset "centile" created.
         - 150 observations
         - 150 unique subjects
         - 1 covariates
@@ -652,11 +670,11 @@ distribution of responses or Z-scores across batch effects.
         	site (1)
     	sex (1)
         
-    Process: 29780 - 2026-04-22 16:03:19 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:19 - Harmonizing data on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:19 - Harmonizing data for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:07:08 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:08 - Harmonizing data on 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:08 - Harmonizing data for Right-Amygdala.
+
 
 
 .. image:: 02_BLR_files/02_BLR_27_1.png
@@ -728,19 +746,19 @@ Finally, we show how we can use ``plot_qq`` and ``plot_ridge``:
 
 .. parsed-literal::
 
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\plotter.py:1045: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1049: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       g.figure.tight_layout()
-    
+
 
 
 .. image:: 02_BLR_files/02_BLR_32_1.png
@@ -748,19 +766,19 @@ Finally, we show how we can use ``plot_qq`` and ``plot_ridge``:
 
 .. parsed-literal::
 
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\plotter.py:1045: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1049: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       g.figure.tight_layout()
-    
+
 
 
 .. image:: 02_BLR_files/02_BLR_32_3.png
@@ -772,11 +790,11 @@ What’s next?
 Now we have a normative Bayesian linear regression model, we can use it
 to::
 
-- Make predictions on new data
-- Harmonize data, this means that we ‘remove’ the batch effects from the
-  data, by simulating what the data would have looked like if all data
-  was from the same batch.
-- Synthesize new data
+-  Make predictions on new data
+-  Harmonize data, this means that we ‘remove’ the batch effects from
+   the data, by simulating what the data would have looked like if all
+   data was from the same batch.
+-  Synthesize new data
 
 Predicting
 ~~~~~~~~~~
@@ -788,17 +806,17 @@ Predicting
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:21 - Making predictions on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing z-scores for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing z-scores for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing log-probabilities for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing log-probabilities for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing yhat for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:21 - Computing yhat for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:07:09 - Making predictions on 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing z-scores for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing z-scores for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing log-probabilities for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing log-probabilities for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing yhat for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:09 - Computing yhat for Right-Amygdala.
+
 
 Harmonize
 ~~~~~~~~~
@@ -832,9 +850,9 @@ Harmonize
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:21 - Harmonizing data on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:21 - Harmonizing data for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:07:10 - Harmonizing data on 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:10 - Harmonizing data for Right-Amygdala.
+
 
 
 .. image:: 02_BLR_files/02_BLR_37_1.png
@@ -874,7 +892,7 @@ site B.
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:25 - Dataset "synthesized" created.
+    Process: 2617 - 2026-05-22 16:07:15 - Dataset "synthesized" created.
         - 10000 observations
         - 10000 unique subjects
         - 1 covariates
@@ -883,9 +901,9 @@ site B.
         	sex (2)
     	site (23)
         
-    Process: 29780 - 2026-04-22 16:03:25 - Synthesizing data for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:25 - Synthesizing data for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:25 - Dataset "centile" created.
+    Process: 2617 - 2026-05-22 16:07:15 - Synthesizing data for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:15 - Synthesizing data for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:15 - Dataset "centile" created.
         - 150 observations
         - 150 unique subjects
         - 1 covariates
@@ -894,11 +912,11 @@ site B.
         	sex (1)
     	site (1)
         
-    Process: 29780 - 2026-04-22 16:03:25 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:25 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:25 - Harmonizing data on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:25 - Harmonizing data for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:07:15 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:15 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:16 - Harmonizing data on 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:16 - Harmonizing data for Right-Amygdala.
+
 
 
 .. image:: 02_BLR_files/02_BLR_39_1.png
@@ -928,9 +946,9 @@ site B.
 
 .. parsed-literal::
 
-    Process: 29780 - 2026-04-22 16:03:25 - Synthesizing data for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:25 - Synthesizing data for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:25 - Dataset "centile" created.
+    Process: 2617 - 2026-05-22 16:07:16 - Synthesizing data for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:16 - Synthesizing data for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:16 - Dataset "centile" created.
         - 150 observations
         - 150 unique subjects
         - 1 covariates
@@ -939,11 +957,11 @@ site B.
         	sex (1)
     	site (1)
         
-    Process: 29780 - 2026-04-22 16:03:25 - Computing centiles for 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:25 - Computing centiles for Right-Amygdala.
-    Process: 29780 - 2026-04-22 16:03:25 - Harmonizing data on 1 response variables.
-    Process: 29780 - 2026-04-22 16:03:25 - Harmonizing data for Right-Amygdala.
-    
+    Process: 2617 - 2026-05-22 16:07:16 - Computing centiles for 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:16 - Computing centiles for Right-Amygdala.
+    Process: 2617 - 2026-05-22 16:07:16 - Harmonizing data on 1 response variables.
+    Process: 2617 - 2026-05-22 16:07:16 - Harmonizing data for Right-Amygdala.
+
 
 
 .. image:: 02_BLR_files/02_BLR_40_1.png

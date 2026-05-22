@@ -39,19 +39,19 @@ What we will do
 The functions that we will use
 ------------------------------
 
-+-------------------------------------+-----------------------------------+
-| Function                            | Role                              |
-+=====================================+===================================+
-| ``NormativeModel.fit_predict()``    | Fit and predict the baseline and  |
-|                                     | central model                     |
-+-------------------------------------+-----------------------------------+
-| ``NormativeModel.extend_predict()`` | Extend the central model with     |
-|                                     | data from a remote location +     |
-|                                     | synthetic data (generated from    |
-|                                     | the central model) and then       |
-|                                     | predict on the test data from a   |
-|                                     | remote location.                  |
-+-------------------------------------+-----------------------------------+
++-----------------------------------+-----------------------------------+
+| Function                          | Role                              |
++===================================+===================================+
+| ``NormativeModel.fit_predict()``  | Fit and predict the baseline and  |
+|                                   | central model                     |
++-----------------------------------+-----------------------------------+
+| ``                                | Extend the central model with     |
+| NormativeModel.extend_predict()`` | data from a remote location +     |
+|                                   | synthetic data (generated from    |
+|                                   | the central model) and then       |
+|                                   | predict on the test data from a   |
+|                                   | remote location.                  |
++-----------------------------------+-----------------------------------+
 
 Imports
 -------
@@ -139,15 +139,15 @@ tissue within the brain’s white matter.
      'Leiden_2200' 'Milwaukee_b' 'Munchen' 'NewYork_a' 'NewYork_a_ADHD'
      'Newark' 'Oulu' 'Oxford' 'PaloAlto' 'Pittsburgh' 'Queensland'
      'SaintLouis']
-    
+
 
 Split data
 ----------
 
 We split the data into:
 
-- A large central dataset (19 sites)
-- Two smaller datasets (each dataset has 2 sites)
+-  A large central dataset (19 sites)
+-  Two smaller datasets (each dataset has 2 sites)
 
 In a FL scenario the large model would be owned by a central location
 (e.g., a hospital in the Netherlands) and the smaller ones by remote
@@ -230,7 +230,7 @@ reason, they use the FL workflow.
     Location 1: 44 train, 12 test
     Location 2: 40 train, 11 test
     All data: 862 train, 216 test
-    
+
 
 Visualize the data
 ------------------
@@ -332,7 +332,7 @@ likelihood HBR with B-spline basis functions.
         nuts_sampler="nutpie",
         likelihood=likelihood,
     )
-    
+
 
 --------------
 
@@ -360,6 +360,16 @@ into a single dataset and train one model.
     # Use the data from all 23 sites, before any splitting happened.
     baseline_model.fit_predict(
         train_all, test_all);
+
+
+.. parsed-literal::
+
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
+    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
+    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
+      warnings.warn(
+
 
 Part 2: FL with ``extend()``
 ----------------------------
@@ -405,6 +415,14 @@ The central location trains an HBR model using only its own 19 sites.
 .. image:: 12_federated_learning_files/12_federated_learning_15_0.png
 
 
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
 Step 2: Extend the central model to remote locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -448,6 +466,14 @@ No real data is exchanged only model parameters.
 .. image:: 12_federated_learning_files/12_federated_learning_18_0.png
 
 
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
 The extended model from location 1 knows about both the central sites
 (via synthetic data) and its own local sites.
 
@@ -482,6 +508,14 @@ Location 2 extends the model further with their own data.
 .. image:: 12_federated_learning_files/12_federated_learning_22_0.png
 
 
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
 The extended model from location 2 knows about both the central and
 location 1 sites (via synthetic data) and its own local sites.
 
@@ -492,8 +526,8 @@ Extended vs baseline model
 
 We now compare the 2 models:
 
-- **baseline**: all data were in one location
-- **extended**: data were split in 3 locations
+-  **baseline**: all data were in one location
+-  **extended**: data were split in 3 locations
 
 Centile curves
 ~~~~~~~~~~~~~~
@@ -522,7 +556,7 @@ Centile curves
 .. parsed-literal::
 
     === baseline model ===
-    
+
 
 
 .. image:: 12_federated_learning_files/12_federated_learning_25_1.png
@@ -532,10 +566,18 @@ Centile curves
 
     
     === Extended model ===
-    
+
 
 
 .. image:: 12_federated_learning_files/12_federated_learning_25_3.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 Conclusions

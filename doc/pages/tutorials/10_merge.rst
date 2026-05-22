@@ -152,10 +152,10 @@ Part 1: Train a model at each remote location
 Each remote location trains its own normative model independently,
 without sharing any data. Crucially, the two model types are different:
 
-- **Location 1** uses an ``HBR`` (PCNtoolkit defaults: Normal
-  likelihood, B-spline basis for μ and σ, random intercept for μ).
-- **Location 2** uses a ``BLR`` with a non-linear warp applied to the
-  response variable, allowing it to capture non-Gaussian distributions.
+-  **Location 1** uses an ``HBR`` (PCNtoolkit defaults: Normal
+   likelihood, B-spline basis for μ and σ, random intercept for μ).
+-  **Location 2** uses a ``BLR`` with a non-linear warp applied to the
+   response variable, allowing it to capture non-Gaussian distributions.
 
 Train the Location 1 model (HBR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,7 +164,17 @@ Train the Location 1 model (HBR)
 
     location1_model = NormativeModel(HBR(progressbar=False), save_dir="../out/models/location1_model")
     location1_model.fit_predict(location1_train, location1_test);
-    
+
+
+
+.. parsed-literal::
+
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
+    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
+    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
+      warnings.warn(
+
 
 Train the Location 2 model (BLR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

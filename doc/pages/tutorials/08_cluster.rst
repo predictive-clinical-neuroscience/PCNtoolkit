@@ -100,7 +100,7 @@ Imports
 .. parsed-literal::
 
     This should be the conda environment path: /project/3022000.05/projects/stijdboe/envs/pcntoolkit_cluster_tutorial
-    
+
 
 .. code:: ipython3
 
@@ -140,7 +140,7 @@ Imports
           7     "CortexVol",
           8 ]
           9 # Select only a few features
-    
+
 
     NameError: name 'load_fcon1000' is not defined
 
@@ -275,7 +275,7 @@ Now we can just do:
     No more running jobs!
     ---------------------------------------------------------
     
-    
+
 
 
 
@@ -324,7 +324,7 @@ inspect and use to predict on new data.
     Process: 2343784 - 2025-05-13 18:58:23 - Harmonizing data for CortexVol.
     Process: 2343784 - 2025-05-13 18:58:23 - Harmonizing data for WM-hypointensities.
     Process: 2343784 - 2025-05-13 18:58:23 - Harmonizing data for Right-Amygdala.
-    
+
 
 
 .. image:: 08_cluster_files/08_cluster_14_1.png
@@ -377,7 +377,7 @@ BLR models can only be extended, not transferred (yet).
     No more running jobs!
     ---------------------------------------------------------
     
-    
+
 
 
 

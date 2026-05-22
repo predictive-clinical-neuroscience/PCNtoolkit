@@ -41,14 +41,14 @@ You can access the evaluation metrics with the code below:
 
 .. code:: python
 
-    # fit and predict with a normative model
-    model.predict(test_data)
-    
-    # Access the statistics DataArray
-    test_data['statistics']  # shape: (n_response_vars, n_metrics)
-    
-    # As a readable DataFrame
-    test_all.get_statistics_df()
+   # fit and predict with a normative model
+   model.predict(test_data)
+
+   # Access the statistics DataArray
+   test_data['statistics']  # shape: (n_response_vars, n_metrics)
+
+   # As a readable DataFrame
+   test_data.get_statistics_df()
 
 Point prediction metrics
 ------------------------
@@ -70,9 +70,9 @@ predicting the* **mean**\ *?*
 
 Unlike EXPV, R² is penalized by systematic mean shifts.
 
-- ≤1 — higher is better
-- 0 = no better than mean
-- negative = worse than mean
+-  ≤1 — higher is better
+-  0 = no better than mean
+-  negative = worse than mean
 
 --------------
 
@@ -85,11 +85,11 @@ Similar to R², but it measures how much of the **variance** in the true
 values is explained by the model, after removing any systematic mean
 offset from the residuals.
 
-- Range: 0 to 1 — higher is better
-- A score of 1 means the model perfectly explains the variance in the
-  data
-- A score of 0 means the model explains no more variance than simply
-  predicting the mean
+-  Range: 0 to 1 — higher is better
+-  A score of 1 means the model perfectly explains the variance in the
+   data
+-  A score of 0 means the model explains no more variance than simply
+   predicting the mean
 
 --------------
 
@@ -102,7 +102,7 @@ The average magnitude of prediction error, in the same units as the
 response variable. Larger errors are penalized more than small ones due
 to the squaring.
 
-- Range: 0 to ∞ — lower is better
+-  Range: 0 to ∞ — lower is better
 
 --------------
 
@@ -114,10 +114,10 @@ SMSE — Standardized mean squared error
 SMSE normalizes the MSE by the variance of the target, making it
 scale-independent and comparable across different response variables.
 
-- SMSE = 1 means your model does no better than always predicting the
-  mean
-- SMSE < 1 means improvement over the mean predictor
-- SMSE is directly related to R²: SMSE ≈ 1 − R²
+-  SMSE = 1 means your model does no better than always predicting the
+   mean
+-  SMSE < 1 means improvement over the mean predictor
+-  SMSE is directly related to R²: SMSE ≈ 1 − R²
 
 --------------
 
@@ -130,8 +130,8 @@ The average absolute percentage error between predictions and true
 values. Scale-independent, making it interpretable without knowing the
 units of the response variable.
 
-- Range: 0 to ∞
-- lower is better
+-  Range: 0 to ∞
+-  lower is better
 
 ..
 
@@ -153,10 +153,10 @@ a higher value for A than for B?). Unlike Pearson correlation,
 Spearman’s ρ is **robust to outliers** and does not assume a linear
 relationship.
 
-- Range: −1 to 1
-- higher is better
-- ``Rho_p`` is the associated p-value testing whether ρ is significantly
-  different from zero
+-  Range: −1 to 1
+-  higher is better
+-  ``Rho_p`` is the associated p-value testing whether ρ is
+   significantly different from zero
 
 Probabilistic metrics
 ---------------------
@@ -182,8 +182,8 @@ assigns to the true value given the test input
 
 Measures how “surprised” the model is by the data y, on average.
 
-- Range: 0 to ∞
-- lower is better
+-  Range: 0 to ∞
+-  lower is better
 
 ..
 
@@ -258,8 +258,8 @@ Important: MACE is averaged across unique combinations of batch effects
 equally. This means small groups have the same influence as large
 groups, and hence they may add disproportionate amount of noise to MACE.
 
-- MACE values close to 0 indicate the predicted centile curves closely
-  match the distribution of the data.
+-  MACE values close to 0 indicate the predicted centile curves closely
+   match the distribution of the data.
 
 **Connection to the QQ plot:** The QQ plot is the “uncompressed” version
 of MACE. Each point on the QQ plot corresponds to MACE at a specific
@@ -298,7 +298,7 @@ whether the original data was Gaussian or not. A W close to 1 means the
 model successfully normalized the non-Gaussian original data into
 approximately standard-normal Z-scores.
 
-- Range: 0 to 1 — closer to 1 is better
+-  Range: 0 to 1 — closer to 1 is better
 
 +------------------------+---------------------------------------------+
 | W value                | Interpretation                              |
@@ -333,7 +333,7 @@ relative to a standard normal distribution. A normative model can be
 well-calibrated if the Z-scores follow a standard normal distribution
 which is expected to have skewness = 0.
 
-- Range: :math:`(-\infty, +\infty)` - closer to 0 is better
+-  Range: :math:`(-\infty, +\infty)` - closer to 0 is better
 
 +-----------------------------+----------------------------------------+
 | Skewness value              | Interpretation                         |
@@ -377,7 +377,7 @@ are relative to a standard normal distribution. A normative model can be
 well-calibrated if the Z-scores follow a standard normal distribution
 which is expected to have excess kurtosis = 0.
 
-- Range: :math:`[-2, +\infty)` - closer to 0 is better
+-  Range: :math:`[-2, +\infty)` - closer to 0 is better
 
 +-----------------------------+----------------------------------------+
 | Kurtosis value              | Interpretation                         |
@@ -406,31 +406,34 @@ you can see seven distributions each with a different kurtosis value.
 Summary table
 -------------
 
-+------------+-----------------+---------------+--------------+-----------+
-| Metric     | Family          | Input         | Better when  | Range     |
-+============+=================+===============+==============+===========+
-| R²         | Point           | Y, Yhat       | Higher       | ≤ 1       |
-+------------+-----------------+---------------+--------------+-----------+
-| EXPV       | Point           | Y, Yhat       | Higher       | 0-1       |
-+------------+-----------------+---------------+--------------+-----------+
-| Rho        | Point           | Y, Yhat       | Higher       | −1 to 1   |
-+------------+-----------------+---------------+--------------+-----------+
-| RMSE       | Point           | Y, Yhat       | Lower        | ≥ 0       |
-+------------+-----------------+---------------+--------------+-----------+
-| SMSE       | Point           | Y, Yhat       | Lower        | ≥ 0       |
-+------------+-----------------+---------------+--------------+-----------+
-| MAPE       | Point           | Y, Yhat       | Lower        | ≥ 0       |
-+------------+-----------------+---------------+--------------+-----------+
-| MLL        | Probabilistic   | logp          | Lower        | ≥ 0       |
-+------------+-----------------+---------------+--------------+-----------+
-| MSLL       | Probabilistic   | logp,         | Lower        | unbounded |
-|            |                 | baseline_logp | (negative)   |           |
-+------------+-----------------+---------------+--------------+-----------+
-| MACE       | Probabilistic   | centiles, Y   | Lower        | 0-1       |
-+------------+-----------------+---------------+--------------+-----------+
-| ShapiroW   | Probabilistic   | Z-scores      | Higher       | 0–1       |
-+------------+-----------------+---------------+--------------+-----------+
-| Skewness   | Probabilistic   | Z-scores      | Closer to 0  | unbounded |
-+------------+-----------------+---------------+--------------+-----------+
-| Kurtosis   | Probabilistic   | Z-scores      | Closer to 0  | −2 to ∞   |
-+------------+-----------------+---------------+--------------+-----------+
++------------+-----------------+------------+--------------+----------+
+| Metric     | Family          | Input      | Better when  | Range    |
++============+=================+============+==============+==========+
+| R²         | Point           | Y, Yhat    | Higher       | ≤ 1      |
++------------+-----------------+------------+--------------+----------+
+| EXPV       | Point           | Y, Yhat    | Higher       | 0-1      |
++------------+-----------------+------------+--------------+----------+
+| Rho        | Point           | Y, Yhat    | Higher       | −1 to 1  |
++------------+-----------------+------------+--------------+----------+
+| RMSE       | Point           | Y, Yhat    | Lower        | ≥ 0      |
++------------+-----------------+------------+--------------+----------+
+| SMSE       | Point           | Y, Yhat    | Lower        | ≥ 0      |
++------------+-----------------+------------+--------------+----------+
+| MAPE       | Point           | Y, Yhat    | Lower        | ≥ 0      |
++------------+-----------------+------------+--------------+----------+
+| MLL        | Probabilistic   | logp       | Lower        | ≥ 0      |
++------------+-----------------+------------+--------------+----------+
+| MSLL       | Probabilistic   | logp,      | Lower        | u        |
+|            |                 | bas        | (negative)   | nbounded |
+|            |                 | eline_logp |              |          |
++------------+-----------------+------------+--------------+----------+
+| MACE       | Probabilistic   | centiles,  | Lower        | 0-1      |
+|            |                 | Y          |              |          |
++------------+-----------------+------------+--------------+----------+
+| ShapiroW   | Probabilistic   | Z-scores   | Higher       | 0–1      |
++------------+-----------------+------------+--------------+----------+
+| Skewness   | Probabilistic   | Z-scores   | Closer to 0  | u        |
+|            |                 |            |              | nbounded |
++------------+-----------------+------------+--------------+----------+
+| Kurtosis   | Probabilistic   | Z-scores   | Closer to 0  | −2 to ∞  |
++------------+-----------------+------------+--------------+----------+
