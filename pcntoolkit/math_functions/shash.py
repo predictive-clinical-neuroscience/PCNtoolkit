@@ -46,8 +46,12 @@ from pytensor.scalar.basic import BinaryScalarOp, upgrade_to_float
 from pytensor.tensor import as_tensor_variable  # type: ignore
 from pytensor.tensor.elemwise import Elemwise, scalar_elemwise
 from pytensor.tensor.random.op import RandomVariable  # type: ignore
+
+
 # pylint: disable=arguments-differ
 
+# Constant that controls the accuracy of the finite difference approximation of dkv/dp
+KV_GRADIENT_DP = 1e-8
 
 # Basic shash operations
 def S(x: NDArray[np.float64], e: NDArray[np.float64], d: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -76,15 +80,14 @@ def S_inv(x: NDArray[np.float64], e: NDArray[np.float64], d: NDArray[np.float64]
 def K(p, x, chunks=None):
     if isinstance(p, float):
         return spp.kv(p, x)
-    return da.map_blocks(lambda c: spp.kv(c, x), da.from_array(p, chunks=chunks or 'auto'), dtype=np.float64)
-
+    return da.map_blocks(lambda c: spp.kv(c, x), da.from_array(p, chunks=chunks or "auto"), dtype=np.float64)
 
 
 def P(q: NDArray[np.float64]) -> NDArray[np.float64]:
     """The P function as given in Jones et al."""
     frac = np.exp(1 / 4) / np.sqrt(8 * np.pi)
-    K1 = K((q + 1) / 2, 1 / 4, chunks=(1000,1000))
-    K2 = K((q - 1) / 2, 1 / 4, chunks=(1000,1000))
+    K1 = K((q + 1) / 2, 1 / 4, chunks=(1000, 1000))
+    K2 = K((q - 1) / 2, 1 / 4, chunks=(1000, 1000))
     a = (K1 + K2) * frac
     return a
 
@@ -100,7 +103,8 @@ def m(epsilon: NDArray[np.float64], delta: NDArray[np.float64], r: int) -> NDArr
         p = P((r - 2 * i) / delta)
         acc += combs * flip * ex * p
     return frac1 * acc
-    
+
+
 def m1m2(epsilon: float, delta: float) -> Tuple[float, float]:
     inv_delta = 1.0 / delta
     two_inv_delta = 2.0 * inv_delta
@@ -113,6 +117,7 @@ def m1m2(epsilon: float, delta: float) -> Tuple[float, float]:
     raw_second = (cosh_2eps_delta * p2 - 1) / 2
     var = raw_second - mean**2
     return mean, var
+
 
 class Kv(BinaryScalarOp):
     nfunc_spec = ("scipy.special.kv", 2, 1)
@@ -129,7 +134,7 @@ class Kv(BinaryScalarOp):
         inputs: Sequence[Variable[Any, Any]],
         output_gradients: Sequence[Variable[Any, Any]],
     ) -> List[Variable]:
-        dp = 1e-16
+        dp = KV_GRADIENT_DP
         (p, x) = inputs
         (gz,) = output_gradients
         # Use finite differences for derivative with respect to p
