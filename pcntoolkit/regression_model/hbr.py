@@ -445,7 +445,7 @@ class HBR(RegressionModel):
         """
         if self.is_fitted:
             if hasattr(self, "idata"):
-                self.idata.to_netcdf(path, groups=["posterior"])
+                self.idata.to_netcdf(path)
             else:
                 raise ValueError(Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_IDATA))
 
