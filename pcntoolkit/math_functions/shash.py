@@ -351,23 +351,6 @@ class SHASHbRV(RandomVariable):
     ) -> NDArray[np.float64]:
         s = rng.normal(size=size)
 
-        def P(q: float) -> float:
-            K1 = spp.kv((q + 1) / 2, 0.25)
-            K2 = spp.kv((q - 1) / 2, 0.25)
-            a = (K1 + K2) * CONST1
-            return a
-
-        def m1m2(epsilon: float, delta: float) -> Tuple[float, float]:
-            inv_delta = 1.0 / delta
-            two_inv_delta = 2.0 * inv_delta
-            p1 = P(inv_delta)
-            p2 = P(two_inv_delta)
-            eps_delta = epsilon / delta
-            sinh_eps_delta = np.sinh(eps_delta)
-            cosh_2eps_delta = np.cosh(2 * eps_delta)
-            mean = sinh_eps_delta * p1
-            raw_second = (cosh_2eps_delta * p2 - 1) / 2
-            return mean, raw_second
 
         mean, raw_second = m1m2(epsilon, delta)
         out = ((np.sinh((np.arcsinh(s) + epsilon) / delta) - mean) / np.sqrt(raw_second - mean**2)) * sigma + mu  # type: ignore
