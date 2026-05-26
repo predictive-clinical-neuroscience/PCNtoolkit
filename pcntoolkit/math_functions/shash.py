@@ -111,8 +111,7 @@ def m1m2(epsilon: float, delta: float) -> Tuple[float, float]:
     cosh_2eps_delta = np.cosh(2 * eps_delta)
     mean = sinh_eps_delta * p1
     raw_second = (cosh_2eps_delta * p2 - 1) / 2
-    var = raw_second - mean**2
-    return mean, var
+    return mean, raw_second
 
 class Kv(BinaryScalarOp):
     nfunc_spec = ("scipy.special.kv", 2, 1)
@@ -201,8 +200,7 @@ class SHASH(Continuous):
         cosh_2eps_delta = np.cosh(2 * eps_delta)
         mean = sinh_eps_delta * p1
         raw_second = (cosh_2eps_delta * p2 - 1) / 2
-        var = raw_second - mean**2
-        return mean, var
+        return mean, raw_second
 
     @classmethod
     def dist(cls, epsilon: pt.TensorLike, delta: pt.TensorLike, **kwargs: Any) -> Any:
@@ -353,27 +351,9 @@ class SHASHbRV(RandomVariable):
     ) -> NDArray[np.float64]:
         s = rng.normal(size=size)
 
-        def P(q: float) -> float:
-            K1 = spp.kv((q + 1) / 2, 0.25)
-            K2 = spp.kv((q - 1) / 2, 0.25)
-            a = (K1 + K2) * CONST1
-            return a
 
-        def m1m2(epsilon: float, delta: float) -> Tuple[float, float]:
-            inv_delta = 1.0 / delta
-            two_inv_delta = 2.0 * inv_delta
-            p1 = P(inv_delta)
-            p2 = P(two_inv_delta)
-            eps_delta = epsilon / delta
-            sinh_eps_delta = np.sinh(eps_delta)
-            cosh_2eps_delta = np.cosh(2 * eps_delta)
-            mean = sinh_eps_delta * p1
-            raw_second = (cosh_2eps_delta * p2 - 1) / 2
-            var = raw_second - mean**2
-            return mean, var
-
-        mean, var = m1m2(epsilon, delta)
-        out = ((np.sinh((np.arcsinh(s) + epsilon) / delta) - mean) / np.sqrt(var)) * sigma + mu  # type: ignore
+        mean, raw_second = m1m2(epsilon, delta)
+        out = ((np.sinh((np.arcsinh(s) + epsilon) / delta) - mean) / np.sqrt(raw_second - mean**2)) * sigma + mu  # type: ignore
         return out
 
 
@@ -405,7 +385,8 @@ class SHASHb(Continuous):
         epsilon: float,
         delta: float,  # type: ignore
     ) -> float:
-        mean, var = SHASH.m1m2(epsilon, delta)
+        mean, raw_second = SHASH.m1m2(epsilon, delta)
+        var = raw_second - mean**2
         remapped_value = ((value - mu) / sigma) * np.sqrt(var) + mean  # type: ignore
         this_S = S(remapped_value, epsilon, delta)
         this_S_sqr = np.square(this_S)
