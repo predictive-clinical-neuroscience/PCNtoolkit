@@ -657,7 +657,9 @@ def _plot_centiles_advanced(
                         title_fontsize=10,
                     )
             else:
-                ax.get_legend().remove()
+                legend = ax.get_legend()
+                if legend is not None:
+                    legend.remove()
 
     title = f"Centiles of {response_var}"
     plotname = f"centiles_{response_var}"
