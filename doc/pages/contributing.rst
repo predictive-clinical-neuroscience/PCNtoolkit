@@ -41,7 +41,9 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
 Congrats! You have now set up your development environment. 
 
-To contribute, create a new branch based on the ``dev`` branch and open your pull request. Your pull request should be approved by at least one developer before merging. The ``dev`` branch is where we add changes for the next release and once we are ready to release to the public we move all our code to the ``master`` branch.
+To contribute, create a new branch based on the ``dev`` branch and open your pull request. Your pull request should be approved by at least one developer before merging. The ``dev`` branch is where we add changes for the next release and once we are ready to release to the public we move all our code to the ``master`` branch. Read more about our branching strategy in our `GitHub Wiki <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/GitHub-workflow>`_.
+
+Run into issues? Check our `GitHub Wiki <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Common-errors-in-dev-environment-setup>`_ for common errors that might happen when you set up your dev environment.
 
 Running Tests
 -------------
@@ -53,7 +55,7 @@ Running Tests
 Building the Website
 --------------------
 
-Our website lives in the ``doc/`` folder and is built with Sphinx. When you make changes to existing documentation or add new documentation, you should build the website locally to check how everything looks. To do that:
+Our website lives in the ``doc/`` folder and is built with Sphinx. When you make changes to existing documentation or add new documentation (more info in our `GitHub Wiki <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Add-a-tutorial-to-the-website>`_, you should build the website locally to check how everything looks. To do that:
 
 1. Go to the ``doc/`` folder:
 
