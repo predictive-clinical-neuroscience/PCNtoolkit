@@ -55,7 +55,7 @@ Running Tests
 Building the Website
 --------------------
 
-Our website lives in the ``doc/`` folder and is built with Sphinx. When you make changes to existing documentation or add new documentation (more info in our `GitHub Wiki <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Add-a-tutorial-to-the-website>`_, you should build the website locally to check how everything looks. To do that:
+Our website lives in the ``doc/`` folder and is built with Sphinx. When you make changes to existing documentation or add new documentation (for more info, see `how to add a tutorial to the website <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Add-a-tutorial-to-the-website>`_ page in our GitHub Wiki), you should build the website locally to check how everything looks. To do that:
 
 1. Go to the ``doc/`` folder:
 
