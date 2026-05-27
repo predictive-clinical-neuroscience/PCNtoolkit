@@ -67,7 +67,7 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # ── 5. Extract release notes ────────────────────
+      # ── 5. Extract release notes from CHANGES ────────────────────
       - name: Extract release notes from CHANGES
         if: steps.check_tag.outputs.skip == 'false'
         run: |
