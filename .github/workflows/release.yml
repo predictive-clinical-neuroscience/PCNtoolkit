@@ -1,0 +1,214 @@
+# Runs automatically on every push to master.
+#
+# Guards against non-release pushes by checking
+# whether the tag v{version} already exists.
+# If it does, all release steps are silently
+# skipped, so routine hotfix merges do not
+# accidentally trigger a duplicate release.
+#
+# Automated steps (4-8 of the release process):
+#   4b. Skip if this push is not a new version.
+#   5.  Extract the matching section from CHANGES.
+#   6.  Create a GitHub Release (tag + notes).
+#       Zenodo is triggered automatically by this.
+#   7.  Open a PR from master to dev.
+#   8.  Merge that PR back into dev.
+#
+# Manual steps handled outside this workflow:
+#   1. Bump version in pyproject.toml
+#   2. Edit CHANGES with the new version section
+#   3. Run python render_citation.py
+#   4a. Merge dev to master (triggers this workflow)
+#   9.  Build and upload to PyPI
+
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  # Required to create tags and GitHub Releases.
+  contents: write
+  # Required to open and merge the master-to-dev PR.
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ─────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history is needed so that the tag
+          # is created on the correct master commit.
+          fetch-depth: 0
+
+      # ── 2. Python ───────────────────────────────────
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # ── 3. Read version ─────────────────────────────
+      - name: Extract version from pyproject.toml
+        run: |
+          # tomllib is part of the Python 3.11+ stdlib;
+          # no extra packages are needed.
+          VERSION=$(python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              d = tomllib.load(f)
+          print(d['project']['version'], end='')
+          ")
+          # Export to the GitHub Actions environment so
+          # all subsequent steps can use $VERSION.
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Detected version: $VERSION"
+
+      # ── 4. Guard: skip if tag exists ────────────────
+      - name: Check whether release tag already exists
+        id: check_tag
+        run: |
+          # Fetch all remote tags so the check is
+          # accurate even on a fresh clone.
+          git fetch --tags
+          if git tag -l "v$VERSION" | grep -q .; then
+            echo "Tag v$VERSION already exists." \
+              " This push is not a new version release." \
+              " Skipping all release steps."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── 5. Extract release notes ────────────────────
+      - name: Extract release notes from CHANGES
+        if: steps.check_tag.outputs.skip == 'false'
+        run: |
+          # Inline Python script reads CHANGES and
+          # extracts the section for the current version.
+          # Fails fast if the section is missing or empty
+          # so a forgotten CHANGES update is caught
+          # before any release is created.
+          python - <<'PYEOF'
+          import os, re, sys
+
+          # Read the target version from the environment.
+          version = os.environ["VERSION"]
+
+          # Read the full CHANGES file.
+          with open("CHANGES", encoding="utf-8") as f:
+              content = f.read()
+
+          # Match headers such as "# Version 1.3.0" or
+          # "# version 1.3.0" with an optional colon.
+          header = re.compile(
+              r"^#\s+[Vv]ersion\s+"
+              + re.escape(version)
+              + r"\s*:?\s*$",
+              re.MULTILINE,
+          )
+          m = header.search(content)
+          if not m:
+              print(
+                  f"ERROR: No '# Version {version}' section"
+                  " found in CHANGES."
+                  " Add it before releasing.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          # Slice content from after the matched header
+          # to the start of the next version header.
+          start = m.end()
+          nxt = re.search(
+              r"^#\s+[Vv]ersion\s+",
+              content[start:],
+              re.MULTILINE,
+          )
+          end = start + nxt.start() if nxt else len(content)
+          notes = content[start:end].strip()
+
+          if not notes:
+              print(
+                  f"ERROR: Section for version {version}"
+                  " in CHANGES is empty.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          # Write the extracted notes for the next step.
+          with open(
+              "release_notes.md", "w", encoding="utf-8"
+          ) as f:
+              f.write(notes)
+
+          print(f"Extracted release notes for {version}.")
+          PYEOF
+
+      # ── 6. Create GitHub Release ────────────────────
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # gh creates the annotated tag on HEAD of
+          # master, publishes the release page, and
+          # uses the extracted CHANGES section as the
+          # release description.
+          # Zenodo picks up the new release automatically
+          # via the existing GitHub webhook.
+          gh release create "v$VERSION" \
+            --title "Version $VERSION" \
+            --notes-file release_notes.md
+
+      # ── 7. Open PR: master → dev ────────────────────
+      - name: Create PR to sync master back into dev
+        if: steps.check_tag.outputs.skip == 'false'
+        id: create_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create the sync PR and capture its URL so
+          # the merge step can reference it by number.
+          PR_URL=$(gh pr create \
+            --base dev \
+            --head master \
+            --title \
+              "Merge master back to dev after $VERSION release" \
+            --body \
+              "Automated post-release sync of master to dev.")
+          # Export the PR URL to subsequent steps.
+          echo "PR_URL=$PR_URL" >> "$GITHUB_ENV"
+          echo "Created PR: $PR_URL"
+
+      # ── 8. Merge PR: master → dev ───────────────────
+      - name: Merge master-to-dev PR
+        if: steps.check_tag.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract the PR number from the URL
+          # (last path segment, e.g. ".../pull/42").
+          PR_NUM=$(basename "$PR_URL")
+          # Attempt an immediate merge.
+          # --delete-branch=false is technically redundant
+          # because master is a protected branch and
+          # GitHub's API will refuse to delete it, but it
+          # is kept here as an explicit safety guardrail.
+          # If dev branch protection blocks the auto-merge
+          # (e.g. required reviews are configured), the
+          # command exits non-zero. We catch this with ||
+          # so the workflow still succeeds: the release
+          # has already been created, and the PR remains
+          # open for manual merging.
+          gh pr merge "$PR_NUM" \
+            --merge \
+            --delete-branch=false \
+            || echo \
+              "Auto-merge blocked by branch protection." \
+              " Merge the PR manually: $PR_URL"
