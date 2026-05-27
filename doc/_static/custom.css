@@ -1,0 +1,101 @@
+/* Blue top navigation bar */
+/* Light mode */
+   .bd-header {
+    background-color: #5ea8cb !important;
+}
+/* Dark mode */
+html[data-theme="dark"] .bd-header {
+    background-color: #2a7da3 !important;
+}
+
+/* White text for nav links on the dark blue navbar. */
+.bd-header ul.navbar-nav > li.nav-item > .nav-link,
+.bd-header ul.navbar-nav > li.nav-item.current > .nav-link,
+.bd-header ul.navbar-nav > li.nav-item.dropdown > .dropdown-toggle {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Remove underline from the logo anchor while keeping
+   it clickable. */
+.bd-header .navbar-brand {
+    text-decoration: none !important;
+}
+
+/* Bold white logo/brand text on the dark blue navbar. */
+.bd-header .navbar-brand p {
+    color: white !important;
+    font-weight: bold !important;
+}
+
+/* Keep the logo icon small inside the navbar height. */
+.bd-header .navbar-brand img {
+    height: 1.8rem;
+    width: auto;
+}
+
+/* White icon-link icons (e.g. GitHub icon) on the
+   dark navbar. */
+.bd-header .pst-navbar-icon {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Version-switcher button: white text on the dark
+   navbar background. */
+.bd-header button.btn.version-switcher__button {
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Notebook printed output (parsed-literal / cell output)
+   rendered in a light yellow box, visually distinct
+   from normal code blocks. The more-specific selector
+   ensures it overrides the theme's bare `pre` rule. */
+/* Light mode */
+.bd-article .highlight-default .highlight pre,
+.bd-article-container .highlight-default .highlight pre {
+    background-color: #fffde7 !important;
+    border: 1px solid #f0d080 !important;
+    border-left: 4px solid #f9a825 !important;
+    border-radius: 4px;
+    padding: 12px 16px;
+    color: #333333 !important;
+}
+/* Dark mode */
+html[data-theme="dark"] .bd-article .highlight-default .highlight pre,
+html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre {
+    background-color: #2a2400 !important;
+    border: 1px solid #5a4a00 !important;
+    border-left: 4px solid #c8861f !important;
+    color: #e8e0c0 !important;
+}
+/* Ensure the text color inside the notebook output box is white in dark mode. */
+html[data-theme="dark"] .bd-article .highlight-default .highlight pre *,
+html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre * {
+    color: #ffffff !important;
+}
+
+/* Hide the RST header on the homepage; the HTML header (pcn-homepage-title)
+   provides the visible heading instead. The RST header is used
+   when navigating with previous/next buttons. */
+#pcntoolkit-homepage > h1 {
+    display: none;
+}
+
+/* Homepage section. */
+.pcn-homepage {
+    text-align: center;
+    padding: 2rem 0 1rem;
+}
+/* Title */
+.pcn-homepage-title {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 0.4rem;
+}
+/* Subtitle */
+.pcn-homepage-subtitle {
+    font-size: 2rem;
+    color: #5ea8cb;
+    font-weight: bold;
+    margin-top: 0;
+}

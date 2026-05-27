@@ -1,44 +1,36 @@
-Welcome to PCNToolkit's documentation!
-======================================
+PCNtoolkit homepage
+===================
+
+.. raw:: html
+
+   <div class="pcn-homepage">
+     <h1 class="pcn-homepage-title">PCNtoolkit</h1>
+     <p class="pcn-homepage-subtitle">
+       Open source Python software for normative modelling
+     </p>
+   </div>
+
+PCNtoolkit implements normative modelling, a statistical
+and machine learning framework that shifts away from
+traditional case-control comparisons (healthy vs. patient
+groups) and instead focuses on the individual. Rather than
+asking how patient groups differ on average, normative
+modelling asks: *"How does this specific individual deviate
+from a large healthy reference population?"*
+
+.. image:: _static/nm.png
+   :alt: Normative modelling illustration
+   :align: center
+   :width: 80%
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Getting Started
+   :maxdepth: 2
+   :hidden:
 
-   pages/quickstart
-   pages/background.rst
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Tutorials
-
-   pages/tutorials/00_getting_started.rst
-   pages/tutorials/01_loading_data.rst
-   pages/tutorials/02_BLR.rst
-   pages/tutorials/03_HBR_Normal.rst
-   pages/tutorials/04_HBR_SHASH.rst
-   pages/tutorials/05_HBR_Beta.rst
-   pages/tutorials/06_transfer_extend.rst
-   pages/tutorials/07_model_comparison.rst
-   pages/tutorials/08_cluster.rst
-   pages/tutorials/09_command_line_interface.rst
-   pages/tutorials/10_merge.rst
-   pages/tutorials/12_federated_learning.rst
-   pages/tutorials/13_evaluation_metrics.rst
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Miscellaneous
-
-   pages/troubleshooting.rst
-   pages/citing.rst
-
-.. toctree::
-   :maxdepth: 1
-   :caption: For Developers
-
-   pages/contributing.rst
+   getting_started/index
+   tutorials/index
+   support/index
+   development/index
 
 
       
