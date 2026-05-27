@@ -25,7 +25,7 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
    .. code-block:: bash
 
-       conda create -n ptk-dev
+       conda create -n ptk-dev python=3.12
        conda activate ptk-dev
 
 4. **Install the dependencies** 
@@ -41,7 +41,10 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
 Congrats! You have now set up your development environment. 
 
-To contribute, create a new branch based on the ``dev`` branch and open your pull request. Your pull request should be approved by at least one developer before merging. The ``dev`` branch is where we add changes for the next release and once we are ready to release to the public we move all our code to the ``master`` branch.
+To contribute, create a new branch based on the ``dev`` branch and open your pull request. Your pull request should be approved by at least one developer before merging. The ``dev`` branch is where we add changes for the next release and once we are ready to release to the public we move all our code to the ``master`` branch. Read more about `our branching and PR workflow <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/GitHub-workflow>`_ in our GitHub Wiki.
+
+.. note::
+    Ran into issues when you set up your dev environment? Check out `this list of common errors and how to fix them <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Common-errors-in-dev-environment-setup>`_.
 
 Running Tests
 -------------
@@ -53,7 +56,7 @@ Running Tests
 Building the Website
 --------------------
 
-Our website lives in the ``doc/`` folder and is built with Sphinx. When you make changes to existing documentation or add new documentation, you should build the website locally to check how everything looks. To do that:
+Our website lives in the ``doc/`` folder and is built with Sphinx. When you make changes to existing documentation or add new documentation (for more info, see `how to add a tutorial to the website <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Add-a-tutorial-to-the-website>`_ page in our GitHub Wiki), you should build the website locally to check how everything looks. To do that:
 
 1. Go to the ``doc/`` folder:
 

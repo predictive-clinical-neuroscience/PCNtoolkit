@@ -23,54 +23,35 @@ What we will do
 **Classic normative modelling workflow**
 
 1. *Fit a model* on all data together (let’s call it *baseline model* as
-   later we will compare it with the aggregated model produced from the
-   FL workflow)
+   later we will compare it with the extended model produced from the FL
+   workflow)
 
-**Prepare the data for FL**
+**FL workflow**
 
 2. *Split* the data into a large central dataset and two smaller ones
 3. *Fit a central model* on the central dataset only
-
-**FL with ``extend()``**
-
 4. *Extend* the central model to each of the two smaller datasets
-5. *Merge (= aggregate)* the central model and the two extended models
-   into a single global model
-6. *Evaluate* the final aggregated model
 
-**FL with ``transfer()``**
+**Comparison classic vs FL workflow**
 
-7. *Transfer* the central model to each of the two smaller datasets
-8. *Merge* the central model and the two transferred models into a
-   single global model
-9. *Evaluate* the final aggregated model
-
-**Evaluation**
-
-10. *Compare* the aggregated models to the baseline model
+5. *Compare* the extended model to the baseline model
 
 The functions that we will use
 ------------------------------
 
-+-----------------------------------+-----------------------------------+
-| Function                          | Role                              |
-+===================================+===================================+
-| ``NormativeModel.fit()``          | Fit the central model             |
-+-----------------------------------+-----------------------------------+
-| ``NormativeModel.extend()``       | Refit the central model with data |
-|                                   | from the smaller model +          |
-|                                   | synthetic data (generated from    |
-|                                   | the central model)                |
-+-----------------------------------+-----------------------------------+
-| ``NormativeModel.transfer()``     | Transfer the central model’s      |
-|                                   | priors to the smaller dataset     |
-+-----------------------------------+-----------------------------------+
-| ``NormativeModel.merge()``        | Merge (= aggregate) central +     |
-|                                   | extended/transferred models       |
-+-----------------------------------+-----------------------------------+
-| ``NormativeModel.predict()``      | Evaluate the final aggregated     |
-|                                   | model                             |
-+-----------------------------------+-----------------------------------+
++-------------------------------------+-----------------------------------+
+| Function                            | Role                              |
++=====================================+===================================+
+| ``NormativeModel.fit_predict()``    | Fit and predict the baseline and  |
+|                                     | central model                     |
++-------------------------------------+-----------------------------------+
+| ``NormativeModel.extend_predict()`` | Extend the central model with     |
+|                                     | data from a remote location +     |
+|                                     | synthetic data (generated from    |
+|                                     | the central model) and then       |
+|                                     | predict on the test data from a   |
+|                                     | remote location.                  |
++-------------------------------------+-----------------------------------+
 
 Imports
 -------
@@ -124,8 +105,8 @@ including cortical thickness measures, subcortical and ventricular
 volumes, and global brain-volume estimates.
 
 For this tutorial, we select a single response variable: the
-``WM-hypointensities``\ which is a measure related to damaged or
-diseased tissue within the brain’s white matter.
+WM-hypointensitieswhich is a measure related to damaged or diseased
+tissue within the brain’s white matter.
 
 .. code:: ipython3
 
@@ -314,10 +295,9 @@ Visualize the data
 Configure the HBR model
 -----------------------
 
-We define a shared model configuration that will be used for **all**
-models (baseline, central, transferred, and aggregated). This ensures a
-fair comparison. We use a Normal likelihood HBR with B-spline basis
-functions.
+We define a shared model configuration that will be used for both
+baseline and FL model. This ensures a fair comparison. We use a Normal
+likelihood HBR with B-spline basis functions.
 
 .. code:: ipython3
 
@@ -384,9 +364,9 @@ into a single dataset and train one model.
 Part 2: FL with ``extend()``
 ----------------------------
 
-Now we simulate the FL scenario. The central location **does not have
-access** to the data at Location 1 and Location 2. Only model parameters
-are exchanged.
+Now we simulate the FL scenario. None of the locations (central,
+location 1 and 2) share their data with each other. Only model
+parameters are exchanged.
 
 Step 1: Train the central model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -406,9 +386,9 @@ The central location trains an HBR model using only its own 19 sites.
         ),
         inscaler="standardize",
         outscaler="standardize",
-    )
+    );
     
-    central_model.fit(train_central)
+    central_model.fit_predict(train_central, test_central);
 
 .. code:: ipython3
 
@@ -417,6 +397,7 @@ The central location trains an HBR model using only its own 19 sites.
         central_model,
         scatter_data=train_central,
         batch_effects="all",
+        show_legend=False
     )
 
 
@@ -427,10 +408,11 @@ The central location trains an HBR model using only its own 19 sites.
 Step 2: Extend the central model to remote locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each remote location receives the central model json files that are
-saved in ``resources/federated/central`` and calls ``extend()`` locally
+Location 1 receives the central model json files that are saved in
+``resources/federated/central`` and calls ``extend_predict()`` locally
 using its own private data.
 
+``extend_predict()`` runs both ``extend()`` and ``predict()``.
 ``extend()`` synthesizes data from the central model’s learned
 distribution, merges it with the real local data, and refits a full
 model.
@@ -444,183 +426,74 @@ No real data is exchanged only model parameters.
     
     # Location 1 extends the central model
     # with their private data.
-    extended_1 = central_model.extend(
+    extended_location_1 = central_model.extend_predict(
         train_location1,
+        test_location1,
         save_dir=(
-            "resources/federated/extended_1"
+            "resources/federated/extended_location_1"
         ),
-    )
-
-.. code:: ipython3
-
-    # Location 2 loads the central model from disk
-    central_model = NormativeModel.load("resources/federated/central")
-    
-    # Location 2 extends the central model
-    # with their private data.
-    extended_2 = central_model.extend(
-        train_location2,
-        save_dir=(
-            "resources/federated/extended_2"
-        ),
-    )
-
-.. code:: ipython3
-
-    # Visualize the extended models
-    plot_centiles_advanced(
-        extended_1,
-        scatter_data=train_location1,
-        batch_effects="all",
-    )
-    
-    plot_centiles_advanced(
-        extended_2,
-        scatter_data=train_location2,
-        batch_effects="all",
-    )
-
-
-
-.. image:: 12_federated_learning_files/12_federated_learning_19_0.png
-
-
-
-.. image:: 12_federated_learning_files/12_federated_learning_19_1.png
-
-
-Each extended model knows about both the central sites (via synthetic
-data) and its own local sites.
-
-Step 3: Merge extended models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The remote locations send back to the central location their updated
-model parameters. The central location merges the central model with
-both extended models using ``NormativeModel.merge()``.
-
-Under the hood, ``merge()`` does the following:
-
-1. Calls ``synthesize()`` on each model to generate synthetic data from
-   its learned distribution
-2. Pools all synthetic datasets together
-3. Refits a single global model on the combined synthetic data
-
-No real data is exchanged only model parameters.
-
-.. code:: ipython3
-
-    # For simplicity, we will not load the extended models from disk 
-    # using `NormativeModel.load`, but in practice you would do that here.
-    
-    # Merge central + both extended models
-    aggregated_model_with_extend = NormativeModel.merge(
-        save_dir=(
-            "resources/federated/merged_extend"
-        ),
-        models=[
-            central_model,
-            extended_1,
-            extended_2,
-        ],
-    )
-
-Step 4: Predict with the aggregated model
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The aggregated model now covers all 23 sites. We can predict on the full
-test set.
-
-.. code:: ipython3
-
-    # make a copy that holds all the test data
-    test_all_extended = test_all.copy(deep=True)
-    
-    # Predict the test data based on the aggegated model
-    aggregated_model_with_extend.predict(
-        test_all_extended
     );
 
-Part 3: FL with ``transfer()``
-------------------------------
-
-We now repeat the FL workflow, but using ``transfer()`` instead of
-``extend()``.
-
-Step 1: Transfer to both locations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. code:: ipython3
 
-    # Location 1 transfers the central model
-    transferred_1 = central_model.transfer(
-        train_location1,
-        save_dir=(
-            "resources/federated/transferred_1"
-        ),
-    )
-    
-    # Location 2 transfers the central model
-    transferred_2 = central_model.transfer(
-        train_location2,
-        save_dir=(
-            "resources/federated/transferred_2"
-        ),
-    )
-
-.. code:: ipython3
-
-    # Visualize the transferred models
+    # Visualize the extended model
     plot_centiles_advanced(
-        transferred_1,
+        extended_location_1,
         scatter_data=train_location1,
         batch_effects="all",
     )
+
+
+
+.. image:: 12_federated_learning_files/12_federated_learning_18_0.png
+
+
+The extended model from location 1 knows about both the central sites
+(via synthetic data) and its own local sites.
+
+Now location 1 shares its extended model parameters with location 2.
+Location 2 extends the model further with their own data.
+
+.. code:: ipython3
+
+    # Location 2 loads the extended model from disk
+    extended_location_1 = NormativeModel.load("resources/federated/extended_location_1")
     
+    # Location 2 extends the model
+    # with their private data.
+    extended_location_1_and_2 = extended_location_1.extend_predict(
+        train_location2,
+        test_location2,
+        save_dir=(
+            "resources/federated/extended_location_1_and_2"
+        ),
+    )
+
+.. code:: ipython3
+
     plot_centiles_advanced(
-        transferred_2,
+        extended_location_1_and_2,
         scatter_data=train_location2,
         batch_effects="all",
     )
 
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_27_0.png
+.. image:: 12_federated_learning_files/12_federated_learning_22_0.png
 
 
-
-.. image:: 12_federated_learning_files/12_federated_learning_27_1.png
-
-
-Step 2: Merge transferred models and predict
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: ipython3
-
-    # Merge central + both transferred models
-    aggregated_model_with_transfer = NormativeModel.merge(
-        save_dir="resources/federated/merged_transfer",
-        models=[
-            central_model,
-            transferred_1,
-            transferred_2,
-        ],
-    )
-    
-    # Predict on the full test set
-    test_all_transferred = test_all.copy(deep=True)
-    aggregated_model_with_transfer.predict(test_all_transferred);
+The extended model from location 2 knows about both the central and
+location 1 sites (via synthetic data) and its own local sites.
 
 --------------
 
-Aggregated vs baseline model
-----------------------------
+Extended vs baseline model
+--------------------------
 
-We now compare all three models:
+We now compare the 2 models:
 
-- **baseline**: all data pooled
-- **Aggregated (extend)**: remote sites used ``extend()``
-- **Aggregated (transfer)**: remote sites used ``transfer()``
+- **baseline**: all data were in one location
+- **extended**: data were split in 3 locations
 
 Centile curves
 ~~~~~~~~~~~~~~
@@ -633,22 +506,16 @@ Centile curves
         baseline_model,
         scatter_data=test_all,
         batch_effects="all",
+        show_legend=False
     )
     
-    # Aggregated model centiles (extend)
-    print("\n=== Aggregated (extend) ===")
+    # Extended model centiles
+    print("\n=== Extended model ===")
     plot_centiles_advanced(
-        aggregated_model_with_extend,
+        extended_location_1_and_2,
         scatter_data=test_all,
         batch_effects="all",
-    )
-    
-    # Aggregated model centiles (transfer)
-    print("\n=== Aggregated (transfer) ===")
-    plot_centiles_advanced(
-        aggregated_model_with_transfer,
-        scatter_data=test_all,
-        batch_effects="all",
+        show_legend=False
     )
 
 
@@ -658,223 +525,33 @@ Centile curves
     
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_31_1.png
+.. image:: 12_federated_learning_files/12_federated_learning_25_1.png
 
 
 .. parsed-literal::
 
     
-    === Aggregated (extend) ===
+    === Extended model ===
     
 
 
-.. image:: 12_federated_learning_files/12_federated_learning_31_3.png
-
-
-.. parsed-literal::
-
-    
-    === Aggregated (transfer) ===
-    
-
-
-.. image:: 12_federated_learning_files/12_federated_learning_31_5.png
-
-
-QQ plots and evaluation metrics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: ipython3
-
-    # QQ plots for all three models
-    plt.title("Baseline")
-    plot_qq(test_all, plot_id_line=True)
-    
-    plt.title("Aggregated (extend)")
-    plot_qq(
-        test_all_extended, plot_id_line=True
-    )
-    
-    plt.title("Aggregated (transfer)")
-    plot_qq(
-        test_all_transferred, plot_id_line=True
-    )
-    
-    # Evaluation metrics for all three
-    baseline_stats = (
-        test_all.get_statistics_df()
-    )
-    extend_stats = (
-        test_all_extended.get_statistics_df()
-    )
-    transfer_stats = (
-        test_all_transferred.get_statistics_df()
-    )
-    
-    comparison = pd.concat(
-        [
-            baseline_stats,
-            extend_stats,
-            transfer_stats,
-        ]
-        , keys=[
-            "baseline",
-            "Aggregated (extend)",
-            "Aggregated (transfer)",
-        ]
-    )
-    comparison
-
-
-
-.. image:: 12_federated_learning_files/12_federated_learning_33_0.png
-
-
-
-.. image:: 12_federated_learning_files/12_federated_learning_33_1.png
-
-
-
-.. image:: 12_federated_learning_files/12_federated_learning_33_2.png
-
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-    
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-    
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>statistic</th>
-          <th>EXPV</th>
-          <th>MACE</th>
-          <th>MAPE</th>
-          <th>MLL</th>
-          <th>MSLL</th>
-          <th>R2</th>
-          <th>RMSE</th>
-          <th>Rho</th>
-          <th>Rho_p</th>
-          <th>SMSE</th>
-          <th>ShapiroW</th>
-        </tr>
-        <tr>
-          <th></th>
-          <th>response_vars</th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>baseline</th>
-          <th>WM-hypointensities</th>
-          <td>0.359381</td>
-          <td>0.124935</td>
-          <td>0.342213</td>
-          <td>0.798763</td>
-          <td>-0.320506</td>
-          <td>0.356309</td>
-          <td>485.579657</td>
-          <td>0.491113</td>
-          <td>1.633169e-14</td>
-          <td>0.643691</td>
-          <td>0.967511</td>
-        </tr>
-        <tr>
-          <th>Aggregated (extend)</th>
-          <th>WM-hypointensities</th>
-          <td>0.351299</td>
-          <td>0.132170</td>
-          <td>0.329932</td>
-          <td>0.868492</td>
-          <td>-0.316311</td>
-          <td>0.351281</td>
-          <td>487.472645</td>
-          <td>0.462524</td>
-          <td>7.558404e-13</td>
-          <td>0.648719</td>
-          <td>0.958050</td>
-        </tr>
-        <tr>
-          <th>Aggregated (transfer)</th>
-          <th>WM-hypointensities</th>
-          <td>0.309515</td>
-          <td>0.135989</td>
-          <td>0.356217</td>
-          <td>0.909280</td>
-          <td>-0.275522</td>
-          <td>0.308878</td>
-          <td>503.151987</td>
-          <td>0.405334</td>
-          <td>6.002990e-10</td>
-          <td>0.691122</td>
-          <td>0.945963</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
+.. image:: 12_federated_learning_files/12_federated_learning_25_3.png
 
 
 Conclusions
 -----------
 
-All the models perform very similarly. So the FL workflow, where the
-data are different locations. performs as good as the baseline workflow,
-where all the data are in one location.
+The two models perform very similarly. So the FL workflow, where the
+data are from different locations, performs similar to the baseline
+workflow, where all the data are in one location.
 
-In more detail:
+A small difference in the centile plots is that, compared to the
+baseline, the centiles of the extended model show a downward shift for
+old ages (> 80 years), reaching even negative values for WM
+hypointensities. This probably happens because there are almost no real
+data beyond ~80 years, and the synthetic data have little information in
+this range.
 
-Centile plots
-~~~~~~~~~~~~~
-
-Looking at the centile plots, both aggregated models fit the test data
-well across most of the age range.
-
-The **aggregated (extend)** model shows an abrupt divergence at old ages
-(> 70 years). This happens because ``extend()`` fits a model on
-synthetic data from the central model and real local data. The synthetic
-and the real local data have almost no datapoints beyond age ~70 . As a
-result the model does not fit well for these ages.
-
-QQ plots
-~~~~~~~~
-
-Both aggregated models show a systematic deviation from the identity
-line at the **lower tail** of the QQ plot. That means the model
-“expects” the lowest-percentile subjects to have smaller observed values
-than they actually do.
-
-Evaluation metrics
-~~~~~~~~~~~~~~~~~~
-
-Looking at all evaluation metrics, the **aggregated (transfer)**
-performs worse than the other two models. While the **aggregated
-(extend)** performs *slightly* worse than the baseline model. For more
-info on the evaluation metrics, see our tutorial
-`here <https://pcntoolkit.readthedocs.io/en/stable/pages/tutorials/13_evaluation_metrics.html>`__.
+Because of this lack of data beyond ~80 years, we should be cautious
+with the baseline model as well; the upward trend observed there is not
+necessarily more accurate.

@@ -13,6 +13,7 @@ import copy
 from pcntoolkit.math_functions.factorize import *
 from pcntoolkit.math_functions.likelihood import Likelihood, get_default_normal_likelihood
 from pcntoolkit.regression_model.regression_model import RegressionModel
+from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Output
 
 
@@ -338,7 +339,9 @@ class HBR(RegressionModel):
         my_dict = self.regmodel_dict
         my_dict["likelihood"] = self.likelihood.to_dict()
         for key, value in self.__dict__.items():
-            if key not in ["likelihood", "pymc_model", "idata"]:
+            # Save the ptk_version currently 
+            # used by the user
+            if key not in ["likelihood", "pymc_model", "idata", "ptk_version"]:
                 my_dict[key] = value
         if self.is_fitted and (path is not None):
             idata_path = os.path.join(path, "idata.nc")
@@ -367,8 +370,15 @@ class HBR(RegressionModel):
         HBR
             New model instance
         """
+        # Extract the saved version; default to "0.0.0" for old models.
+        version: str = my_dict.get("ptk_version", "0.0.0")
+        # Apply any registered HBR migrations for this version.
+        my_dict = registry.migrate("HBR", my_dict, version=version)
         name: str = my_dict["name"]
-        likelihood: Likelihood = Likelihood.from_dict(my_dict["likelihood"])
+        # Pass version down so likelihood/prior migrations are applied.
+        likelihood: Likelihood = Likelihood.from_dict(
+            my_dict["likelihood"], version=version
+        )
         draws: int = my_dict["draws"]
         tune: int = my_dict["tune"]
         cores: int = my_dict["cores"]

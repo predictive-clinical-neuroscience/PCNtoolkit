@@ -263,6 +263,8 @@ def _plot_centiles(
     fig.tight_layout()
     if save_dir:
         fig.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
+        # Close the figure immediately after writing to disk
+        plt.close(fig)
     return fig
 
 def plot_centiles_advanced(
@@ -655,7 +657,9 @@ def _plot_centiles_advanced(
                         title_fontsize=10,
                     )
             else:
-                ax.get_legend().remove()
+                legend = ax.get_legend()
+                if legend is not None:
+                    legend.remove()
 
     title = f"Centiles of {response_var}"
     plotname = f"centiles_{response_var}"
@@ -922,6 +926,8 @@ def _plot_qq(
             os.path.join(save_dir, f"qq_{response_var}_{data.name}.png"),
             dpi=300,
         )
+        # Close the figure immediately after writing to disk
+        plt.close(fig)
     return fig
 
 

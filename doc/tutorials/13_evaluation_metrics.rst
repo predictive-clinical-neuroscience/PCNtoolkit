@@ -293,19 +293,18 @@ where :math:`\hat{\mu}_i` is the model’s predicted mean and
 :math:`i`.
 
 For a normative model, if the model is perfectly calibrated, the
-Z-scores should follow a standard normal distribution
-:math:`\mathcal{N}(0, 1)`, regardless of whether the original data was
-Gaussian or not. A W close to 1 means the model successfully normalized
-the non-Gaussian original data into approximately standard-normal
-Z-scores.
+Z-scores should follow a standard normal distribution, regardless of
+whether the original data was Gaussian or not. A W close to 1 means the
+model successfully normalized the non-Gaussian original data into
+approximately standard-normal Z-scores.
 
 - Range: 0 to 1 — closer to 1 is better
 
 +------------------------+---------------------------------------------+
 | W value                | Interpretation                              |
 +========================+=============================================+
-| W ≈ 1.0                | Z-scores are well-normalized; model         |
-|                        | uncertainty is well-calibrated              |
+| W ≈ 1.0                | Z-scores are well-normalized; model can be  |
+|                        | well-calibrated                             |
 +------------------------+---------------------------------------------+
 | W ≈ 0.95               | Mild departure from normality, likely       |
 |                        | slight miscalibration in the tails          |
@@ -318,6 +317,91 @@ Z-scores.
 You can read more about the Shapiro–Wilk test in
 `this <https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test>`__
 wikipedia page.
+
+--------------
+
+Skewness — Skewness of Z-scores
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math:: \text{Skewness} = \frac{n}{(n-1)(n-2)} \sum_i \left(\frac{Z_i - \bar{Z}}{s}\right)^3
+
+where :math:`s` is the sample standard deviation, :math:`n` is the
+number of observations.
+
+Skewness measures how long the tails of the Z-score distribution are
+relative to a standard normal distribution. A normative model can be
+well-calibrated if the Z-scores follow a standard normal distribution
+which is expected to have skewness = 0.
+
+- Range: :math:`(-\infty, +\infty)` - closer to 0 is better
+
++-----------------------------+----------------------------------------+
+| Skewness value              | Interpretation                         |
++=============================+========================================+
+| ≈ 0                         | Z-scores are symmetric; model can be   |
+|                             | well-calibrated                        |
++-----------------------------+----------------------------------------+
+| > 0                         | the right tail of the Z-score          |
+|                             | distribution is longer than the left;  |
+|                             | the model tends to predict values that |
+|                             | are too low                            |
++-----------------------------+----------------------------------------+
+| < 0                         | the left tail of the Z-score           |
+|                             | distribution is longer than the right; |
+|                             | the model tends to predict values that |
+|                             | are too high                           |
++-----------------------------+----------------------------------------+
+
+..
+
+   ⚠️ Because of the denominator in the formula, :math:`n` must be
+   higher or equal to 3. If not, a NaN value is returned.
+
+A nice visual representation can be found
+`here <https://www.medcalc.org/en/manual/skewnesskurtosis.php>`__.
+
+--------------
+
+Kurtosis — Excess kurtosis of Z-scores
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. math:: \text{Kurtosis} = \frac{n(n+1)}{(n-1)(n-2)(n-3)} \sum_i \left(\frac{Z_i - \bar{Z}}{s}\right)^4 - \frac{3(n-1)^2}{(n-2)(n-3)}
+
+where :math:`s` is the sample standard deviation, :math:`n` is the
+number of observations. The :math:`-\,\frac{3(n-1)^2}{(n-2)(n-3)}` term
+centres the statistic so that a normal distribution yields exactly 0
+(Fisher’s definition of *excess* kurtosis).
+
+Excess kurtosis measures how fat the tails of the Z-score distribution
+are relative to a standard normal distribution. A normative model can be
+well-calibrated if the Z-scores follow a standard normal distribution
+which is expected to have excess kurtosis = 0.
+
+- Range: :math:`[-2, +\infty)` - closer to 0 is better
+
++-----------------------------+----------------------------------------+
+| Kurtosis value              | Interpretation                         |
++=============================+========================================+
+| ≈ 0                         | Tails match a normal distribution;     |
+|                             | model can be well-calibrated           |
++-----------------------------+----------------------------------------+
+| > 0                         | Fatter tails; more outliers than a     |
+|                             | normal distribution                    |
++-----------------------------+----------------------------------------+
+| < 0                         | Lighter tails; less outliers than a    |
+|                             | normal distribution                    |
++-----------------------------+----------------------------------------+
+
+..
+
+   ⚠️ Because of the denominator in the formula, :math:`n` must be
+   higher or equal to 4. If not, a NaN value is returned.
+
+A nice visual representation can be found
+`here <https://www.medcalc.org/en/manual/skewnesskurtosis.php>`__ and in
+`this wikipedia
+figure <https://en.wikipedia.org/wiki/Kurtosis#/media/File:Standard_symmetric_pdfs.svg>`__
+you can see seven distributions each with a different kurtosis value.
 
 Summary table
 -------------
@@ -345,4 +429,8 @@ Summary table
 | MACE       | Probabilistic   | centiles, Y   | Lower        | 0-1       |
 +------------+-----------------+---------------+--------------+-----------+
 | ShapiroW   | Probabilistic   | Z-scores      | Higher       | 0–1       |
++------------+-----------------+---------------+--------------+-----------+
+| Skewness   | Probabilistic   | Z-scores      | Closer to 0  | unbounded |
++------------+-----------------+---------------+--------------+-----------+
+| Kurtosis   | Probabilistic   | Z-scores      | Closer to 0  | −2 to ∞   |
 +------------+-----------------+---------------+--------------+-----------+
