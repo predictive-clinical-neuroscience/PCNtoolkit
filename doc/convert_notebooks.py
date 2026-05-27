@@ -19,8 +19,12 @@ os.makedirs(TUTORIALS_DIR, exist_ok=True)
 
 def clean_tutorials_dir() -> None:
     """Remove previously generated RST files and support png's."""
-    # Delete every generated .rst file in the tutorials output dir
+    # Delete every generated .rst file in the tutorials output dir,
+    # but not the index.rst.
     for f in glob.glob(os.path.join(TUTORIALS_DIR, "*.rst")):
+        # Skip the index.rst
+        if os.path.basename(f) == "index.rst":
+            continue
         os.remove(f)
     # Delete every notebook-support directory that ends with "_files/".
     # This deletes all the png's
