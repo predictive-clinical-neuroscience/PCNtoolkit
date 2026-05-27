@@ -2,8 +2,8 @@ HBR with SHASH likelihood
 =========================
 
 Welcome to this tutorial notebook that will go through the fitting and
-evaluation of Normative models with a Hierarchical Bayesian Regression (HBR)
-model using a SHASH likelihood.
+evaluation of Normative models with a Hierarchical Bayesian Regression
+(HBR) model using a SHASH likelihood.
 
 Let’s jump right in.
 
@@ -433,7 +433,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -527,7 +527,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -620,7 +620,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -714,7 +714,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -807,7 +807,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -901,7 +901,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -994,7 +994,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -1088,7 +1088,7 @@ All results can be found in the save directory.
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -1932,7 +1932,7 @@ Let’s start with the centiles.
         scatter_data=train,  # Scatter this data along with the centiles
         batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},  # Highlight these groups
         show_other_data=True,  # scatter data not in those groups as smaller black circles
-        harmonize=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
+        harmonize_data=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
         conditionals=[30]
     )
 
@@ -2023,7 +2023,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 04_HBR_SHASH_files/04_HBR_SHASH_22_1.png
@@ -2043,7 +2043,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 04_HBR_SHASH_files/04_HBR_SHASH_22_3.png
@@ -2063,7 +2063,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 04_HBR_SHASH_files/04_HBR_SHASH_22_5.png
@@ -2083,7 +2083,7 @@ And finally the ridge plot:
       self._figure.tight_layout(*args, **kwargs)
     /opt/anaconda3/envs/ptk/lib/python3.12/site-packages/pcntoolkit/util/plotter.py:817: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       plt.tight_layout()
-
+    
 
 
 .. image:: 04_HBR_SHASH_files/04_HBR_SHASH_22_7.png

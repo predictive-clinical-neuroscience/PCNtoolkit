@@ -123,7 +123,7 @@ class Warnings:
     DATA_NOT_SCALED = "Data is not scaled, skipping scaling back to original scale."
     DATA_ALREADY_SCALED = "Data is already scaled, skipping scaling back to original scale."
     NO_COVARIATES = "No covariates provided for dataset {dataset_name}."
-    SYNTHESIZE_N_SAMPLES_IGNORED = "n_samples is ignored because data is provided."
+    SYNTHESIZE_N_SAMPLES_IGNORED = "{n_samples} sample(s) ignored because data is provided."
     CENTILES_ALREADY_COMPUTED_FOR_CENTILES = "Centiles are already computed for {dataset_name} for centiles {centiles}, skipping computation. Force recompute by passing recompute=True to compute_centiles"
     THRIVELINES_ALREADY_COMPUTED_FOR = "Thrivelines are already computed for {dataset_name} for offsets {offsets}, skipping computation. Force recompute by passing recompute=True to compute_thrivelines"
     REMOVE_NAN_SET_TO_FALSE = (
@@ -140,6 +140,12 @@ class Warnings:
     LOADING_DATA_NOT_SUPPORTED_FOR_CROSS_VALIDATION = (
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
+    RENAMED = "'{old_name}' has been renamed to '{new_name}'."
+    TOO_FEW_OBSERVATIONS = (
+        "Cannot compute {statistic}: {n_valid} valid observation(s) "
+        "found after removing NaN/Inf values, but at least "
+        "{n_required} are required. Returning NaN."
+    )
     BLR_CG_NOT_SUPPORTED_WITH_WARP = (
         "The 'cg' optimizer requires analytical gradients, which are not implemented for warped models. "
         "Falling back to the default 'l-bfgs-b' optimizer. "
@@ -150,6 +156,22 @@ class Warnings:
         "Falling back to the default 'l-bfgs-b' optimizer. "
         "Please set optimizer='l-bfgs-b' to avoid this warning."
     )
+    TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
+        "Transfer data contain fewer batch effect levels than training data. "
+        "This may lead to biased results."
+    )
+    MODEL_SAVED_WITH_NEWER_VERSION = (
+        "This model was saved with PCNtoolkit v{saved_version}, "
+        "but you are running v{current_version}. "
+        "Some features may not load correctly. "
+        "Please update PCNtoolkit: pip install --upgrade pcntoolkit"
+    )
+    MODEL_MIGRATION_APPLIED = (
+        "This model was saved with PCNtoolkit v{saved_version}, "
+        "but you are running v{current_version}. "
+        "Loading this model in v{current_version}..."
+    )
+
 
 class Errors:
     ERROR_BATCH_SIZE_AND_N_BATCHES_MISMATCH = "Batch size ({batch_size}) and number of batches ({n_batches}) are both specified, but do not match the number of response variables ({n_response_vars})"
@@ -250,15 +272,28 @@ class Output:
             print(message)
 
     @classmethod
-    def warning(cls, message: str, *args, **kwargs) -> None:
-        """Print warning message only if show_warnings mode is enabled"""
+    def warning(
+        cls,
+        message: str,
+        *args,
+        category: type = UserWarning,
+        **kwargs,
+    ) -> None:
+        """Print warning only if show_warnings mode is enabled."""
         if cls._show_warnings:
             message = message.format(*args, **kwargs)
             if cls._show_timestamp:
-                message = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " - " + message
+                message = (
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    + " - "
+                    + message
+                )
             if cls._show_pid:
-                message = "Process: " + str(os.getpid()) + " - " + message
-            warnings.warn(message)
+                message = (
+                    "Process: " + str(os.getpid()) + " - " + message
+                )
+            # Emit with the requested warning category
+            warnings.warn(message, category)
 
     @classmethod
     def error(cls, message: str, *args, **kwargs) -> str:

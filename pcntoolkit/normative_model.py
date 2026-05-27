@@ -25,6 +25,7 @@ from pcntoolkit.regression_model.hbr import HBR  # noqa: F401 # type: ignore
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.regression_model.test_model import TestModel  # noqa: F401 # type: ignore
 from pcntoolkit.util.evaluator import Evaluator
+from pcntoolkit.util.migration import check_forward_compatibility
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 from pcntoolkit.util.paths import ensure_dir_exists, get_default_save_dir, get_save_subdirs
 from pcntoolkit.util.plotter import plot_centiles, plot_qq
@@ -162,12 +163,23 @@ class NormativeModel:
             data.save_results(resultsdir)
         if self.saveplots:
             plotdir = os.path.join(self.save_dir, "plots")
-            plot_qq(data, plot_id_line=True, save_dir=plotdir)
+
+            # QQ plots
+            plot_qq(
+                data,
+                plot_id_line=True,
+                save_dir=plotdir,
+                show_figure=False,
+            )
+
+            # Centile plots
             plot_centiles(
                 self,
                 data,
                 save_dir=plotdir,
+                show_figure=False,
             )
+
         return data
 
     def fit_predict(self, fit_data: NormData, predict_data: NormData) -> NormData:
@@ -205,6 +217,12 @@ class NormativeModel:
         new_model.response_vars = respvar_intersection
 
         new_model.preprocess(transfer_data)
+
+        if self.unique_batch_effects is not None:
+            if len(transfer_data.batch_effect_dims) < len(self.batch_effect_dims):
+                Output.warning(
+                    Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS
+                )
         new_model.register_batch_effects(transfer_data)
 
         Output.print(Messages.TRANSFERRING_MODELS, n_models=len(respvar_intersection))
@@ -464,6 +482,11 @@ class NormativeModel:
         with open(model_path, mode="r", encoding="utf-8") as f:
             metadata = json.load(f)
 
+        # Warn if model was saved with a newer pcntoolkit version.
+        norm_version: str = metadata.get("ptk_version", "0.0.0")
+        current_version: str = importlib.metadata.version("pcntoolkit")
+        check_forward_compatibility(norm_version, current_version)
+
         savemodel = metadata["savemodel"]
         saveresults = metadata["saveresults"]
         save_dir = metadata["save_dir"]
@@ -490,7 +513,15 @@ class NormativeModel:
                     response_vars.append(responsevar)
                     regression_model_type = globals()[reg_model_dict["model"]["type"]]
                     regression_models[responsevar] = regression_model_type.from_dict(reg_model_dict["model"], path)
-                    outscalers[responsevar] = Scaler.from_dict(reg_model_dict["outscaler"])
+                    # Use the version stored in the regression model dict so
+                    # that the outscaler migration uses the correct version.
+                    reg_version: str = reg_model_dict["model"].get(
+                        "ptk_version", "0.0.0"
+                    )
+                    outscalers[responsevar] = Scaler.from_dict(
+                        reg_model_dict["outscaler"],
+                        version=reg_version,
+                    )
         template_regression_model = type(regression_models[response_vars[0]]).from_dict(
             metadata["template_regression_model"], None
         )
@@ -513,7 +544,12 @@ class NormativeModel:
         self.regression_models = regression_models
         self.outscalers = outscalers
         self.response_vars = response_vars
-        self.inscalers = {k: Scaler.from_dict(v) for k, v in metadata["inscalers"].items()}
+        # Pass the top-level normative_model.json version to inscaler
+        # migration so that Scaler.from_dict() can apply upgrades.
+        self.inscalers = {
+            k: Scaler.from_dict(v, version=norm_version)
+            for k, v in metadata["inscalers"].items()
+        }
 
         if "batch_effects_maps" in metadata:
             self.batch_effects_maps = {
@@ -818,7 +854,7 @@ class NormativeModel:
         Computes the log-probability of the data under a simple Gaussian model.
         
         The baseline model is a Gaussian with mean and standard deviation
-        computed from the scaled Y data. This serves as a null model reference
+        computed from the scaled Y data. This serves as a baseline model
         to evaluate for example the MSLL (Mean Standardized Log Loss) of our
         fitted model.
 
@@ -853,18 +889,18 @@ class NormativeModel:
 
         self.postprocess(data)
         return data
-    
+
     @staticmethod
     def elemwise_logp_baseline_model(y_scaled: np.ndarray) -> np.ndarray:
         """
-        Compute log-probability for each observation under a baseline 
+        Compute log-probability for each observation under a baseline
         Gaussian model.
-        
+
         Parameters
         ----------
         y_scaled : np.ndarray
             Scaled response variable values.
-            
+
         Returns
         -------
         np.ndarray

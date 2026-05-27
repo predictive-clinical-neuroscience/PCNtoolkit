@@ -510,7 +510,7 @@ class NormData(xr.Dataset):
             new_data_vars["Z"] = (["observations", "response_vars"], new_Z.data)
 
         if hasattr(self, "centiles") and hasattr(other, "centiles"):
-            if self.centile.to_numpy() == other.centile.to_numpy():
+            if np.array_equal(self.centile.to_numpy(), other.centile.to_numpy()):
                 new_centiles = xr.DataArray(
                     np.zeros((new_X.shape[0], len(respvar_intersection), len(self.centile.to_numpy()))),
                     dims=["observations", "response_vars", "centile"],
@@ -682,7 +682,23 @@ class NormData(xr.Dataset):
         names: Optional[Tuple[str, str]],
     ) -> Tuple[NormData, NormData]:
         """
-        Split the data into two datasets, one with the specified batch effects and one without.
+        Split the data into two datasets, one with the specified batch effects 
+        and one without.
+
+        This is useful when you want to split a dataset into two smaller ones.
+
+        Parameters
+        ----------
+        batch_effects : Dict[str, List[str]]
+            A dictionary mapping batch effect dimensions to lists of values to
+            split on.
+        names : Optional[Tuple[str, str]]
+            The names for the two splits.
+
+        Returns
+        -------
+        Tuple[NormData, NormData]
+            A tuple containing the two split NormData instances.
         """
         if names is None:
             names = ["selected", "not_selected"]  # type:ignore
@@ -1033,19 +1049,31 @@ class NormData(xr.Dataset):
 
             self.attrs["is_scaled"] = False
 
-    def select_batch_effects(self, name, batch_effects: Dict[str, List[str]], invert: bool = False) -> NormData:
+    def select_batch_effects(
+        self,
+        name: str,
+        batch_effects: Dict[str, List[str]],
+        invert: bool = False,
+    ) -> NormData:
         """
-        Select only the specified batch effects.
+        Select observations matching (or not matching) batch effects.
 
         Parameters
         ----------
+        name : str
+            Name to assign to the returned ``NormData`` instance.
         batch_effects : Dict[str, List[str]]
-            A dictionary specifying which batch effects to select.
+            A dictionary mapping batch effect dimensions to lists of values to
+            select batch effects from.
+        invert : bool, optional
+            If ``True``, return observations that do *not* match
+            any of the specified batch effect values. Default is ``False``.
 
         Returns
         -------
         NormData
-            A NormData instance with the selected batch effects.
+            A NormData instance containing observations matching
+            (or not matching) the specified batch effects.
         """
         mask = np.zeros(self.batch_effects.shape[0], dtype=bool)
         for key, values in batch_effects.items():
@@ -1077,21 +1105,28 @@ class NormData(xr.Dataset):
         """
         acc = []
         x_columns = [col for col in ["X"] if hasattr(self, col)]
-        y_columns = [col for col in ["Y", "Y_harmonized", "Z"] if hasattr(self, col)]
+        y_columns = [col for col in ["Y", "Y_harmonized", "Z", "logp", "Yhat"] 
+                     if hasattr(self, col)]
         acc.append(
             xr.Dataset.to_dataframe(self[x_columns], dim_order)
             .reset_index(drop=False)
-            .pivot(index="observations", columns="covariates", values=x_columns)
+            .pivot(index="observations", 
+                   columns="covariates", 
+                   values=x_columns)
         )
         acc.append(
             xr.Dataset.to_dataframe(self[y_columns], dim_order)
             .reset_index(drop=False)
-            .pivot(index="observations", columns="response_vars", values=y_columns)
+            .pivot(index="observations", 
+                   columns="response_vars", 
+                   values=y_columns)
         )
         be = (
             xr.DataArray.to_dataframe(self.batch_effects, dim_order)
             .reset_index(drop=False)
-            .pivot(index="observations", columns="batch_effect_dims", values="batch_effects")
+            .pivot(index="observations", 
+                   columns="batch_effect_dims", 
+                   values="batch_effects")
         )
         be.columns = [("batch_effects", col) for col in be.columns]
 
@@ -1127,7 +1162,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1181,7 +1216,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1238,7 +1273,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"logp_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1282,7 +1317,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f, index_col=0) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1336,7 +1371,7 @@ class NormData(xr.Dataset):
 
         This method creates a DataArray with dimensions 'response_vars' and 'statistics',
         where 'response_vars' corresponds to the response variables in the dataset,
-        and 'statistics' includes statistics such as Rho, RMSE, SMSE, EXPV, NLL, and ShapiroW.
+        and 'statistics' includes statistics such as Rho, RMSE, SMSE, EXPV, MLL, and ShapiroW.
         The DataArray is filled with NaN values initially.
         """
         rv = self.response_vars.to_numpy().copy().tolist()
@@ -1346,7 +1381,7 @@ class NormData(xr.Dataset):
             dims=("response_vars", "statistics"),
             coords={
                 "response_vars": np.arange(len(rv)),
-                "statistics": ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "NLL", "ShapiroW", "MACE", "MAPE", "EXPV"],
+                "statistics": ["Rho", "Rho_p", "R2", "RMSE", "SMSE", "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV"],
             },
         )
 

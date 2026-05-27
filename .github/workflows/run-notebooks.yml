@@ -1,0 +1,116 @@
+# Manually execute all tutorial notebooks and commit the results.
+#
+# Trigger: manual only.
+# - Open the Actions tab, select "Run Notebooks", click "Run workflow".
+# - Pick the branch you want to run against (e.g. your PR branch).
+# - Tick "Dry run" to execute notebooks without committing anything.
+#
+# The workflow stops immediately if any notebook fails.
+# The failing notebook name and cell error are printed in the log.
+# Nothing is committed unless every notebook succeeds.
+#
+# Notebook 08_cluster.ipynb is always skipped — it requires SLURM.
+
+name: Run Notebooks
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: >
+          Dry run — execute notebooks but do NOT commit results back.
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # required to push committed outputs back
+
+jobs:
+  run-notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # persist-credentials lets the final push step use the
+          # built-in GITHUB_TOKEN — no personal access token needed.
+          persist-credentials: true
+
+      # ── 2. Python ──────────────────────────────────────────────
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # ── 3. System dependencies ─────────────────────────────────
+      - name: Install pandoc
+        # pandoc is required by nbconvert --to rst, which is called
+        # by doc/convert_notebooks.py in step 6.
+        run: sudo apt-get install -y pandoc
+
+      # ── 4. Python dependencies ─────────────────────────────────
+      - name: Install Python dependencies
+        run: |
+          # Install the package plus its dev extras, then add
+          # papermill for notebook execution.
+          pip install -e ".[dev]"
+          pip install papermill
+
+      # ── 5. Execute all notebooks ───────────────────────────────
+      - name: Execute notebooks
+        run: |
+          # Loop over every notebook in examples/, skipping the
+          # cluster notebook which requires SLURM and cannot run
+          # in a GitHub Actions environment.
+          FAILED=0
+          for nb in examples/*.ipynb; do
+            if [[ "$nb" == *"08_cluster"* ]]; then
+              echo "Skipping (SLURM-only): $nb"
+              continue
+            fi
+
+            echo "Running: $nb"
+
+            # papermill executes the notebook in-place and prints
+            # the failing cell + Python traceback on error.
+            papermill "$nb" "$nb" \
+              --execution-timeout 3600 \
+              --request-save-on-cell-execute \
+              || { echo "FAILED: $nb"; FAILED=1; break; }
+
+            echo "Done:    $nb"
+          done
+
+          # Exit with failure so GitHub Actions marks the job red
+          # and shows the error prominently.
+          exit $FAILED
+
+      # ── 6. Convert notebooks to RST ───────────────────────────
+      - name: Convert notebooks to RST
+        # Regenerate all RST files from the freshly executed .ipynb
+        # files so the website outputs are up to date.
+        run: python doc/convert_notebooks.py
+
+      # ── 7. Commit and push ─────────────────────────────────────
+      - name: Commit generated outputs
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email \
+            "github-actions[bot]@users.noreply.github.com"
+
+          # Stage the executed notebooks and the generated RST files.
+          git add examples/ doc/pages/tutorials/
+
+          # Commit only if there are staged changes; exit cleanly
+          # if nothing changed (idempotent re-runs are safe).
+          if git diff --staged --quiet; then
+            echo "Nothing changed — no commit needed."
+          else
+            git commit -m \
+              "chore: update executed notebook outputs [skip ci]"
+            git push
+          fi

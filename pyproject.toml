@@ -1,6 +1,6 @@
 [project]
 name = "pcntoolkit"
-version = "1.2.0.post1"
+version = "1.3.0"
 description = "Predictive Clinical Neuroscience Toolkit"
 readme = "README.md"
 license = "GPL-3.0-only"
@@ -28,20 +28,30 @@ requires-python = ">=3.11,<3.13"
 
 dependencies = [
     "nibabel>=5.3.1",
-    "pymc>=5.19.1",
+    "h5py>=3.11.0",
+    "h5netcdf>=1.3.0",
+    "pymc>=5.19.1,<6.0.0",
+    "pytensor>=2.22.0,<3.0.0",
     "scikit-learn>=1.5.2",
     "six>=1.16.0",
     "scipy>=1.12",
     "matplotlib>=3.9.2",
     "seaborn>=0.13.2",
     "numba>=0.60.0",
-    "nutpie>=0.16.5",
+    "nutpie>=0.16.5,<0.16.9",
     "joblib>=1.4.2",
     "dill>=0.3.9",
     "ipywidgets>=8.1.5",
     "ipykernel>=6.29.5",
+    "ipython>=8.0.0",
     "dask>=2025.11.0",
-    "filelock>=3.13.0"
+    "filelock>=3.13.0",
+    "packaging>=21.3",
+    "arviz>=0.21.0,<1.0.0",
+    "numpy>=2.0.0",
+    "pandas>=2.2.0",
+    "xarray>=2024.1.0",
+    "cloudpickle>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -53,6 +63,7 @@ dev = [
     "sphinx-rtd-theme>=3.0.2",
     "ruff>=0.8.6",
     "pytest-cov>=6.0.0",
+    "nbconvert>=7.15.0",
 ]
 
 [project.scripts]
