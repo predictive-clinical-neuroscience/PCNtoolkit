@@ -14,5 +14,6 @@ Tutorials
    07_model_comparison
    08_cluster
    09_command_line_interface
+   10_merge
    12_federated_learning
    13_evaluation_metrics
