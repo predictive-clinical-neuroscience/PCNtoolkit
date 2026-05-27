@@ -25,7 +25,7 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
    .. code-block:: bash
 
-       conda create -n ptk-dev
+       conda create -n ptk-dev python=3.12
        conda activate ptk-dev
 
 4. **Install the dependencies** 
