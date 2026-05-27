@@ -158,6 +158,7 @@ Models estimated on earlier versions of PCNtoolkit (up until v0.39) are NOT COMP
 6. Fix bug with nm.predict, it is now fully in-place on the Normdata
 7. Fix transfer bug for HBR
 
+
 # Version 1.2.0
 
 **Major changes:**
@@ -165,7 +166,6 @@ Models estimated on earlier versions of PCNtoolkit (up until v0.39) are NOT COMP
 3. Remove python 3.10 support 
 3. Replace "fcntl" package with "filelock" to allow Windows support
 4. Update contribution guide in the website and add a troubleshooting section
-
 
 **Minor changes:**
 1. Add copilot-instructions.md 
@@ -175,7 +175,34 @@ Models estimated on earlier versions of PCNtoolkit (up until v0.39) are NOT COMP
 1. Fix MSLL computation
 2. Refactor logging for BLR: add warnings and errors related to optimizers and warping
 
+
 # Version 1.2.0.post1
 
 **Hotfix**
 Fix packaging issues (no missing files or folders)
+
+
+# Version 1.3.0
+
+**Major changes:**
+1. Add fractional polynomials basis function
+2. Rename NLL (negative log-likelihood) → MLL (mean log-loss)
+3. Add MACE averaging (as defined in Zamanzadeh et al. (2026))
+4. Add kurtosis and skewness as evaluation metrics 
+5. Add migration strategy for saved models 
+6. Make HBR SHASHb faster by adjusting the dp parameter
+7. Manage matplotlib more flexibly
+8. Refactor BLR tutorial 
+9. Add federated learning and evaluation metrics tutorials 
+10. Update merge tutorial
+
+**Minor changes:**
+1. Update contributing guidelines and add rules in github (Issue and PR templates)
+
+**Bug fixes**
+1. Add add upper bounds for pymc, nutpie and pytensor 
+2. Fix HBR SHASH to return mean and second moment in m1m2()
+3. Add h5py and h5netcdf as dependency in toml 
+
+
+
