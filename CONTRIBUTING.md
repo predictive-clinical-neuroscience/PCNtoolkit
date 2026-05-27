@@ -12,21 +12,16 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on
 Linux, Mac, or Windows with WSL. To contribute to PCNtoolkit you can
 follow the steps below to set your local development environment:
 
-:::: note
-::: title
-Note
-:::
-
-To use PCNtoolkit you need to have installed
-[Git](https://git-scm.com/downloads) and a Python version (we officially
-support Python version 3.11 and 3.12). Also, we recommend using
-[Anaconda](https://www.anaconda.com/download) to manage Python.
-::::
+> **Note**
+> To use PCNtoolkit you need to have installed
+> [Git](https://git-scm.com/downloads) and a Python version (we officially
+> support Python version 3.11 and 3.12). Also, we recommend using
+> [Anaconda](https://www.anaconda.com/download) to manage Python.
 
 1.  **Fork the repository** - Forking creates your own copy (your
     \"fork\") of PCNtoolkit on your GitHub. This gives you full write
     access to your fork so you can make changes and then submit Pull
-    Requests to the original PCNtoolkit repository (that you don\'t have
+    Requests to the original PCNtoolkit repository (that you don't have
     direct write access to). See [GitHub's guide to
     forking](https://docs.github.com/en/get-started/quickstart/fork-a-repo).
 
@@ -62,18 +57,13 @@ support Python version 3.11 and 3.12). Also, we recommend using
     install extra dependencies that are useful when developing the
     project (for example for testing, or documentation).
 
-:::: note
-::: title
-Note
-:::
-
-**Alternative quicker option:** To simplify and automate commands that
-are frequently used during development, we use [GNU
-Make](https://www.gnu.org/software/make/). Common development tasks are
-defined as short scripts in the `Makefile`. For example, steps 3 and 4
-can be done with a single command: `make dev-setup`. After it, you
-should activate the environment with `conda activate ptk-dev`.
-::::
+> **Note**
+> **Alternative quicker option:** To simplify and automate commands that
+> are frequently used during development, we use [GNU
+> Make](https://www.gnu.org/software/make/). Common development tasks are
+> defined as short scripts in the `Makefile`. For example, steps 3 and 4
+> can be done with a single command: `make dev-setup`. After it, you
+> should activate the environment with `conda activate ptk-dev`.
 
 Congrats! You have now set up your development environment.
 
@@ -86,15 +76,10 @@ PR
 workflow](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/GitHub-workflow)
 in our GitHub Wiki.
 
-:::: note
-::: title
-Note
-:::
-
-Ran into issues when you set up your dev environment? Check out [this
-list of common errors and how to fix
-them](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Common-errors-in-dev-environment-setup).
-::::
+> **Note**
+> Ran into issues when you set up your dev environment? Check out [this
+> list of common errors and how to fix
+> them](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Common-errors-in-dev-environment-setup).
 
 ## Running Tests
 
@@ -134,9 +119,9 @@ how everything looks. To do that:
 
 ### Git Commit Messages
 
-- Use the present tense (\"Add feature\" not \"Added feature\")
-- Use the imperative mood (\"Move cursor to\...\" not \"Moves cursor
-  to\...\")
+- Use the present tense ("Add feature" not "Added feature")
+- Use the imperative mood ("Move cursor to..." not "Moves cursor
+  to...")
 - Limit the first line to 72 characters or less
 - Reference issues and pull requests liberally after the first line
 
