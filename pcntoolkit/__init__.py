@@ -3,6 +3,7 @@ from .dataio.norm_data import NormData
 from .math_functions.basis_function import BsplineBasisFunction, LinearBasisFunction, PolynomialBasisFunction, CompositeBasisFunction, FractionalPolynomialBasisFunction
 from .math_functions.likelihood import BetaLikelihood, NormalLikelihood, SHASHbLikelihood
 from .math_functions.prior import make_prior
+from .longitudinal_score import LongitudinalScore, ZDiffScore
 from .normative_model import NormativeModel
 from .regression_model.blr import BLR
 from .regression_model.hbr import HBR
@@ -30,5 +31,7 @@ __all__ = [
     "plot_ridge",
     "load_fcon1000",
     "Runner",
-    "plot_centiles_advanced"
+    "plot_centiles_advanced",
+    "LongitudinalScore",
+    "ZDiffScore",
 ]
