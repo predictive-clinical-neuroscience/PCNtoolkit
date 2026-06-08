@@ -125,7 +125,6 @@ class Warnings:
     NO_COVARIATES = "No covariates provided for dataset {dataset_name}."
     SYNTHESIZE_N_SAMPLES_IGNORED = "{n_samples} sample(s) ignored because data is provided."
     CENTILES_ALREADY_COMPUTED_FOR_CENTILES = "Centiles are already computed for {dataset_name} for centiles {centiles}, skipping computation. Force recompute by passing recompute=True to compute_centiles"
-    THRIVELINES_ALREADY_COMPUTED_FOR = "Thrivelines are already computed for {dataset_name} for offsets {offsets}, skipping computation. Force recompute by passing recompute=True to compute_thrivelines"
     REMOVE_NAN_SET_TO_FALSE = (
         "Warning: remove_NAN is set to False. Missing (NaN) values may cause errors during model creation or training."
     )

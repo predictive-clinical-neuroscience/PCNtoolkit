@@ -90,8 +90,7 @@ class NormData(xr.Dataset):
         "batch_effect_counts",
         "batch_effect_covariate_ranges",
         "covariate_ranges",
-        "real_ids",
-        "thrive_covariate",  # Whether the ids are real or synthetic
+        "real_ids",  # Whether the ids are real or synthetic
     )
 
     def __init__(
@@ -889,13 +888,6 @@ class NormData(xr.Dataset):
                     dims=self.X.dims,
                     attrs=self.X.attrs,
                 )
-            if "thrive_X" in self.data_vars:
-                self["thrive_X"] = xr.DataArray(
-                    inscalers[self.attrs["thrive_covariate"]].transform(self.thrive_X.data),
-                    coords=self.thrive_X.coords,
-                    dims=self.thrive_X.dims,
-                    attrs=self.thrive_X.attrs,
-                )
             # Scale y column-wise using the outscalers
             if "Y" in self.data_vars:
                 scaled_y = np.zeros(self.Y.shape)
@@ -943,18 +935,6 @@ class NormData(xr.Dataset):
                     dims=self.centiles.dims,
                     attrs=self.centiles.attrs,
                 )
-            if "thrive_Y" in self.data_vars:
-                scaled_thrive_Y = np.zeros(self.thrive_Y.shape)
-                for i, responsevar in enumerate(self.response_vars.to_numpy()):
-                    scaled_thrive_Y[:, i, :] = outscalers[responsevar].transform(
-                        self.thrive_Y.sel(response_vars=responsevar).data
-                    )
-                self["thrive_Y"] = xr.DataArray(
-                    scaled_thrive_Y,
-                    coords=self.thrive_Y.coords,
-                    dims=self.thrive_Y.dims,
-                    attrs=self.thrive_Y.attrs,
-                )
             self.attrs["is_scaled"] = True
 
     def scale_backward(self, inscalers: Dict[str, Any], outscalers: Dict[str, Any]) -> None:
@@ -978,13 +958,6 @@ class NormData(xr.Dataset):
                     coords=self.X.coords,
                     dims=self.X.dims,
                     attrs=self.X.attrs,
-                )
-            if "thrive_X" in self.data_vars:
-                self["thrive_X"] = xr.DataArray(
-                    inscalers[self.attrs["thrive_covariate"]].inverse_transform(self.thrive_X.data),
-                    coords=self.thrive_X.coords,
-                    dims=self.thrive_X.dims,
-                    attrs=self.thrive_X.attrs,
                 )
             if "Y" in self.data_vars:
                 unscaled_y = np.zeros(self.Y.shape)
@@ -1032,19 +1005,6 @@ class NormData(xr.Dataset):
                     coords=self.centiles.coords,
                     dims=self.centiles.dims,
                     attrs=self.centiles.attrs,
-                )
-
-            if "thrive_Y" in self.data_vars:
-                unscaled_thrive_Y = np.zeros(self.thrive_Y.shape)
-                for i, responsevar in enumerate(self.response_vars.to_numpy()):
-                    unscaled_thrive_Y[:, i, :] = outscalers[responsevar].inverse_transform(
-                        self.thrive_Y.sel(response_vars=responsevar).data
-                    )
-                self["thrive_Y"] = xr.DataArray(
-                    unscaled_thrive_Y,
-                    coords=self.thrive_Y.coords,
-                    dims=self.thrive_Y.dims,
-                    attrs=self.thrive_Y.attrs,
                 )
 
             self.attrs["is_scaled"] = False

@@ -280,8 +280,6 @@ def plot_centiles_advanced(
     hue_data: str = "site",
     markers_data: str = "sex",
     show_other_data: bool = False,
-    show_thrivelines: bool = False,
-    z_thrive: float = 0.0,
     show_figure: bool = True,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
@@ -435,8 +433,6 @@ def plot_centiles_advanced(
 
     if not hasattr(centile_data, "centiles"):
         model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
-    if scatter_data and show_thrivelines:
-        model.compute_thrivelines(scatter_data, z_thrive=z_thrive)
     if show_yhat and not hasattr(centile_data, "Yhat"):
         model.compute_yhat(centile_data)
 
@@ -464,7 +460,6 @@ def plot_centiles_advanced(
             hue_data=hue_data,
             markers_data=markers_data,
             show_other_data=show_other_data,
-            show_thrivelines=show_thrivelines,
             save_dir=save_dir,
             show_centile_labels=show_centile_labels,
             show_legend=show_legend,
@@ -489,7 +484,6 @@ def _plot_centiles_advanced(
     hue_data: str = "site",
     markers_data: str = "sex",
     show_other_data: bool = False,
-    show_thrivelines: bool = False,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
@@ -574,9 +568,6 @@ def _plot_centiles_advanced(
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
         scatter_data_name = "Y_harmonized" if harmonize_data else "Y"
-        thriveline_data_name = (
-            "thrive_Y_harmonized" if harmonize_data else "thrive_Y"
-        )
         columns = [("X", covariate), (scatter_data_name, response_var)]
         columns.extend(
             [("batch_effects", be.item()) for be in scatter_data.batch_effect_dims]
@@ -597,11 +588,6 @@ def _plot_centiles_advanced(
                 linewidth=0,
                 ax=ax,
             )
-            if show_thrivelines:
-                ax.plot(
-                    scatter_filter.thrive_X.to_numpy().T,
-                    scatter_filter[thriveline_data_name].to_numpy().T,
-                )
         else:
             idx = np.full(len(df), True)
             for j in batch_effects:
@@ -622,11 +608,6 @@ def _plot_centiles_advanced(
                 linewidth=0,
                 ax=ax,
             )
-            if show_thrivelines:
-                ax.plot(
-                    scatter_filter.thrive_X.to_numpy().T,
-                    scatter_filter[thriveline_data_name].to_numpy().T,
-                )
 
             if show_other_data:
                 non_be_df = df[~idx]
