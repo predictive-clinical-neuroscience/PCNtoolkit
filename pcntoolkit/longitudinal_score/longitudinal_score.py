@@ -18,16 +18,15 @@ class LongitudinalScore(ABC):
     A longitudinal score quantifies whether a subject's change across visits
     departs from the change that is expected under a fitted normative model.
     Concrete subclasses (e.g. ``ZDiffScore``, ``ZGainScore``) implement the
-    specific scoring formula in :meth:`score`.
+    specific scoring formula in the function `score`.
 
     Parameters
     ----------
     normative_model : NormativeModel
         A fitted normative model.
     norm_data : NormData
-        Longitudinal data used to estimate the score's normalisation
-        statistics (e.g. the within-subject residual variance). Must contain
-        multiple visits per subject, with z-scores already predicted.
+        Longitudinal data used to estimate the longitudinal score. Must contain
+        multiple visits per subject.
     subject_id : str
         Name of the column that identifies subjects. Subject identifiers are
         read from the ``subject_ids`` field of the ``NormData``.
@@ -64,11 +63,10 @@ class LongitudinalScore(ABC):
 
     @staticmethod
     def _check_is_predicted(data: "NormData") -> None:
-        for var in ("Y", "Yhat", "Z"):
+        for var in ("Yhat", "Z"):
             if not hasattr(data, var):
                 raise ValueError(
-                    f"The data is missing '{var}'. Run model.predict(data) so that predictions "
-                    "and z-scores are available before computing longitudinal scores."
+                    f"The data is missing '{var}'. Run model.predict(data) before computing longitudinal scores."
                 )
 
     @classmethod
@@ -77,9 +75,9 @@ class LongitudinalScore(ABC):
         _, counts = np.unique(ids, return_counts=True)
         if not np.any(counts >= 2):
             raise ValueError(
-                "The data appears to be cross-sectional: no subject has two or more timepoints. "
+                "The data appears to have cross-sectional (single time-point) observations. "
                 "Longitudinal scores require multiple visits per subject. Remove cross-sectional "
-                "subjects before computing longitudinal scores."
+                "subjects from your data before computing longitudinal scores."
             )
 
     # ------------------------------------------------------------------ #

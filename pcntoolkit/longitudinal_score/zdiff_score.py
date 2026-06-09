@@ -18,18 +18,16 @@ class ZDiffScore(LongitudinalScore):
     """Two-visit z-diff score (Rehák Bučková et al., 2025).
 
     The z-diff score quantifies whether a subject's change between two visits
-    differs from the change expected under a fitted normative model. For each
-    subject the residual change is computed in warped space::
+    differs from the change expected under a fitted normative model.
 
-        Δr = [φ(y₂) − φ(ŷ₂)] − [φ(y₁) − φ(ŷ₁)]
+        Δr = (y₂ - ŷ₂) - (y₁ - ŷ₁)
 
-    where ``φ`` is the model's fitted warp (identity for a non-warped BLR), and
-    ``y``/``ŷ`` are the observed and predicted values. The score standardises
+    where ``y``/``ŷ`` are the observed and predicted values. The score standardises
     this change by the within-subject longitudinal variability::
 
         z_diff = Δr / sqrt(2·σ²·(1−ρ))
 
-    The denominator ``2·σ²·(1−ρ)`` is estimated directly from the longitudinal
+    The denominator ``2·σ²·(1-ρ)`` is estimated directly from the longitudinal
     ``norm_data`` passed at construction as the mean squared residual change
     over its subjects, and is cached per response variable.
 
@@ -37,9 +35,6 @@ class ZDiffScore(LongitudinalScore):
     -----
     - Requires a **BLR** (or warped BLR) normative model.
     - Supports **at most two timepoints** per subject.
-    - The ``norm_data`` provided at construction is general longitudinal test
-      data — whether it represents controls, patients, or a mix is the user's
-      choice.
     """
 
     def __init__(self, normative_model: "NormativeModel", norm_data: "NormData", subject_id: str):
