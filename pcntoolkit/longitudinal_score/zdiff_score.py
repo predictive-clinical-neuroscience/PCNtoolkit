@@ -136,7 +136,7 @@ class ZDiffScore(LongitudinalScore):
         """Map each two-visit subject to its warped residual change ``Δr = r₂ − r₁``."""
         residuals = self.warped_residual(data, responsevar)
         subject_ids = self._get_subject_ids(data)
-        timepoints = self._as_sortable(self._get_observation_column(data, timepoint_col))
+        timepoints = self._get_timepoint_values(data, timepoint_col)
 
         deltas: dict = {}
         for subject in self._ordered_unique(subject_ids):

@@ -110,6 +110,21 @@ class LongitudinalScore(ABC):
             "or covariate when building the NormData."
         )
 
+    @classmethod
+    def _get_timepoint_values(cls, data: "NormData", timepoint_col: str) -> np.ndarray:
+        """Return per-observation timepoint labels used to order a subject's visits.
+
+        Uses ``timepoint_col`` when it is present in the data (as a batch effect
+        or covariate). Otherwise falls back to the first covariate (typically
+        age), which increases monotonically across visits in longitudinal data.
+        """
+        try:
+            values = cls._get_observation_column(data, timepoint_col)
+        except ValueError:
+            ordering_covariate = str(data.covariates.values[0])
+            values = cls._get_observation_column(data, ordering_covariate)
+        return cls._as_sortable(values)
+
     @staticmethod
     def _ordered_unique(values: np.ndarray) -> np.ndarray:
         """Unique values in order of first appearance."""
