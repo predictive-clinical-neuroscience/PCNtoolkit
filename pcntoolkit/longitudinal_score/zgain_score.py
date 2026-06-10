@@ -42,7 +42,7 @@ class ZGainScore(LongitudinalScore):
         correlate across ages.
     subject_id_col : str
         Name of the column that identifies subjects inside both
-        ``reference_data`` and the ``test_data``.
+        ``reference_data`` and the ``score_data``.
     bandwidth : int, default 5
         Age-offset range, in years, for direct correlation estimates.
     covariate : str, default "age"
@@ -94,15 +94,15 @@ class ZGainScore(LongitudinalScore):
 
     def score(
         self,
-        test_data: NormData,
+        score_data: NormData,
         subject_id_col: str | None = None,
         timepoint_col: str = "visit",  # TODO: The LNM_data.csv uses visits to group longitudinal data in a LONG DATAFRAME. Other datasets might use a WIDE DATAFRAME with multiple columns visit_1, visit_2 etc. How can we handle that?
     ) -> xr.DataArray:
-        """Compute the z-gain score for every subject in ``test_data``.
+        """Compute the z-gain score for every subject in ``score_data``.
 
         Parameters
         ----------
-        test_data : NormData
+        score_data : NormData
             Longitudinal cohort with at least two visits per subject and
             z-scores already computed.
         subject_id_col : str, optional
@@ -120,8 +120,8 @@ class ZGainScore(LongitudinalScore):
         subject_id_col = subject_id_col or self.subject_id_col
 
         # Run checks
-        self._check_is_predicted(test_data)
-        self._check_is_longitudinal(test_data)
+        self._check_is_predicted(score_data)
+        self._check_is_longitudinal(score_data)
 
         # Read or estimate the correlation matrix.
         R = self.get_correlation_matrix()
@@ -129,20 +129,20 @@ class ZGainScore(LongitudinalScore):
         max_age = int(R[f"{self.covariate}_1"].max())
 
         # Read response-variable names for the output array.
-        response_vars = [str(r) for r in test_data.response_vars.values]
+        response_vars = [str(r) for r in score_data.response_vars.values]
         # Read subject ids so visits can be grouped per person.
-        subject_ids = self._get_subject_ids(test_data)
+        subject_ids = self._get_subject_ids(score_data)
         # Keep subjects in the same order as the input data.
         subjects = self._ordered_unique(subject_ids)
         # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
         # Read the age value for every visit.
-        ages = self._get_observation_column(test_data, self.covariate).astype(
-            float
-        )
+        ages = self._get_observation_column(
+            score_data, self.covariate
+        ).astype(float)
         # Read the visit-order values used to sort trajectories.
-        timepoints = self._get_timepoint_values(test_data, timepoint_col)
+        timepoints = self._get_timepoint_values(score_data, timepoint_col)
 
         # Initialise an empty array filled with NaN to hold the scores.
         scores = np.full(
@@ -155,7 +155,7 @@ class ZGainScore(LongitudinalScore):
             # Select the correlation matrix for this response variable.
             R_rv = R.sel(response_vars=rv).values
             # Read the z-scores for this single response variable.
-            z_rv = test_data.Z.sel(response_vars=rv).values
+            z_rv = score_data.Z.sel(response_vars=rv).values
             # Score one subject at a time.
             for subject in subjects:
                 # Find the visit rows for the current subject.

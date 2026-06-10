@@ -47,15 +47,15 @@ class LongitudinalScore(ABC):
     @abstractmethod
     def score(
         self,
-        test_data: NormData,
+        score_data: NormData,
         subject_id_col: str | None = None,
         timepoint_col: str = "visit",
     ) -> xr.DataArray:
-        """Score subjects in ``test_data``.
+        """Score subjects in ``score_data``.
 
         Parameters
         ----------
-        test_data : NormData
+        score_data : NormData
             Longitudinal cohort to score.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied

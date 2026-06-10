@@ -49,15 +49,15 @@ class ZDiffScore(LongitudinalScore):
 
     def score(
         self,
-        test_data: NormData,
+        score_data: NormData,
         subject_id_col: str | None = None,
         timepoint_col: str = "visit",
     ) -> xr.DataArray:
-        """Compute the z-diff score for every subject in ``test_data``.
+        """Compute the z-diff score for every subject in ``score_data``.
 
         Parameters
         ----------
-        test_data : NormData
+        score_data : NormData
             Longitudinal cohort with exactly two visits per subject and
             predictions already computed.
         subject_id_col : str, optional
@@ -74,18 +74,18 @@ class ZDiffScore(LongitudinalScore):
         # Use the stored subject id name unless the caller overrides it.
         subject_id_col = subject_id_col or self.subject_id_col
 
-        # Run checks first for both the reference and test data.
+        # Run checks first for both the reference and score data.
         self._check_is_predicted(self.reference_data)
         self._check_is_longitudinal(self.reference_data)
         self._check_at_most_two_timepoints(self.reference_data)
-        self._check_is_predicted(test_data)
-        self._check_is_longitudinal(test_data)
-        self._check_at_most_two_timepoints(test_data)
+        self._check_is_predicted(score_data)
+        self._check_is_longitudinal(score_data)
+        self._check_at_most_two_timepoints(score_data)
 
         # Read response-variable names for the output array.
-        response_vars = [str(r) for r in test_data.response_vars.values]
+        response_vars = [str(r) for r in score_data.response_vars.values]
         # Keep subjects in the same order as the input data.
-        subjects = self._ordered_unique(self._get_subject_ids(test_data))
+        subjects = self._ordered_unique(self._get_subject_ids(score_data))
         # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
@@ -118,10 +118,10 @@ class ZDiffScore(LongitudinalScore):
                     "reference_data has zero residual-change variability."
                 )
 
-            # Compute the change for each target subject (test_data).
+            # Compute the change for each target subject (score_data).
             # Mathematically this Δr_target.
             deltas_target = self._compute_residual_change(
-                test_data,
+                score_data,
                 rv,
                 timepoint_col,
             )
