@@ -47,7 +47,7 @@ class LongitudinalScore(ABC):
     @abstractmethod
     def score(
         self,
-        test_data: "NormData",
+        test_data: NormData,
         subject_id_col: str | None = None,
         timepoint_col: str = "visit",
     ) -> xr.DataArray:
@@ -70,7 +70,7 @@ class LongitudinalScore(ABC):
         """
 
     @staticmethod
-    def _get_subject_ids(data: "NormData") -> np.ndarray:
+    def _get_subject_ids(data: NormData) -> np.ndarray:
         # Make sure the dataset carries subject identifiers.
         if not hasattr(data, "subject_ids"):
             # Tell the user how to build the data correctly.
@@ -83,7 +83,7 @@ class LongitudinalScore(ABC):
         return np.asarray(data.subject_ids.values)
 
     @staticmethod
-    def _get_observation_column(data: "NormData", name: str) -> np.ndarray:
+    def _get_observation_column(data: NormData, name: str) -> np.ndarray:
         """Return a per-observation 1D array for ``name``.
 
         Batch effects are checked first, then covariates.
@@ -94,7 +94,8 @@ class LongitudinalScore(ABC):
             and name in [str(b) for b in data.batch_effect_dims.values]
         ):
             # Return the matching batch-effect values per observation.
-            return np.asarray(data.batch_effects.sel(batch_effect_dims=name).values)
+            return np.asarray(data.batch_effects.sel(
+                batch_effect_dims=name).values)
         # If needed, look for the column among covariates.
         if (
             hasattr(data, "covariates")
@@ -110,8 +111,13 @@ class LongitudinalScore(ABC):
         )
 
     @classmethod
-    def _get_timepoint_values(cls, data: "NormData", timepoint_col: str) -> np.ndarray:
-        """Return per-observation timepoint labels used to order a subject's visits.
+    def _get_timepoint_values(
+        cls,
+        data: NormData,
+        timepoint_col: str,
+    ) -> np.ndarray:
+        """Return per-observation timepoint labels used to order a subject's 
+        visits.
 
         Use ``timepoint_col`` when it is present. Otherwise fall back to the
         first covariate, usually age, as a practical visit-order proxy.
@@ -160,7 +166,7 @@ class LongitudinalScore(ABC):
     # Validation functions
     # ------------------------------------------------------------------ #
     @staticmethod
-    def _check_model_is_fitted(normative_model: "NormativeModel") -> None:
+    def _check_model_is_fitted(normative_model: NormativeModel) -> None:
         # Reject models that have not been fit yet.
         if not getattr(normative_model, "is_fitted", False):
             # Explain how to create the missing fitted state.
@@ -171,7 +177,7 @@ class LongitudinalScore(ABC):
             )
 
     @staticmethod
-    def _check_is_predicted(data: "NormData") -> None:
+    def _check_is_predicted(data: NormData) -> None:
         # Check the prediction fields needed by longitudinal scores.
         for var in ("Yhat", "Z"):
             # Stop if a required prediction output is missing.
@@ -184,14 +190,15 @@ class LongitudinalScore(ABC):
                 )
 
     @classmethod
-    def _check_is_longitudinal(cls, data: "NormData") -> None:
+    def _check_is_longitudinal(cls, data: NormData) -> None:
+        # TODO: This is for LONG DATAFRAME, not for WIDE.
+
         # Read subject ids so we can count visits per person.
         ids = cls._get_subject_ids(data)
         # Count how many observations belong to each subject.
         _, counts = np.unique(ids, return_counts=True)
         # At least one subject must have repeated measurements.
         if not np.any(counts >= 2):
-            # Explain that single-visit data cannot be scored here.
             raise ValueError(
                 "The data appears to have only single-visit observations. "
                 "Longitudinal scores require multiple visits per subject. "

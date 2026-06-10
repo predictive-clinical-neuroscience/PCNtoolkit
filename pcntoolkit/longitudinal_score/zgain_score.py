@@ -1,63 +1,62 @@
 from __future__ import annotations
 
-# Import typing-only helpers to avoid runtime circular imports.
 from typing import TYPE_CHECKING
 
-# Import NumPy for indexing and score calculations.
+from dask.base import compute
 import numpy as np
-# Import xarray for labeled correlation matrices and outputs.
 import xarray as xr
 
-# Import the helper that learns age-to-age z-score correlations.
-from pcntoolkit.math_functions.velocity import get_correlation_matrix
+from pcntoolkit.math_functions.velocity import compute_correlation_matrix
 
-# Import the shared longitudinal-score base class.
 from .longitudinal_score import LongitudinalScore
 
-# Import toolkit types only for static type checking.
+# Import the heavy classes only during type checking.
 if TYPE_CHECKING:
-    # Import the labeled data container used during scoring.
     from pcntoolkit.dataio.norm_data import NormData
-    # Import the normative-model wrapper used by the score.
     from pcntoolkit.normative_model import NormativeModel
 
 
 class ZGainScore(LongitudinalScore):
-    """Generalised velocity-centile (z-gain) score (Bayer et al., 2026).
+    """Velocity centiles from Bayer et al., 2026 (preprint).
 
     The z-gain score asks whether a subject's later z-score is surprising once
     their earlier z-score is known. If the typical age-to-age correlation is
     ``r``, the score is
 
-    ::
-
         z_gain = (z_later − r·z_earlier) / sqrt(1 − r²)
 
     It works with any regression model and any number of visits. When more than
-    two visits are available, the score uses the most recent transition.
+    two visits are available, the score uses the most recent transition (i.e.
+    the latest visit conditioned on the immediately preceding visit).
+    TODO: Discuss with Johanna if this choice makes sense.
+
+    TODO: Using on the full visit history and not only the most recent
+    transition can be done with ``conditional_forecast()``
 
     Parameters
     ----------
     normative_model : NormativeModel
         A fitted normative model.
     reference_data : NormData
-        Longitudinal reference cohort used to learn how z-scores typically
-        persist across ages. Predictions must already be available.
+        Longitudinal reference cohort used to learn how z-scores
+        correlate across ages.
     subject_id_col : str
         Name of the column that identifies subjects inside both
-        ``reference_data`` and the ``test_data`` passed to :meth:`score`.
+        ``reference_data`` and the ``test_data``.
     bandwidth : int, default 5
         Age-offset range, in years, for direct correlation estimates.
     covariate : str, default "age"
-        Covariate that indexes the correlation matrix.
+        The dimension for which the correlations are calculated in the
+        correlation matrix.
     max_correlation : float, default 0.99
-        Upper bound used to keep the denominator safely away from zero.
+        Upper bound used to keep the correlation away from 1 and 
+        the denominator away from zero. 
     """
 
     def __init__(
         self,
-        normative_model: "NormativeModel",
-        reference_data: "NormData",
+        normative_model: NormativeModel,
+        reference_data: NormData,
         subject_id_col: str,
         bandwidth: int = 5,
         covariate: str = "age",
@@ -65,47 +64,39 @@ class ZGainScore(LongitudinalScore):
     ):
         # Reuse the shared setup from the base class.
         super().__init__(normative_model, reference_data, subject_id_col)
+
+        # Run the checks
+        self._check_is_predicted(self.reference_data)
+        self._check_is_longitudinal(self.reference_data)
+
+        self.bandwidth = bandwidth
+        self.covariate = covariate
+        self.max_correlation = max_correlation
+
         # Keep the clipping threshold inside a mathematically safe range.
-        if not 0.0 < max_correlation < 1.0:
+        if not 0.0 < self.max_correlation < 1.0:
             # Explain that the denominator must stay strictly positive.
             raise ValueError(
                 "max_correlation must be strictly between 0 and 1."
             )
-        # Store the bandwidth used when learning correlations.
-        self.bandwidth = bandwidth
-        # Store the covariate that indexes the correlation matrix.
-        self.covariate = covariate
-        # Keep the denominator finite when the estimated correlation is nearly
-        # perfect for a sparse age pair.
-        # Store the clipping threshold for very large correlations.
-        self.max_correlation = max_correlation
-        # Cache the learned age-to-age correlation matrix after first use.
-        # Start with no cached matrix so it can be learned lazily.
+
+        # Cache the correlation matrix after first use.
         self.correlation_matrix: xr.DataArray | None = None
 
-    # ------------------------------------------------------------------ #
-    # Public API
-    # ------------------------------------------------------------------ #
-    def compute_correlation_matrix(self) -> xr.DataArray:
-        """Estimate and cache the age-to-age z-score correlation matrix."""
-        # Learn the matrix only once and then reuse it.
+    def get_correlation_matrix(self) -> xr.DataArray:
+        """Estimate and cache the z-score correlation matrix. It computes
+        the matrix once and then reuses it for all subsequent calls."""
         if self.correlation_matrix is None:
-            # Make sure the reference cohort already has predictions.
-            self._check_is_predicted(self.reference_data)
-            # Make sure the reference cohort really has repeated visits.
-            self._check_is_longitudinal(self.reference_data)
-            # Estimate how strongly z-scores persist across ages.
-            self.correlation_matrix = get_correlation_matrix(
+            self.correlation_matrix = compute_correlation_matrix(
                 self.reference_data, self.bandwidth, self.covariate
             )
-        # Return the cached or newly estimated matrix.
         return self.correlation_matrix
 
     def score(
         self,
-        test_data: "NormData",
+        test_data: NormData,
         subject_id_col: str | None = None,
-        timepoint_col: str = "visit",
+        timepoint_col: str = "visit",  # TODO: The LNM_data.csv uses visits to group longitudinal data in a LONG DATAFRAME. Other datasets might use a WIDE DATAFRAME with multiple columns visit_1, visit_2 etc. How can we handle that?
     ) -> xr.DataArray:
         """Compute the z-gain score for every subject in ``test_data``.
 
@@ -118,7 +109,7 @@ class ZGainScore(LongitudinalScore):
             Subject id column name override. Defaults to the value supplied
             at construction.
         timepoint_col : str, default "visit"
-            Column used to order visits.
+            Column used to order multiple time points/visits.
 
         Returns
         -------
@@ -127,15 +118,13 @@ class ZGainScore(LongitudinalScore):
         """
         # Use the stored subject id name unless the caller overrides it.
         subject_id_col = subject_id_col or self.subject_id_col
-        # Make sure the scored cohort already has z-scores and predictions.
+
+        # Run checks
         self._check_is_predicted(test_data)
-        # Make sure the scored cohort has repeated visits.
         self._check_is_longitudinal(test_data)
 
-        # The reference cohort tells us how strongly z-scores usually persist
-        # from one age to the next.
-        # Read or estimate the age-to-age correlation matrix.
-        R = self.compute_correlation_matrix()
+        # Read or estimate the correlation matrix.
+        R = self.get_correlation_matrix()
         # Read the largest supported age index from that matrix.
         max_age = int(R[f"{self.covariate}_1"].max())
 
@@ -155,11 +144,15 @@ class ZGainScore(LongitudinalScore):
         # Read the visit-order values used to sort trajectories.
         timepoints = self._get_timepoint_values(test_data, timepoint_col)
 
-        # Prepare an output array filled with missing values by default.
-        scores = np.full((len(subjects), len(response_vars)), np.nan, dtype=float)
+        # Initialise an empty array filled with NaN to hold the scores.
+        scores = np.full(
+            (len(subjects), len(response_vars)),
+            np.nan,
+            dtype=float,
+        )
         # Score one response variable at a time.
         for j, rv in enumerate(response_vars):
-            # Select the correlation matrix for this single response variable.
+            # Select the correlation matrix for this response variable.
             R_rv = R.sel(response_vars=rv).values
             # Read the z-scores for this single response variable.
             z_rv = test_data.Z.sel(response_vars=rv).values
@@ -168,32 +161,38 @@ class ZGainScore(LongitudinalScore):
                 # Find the visit rows for the current subject.
                 idx = np.where(subject_ids == subject)[0]
                 # Skip subjects that do not have enough visits.
+                # TODO: Check if this allow the test data to have both
+                # longitudinal and single-visit subjects as we remove
+                # here the single-visit ones.
                 if len(idx) < 2:
                     continue
                 # Sort the visits into time order.
                 ordered = idx[np.argsort(timepoints[idx])]
                 # For longer trajectories, use the last observed step.
                 # Keep only the last two visits for this score.
-                i_prev, i_last = ordered[-2], ordered[-1]
-                # Round and clip the earlier age to valid matrix bounds.
-                a_prev = int(np.clip(round(ages[i_prev]), 0, max_age))
-                # Round and clip the later age to valid matrix bounds.
-                a_last = int(np.clip(round(ages[i_last]), 0, max_age))
-                # Keep the denominator away from zero.
-                # Read the age-specific correlation for this visit pair.
+                obs_prev, obs_last = ordered[-2], ordered[-1]
+                # Round and clip these two visits. We clip to the maximum
+                # age supported by the correlation matrix.
+                # TODO: Discuss with Johanna if it makes sense to round the
+                # age here.
+                age_prev = int(np.clip(round(ages[obs_prev]), 0, max_age))
+                age_last = int(np.clip(round(ages[obs_last]), 0, max_age))
+
+                # Read the specific correlation for this visit pair and keep
+                # the denominator away from zero.
                 r = float(
                     np.clip(
-                        R_rv[a_prev, a_last],
+                        R_rv[age_prev, age_last],
                         -self.max_correlation,
                         self.max_correlation,
                     )
                 )
-                # Convert that correlation into the conditional spread.
-                denom = np.sqrt(1.0 - r**2)
-                # Standardize the later z-score given the earlier z-score.
-                scores[subject_index[subject], j] = (z_rv[i_last] - r * z_rv[i_prev]) / denom
+                denominator = np.sqrt(1.0 - r**2)
+                # Compute zgain
+                scores[subject_index[subject], j] = (
+                    z_rv[obs_last] - r * z_rv[obs_prev]
+                ) / denominator
 
-        # Return labeled scores so subjects and regions stay identifiable.
         return xr.DataArray(
             scores,
             dims=("subjects", "response_vars"),

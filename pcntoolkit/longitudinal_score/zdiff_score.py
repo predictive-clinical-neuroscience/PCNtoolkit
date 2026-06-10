@@ -29,8 +29,8 @@ class ZDiffScore(LongitudinalScore):
 
         z_diff = Δr_target / SD(Δr_reference)
 
-        where SD(Δr_reference) = sqrt(2σ²(1−ρ)) if the residuals are stationary 
-        with variance σ² and visit-to-visit correlation ρ.
+        where SD(Δr_reference) = sqrt(2σ²(1−ρ)) if the residuals are
+        stationary with variance σ² and visit-to-visit correlation ρ.
 
     This score is intended for BLR-based models and subjects with at most two
     visits.
@@ -49,7 +49,7 @@ class ZDiffScore(LongitudinalScore):
 
     def score(
         self,
-        test_data: "NormData",
+        test_data: NormData,
         subject_id_col: str | None = None,
         timepoint_col: str = "visit",
     ) -> xr.DataArray:
@@ -74,7 +74,7 @@ class ZDiffScore(LongitudinalScore):
         # Use the stored subject id name unless the caller overrides it.
         subject_id_col = subject_id_col or self.subject_id_col
 
-        # Run checks first for both the reference and test data
+        # Run checks first for both the reference and test data.
         self._check_is_predicted(self.reference_data)
         self._check_is_longitudinal(self.reference_data)
         self._check_at_most_two_timepoints(self.reference_data)
@@ -89,9 +89,12 @@ class ZDiffScore(LongitudinalScore):
         # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
-        # Initialise an empty array  filled with NaN to hold the scores
-        scores = np.full((len(subjects), len(response_vars)),
-                         np.nan, dtype=float)
+        # Initialise an empty array filled with NaN to hold the scores.
+        scores = np.full(
+            (len(subjects), len(response_vars)),
+            np.nan,
+            dtype=float,
+        )
 
         # Score one response variable at a time.
         for j, rv in enumerate(response_vars):
@@ -101,8 +104,10 @@ class ZDiffScore(LongitudinalScore):
                 self.reference_data, rv, timepoint_col
             )
             # Convert the subject-level changes into a numeric vector.
-            delta_reference_values = np.fromiter(delta_reference.values(),
-                                                 dtype=float)
+            delta_reference_values = np.fromiter(
+                delta_reference.values(),
+                dtype=float,
+            )
             # Estimate the spread of expected changes for this response.
             # Mathematically this is SD(Δr_reference)
             denominator = np.sqrt(float(np.mean(delta_reference_values**2)))
@@ -115,17 +120,15 @@ class ZDiffScore(LongitudinalScore):
 
             # Compute the change for each target subject (test_data).
             # Mathematically this Δr_target.
-            deltas_target = self._compute_residual_change(test_data,
-                                                          rv,
-                                                          timepoint_col)
-            # Convert each raw change into a standardized z-diff score.
+            deltas_target = self._compute_residual_change(
+                test_data,
+                rv,
+                timepoint_col,
+            )
+            # Compute zdiff
             for subject, delta_target in deltas_target.items():
-                # Express each subject's change in standard-deviation units
-                # of healthy change.
                 scores[subject_index[subject], j] = delta_target / denominator
 
-        # Return labeled scores so subjects and response variables can be
-        # accessed by the user.
         return xr.DataArray(
             scores,
             dims=("subjects", "response_vars"),
@@ -138,7 +141,7 @@ class ZDiffScore(LongitudinalScore):
     # ------------------------------------------------------------------ #
     def _compute_residual_change(
         self,
-        data: "NormData",
+        data: NormData,
         responsevar: str,
         timepoint_col: str,
     ) -> dict[object, float]:
@@ -146,7 +149,7 @@ class ZDiffScore(LongitudinalScore):
         each subject."""
         # Compute a residual value for every visit.
         residuals = self._compute_residual(data, responsevar)
-        
+
         # Read subject ids so visits can be grouped per person.
         subject_ids = self._get_subject_ids(data)
         # Read the visit-order values used to sort repeated measures.
@@ -157,21 +160,24 @@ class ZDiffScore(LongitudinalScore):
         for subject in self._ordered_unique(subject_ids):
             # Find the visit rows for the current subject.
             idx = np.where(subject_ids == subject)[0]
+            # Skip subjects that do not have enough visits. TODO: Check if this allow the test data to have both longitudinal and single-visit subjects as we remove here the single-visit ones.
+            if len(idx) < 2:
+                continue
             # Put the two visits into chronological order.
             ordered = idx[np.argsort(timepoints[idx])]
             # Read the residual at visit 1 and visit 2.
             r1, r2 = residuals[ordered[0]], residuals[ordered[1]]
             # Store the change from the first visit to the second.
             deltas[subject] = r2 - r1
-        # Return the deltas of all subjects
+        # Return the changes for all subjects.
         return deltas
 
     def _compute_residual(
         self,
-        data: "NormData",
+        data: NormData,
         responsevar: str,
     ) -> np.ndarray:
-        """Compute the residual for each visit"""
+        """Compute the residual for each visit."""
         # Get the fitted BLR model for the selected response variable.
         blr = self.normative_model[responsevar]
         # Read the observed measurements for this region.
@@ -202,7 +208,7 @@ class ZDiffScore(LongitudinalScore):
     # ------------------------------------------------------------------ #
     # Validation functions
     # ------------------------------------------------------------------ #
-    def _check_at_most_two_timepoints(self, data: "NormData") -> None:
+    def _check_at_most_two_timepoints(self, data: NormData) -> None:
         # Read subject ids so visit counts can be checked.
         ids = self._get_subject_ids(data)
         # Count how many visits each subject contributes.
@@ -217,7 +223,7 @@ class ZDiffScore(LongitudinalScore):
             )
 
     @staticmethod
-    def _check_model_is_blr(normative_model: "NormativeModel") -> None:
+    def _check_model_is_blr(normative_model: NormativeModel) -> None:
         # Read the template model stored inside the normative wrapper.
         template = getattr(normative_model, "template_regression_model", None)
         # Reject models that are not BLR-based.
