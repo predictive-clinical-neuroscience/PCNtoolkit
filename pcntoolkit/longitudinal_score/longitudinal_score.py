@@ -23,26 +23,57 @@ class LongitudinalScore(ABC):
     Parameters
     ----------
     normative_model : NormativeModel
-        A fitted normative model.
-    norm_data : NormData
-        Longitudinal data used to estimate the longitudinal score. Must contain
-        multiple visits per subject.
-    subject_id : str
-        Name of the column that identifies subjects. Subject identifiers are
-        read from the ``subject_ids`` field of the ``NormData``.
+        A fitted normative model. The training data may be cross-sectional
+        or longitudinal.
+    reference_data : NormData
+        A longitudinal **reference / calibration cohort** (typically healthy
+        controls) used to estimate the normative variability of change. Must
+        contain multiple visits per subject and have predictions already
+        computed (``model.predict(reference_data)``). This is **not** the
+        subjects being scored — it is used solely to calibrate the score
+        (e.g. estimate σ² for z-diff or the correlation matrix for z-gain).
+        Pass a held-out longitudinal cohort when the model was trained on
+        cross-sectional data.
+    subject_id_col : str
+        Name of the column that identifies subjects inside both
+        ``reference_data`` and the ``test_data`` passed to :meth:`score`.
+        Subject identifiers are read from the ``subject_ids`` field of each
+        ``NormData``.
     """
 
-    def __init__(self, normative_model: "NormativeModel", norm_data: "NormData", subject_id: str):
+    def __init__(
+        self,
+        normative_model: "NormativeModel",
+        reference_data: "NormData",
+        subject_id_col: str,
+    ):
         self.normative_model = normative_model
-        self.norm_data = norm_data
-        self.subject_id = subject_id
+        self.reference_data = reference_data
+        self.subject_id_col = subject_id_col
 
         self._check_model_is_fitted(normative_model)
-        self._check_is_longitudinal(norm_data)
 
     @abstractmethod
-    def score(self, data: "NormData", subject_id: str | None = None, timepoint_col: str = "visit") -> xr.DataArray:
-        """Score subjects in ``data``.
+    def score(
+        self,
+        test_data: "NormData",
+        subject_id_col: str | None = None,
+        timepoint_col: str = "visit",
+    ) -> xr.DataArray:
+        """Score subjects in ``test_data``.
+
+        Parameters
+        ----------
+        test_data : NormData
+            The **subjects to be scored** — the clinical or held-out cohort
+            you want longitudinal deviation scores for. Predictions must
+            already be computed (``model.predict(test_data)``).
+        subject_id_col : str, optional
+            Subject id column name override. Defaults to the value supplied
+            at construction.
+        timepoint_col : str, default "visit"
+            Column (batch effect or covariate) used to order visits within
+            each subject.
 
         Returns
         -------
@@ -64,9 +95,11 @@ class LongitudinalScore(ABC):
     @staticmethod
     def _check_is_predicted(data: "NormData") -> None:
         for var in ("Yhat", "Z"):
-            if not hasattr(data, var):
+            if var not in data.data_vars:
                 raise ValueError(
-                    f"The data is missing '{var}'. Run model.predict(data) before computing longitudinal scores."
+                    f"The data is missing '{var}'. "
+                    "Run model.predict(data) before computing "
+                    "longitudinal scores."
                 )
 
     @classmethod

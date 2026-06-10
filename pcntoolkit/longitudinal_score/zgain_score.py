@@ -44,11 +44,14 @@ class ZGainScore(LongitudinalScore):
     ----------
     normative_model : NormativeModel
         A fitted normative model.
-    norm_data : NormData
-        Longitudinal data (z-scores predicted) used to estimate the correlation
-        matrix.
-    subject_id : str
-        Subject id column name.
+    reference_data : NormData
+        A longitudinal **reference / calibration cohort** (typically healthy
+        controls) with z-scores already computed (``model.predict(...)``),
+        used to estimate the z-score correlation matrix ``R(age₁, age₂)``.
+        This is **not** the subjects being scored.
+    subject_id_col : str
+        Name of the column that identifies subjects inside both
+        ``reference_data`` and the ``test_data`` passed to :meth:`score`.
     bandwidth : int, default 5
         Age-offset range (in years) within which correlations are estimated
         directly; larger offsets are interpolated.
@@ -59,13 +62,13 @@ class ZGainScore(LongitudinalScore):
     def __init__(
         self,
         normative_model: "NormativeModel",
-        norm_data: "NormData",
-        subject_id: str,
+        reference_data: "NormData",
+        subject_id_col: str,
         bandwidth: int = 5,
         covariate: str = "age",
         max_correlation: float = 0.99,
     ):
-        super().__init__(normative_model, norm_data, subject_id)
+        super().__init__(normative_model, reference_data, subject_id_col)
         self.bandwidth = bandwidth
         self.covariate = covariate
         # Correlations are clipped to +/- max_correlation when forming the
@@ -80,24 +83,32 @@ class ZGainScore(LongitudinalScore):
     # Public API
     # ------------------------------------------------------------------ #
     def compute_correlation_matrix(self) -> xr.DataArray:
-        """Estimate (and cache) the z-score correlation matrix from ``norm_data``."""
+        """Estimate (and cache) the z-score correlation matrix from ``reference_data``."""
         if self.correlation_matrix is None:
-            self._check_is_predicted(self.norm_data)
-            self.correlation_matrix = get_correlation_matrix(self.norm_data, self.bandwidth, self.covariate)
+            self._check_is_predicted(self.reference_data)
+            self._check_is_longitudinal(self.reference_data)
+            self.correlation_matrix = get_correlation_matrix(
+                self.reference_data, self.bandwidth, self.covariate
+            )
         return self.correlation_matrix
 
-    def score(self, data: "NormData", subject_id: str | None = None, timepoint_col: str = "visit") -> xr.DataArray:
-        """Compute the z-gain score for every subject in ``data``.
+    def score(
+        self,
+        test_data: "NormData",
+        subject_id_col: str | None = None,
+        timepoint_col: str = "visit",
+    ) -> xr.DataArray:
+        """Compute the z-gain score for every subject in ``test_data``.
 
         Parameters
         ----------
-        data : NormData
-            Longitudinal data to score, with predictions/z-scores already
-            computed (``model.predict(data)``).
-        subject_id : str, optional
-            Subject id column name (kept for API symmetry; subject ids are read
-            from the ``NormData`` ``subject_ids`` field). Defaults to the value
-            passed at construction.
+        test_data : NormData
+            The **subjects to be scored**: longitudinal data with ≥ 2 visits
+            per subject and z-scores already computed
+            (``model.predict(test_data)``).
+        subject_id_col : str, optional
+            Subject id column name override. Defaults to the value supplied
+            at construction.
         timepoint_col : str, default "visit"
             Column (batch effect or covariate) used to order visits.
 
@@ -107,25 +118,25 @@ class ZGainScore(LongitudinalScore):
             ``(subjects, response_vars)`` z-gain scores. Subjects with fewer
             than two timepoints are ``NaN``.
         """
-        subject_id = subject_id or self.subject_id
-        self._check_is_predicted(data)
-        self._check_is_longitudinal(data)
+        subject_id_col = subject_id_col or self.subject_id_col
+        self._check_is_predicted(test_data)
+        self._check_is_longitudinal(test_data)
 
         R = self.compute_correlation_matrix()
         max_age = int(R[f"{self.covariate}_1"].max())
 
-        response_vars = [str(r) for r in data.response_vars.values]
-        subject_ids = self._get_subject_ids(data)
+        response_vars = [str(r) for r in test_data.response_vars.values]
+        subject_ids = self._get_subject_ids(test_data)
         subjects = self._ordered_unique(subject_ids)
         subject_index = {s: i for i, s in enumerate(subjects)}
 
-        ages = self._get_observation_column(data, self.covariate).astype(float)
-        timepoints = self._get_timepoint_values(data, timepoint_col)
+        ages = self._get_observation_column(test_data, self.covariate).astype(float)
+        timepoints = self._get_timepoint_values(test_data, timepoint_col)
 
         scores = np.full((len(subjects), len(response_vars)), np.nan, dtype=float)
         for j, rv in enumerate(response_vars):
             R_rv = R.sel(response_vars=rv).values  # (n_ages, n_ages), indexed by integer age
-            z_rv = data.Z.sel(response_vars=rv).values
+            z_rv = test_data.Z.sel(response_vars=rv).values
             for subject in subjects:
                 idx = np.where(subject_ids == subject)[0]
                 if len(idx) < 2:
