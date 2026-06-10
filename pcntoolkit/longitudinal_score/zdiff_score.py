@@ -5,10 +5,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import xarray as xr
 
+# Import BLR because z-diff is defined only for BLR models.
 from pcntoolkit.regression_model.blr import BLR
 
 from .longitudinal_score import LongitudinalScore
 
+# Import the heavy classes only during type checking.
 if TYPE_CHECKING:
     from pcntoolkit.dataio.norm_data import NormData
     from pcntoolkit.normative_model import NormativeModel
@@ -17,43 +19,34 @@ if TYPE_CHECKING:
 class ZDiffScore(LongitudinalScore):
     """Two-visit z-diff score (Rehák Bučková et al., 2025).
 
-    The z-diff score quantifies whether a subject's change between two visits
-    differs from the change expected under a fitted normative model.
+    The z-diff score asks whether the change between two visits is larger or
+    smaller than expected under a fitted BLR normative model.
 
-        Δr = (y₂ - ŷ₂) - (y₁ - ŷ₁)
+        Δr_target = (y₂ - ŷ₂) - (y₁ - ŷ₁)
 
-    where ``y``/``ŷ`` are the observed and predicted values. The score
-    standardises this change by the within-subject longitudinal variability::
+    The toolkit scales that change by the spread of changes learned
+    from ``reference_data`` (can be the healthy subjects)::
 
-        z_diff = Δr / sqrt(2·σ²·(1−ρ))
+        z_diff = Δr_target / SD(Δr_reference)
 
-    Notes
-    -----
-    The full paper denominator contains two terms: an aleatoric term
-    ``sqrt(2·σ²·(1−ρ))`` (expected healthy between-visit variance) and
-    an epistemic term ``[Φ(x₂)−Φ(x₁)]ᵀ A⁻¹ [Φ(x₂)−Φ(x₁)]`` (model
-    uncertainty from the covariate shift). This implementation omits the
-    epistemic term and estimates the aleatoric term empirically as
-    ``sqrt(mean(Δr²))`` over ``reference_data``. The epistemic term is
-    negligible in practice (order of 10⁻³ vs 10⁻¹), so the simplification
-    has minimal impact on results.
+        where SD(Δr_reference) = sqrt(2σ²(1−ρ)) if the residuals are stationary 
+        with variance σ² and visit-to-visit correlation ρ.
 
-    - Requires a **BLR** (or warped BLR) normative model.
-    - Supports **at most two timepoints** per subject.
+    This score is intended for BLR-based models and subjects with at most two
+    visits.
     """
 
     def __init__(
         self,
-        normative_model: "NormativeModel",
-        reference_data: "NormData",
+        normative_model: NormativeModel,
+        reference_data: NormData,
         subject_id_col: str,
     ):
+        # Reuse the shared setup from the base class.
         super().__init__(normative_model, reference_data, subject_id_col)
+        # z-diff is defined only for BLR models.
         self._check_model_is_blr(normative_model)
 
-    # ------------------------------------------------------------------ #
-    # Public API
-    # ------------------------------------------------------------------ #
     def score(
         self,
         test_data: "NormData",
@@ -65,51 +58,74 @@ class ZDiffScore(LongitudinalScore):
         Parameters
         ----------
         test_data : NormData
-            The **subjects to be scored**: longitudinal data with exactly two
-            visits per subject and predictions already computed
-            (``model.predict(test_data)``).
+            Longitudinal cohort with exactly two visits per subject and
+            predictions already computed.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
         timepoint_col : str, default "visit"
-            Column (batch effect or covariate) used to order the two visits.
+            Column used to order the two visits.
 
         Returns
         -------
         xr.DataArray
-            ``(subjects, response_vars)`` z-diff scores. Subjects without
-            exactly two timepoints are ``NaN``.
+            One z-diff score per subject and response variable.
         """
+        # Use the stored subject id name unless the caller overrides it.
         subject_id_col = subject_id_col or self.subject_id_col
 
+        # Run checks first for both the reference and test data
         self._check_is_predicted(self.reference_data)
         self._check_is_longitudinal(self.reference_data)
+        self._check_at_most_two_timepoints(self.reference_data)
         self._check_is_predicted(test_data)
         self._check_is_longitudinal(test_data)
         self._check_at_most_two_timepoints(test_data)
 
+        # Read response-variable names for the output array.
         response_vars = [str(r) for r in test_data.response_vars.values]
+        # Keep subjects in the same order as the input data.
         subjects = self._ordered_unique(self._get_subject_ids(test_data))
-
-        scores = np.full((len(subjects), len(response_vars)),
-                         np.nan, dtype=float)
+        # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
+        # Initialise an empty array  filled with NaN to hold the scores
+        scores = np.full((len(subjects), len(response_vars)),
+                         np.nan, dtype=float)
+
+        # Score one response variable at a time.
         for j, rv in enumerate(response_vars):
-            norm_deltas = self._residual_change(
+            # Learn the typical size of expected change from the reference
+            # cohort (reference_data).
+            delta_reference = self._compute_residual_change(
                 self.reference_data, rv, timepoint_col
             )
-            if len(norm_deltas) == 0:
+            # Convert the subject-level changes into a numeric vector.
+            delta_reference_values = np.fromiter(delta_reference.values(),
+                                                 dtype=float)
+            # Estimate the spread of expected changes for this response.
+            # Mathematically this is SD(Δr_reference)
+            denominator = np.sqrt(float(np.mean(delta_reference_values**2)))
+            # Reject the degenerate case of no expected change at all.
+            if np.isclose(denominator, 0.0):
                 raise ValueError(
                     f"Cannot estimate denominator for '{rv}': "
-                    "no subject in reference_data has exactly two timepoints."
+                    "reference_data has zero residual-change variability."
                 )
-            delta_values = np.fromiter(norm_deltas.values(), dtype=float)
-            denominator = np.sqrt(float(np.mean(delta_values**2)))
-            deltas = self._residual_change(test_data, rv, timepoint_col)
-            for subject, delta in deltas.items():
-                scores[subject_index[subject], j] = delta / denominator
 
+            # Compute the change for each target subject (test_data).
+            # Mathematically this Δr_target.
+            deltas_target = self._compute_residual_change(test_data,
+                                                          rv,
+                                                          timepoint_col)
+            # Convert each raw change into a standardized z-diff score.
+            for subject, delta_target in deltas_target.items():
+                # Express each subject's change in standard-deviation units
+                # of healthy change.
+                scores[subject_index[subject], j] = delta_target / denominator
+
+        # Return labeled scores so subjects and response variables can be
+        # accessed by the user.
         return xr.DataArray(
             scores,
             dims=("subjects", "response_vars"),
@@ -120,56 +136,93 @@ class ZDiffScore(LongitudinalScore):
     # ------------------------------------------------------------------ #
     # Internals
     # ------------------------------------------------------------------ #
-    def _residual_change(self, data: "NormData", responsevar: str, timepoint_col: str) -> dict:
-        """Map each two-visit subject to its warped residual change ``Δr = r₂ − r₁``."""
-        residuals = self._warped_residual(data, responsevar)
+    def _compute_residual_change(
+        self,
+        data: "NormData",
+        responsevar: str,
+        timepoint_col: str,
+    ) -> dict[object, float]:
+        """Compute the residual change from the first visit to the second for
+        each subject."""
+        # Compute a residual value for every visit.
+        residuals = self._compute_residual(data, responsevar)
+        
+        # Read subject ids so visits can be grouped per person.
         subject_ids = self._get_subject_ids(data)
+        # Read the visit-order values used to sort repeated measures.
         timepoints = self._get_timepoint_values(data, timepoint_col)
 
-        deltas: dict = {}
+        # Collect one change value per subject.
+        deltas: dict[object, float] = {}
         for subject in self._ordered_unique(subject_ids):
+            # Find the visit rows for the current subject.
             idx = np.where(subject_ids == subject)[0]
-            if len(idx) != 2:
-                continue
+            # Put the two visits into chronological order.
             ordered = idx[np.argsort(timepoints[idx])]
+            # Read the residual at visit 1 and visit 2.
             r1, r2 = residuals[ordered[0]], residuals[ordered[1]]
+            # Store the change from the first visit to the second.
             deltas[subject] = r2 - r1
+        # Return the deltas of all subjects
         return deltas
 
-    def _warped_residual(self, data: "NormData", responsevar: str) -> np.ndarray:
-        """Per-observation residual ``φ(y) − φ(ŷ)`` for one response variable.
-
-        For a warped BLR the observed and predicted values are first mapped to
-        the space in which the warp was fitted (using the model's outscaler,
-        which is identity if the user chose no scaling) and then warped. For a
-        non-warped BLR this reduces to ``y − ŷ`` in the original space.
-        """
+    def _compute_residual(
+        self,
+        data: "NormData",
+        responsevar: str,
+    ) -> np.ndarray:
+        """Compute the residual for each visit"""
+        # Get the fitted BLR model for the selected response variable.
         blr = self.normative_model[responsevar]
-        y = np.asarray(data.Y.sel(
-            response_vars=responsevar).values, dtype=float)
-        yhat = np.asarray(data.Yhat.sel(
-            response_vars=responsevar).values, dtype=float)
+        # Read the observed measurements for this region.
+        y = np.asarray(
+            data.Y.sel(response_vars=responsevar).values,
+            dtype=float,
+        )
+        # Read the predicted measurements for this region.
+        yhat = np.asarray(
+            data.Yhat.sel(response_vars=responsevar).values,
+            dtype=float,
+        )
 
+        # If the BLR used a warp, compare values on that fitted scale.
         if getattr(blr, "warp", None) is not None:
+            # Compare observed and predicted values on the same scale that the
+            # fitted BLR used internally.
+            # Get the output scaler paired with this response variable.
             outscaler = self.normative_model.outscalers[responsevar]
+            # Transform and warp the observed values.
             y = blr.warp.f(outscaler.transform(y), blr.gamma)
+            # Transform and warp the predicted values.
             yhat = blr.warp.f(outscaler.transform(yhat), blr.gamma)
 
+        # Return the residual that z-diff uses at each visit.
         return y - yhat
 
+    # ------------------------------------------------------------------ #
+    # Validation functions
+    # ------------------------------------------------------------------ #
     def _check_at_most_two_timepoints(self, data: "NormData") -> None:
+        # Read subject ids so visit counts can be checked.
         ids = self._get_subject_ids(data)
+        # Count how many visits each subject contributes.
         _, counts = np.unique(ids, return_counts=True)
+        # Reject any subject with more than two visits.
         if np.any(counts > 2):
+            # Tell the user to switch to z-gain for longer trajectories.
             raise ValueError(
-                "ZDiffScore supports at most two timepoints per subject. Some subjects have more "
-                "than two visits. Use ZGainScore for three or more timepoints."
+                "ZDiffScore supports at most two timepoints per subject. "
+                "Some subjects have more than two visits. You can use ZGainScore "
+                "for three or more timepoints."
             )
 
     @staticmethod
     def _check_model_is_blr(normative_model: "NormativeModel") -> None:
+        # Read the template model stored inside the normative wrapper.
         template = getattr(normative_model, "template_regression_model", None)
+        # Reject models that are not BLR-based.
         if not isinstance(template, BLR):
+            # Explain that z-diff is only defined for BLR models here.
             raise ValueError(
                 "ZDiffScore requires a BLR (or warped BLR) normative model. "
                 "Use ZGainScore for other regression models."
