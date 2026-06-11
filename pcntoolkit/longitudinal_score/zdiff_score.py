@@ -40,7 +40,7 @@ class ZDiffScore(LongitudinalScore):
         self,
         normative_model: NormativeModel,
         reference_data: NormData,
-        subject_id_col: str,
+        subject_id_col: str, # TODO: Are these subject_id_col necessary as a keyword argument? Does the user need to specify that?
     ):
         # Reuse the shared setup from the base class.
         super().__init__(normative_model, reference_data, subject_id_col)

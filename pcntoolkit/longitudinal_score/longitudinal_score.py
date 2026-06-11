@@ -73,7 +73,6 @@ class LongitudinalScore(ABC):
     def _get_subject_ids(data: NormData) -> np.ndarray:
         # Make sure the dataset carries subject identifiers.
         if not hasattr(data, "subject_ids"):
-            # Tell the user how to build the data correctly.
             raise ValueError(
                 "The NormData has no 'subject_ids'. Build it with "
                 "NormData.from_dataframe(..., "
@@ -96,6 +95,7 @@ class LongitudinalScore(ABC):
             # Return the matching batch-effect values per observation.
             return np.asarray(data.batch_effects.sel(
                 batch_effect_dims=name).values)
+
         # If needed, look for the column among covariates.
         if (
             hasattr(data, "covariates")
@@ -103,9 +103,10 @@ class LongitudinalScore(ABC):
         ):
             # Return the matching covariate values per observation.
             return np.asarray(data.X.sel(covariates=name).values)
-        # Stop when the requested ordering column is absent.
+
+        # If no column is found then throw error
         raise ValueError(
-            f"Could not find timepoint column '{name}' in the data. "
+            f"Could not find column '{name}' in the data. "
             "Include it as a batch effect or covariate when building the "
             "NormData."
         )
@@ -116,38 +117,36 @@ class LongitudinalScore(ABC):
         data: NormData,
         timepoint_col: str,
     ) -> np.ndarray:
-        """Return per-observation timepoint labels used to order a subject's 
+        """Return per-observation timepoint labels used to order a subject's
         visits.
 
         Use ``timepoint_col`` when it is present. Otherwise fall back to the
         first covariate, usually age, as a practical visit-order proxy.
+        TODO: Check if this fallback makes sense, eg if people don't have 
+        age in their data?
         """
-        # Prefer the user-named timepoint column when available.
+        # First try to read the requested visit-order column.
         try:
-            # Read the requested visit-order column.
             values = cls._get_observation_column(data, timepoint_col)
-        # If that column is absent, try a practical fallback.
+
+        # If for example the visit-order column is missing, you can use the
+        # age column, e.g.
+        # visit 1 = age 34.2 (earlier)
+        # visit 2 = age 36.8 (later)
         except ValueError as error:
-            # When visits are not stored explicitly, age is often enough to
-            # put measurements into the right time order.
-            # Stop if there is nothing left to order visits with.
             if not hasattr(data, "covariates") or len(data.covariates.values) == 0:
-                # Explain why visit ordering cannot be recovered.
                 raise ValueError(
                     f"Could not find timepoint column '{timepoint_col}' and "
                     "no covariate is available to order visits."
                 ) from error
             # Use the first covariate as a simple visit-order proxy.
             ordering_covariate = str(data.covariates.values[0])
-            # Read that fallback column from the dataset.
             values = cls._get_observation_column(data, ordering_covariate)
-        # Convert labels into a form that sorts cleanly.
         return cls._as_sortable(values)
 
     @staticmethod
     def _ordered_unique(values: np.ndarray) -> np.ndarray:
-        """Unique values in order of first appearance."""
-        # Preserve subject order as it first appears in the data.
+        """Preserve subject order as it first appears in the data."""
         return pd.unique(np.asarray(values))
 
     @staticmethod
@@ -155,11 +154,9 @@ class LongitudinalScore(ABC):
         """Cast labels to float when possible so visits sort numerically."""
         # Try numeric sorting first for ages or numbered visits.
         try:
-            # Convert labels to floats when that makes sense.
             return np.asarray(values, dtype=float)
         # Keep original labels when numeric conversion is impossible.
         except (ValueError, TypeError):
-            # Return the labels unchanged for lexicographic sorting.
             return np.asarray(values)
 
     # ------------------------------------------------------------------ #
