@@ -6,7 +6,9 @@ thrivelines and conditional forecasting.
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -251,3 +253,287 @@ def design_matrix(bandwidth: int, Sigma: np.ndarray) -> pd.DataFrame:
         dfs.append(df_i)
     # Stack all offset blocks into one regression table.
     return pd.concat(dfs, axis=0)
+
+
+# ------------------------------------------------------------------- #
+# Thrivelines
+# ------------------------------------------------------------------- #
+
+
+def get_thrive_lines(
+    correlations: xr.DataArray,
+    start_z: xr.DataArray | float,
+    z_thrive: float = -1.96,
+) -> xr.DataArray:
+    """Thriveline propagator from Bayer et al. (2026).
+
+        Z_{next} = Z_{current} * r + sqrt(1 - r^2) * z_thrive
+
+    Parameters
+    ----------
+    correlations : xr.DataArray
+        Pearson correlations for each step, earliest timepoint first.
+        Must have dimension ``hop``.
+    start_z : xr.DataArray or float
+        Z-score at the anchor timepoint.
+    z_thrive : float, default -1.96
+        Thrive shrinkage term added at each step.
+
+    Returns
+    -------
+    xr.DataArray
+        Z-scores along the segment, dimension ``offset``.
+    """
+    if "hop" not in correlations.dims:
+        raise ValueError("correlations must have dimension 'hop'.")
+
+    z0 = float(start_z.item() if isinstance(start_z, xr.DataArray) else start_z)
+    z_path = [z0]
+    current = z0
+    for r in correlations.transpose("hop").values:
+        current = current * float(r) + math.sqrt(1.0 - float(r) ** 2) * z_thrive
+        z_path.append(current)
+
+    timepoint_diff = correlations.attrs.get("timepoint_diff", 1)
+    return xr.DataArray(
+        z_path,
+        dims=("offset",),
+        coords={"offset": np.arange(len(z_path)) * timepoint_diff},
+        attrs={"z_thrive": z_thrive, "timepoint_diff": timepoint_diff},
+    )
+
+
+def compute_thrivelines(
+    R: xr.DataArray,
+    *,
+    data: NormData | None = None,
+    covariate: str = "age",
+    timepoint_diff: int | float = 1,
+    z_thrive: float = -1.96,
+    propagate: Callable[[xr.DataArray, xr.DataArray | float, float], xr.DataArray] = get_thrive_lines,
+    anchor_step: int | float = 1,
+    z_anchor_start: int | float = -3,
+    z_anchor_end: int | float = 4,
+) -> tuple[xr.DataArray, xr.DataArray]:
+    """Propagate Z-scores along thriveline segments.
+
+    ``R`` is typically from :func:`compute_correlation_matrix` or
+    :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_correlation_matrix`.
+    Thrivelines are computed for every label in ``R.response_vars``.
+
+    Parameters
+    ----------
+    R : xr.DataArray
+        Z-score correlation matrix
+        ``(response_vars, f"{covariate}_1", f"{covariate}_2")``.
+    data : NormData, optional
+        Observation anchors (requires predicted ``Z``). When omitted, a
+        covariate × Z grid is built for overlay plots.
+    covariate : str, default "age"
+        Covariate used to read anchor ages from ``data.X``.
+    timepoint_diff : int or float, default 1
+        Covariate step between timepoints on each segment.
+    z_thrive : float, default -1.96
+        Passed through to ``propagate``.
+    propagate : callable, default :func:`get_thrive_lines`
+        ``propagate(hop_correlations, start_z, z_thrive) -> xr.DataArray``.
+    anchor_step, z_anchor_start, z_anchor_end
+        Grid-mode parameters, used only when ``data`` is omitted.
+
+    Returns
+    -------
+    thrive_Z, thrive_X : xr.DataArray
+        Dims ``(segment, response_vars, offset)``.
+    """
+    if timepoint_diff <= 0:
+        raise ValueError("timepoint_diff must be > 0.")
+
+    R, response_vars = _response_vars_from_R(R)
+    age_dim_later, age_dim_earlier = _covariate_age_dims(R.isel(response_vars=0, drop=True))
+    max_covariate = float(R.coords[age_dim_later].max())
+    end_covariate = max_covariate + timepoint_diff
+
+    if data is not None:
+        start_ages, start_z = _anchors_from_normdata(data, covariate, response_vars)
+    else:
+        start_ages, start_z = _grid_anchors(
+            0, end_covariate, anchor_step, z_anchor_start, z_anchor_end
+        )
+
+    start_ages, start_z = _drop_out_of_range_anchors(
+        start_ages, start_z, max_covariate, timepoint_diff
+    )
+
+    n_segments = start_ages.sizes["segment"]
+    offsets = xr.DataArray([0, timepoint_diff], dims="offset")
+    thrive_Z = xr.DataArray(
+        np.full((n_segments, len(response_vars), 2), np.nan),
+        dims=("segment", "response_vars", "offset"),
+        coords={
+            "segment": start_ages.coords["segment"],
+            "response_vars": response_vars,
+            "offset": offsets,
+        },
+        attrs={
+            "propagate": getattr(propagate, "__name__", str(propagate)),
+            "timepoint_diff": timepoint_diff,
+        },
+    )
+    thrive_X = xr.DataArray(
+        np.full((n_segments, len(response_vars), 2), np.nan),
+        dims=("segment", "response_vars", "offset"),
+        coords={
+            "segment": start_ages.coords["segment"],
+            "response_vars": response_vars,
+            "offset": offsets,
+        },
+    )
+
+    for rv_idx, rv in enumerate(response_vars):
+        R_rv = R.sel(response_vars=rv, drop=True)
+        for seg_idx in range(n_segments):
+            covariate_anchor = start_ages.isel(segment=seg_idx).item()
+            covariate_to = covariate_anchor + timepoint_diff
+            if "response_vars" in start_z.dims:
+                z_anchor = start_z.isel(segment=seg_idx, response_vars=rv_idx)
+            else:
+                z_anchor = start_z.isel(segment=seg_idx)
+            r = _lookup_correlation(
+                R_rv, covariate_anchor, covariate_to, age_dim_later, age_dim_earlier
+            )
+            if r is None:
+                continue
+            hop_rs = xr.DataArray(
+                [r],
+                dims=("hop",),
+                coords={"hop": [0]},
+                attrs={"timepoint_diff": timepoint_diff},
+            )
+            z_path = propagate(hop_rs, z_anchor, z_thrive)
+            if "offset" not in z_path.dims:
+                raise ValueError(
+                    "propagate must return an xr.DataArray with dimension 'offset'."
+                )
+            thrive_Z[{"segment": seg_idx, "response_vars": rv_idx}] = z_path.values
+            thrive_X[{"segment": seg_idx, "response_vars": rv_idx}] = (
+                covariate_anchor + offsets
+            ).values
+
+    thrive_Z = thrive_Z.assign_coords(start_age=("segment", start_ages.values))
+    thrive_X = thrive_X.assign_coords(start_age=("segment", start_ages.values))
+    if "response_vars" in start_z.dims:
+        thrive_Z = thrive_Z.assign_coords(start_z=start_z)
+        thrive_X = thrive_X.assign_coords(start_z=start_z)
+    else:
+        thrive_Z = thrive_Z.assign_coords(start_z=("segment", start_z.values))
+        thrive_X = thrive_X.assign_coords(start_z=("segment", start_z.values))
+    return thrive_Z, thrive_X
+
+
+def _covariate_age_dims(R: xr.DataArray) -> tuple[str, str]:
+    age_dims = [d for d in R.dims if d.endswith("_1") or d.endswith("_2")]
+    if len(age_dims) != 2:
+        raise ValueError(
+            f"Expected two age dimensions ending in '_1' and '_2', got {R.dims}."
+        )
+    return age_dims[0], age_dims[1]
+
+
+def _lookup_correlation(
+    R_rv: xr.DataArray,
+    covariate_from: int | float,
+    covariate_to: int | float,
+    age_dim_later: str,
+    age_dim_earlier: str,
+) -> float | None:
+    later_vals = R_rv.coords[age_dim_later].values
+    earlier_vals = R_rv.coords[age_dim_earlier].values
+    if covariate_to not in later_vals or covariate_from not in earlier_vals:
+        return None
+    return float(
+        R_rv.sel(
+            {age_dim_later: covariate_to, age_dim_earlier: covariate_from},
+            drop=True,
+        ).item()
+    )
+
+
+def _anchors_from_normdata(
+    data: NormData,
+    covariate: str,
+    response_vars: list[str],
+) -> tuple[xr.DataArray, xr.DataArray]:
+    if "Z" not in data:
+        raise ValueError("NormData must contain predicted Z-scores before computing thrivelines.")
+
+    covariates = [str(c) for c in data.covariates.values]
+    if covariate not in covariates:
+        raise ValueError(f"covariate '{covariate}' not found in NormData covariates: {covariates}.")
+
+    data_response_vars = [str(r) for r in data.response_vars.values]
+    missing = [rv for rv in response_vars if rv not in data_response_vars]
+    if missing:
+        raise ValueError(
+            f"response variables {missing} not found in NormData: {data_response_vars}."
+        )
+
+    ages = np.round(data.X.sel(covariates=covariate).values.astype(float))
+    zs = data.Z.sel(response_vars=response_vars).values.astype(float)
+    if zs.ndim == 1:
+        zs = zs[:, np.newaxis]
+    observations = data.observations.values
+
+    return (
+        xr.DataArray(ages, dims=("segment",), coords={"segment": observations}, name="start_age"),
+        xr.DataArray(
+            zs,
+            dims=("segment", "response_vars"),
+            coords={"segment": observations, "response_vars": response_vars},
+            name="start_z",
+        ),
+    )
+
+
+def _grid_anchors(
+    start_covariate: int | float,
+    end_covariate: int | float,
+    anchor_step: int | float,
+    z_anchor_start: int | float,
+    z_anchor_end: int | float,
+) -> tuple[xr.DataArray, xr.DataArray]:
+    covariate_anchors = np.arange(start_covariate, end_covariate, anchor_step)
+    z_anchors = np.arange(z_anchor_start, z_anchor_end, dtype=float)
+    age_grid, z_grid = np.meshgrid(covariate_anchors, z_anchors, indexing="ij")
+    segment = np.arange(age_grid.size)
+    return (
+        xr.DataArray(age_grid.ravel(), dims=("segment",), coords={"segment": segment}, name="start_age"),
+        xr.DataArray(z_grid.ravel(), dims=("segment",), coords={"segment": segment}, name="start_z"),
+    )
+
+
+def _response_vars_from_R(R: xr.DataArray) -> tuple[xr.DataArray, list[str]]:
+    if "response_vars" not in R.dims:
+        if "response_vars" in R.coords and R.coords["response_vars"].ndim == 0:
+            label = str(R.coords["response_vars"].item())
+            R = R.expand_dims(response_vars=[label])
+        elif R.name is not None:
+            R = R.expand_dims(response_vars=[str(R.name)])
+        elif "response_var" in R.attrs:
+            R = R.expand_dims(response_vars=[str(R.attrs["response_var"])])
+        else:
+            raise ValueError(
+                "R has no response_vars dimension. Pass the matrix from "
+                "compute_correlation_matrix, or select one region with "
+                "R.sel(response_vars=name) so the label is kept as a coordinate."
+            )
+    return R, [str(r) for r in R.response_vars.values]
+
+
+def _drop_out_of_range_anchors(
+    start_ages: xr.DataArray,
+    start_z: xr.DataArray,
+    max_covariate: int | float,
+    timepoint_diff: int | float,
+) -> tuple[xr.DataArray, xr.DataArray]:
+    valid = start_ages.values + timepoint_diff <= max_covariate
+    return start_ages.isel(segment=valid), start_z.isel(segment=valid)
