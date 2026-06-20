@@ -314,6 +314,8 @@ def compute_thrivelines(
     anchor_step: int | float = 1,
     z_anchor_start: int | float = -3,
     z_anchor_end: int | float = 4,
+    z_anchors: list[float] | np.ndarray | None = None,
+    covariate_range: tuple[float, float] | None = None,
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Propagate Z-scores along thriveline segments.
 
@@ -338,7 +340,14 @@ def compute_thrivelines(
     propagate : callable, default :func:`get_thrive_lines`
         ``propagate(hop_correlations, start_z, z_thrive) -> xr.DataArray``.
     anchor_step, z_anchor_start, z_anchor_end
-        Grid-mode parameters, used only when ``data`` is omitted.
+        Grid-mode parameters, used only when ``data`` is omitted and
+        ``z_anchors`` is not provided.
+    z_anchors : array-like of float, optional
+        Explicit starting Z-scores for grid mode (e.g. ``norm.ppf(centiles)``).
+        When provided, ``z_anchor_start`` / ``z_anchor_end`` are ignored.
+    covariate_range : tuple of float, optional
+        ``(min, max)`` covariate bounds used to slice ``R`` and place grid
+        anchors. When omitted, anchors span the age coordinates present in ``R``.
 
     Returns
     -------
@@ -349,19 +358,29 @@ def compute_thrivelines(
         raise ValueError("timepoint_diff must be > 0.")
 
     R, response_vars = _response_vars_from_R(R)
+    if covariate_range is not None:
+        R = _slice_r_to_covariate_range(R, covariate_range)
+        min_covariate, max_covariate = covariate_range
+    else:
+        min_covariate, max_covariate = _covariate_bounds_from_R(R)
+
     age_dim_later, age_dim_earlier = _covariate_age_dims(R.isel(response_vars=0, drop=True))
-    max_covariate = float(R.coords[age_dim_later].max())
     end_covariate = max_covariate + timepoint_diff
 
     if data is not None:
         start_ages, start_z = _anchors_from_normdata(data, covariate, response_vars)
     else:
         start_ages, start_z = _grid_anchors(
-            0, end_covariate, anchor_step, z_anchor_start, z_anchor_end
+            min_covariate,
+            end_covariate,
+            anchor_step,
+            z_anchor_start,
+            z_anchor_end,
+            z_anchors=z_anchors,
         )
 
     start_ages, start_z = _drop_out_of_range_anchors(
-        start_ages, start_z, max_covariate, timepoint_diff
+        start_ages, start_z, min_covariate, max_covariate, timepoint_diff
     )
 
     n_segments = start_ages.sizes["segment"]
@@ -428,6 +447,26 @@ def compute_thrivelines(
         thrive_Z = thrive_Z.assign_coords(start_z=("segment", start_z.values))
         thrive_X = thrive_X.assign_coords(start_z=("segment", start_z.values))
     return thrive_Z, thrive_X
+
+
+def _covariate_bounds_from_R(R: xr.DataArray) -> tuple[float, float]:
+    age_dim_later, age_dim_earlier = _covariate_age_dims(R.isel(response_vars=0, drop=True))
+    ages = np.concatenate(
+        [
+            R.coords[age_dim_later].values.ravel(),
+            R.coords[age_dim_earlier].values.ravel(),
+        ]
+    )
+    return float(np.min(ages)), float(np.max(ages))
+
+
+def _slice_r_to_covariate_range(
+    R: xr.DataArray,
+    covariate_range: tuple[float, float],
+) -> xr.DataArray:
+    lo, hi = covariate_range
+    age_dim_later, age_dim_earlier = _covariate_age_dims(R.isel(response_vars=0, drop=True))
+    return R.sel({age_dim_later: slice(lo, hi), age_dim_earlier: slice(lo, hi)})
 
 
 def _covariate_age_dims(R: xr.DataArray) -> tuple[str, str]:
@@ -500,10 +539,14 @@ def _grid_anchors(
     anchor_step: int | float,
     z_anchor_start: int | float,
     z_anchor_end: int | float,
+    z_anchors: list[float] | np.ndarray | None = None,
 ) -> tuple[xr.DataArray, xr.DataArray]:
     covariate_anchors = np.arange(start_covariate, end_covariate, anchor_step)
-    z_anchors = np.arange(z_anchor_start, z_anchor_end, dtype=float)
-    age_grid, z_grid = np.meshgrid(covariate_anchors, z_anchors, indexing="ij")
+    if z_anchors is not None:
+        z_values = np.asarray(z_anchors, dtype=float)
+    else:
+        z_values = np.arange(z_anchor_start, z_anchor_end, dtype=float)
+    age_grid, z_grid = np.meshgrid(covariate_anchors, z_values, indexing="ij")
     segment = np.arange(age_grid.size)
     return (
         xr.DataArray(age_grid.ravel(), dims=("segment",), coords={"segment": segment}, name="start_age"),
@@ -532,8 +575,11 @@ def _response_vars_from_R(R: xr.DataArray) -> tuple[xr.DataArray, list[str]]:
 def _drop_out_of_range_anchors(
     start_ages: xr.DataArray,
     start_z: xr.DataArray,
+    min_covariate: int | float,
     max_covariate: int | float,
     timepoint_diff: int | float,
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    valid = start_ages.values + timepoint_diff <= max_covariate
+    valid = (start_ages.values >= min_covariate) & (
+        start_ages.values + timepoint_diff <= max_covariate
+    )
     return start_ages.isel(segment=valid), start_z.isel(segment=valid)
