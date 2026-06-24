@@ -1162,7 +1162,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1216,7 +1216,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1273,7 +1273,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"logp_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:
@@ -1317,7 +1317,7 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="a+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
+            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
                 f.seek(0)
                 old_results = pd.read_csv(f, index_col=0) if os.path.getsize(res_path) > 0 else None
                 if old_results is not None:

@@ -1,5 +1,5 @@
 sphinx>=4.5.0
-sphinx-rtd-theme>=1.0.0
+pydata-sphinx-theme>=0.15.2
 sphinx-autoapi>=2.0.0
 sphinx-autodoc-typehints>=1.18.0
 sphinx-autobuild>=2024.4.16
