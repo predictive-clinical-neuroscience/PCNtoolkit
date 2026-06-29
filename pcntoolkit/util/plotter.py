@@ -1109,7 +1109,25 @@ def _reference_covariate_range(
     thrive: LongitudinalScore,
     covariate: str,
 ) -> tuple[int, int] | None:
-    """Min/max integer covariate values in the score's reference cohort."""
+    """Return the integer covariate span of a longitudinal score's reference cohort.
+
+    Used as a default ``covariate_range`` when plotting thrivelines so anchor
+    points align with ages (or other integer covariates) present in the
+    reference data used to estimate age-to-age correlations.
+
+    Parameters
+    ----------
+    thrive : LongitudinalScore
+        Longitudinal score whose ``reference_data`` defines the cohort span.
+    covariate : str
+        Covariate to read from ``reference_data.X`` (typically ``"age"``).
+
+    Returns
+    -------
+    tuple of int or None
+        ``(min, max)`` integer covariate values after rounding, or ``None`` if
+        ``covariate`` is absent from the reference data or the cohort is empty.
+    """
     ref = thrive.reference_data
     covariates = [str(c) for c in ref.covariates.values]
     if covariate not in covariates:
@@ -1126,6 +1144,33 @@ def _encode_batch_effects(
     n_obs: int,
     centile_template: NormData,
 ) -> xr.DataArray | None:
+    """Build a model-encoded batch-effect array for thriveline backward passes.
+
+    Each thriveline segment is evaluated at the reference batch effect used for
+    the centile grid. Missing batch-effect keys are filled from
+    ``centile_template`` or the model's first allowed level.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Normative model used to map raw batch labels to encoded values.
+    batch_effects : dict of str
+        Reference batch labels keyed by batch-effect dimension
+        (e.g. ``{"site": "A"}``).
+    n_obs : int
+        Number of observations (thriveline segments) to replicate batch effects
+        for.
+    centile_template : NormData
+        Synthetic centile grid; used to infer batch levels when a key is absent
+        from ``batch_effects``.
+
+    Returns
+    -------
+    xr.DataArray or None
+        Encoded batch effects with dimensions
+        ``(observations, batch_effect_dims)``, or ``None`` when the model has
+        no batch effects.
+    """
     if not model.unique_batch_effects:
         return None
     be_keys = sorted(model.unique_batch_effects.keys())
@@ -1159,7 +1204,40 @@ def _thrivelines_to_y(
     batch_effects: dict[str, str],
     centile_template: NormData,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Map Z thrivelines to Y using ``model[response_var].backward`` per offset."""
+    """Map propagated Z thrivelines to Y coordinates for plotting.
+
+    For each thriveline segment and offset, covariate values come from
+    ``thrive_X``, non-thrive covariates are fixed to the centile-grid means,
+    and ``model[response_var].backward`` converts z-scores to response-scale
+    ``Y`` at the reference batch effect.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Normative model providing scalers and the regional ``backward`` map.
+    response_var : str
+        Response variable to convert.
+    thrive_Z : xr.DataArray
+        Propagated z-scores from :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`,
+        with dimensions ``(segment, response_vars, offset)``.
+    thrive_X : xr.DataArray
+        Matching covariate coordinates, same shape as ``thrive_Z``.
+    thrive_covariate : str
+        Covariate dimension along which thrivelines advance (e.g. ``"age"``).
+    batch_effects : dict of str
+        Reference batch labels for the centile grid, passed to
+        :func:`_encode_batch_effects`.
+    centile_template : NormData
+        Synthetic centile ``NormData`` used to fix non-thrive covariates and
+        infer missing batch levels.
+
+    Returns
+    -------
+    x_plot, y_plot : tuple of ndarray
+        Arrays of shape ``(n_segments, n_offsets)`` with covariate and response
+        values ready for matplotlib. Entries are ``NaN`` where propagation or
+        lookup failed.
+    """
     z_rv = thrive_Z.sel(response_vars=response_var, drop=True)
     x_rv = thrive_X.sel(response_vars=response_var, drop=True)
     n_segments = z_rv.sizes["segment"]
