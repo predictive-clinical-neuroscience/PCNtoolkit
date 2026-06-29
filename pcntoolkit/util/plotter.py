@@ -33,8 +33,6 @@ def plot_centiles(
     scatter_kwargs: dict = {},
     show_figure: bool = True,
     save_dir: str | None = None,
-    thrive: LongitudinalScore | None = None,
-    thrive_kwargs: dict = {},
 ) -> list[Figure]:
     """
     Plot the centiles of the model.
@@ -67,20 +65,6 @@ def plot_centiles(
         Defaults to True.
     save_dir: str | None, optional
         Directory to save the figures. Defaults to None.
-    thrive: LongitudinalScore | None, optional
-        Pre-initialized longitudinal score used to obtain the z-score
-        correlation matrix via ``get_correlation_matrix()`` (e.g. a fitted
-        :class:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore`).
-        When provided, thrivelines are computed and overlaid on the centile
-        plot (Z propagation from the score, Y mapping via the normative model).
-    thrive_kwargs: dict, optional
-        Keyword arguments forwarded to
-        :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
-        (e.g. ``z_anchor_start``, ``z_anchor_end``, ``timepoint_diff``,
-        ``covariate_range``, ``z_anchors``). When ``covariate_range`` is omitted,
-        it defaults to the min/max age in ``thrive.reference_data``. When
-        ``z_anchors`` is omitted, it defaults to ``norm.ppf(centiles)`` so
-        thrivelines start on the plotted centile curves.
 
     Returns
     -------
@@ -157,40 +141,8 @@ def plot_centiles(
 
         model.harmonize(scatter_data, reference_batch_effect=batch_effects)
 
-    thrive_by_region: dict[str, tuple[np.ndarray, np.ndarray]] = {}
-    if thrive is not None:
-        R = _get_score_correlation_matrix(thrive).sel(response_vars=response_vars)
-        thrive_covariate = getattr(thrive, "covariate", covariate)
-        compute_kwargs = dict(thrive_kwargs)
-        if "covariate_range" not in compute_kwargs:
-            ref_range = _reference_covariate_range(thrive, thrive_covariate)
-            if ref_range is not None:
-                compute_kwargs["covariate_range"] = ref_range
-        if (
-            "z_anchors" not in compute_kwargs
-            and "z_anchor_start" not in compute_kwargs
-            and "z_anchor_end" not in compute_kwargs
-        ):
-            compute_kwargs["z_anchors"] = stats.norm.ppf(np.asarray(centiles, dtype=float))
-        thrive_Z, thrive_X = compute_thrivelines(
-            R,
-            covariate=thrive_covariate,
-            **compute_kwargs,
-        )
-        for response_var in response_vars:
-            thrive_by_region[response_var] = _thrivelines_to_y(
-                model,
-                response_var,
-                thrive_Z,
-                thrive_X,
-                thrive_covariate,
-                batch_effects,
-                centile_data,
-            )
-
     figs: list[Figure] = []
     for response_var in response_vars:
-        thrive_xy = thrive_by_region.get(response_var)
         fig = _plot_centiles(
             centile_data=centile_data,
             response_var=response_var,
@@ -198,7 +150,6 @@ def plot_centiles(
             scatter_data=scatter_data,
             scatter_kwargs=complete_scatter_kwargs,
             save_dir=save_dir,
-            thrive_xy=thrive_xy,
         )
         figs.append(fig)
     # Show all figures at once when requested.
@@ -215,7 +166,6 @@ def _plot_centiles(
     scatter_kwargs: dict = {},
     save_dir: str | None = None,
     ax: Axes | None = None,
-    thrive_xy: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> Figure:
     sns.set_style("whitegrid")
     # Use the provided axes or create a new figure and axes.
@@ -278,18 +228,6 @@ def _plot_centiles(
 
     minx, maxx = ax.get_xlim()
     ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
-    if thrive_xy is not None:
-        thrive_x, thrive_y = thrive_xy
-        for seg_x, seg_y in zip(thrive_x, thrive_y):
-            if np.all(np.isfinite(seg_x)) and np.all(np.isfinite(seg_y)):
-                ax.plot(
-                    seg_x,
-                    seg_y,
-                    color="#c0392b",
-                    alpha=0.55,
-                    linewidth=1.0,
-                    zorder=1,
-                )
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
@@ -349,6 +287,8 @@ def plot_centiles_advanced(
     show_legend: bool = True,
     show_yhat: bool = False,
     plt_kwargs: dict | None = None,
+    thrive: LongitudinalScore | None = None,
+    thrive_kwargs: dict | None = None,
     **kwargs: Any,
 ) -> list[Figure]:
     """Generate centile plots for response variables with optional data overlay.
@@ -395,6 +335,21 @@ def plot_centiles_advanced(
         Whether to show the legend on the plot.
     plt_kwargs: dict, optional
         Additional keyword arguments passed to plt.subplots().
+    thrive: LongitudinalScore | None, optional
+        Pre-initialized longitudinal score used to obtain the z-score
+        correlation matrix via ``get_correlation_matrix()`` (e.g. a fitted
+        :class:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore`).
+        When provided, thrivelines are computed and overlaid on the centile
+        plot (Z propagation from the score, Y mapping via the normative model).
+    thrive_kwargs: dict, optional
+        Keyword arguments forwarded to
+        :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
+        (e.g. ``z_anchor_start``, ``z_anchor_end``, ``timepoint_diff``,
+        ``covariate_range``, ``z_anchors``). When ``covariate_range`` is omitted,
+        it defaults to the min/max covariate in ``thrive.reference_data``, or
+        the plotted ``covariate_ranges`` for the thrive covariate. When
+        ``z_anchors`` is omitted, it defaults to ``norm.ppf(centiles)`` so
+        thrivelines start on the plotted centile curves.
     **kwargs: Any, optional
         Additional keyword arguments for the model.compute_centiles method.
 
@@ -509,9 +464,46 @@ def plot_centiles_advanced(
         else:
             model.harmonize(scatter_data)
 
+    thrive_by_region: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    if thrive is not None:
+        R = _get_score_correlation_matrix(thrive).sel(response_vars=response_vars)
+        thrive_covariate = getattr(thrive, "covariate", covariate)
+        compute_kwargs = dict(thrive_kwargs or {})
+        if "covariate_range" not in compute_kwargs:
+            ref_range = _reference_covariate_range(thrive, thrive_covariate)
+            if ref_range is not None:
+                compute_kwargs["covariate_range"] = ref_range
+            elif thrive_covariate in covariate_ranges:
+                lo, hi = covariate_ranges[thrive_covariate]
+                compute_kwargs["covariate_range"] = (
+                    int(round(lo)),
+                    int(round(hi)),
+                )
+        if (
+            "z_anchors" not in compute_kwargs
+            and "z_anchor_start" not in compute_kwargs
+            and "z_anchor_end" not in compute_kwargs
+        ):
+            compute_kwargs["z_anchors"] = stats.norm.ppf(
+                np.asarray(centile_data.coords["centile"].values, dtype=float)
+            )
+        thrive_Z, thrive_X = compute_thrivelines(R, **compute_kwargs)
+        reference_batch_effects = {k: v[0] for k, v in batch_effects.items()}
+        for response_var in response_vars:
+            thrive_by_region[response_var] = _thrivelines_to_y(
+                model,
+                response_var,
+                thrive_Z,
+                thrive_X,
+                thrive_covariate,
+                reference_batch_effects,
+                centile_data,
+            )
+
     figs: list[Figure] = []
     for response_var in response_vars:
         # Collect the Figure returned by each per-variable plot call.
+        thrive_xy = thrive_by_region.get(response_var)
         fig = _plot_centiles_advanced(
             centile_data=centile_data,
             response_var=response_var,
@@ -528,6 +520,7 @@ def plot_centiles_advanced(
             show_legend=show_legend,
             show_yhat=show_yhat,
             plt_kwargs=plt_kwargs,
+            thrive_xy=thrive_xy,
         )
         figs.append(fig)
     # Show all figures at once when requested.
@@ -553,6 +546,7 @@ def _plot_centiles_advanced(
     show_yhat: bool = False,
     plt_kwargs: dict | None = None,
     ax: Axes | None = None,
+    thrive_xy: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> Figure:
     sns.set_style("whitegrid")
     # Use provided axes or create a new figure with optional Figure kwargs.
@@ -627,6 +621,18 @@ def _plot_centiles_advanced(
 
     minx, maxx = ax.get_xlim()
     ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    if thrive_xy is not None:
+        thrive_x, thrive_y = thrive_xy
+        for seg_x, seg_y in zip(thrive_x, thrive_y):
+            if np.all(np.isfinite(seg_x)) and np.all(np.isfinite(seg_y)):
+                ax.plot(
+                    seg_x,
+                    seg_y,
+                    color="#c0392b",
+                    alpha=0.55,
+                    linewidth=1.0,
+                    zorder=1,
+                )
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
