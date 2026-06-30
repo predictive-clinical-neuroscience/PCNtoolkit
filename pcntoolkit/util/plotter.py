@@ -8,12 +8,16 @@ from typing import TYPE_CHECKING, Any, Literal
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  # type: ignore
+import scipy.stats as stats
 import seaborn as sns  # type: ignore
+import xarray as xr
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.longitudinal_score.longitudinal_score import LongitudinalScore
+from pcntoolkit.math_functions.velocity import compute_thrivelines
 from pcntoolkit.util.autoscale_plot import autoscale
 
 if TYPE_CHECKING:
@@ -280,14 +284,14 @@ def plot_centiles_advanced(
     hue_data: str = "site",
     markers_data: str = "sex",
     show_other_data: bool = False,
-    show_thrivelines: bool = False,
-    z_thrive: float = 0.0,
     show_figure: bool = True,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
     show_yhat: bool = False,
     plt_kwargs: dict | None = None,
+    thrive: LongitudinalScore | None = None,
+    thrive_kwargs: dict | None = None,
     **kwargs: Any,
 ) -> list[Figure]:
     """Generate centile plots for response variables with optional data overlay.
@@ -334,6 +338,21 @@ def plot_centiles_advanced(
         Whether to show the legend on the plot.
     plt_kwargs: dict, optional
         Additional keyword arguments passed to plt.subplots().
+    thrive: LongitudinalScore | None, optional
+        Pre-initialized longitudinal score used to obtain the z-score
+        correlation matrix via ``get_correlation_matrix()`` (e.g. a fitted
+        :class:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore`).
+        When provided, thrivelines are computed and overlaid on the centile
+        plot (Z propagation from the score, Y mapping via the normative model).
+    thrive_kwargs: dict, optional
+        Keyword arguments forwarded to
+        :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
+        (e.g. ``z_anchor_start``, ``z_anchor_end``, ``timepoint_diff``,
+        ``covariate_range``, ``z_anchors``). When ``covariate_range`` is omitted,
+        it defaults to the min/max covariate in ``thrive.reference_data``, or
+        the plotted ``covariate_ranges`` for the thrive covariate. When
+        ``z_anchors`` is omitted, it defaults to ``norm.ppf(centiles)`` so
+        thrivelines start on the plotted centile curves.
     **kwargs: Any, optional
         Additional keyword arguments for the model.compute_centiles method.
 
@@ -435,8 +454,6 @@ def plot_centiles_advanced(
 
     if not hasattr(centile_data, "centiles"):
         model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
-    if scatter_data and show_thrivelines:
-        model.compute_thrivelines(scatter_data, z_thrive=z_thrive)
     if show_yhat and not hasattr(centile_data, "Yhat"):
         model.compute_yhat(centile_data)
 
@@ -449,6 +466,42 @@ def plot_centiles_advanced(
             model.harmonize(scatter_data, reference_batch_effect=reference_batch_effect)
         else:
             model.harmonize(scatter_data)
+
+    # Compute thrivelines once (per response var) and convert them to Y-space.
+    thrive_by_region: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    if thrive is not None:
+        R = _get_score_correlation_matrix(thrive).sel(response_vars=response_vars)
+        thrive_covariate = getattr(thrive, "covariate", covariate)
+        compute_kwargs = dict(thrive_kwargs or {})
+        # Default the covariate range to the reference cohort, else the plot range.
+        if "covariate_range" not in compute_kwargs:
+            ref_range = _reference_covariate_range(thrive, thrive_covariate)
+            if ref_range is not None:
+                compute_kwargs["covariate_range"] = ref_range
+            elif thrive_covariate in covariate_ranges:
+                lo, hi = covariate_ranges[thrive_covariate]
+                compute_kwargs["covariate_range"] = (int(round(lo)), int(round(hi)))
+        # Default the starting z-scores to the plotted centile curves.
+        if (
+            "z_anchors" not in compute_kwargs
+            and "z_anchor_start" not in compute_kwargs
+            and "z_anchor_end" not in compute_kwargs
+        ):
+            compute_kwargs["z_anchors"] = stats.norm.ppf(
+                np.asarray(centile_data.coords["centile"].values, dtype=float)
+            )
+        thrive_Z, thrive_X = compute_thrivelines(R, **compute_kwargs)
+        reference_batch_effects = {k: v[0] for k, v in batch_effects.items()}
+        for response_var in response_vars:
+            thrive_by_region[response_var] = _thrivelines_to_y(
+                model,
+                response_var,
+                thrive_Z,
+                thrive_X,
+                thrive_covariate,
+                reference_batch_effects,
+                centile_data,
+            )
 
     figs: list[Figure] = []
     for response_var in response_vars:
@@ -464,12 +517,12 @@ def plot_centiles_advanced(
             hue_data=hue_data,
             markers_data=markers_data,
             show_other_data=show_other_data,
-            show_thrivelines=show_thrivelines,
             save_dir=save_dir,
             show_centile_labels=show_centile_labels,
             show_legend=show_legend,
             show_yhat=show_yhat,
             plt_kwargs=plt_kwargs,
+            thrive_xy=thrive_by_region.get(response_var),
         )
         figs.append(fig)
     # Show all figures at once when requested.
@@ -489,13 +542,13 @@ def _plot_centiles_advanced(
     hue_data: str = "site",
     markers_data: str = "sex",
     show_other_data: bool = False,
-    show_thrivelines: bool = False,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
     show_yhat: bool = False,
     plt_kwargs: dict | None = None,
     ax: Axes | None = None,
+    thrive_xy: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> Figure:
     sns.set_style("whitegrid")
     # Use provided axes or create a new figure with optional Figure kwargs.
@@ -570,13 +623,22 @@ def _plot_centiles_advanced(
 
     minx, maxx = ax.get_xlim()
     ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    if thrive_xy is not None:
+        thrive_x, thrive_y = thrive_xy
+        for seg_x, seg_y in zip(thrive_x, thrive_y):
+            if np.all(np.isfinite(seg_x)) and np.all(np.isfinite(seg_y)):
+                ax.plot(
+                    seg_x,
+                    seg_y,
+                    color="#c0392b",
+                    alpha=0.55,
+                    linewidth=1.0,
+                    zorder=1,
+                )
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
         scatter_data_name = "Y_harmonized" if harmonize_data else "Y"
-        thriveline_data_name = (
-            "thrive_Y_harmonized" if harmonize_data else "thrive_Y"
-        )
         columns = [("X", covariate), (scatter_data_name, response_var)]
         columns.extend(
             [("batch_effects", be.item()) for be in scatter_data.batch_effect_dims]
@@ -597,11 +659,6 @@ def _plot_centiles_advanced(
                 linewidth=0,
                 ax=ax,
             )
-            if show_thrivelines:
-                ax.plot(
-                    scatter_filter.thrive_X.to_numpy().T,
-                    scatter_filter[thriveline_data_name].to_numpy().T,
-                )
         else:
             idx = np.full(len(df), True)
             for j in batch_effects:
@@ -622,11 +679,6 @@ def _plot_centiles_advanced(
                 linewidth=0,
                 ax=ax,
             )
-            if show_thrivelines:
-                ax.plot(
-                    scatter_filter.thrive_X.to_numpy().T,
-                    scatter_filter[thriveline_data_name].to_numpy().T,
-                )
 
             if show_other_data:
                 non_be_df = df[~idx]
@@ -1058,3 +1110,202 @@ def _plot_ridge(
             dpi=300,
         )
     return g.figure
+
+
+def _get_score_correlation_matrix(score: LongitudinalScore) -> xr.DataArray:
+    """Return ``score.get_correlation_matrix()`` or raise a clear error."""
+    get_matrix = getattr(score, "get_correlation_matrix", None)
+    if get_matrix is None or not callable(get_matrix):
+        raise TypeError(
+            f"{type(score).__name__} does not provide get_correlation_matrix(); "
+            "thrivelines require a longitudinal score that estimates "
+            "age-to-age z-score correlations (e.g. ZGainScore)."
+        )
+    return get_matrix()
+
+
+def _reference_covariate_range(
+    thrive: LongitudinalScore,
+    covariate: str,
+) -> tuple[int, int] | None:
+    """Return the integer covariate span of a longitudinal score's reference cohort.
+
+    Used as a default ``covariate_range`` when plotting thrivelines so anchor
+    points align with ages (or other integer covariates) present in the
+    reference data used to estimate age-to-age correlations.
+
+    Parameters
+    ----------
+    thrive : LongitudinalScore
+        Longitudinal score whose ``reference_data`` defines the cohort span.
+    covariate : str
+        Covariate to read from ``reference_data.X`` (typically ``"age"``).
+
+    Returns
+    -------
+    tuple of int or None
+        ``(min, max)`` integer covariate values after rounding, or ``None`` if
+        ``covariate`` is absent from the reference data or the cohort is empty.
+    """
+    ref = thrive.reference_data
+    covariates = [str(c) for c in ref.covariates.values]
+    if covariate not in covariates:
+        return None
+    ages = np.round(ref.X.sel(covariates=covariate).values.astype(float))
+    if ages.size == 0:
+        return None
+    return int(ages.min()), int(ages.max())
+
+
+def _encode_batch_effects(
+    model: "NormativeModel",
+    batch_effects: dict[str, str],
+    n_obs: int,
+    centile_template: NormData,
+) -> xr.DataArray | None:
+    """Build a model-encoded batch-effect array for thriveline backward passes.
+
+    Each thriveline segment is evaluated at the reference batch effect used for
+    the centile grid. Missing batch-effect keys are filled from
+    ``centile_template`` or the model's first allowed level.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Normative model used to map raw batch labels to encoded values.
+    batch_effects : dict of str
+        Reference batch labels keyed by batch-effect dimension
+        (e.g. ``{"site": "A"}``).
+    n_obs : int
+        Number of observations (thriveline segments) to replicate batch effects
+        for.
+    centile_template : NormData
+        Synthetic centile grid; used to infer batch levels when a key is absent
+        from ``batch_effects``.
+
+    Returns
+    -------
+    xr.DataArray or None
+        Encoded batch effects with dimensions
+        ``(observations, batch_effect_dims)``, or ``None`` when the model has
+        no batch effects.
+    """
+    if not model.unique_batch_effects:
+        return None
+    be_keys = sorted(model.unique_batch_effects.keys())
+    be_vals: dict[str, str] = {}
+    for k in be_keys:
+        if k in batch_effects:
+            be_vals[k] = batch_effects[k]
+        elif hasattr(centile_template, "batch_effects"):
+            be_vals[k] = str(
+                centile_template.batch_effects.sel(batch_effect_dims=k)
+                .isel(observations=0)
+                .values.item()
+            )
+        else:
+            be_vals[k] = model.unique_batch_effects[k][0]
+    obs_coord = np.arange(n_obs)
+    raw_be = xr.DataArray(
+        np.tile([[str(be_vals[k]) for k in be_keys]], (n_obs, 1)),
+        dims=("observations", "batch_effect_dims"),
+        coords={"observations": obs_coord, "batch_effect_dims": be_keys},
+    )
+    return model.map_batch_effects(raw_be)
+
+
+def _thrivelines_to_y(
+    model: "NormativeModel",
+    response_var: str,
+    thrive_Z: xr.DataArray,
+    thrive_X: xr.DataArray,
+    thrive_covariate: str,
+    batch_effects: dict[str, str],
+    centile_template: NormData,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Map propagated Z thrivelines to Y coordinates for plotting.
+
+    For each thriveline segment and offset, covariate values come from
+    ``thrive_X``, non-thrive covariates are fixed to the centile-grid means,
+    and ``model[response_var].backward`` converts z-scores to response-scale
+    ``Y`` at the reference batch effect.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Normative model providing scalers and the regional ``backward`` map.
+    response_var : str
+        Response variable to convert.
+    thrive_Z : xr.DataArray
+        Propagated z-scores from :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`,
+        with dimensions ``(segment, response_vars, offset)``.
+    thrive_X : xr.DataArray
+        Matching covariate coordinates, same shape as ``thrive_Z``.
+    thrive_covariate : str
+        Covariate dimension along which thrivelines advance (e.g. ``"age"``).
+    batch_effects : dict of str
+        Reference batch labels for the centile grid, passed to
+        :func:`_encode_batch_effects`.
+    centile_template : NormData
+        Synthetic centile ``NormData`` used to fix non-thrive covariates and
+        infer missing batch levels.
+
+    Returns
+    -------
+    x_plot, y_plot : tuple of ndarray
+        Arrays of shape ``(n_segments, n_offsets)`` with covariate and response
+        values ready for matplotlib. Entries are ``NaN`` where propagation or
+        lookup failed.
+    """
+    z_rv = thrive_Z.sel(response_vars=response_var, drop=True)
+    x_rv = thrive_X.sel(response_vars=response_var, drop=True)
+    n_segments = z_rv.sizes["segment"]
+    n_offsets = z_rv.sizes["offset"]
+
+    covariates = list(model.covariates)
+    # Hold every covariate except the thrive one at the centile-grid mean.
+    fixed_covariates = {
+        cov: float(centile_template.X.sel(covariates=cov).mean().values)
+        for cov in covariates
+        if cov != thrive_covariate
+    }
+    be_encoded = _encode_batch_effects(model, batch_effects, n_segments, centile_template)
+    x_plot = np.full((n_segments, n_offsets), np.nan)
+    y_plot = np.full((n_segments, n_offsets), np.nan)
+
+    for o_idx, off in enumerate(z_rv.coords["offset"].values):
+        ages = x_rv.sel(offset=off).values.astype(float)
+        z_vals = z_rv.sel(offset=off).values.astype(float)
+        valid = np.isfinite(ages) & np.isfinite(z_vals)
+        if not valid.any():
+            continue
+
+        n_valid = int(valid.sum())
+        obs_coord = np.arange(n_valid)
+        # Build the scaled covariate matrix expected by backward().
+        X_scaled = np.zeros((n_valid, len(covariates)))
+        for i, cov in enumerate(covariates):
+            if cov == thrive_covariate:
+                col = ages[valid].reshape(-1, 1)
+            else:
+                col = np.full((n_valid, 1), fixed_covariates[cov])
+            X_scaled[:, i] = model.inscalers[cov].transform(col).ravel()
+
+        X_da = xr.DataArray(
+            X_scaled,
+            dims=("observations", "covariates"),
+            coords={"observations": obs_coord, "covariates": covariates},
+        )
+        Z_da = xr.DataArray(z_vals[valid], dims=("observations",), coords={"observations": obs_coord})
+        be_slice = (
+            be_encoded.isel(observations=np.where(valid)[0])
+            if be_encoded is not None
+            else None
+        )
+        # Map z-scores to scaled Y, then invert the response scaler.
+        y_scaled = model[response_var].backward(X_da, be_slice, Z_da).values
+        y_vals = model.outscalers[response_var].inverse_transform(y_scaled.reshape(-1, 1)).ravel()
+        x_plot[valid, o_idx] = ages[valid]
+        y_plot[valid, o_idx] = y_vals
+
+    return x_plot, y_plot
