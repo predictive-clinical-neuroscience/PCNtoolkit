@@ -68,7 +68,6 @@ house rules (style, commits), and avoid common pitfalls. When you create new cod
     - `warp.py` — warping functions for BLR
     - `factorize.py` — factorization helpers for prior transfer
     - `shash.py` — SHASH distribution (PyMC custom dist)
-    - `thrive.py` — THRIVE longitudinal z-score utilities
   - `dataio/` — data I/O:
     - `norm_data.py` — `NormData` class (xarray-based data
       container)

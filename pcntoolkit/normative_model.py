@@ -17,7 +17,6 @@ import xarray as xr
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.math_functions.scaler import Scaler
-from pcntoolkit.math_functions.thrive import get_correlation_matrix, get_thrive_Z_X
 
 # pylint: disable=unused-import
 from pcntoolkit.regression_model.blr import BLR  # noqa: F401 # type: ignore
@@ -104,9 +103,6 @@ class NormativeModel:
         self.batch_effect_counts = None
         self.batch_effect_covariate_ranges = None
         self.covariate_ranges = None
-
-        self.thrive_covariate = None
-        self.correlation_matrix = None
 
     """
         ########################################################################################################################
@@ -411,12 +407,6 @@ class NormativeModel:
             dims=("observations", "response_vars"),
             coords={"observations": data.observations, "response_vars": data.response_vars},
         )
-        if hasattr(data, "thrive_Y"):
-            data["thrive_Y_harmonized"] = xr.DataArray(
-                np.zeros(data.thrive_Y.shape),
-                dims=("observations", "response_vars", "offset"),
-                coords={"observations": data.observations, "response_vars": data.response_vars},
-            )
         for responsevar in respvar_intersection:
             Output.print(Messages.HARMONIZING_DATA_MODEL, model_name=responsevar)
             resp_fit_data = data.sel({"response_vars": responsevar})
@@ -424,15 +414,6 @@ class NormativeModel:
             Z_pred = self[responsevar].forward(X, be, Y)
             Y_harmonized = self[responsevar].backward(X, ref_be_array, Z_pred)
             data["Y_harmonized"].loc[{"response_vars": responsevar}] = Y_harmonized
-            if hasattr(data, "thrive_Y"):
-                for o in data.offset:
-                    offset_X = X.copy()
-                    # ! here
-                    offset_X.loc[{"covariates": self.thrive_covariate}] = resp_fit_data.thrive_X.sel({"offset": o})
-                    thrive_Y_harmonized = self[responsevar].backward(
-                        offset_X, ref_be_array, resp_fit_data.thrive_Z.sel({"offset": o})
-                    )
-                    data["thrive_Y_harmonized"].loc[{"response_vars": responsevar, "offset": o}] = thrive_Y_harmonized
         self.is_fitted = True
 
         self.postprocess(data)
@@ -672,19 +653,18 @@ class NormativeModel:
         Parameters
         ----------
         data : NormData
-            Data object containing response variable arrays (Y, Yhat, 
-            centiles, thrive_Y) to which the transform should be applied.
-        
+            Data object containing response variable arrays (Y, Yhat,
+            centiles) to which the transform should be applied.
+
         """
         if self.y_transform is None:
             return
-      
-        # TODO: Check if we need to track if transform has already been 
-        # applied to avoid double-inverting. Normally I dont expect any issues 
+
+        # TODO: Check if we need to track if transform has already been
+        # applied to avoid double-inverting. Normally I dont expect any issues
         # as every process() is followed by a postprocess(). The only issues can
-        # be if users call postprocess() multiple times manually or with
-        # compute_thrivelines() that has a preprocess() call without a postprocess().
-            
+        # be if users call postprocess() multiple times manually.
+
         if self.y_transform == "log1p":
             # Apply log1p transform to the response variable Y
             for var in ["Y"]:
@@ -718,23 +698,22 @@ class NormativeModel:
         ----------
         data : NormData
             Data object containing response variable arrays (Y, Yhat,
-            centiles, thrive_Y) to which the inverse transform should be applied.
+            centiles) to which the inverse transform should be applied.
         """
         if self.y_transform is None:
             return
-        
-        # TODO: Check if we need to track if inverse transform has already been 
-        # applied to avoid double-inverting. Normally I dont expect any issues 
+
+        # TODO: Check if we need to track if inverse transform has already been
+        # applied to avoid double-inverting. Normally I dont expect any issues
         # as every process() is followed by a postprocess(). The only issues can
-        # be if users call postprocess() multiple times manually or with
-        # compute_thrivelines() that has a preprocess() call without a postprocess().
-            
+        # be if users call postprocess() multiple times manually.
+
         if self.y_transform == "log1p":
-            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
+            for var in ("Y", "centiles", "Yhat", "Y_harmonized"):
                 if var in data.data_vars:
                     data[var] = np.expm1(data[var])
         elif self.y_transform == "log":
-            for var in ("Y", "centiles", "Yhat", "Y_harmonized", "thrive_Y"):
+            for var in ("Y", "centiles", "Yhat", "Y_harmonized"):
                 if var in data.data_vars:
                     data[var] = np.exp(data[var])
             
@@ -965,78 +944,6 @@ class NormativeModel:
                 resp_predict_data, responsevar, X, be
             )
         self.postprocess(data)
-        return data
-
-    def compute_correlation_matrix(self, data, bandwidth=5, covariate="age"):
-        self.thrive_covariate = covariate
-        self.correlation_matrix = get_correlation_matrix(data, bandwidth, covariate)
-
-    def compute_thrivelines(
-        self: NormativeModel, data: NormData, span: int = 5, step: int = 1, z_thrive: float = 0.0, covariate="age", **kwargs
-    ) -> NormData:
-        """
-        Computes the thrivelines for each responsevar in the data
-        """
-        data.attrs["thrive_covariate"] = self.thrive_covariate
-        self.preprocess(data)
-        # TODO: Write utility function to create a normdata object for easy thriveline creation (with appropriate Z scores)
-        offsets = np.arange(0, span + 1, step=step)
-        # Compute the thrivelines
-        # Add them to the dataset, label them correctly
-
-        # Drop the thrivelines and dimensions if they already exist
-        thrivelines_already_computed = ("thrive_Z" in data or "thrive_Y" in data or "offset" in data.coords) and (
-            data.attrs["z_thrive"] == z_thrive
-        )
-        if thrivelines_already_computed:
-            if not kwargs.get("recompute", False):
-                if all([c in data.offset.values for c in offsets]):
-                    Output.warning(Warnings.THRIVELINES_ALREADY_COMPUTED_FOR, dataset_name=data.attrs["name"], offsets=offsets)
-                    return data
-            del data["thrive_Z"]
-            del data["thrive_Y"]
-            del data.coords["offset"]
-            del data.dims.mapping["offset"]
-        data.attrs["z_thrive"] = z_thrive
-
-        # Make Z-score predictions if needed
-        if not hasattr(data, "Z"):
-            self.predict(data)
-
-        respvar_intersection = list(set(self.response_vars).intersection(data.response_vars.values))
-
-        # Get the covariate matrix that was derived during fit
-        cormat = self.correlation_matrix
-
-        # Create X, Y, and Z for thrivelines data
-        data["thrive_Z"] = xr.DataArray(
-            np.zeros((data.X.shape[0], len(respvar_intersection), offsets.shape[0])),
-            dims=("observations", "response_vars", "offset"),
-            coords={"offset": offsets},
-        )
-        data["thrive_Y"] = xr.DataArray(
-            np.zeros((data.X.shape[0], len(respvar_intersection), offsets.shape[0])),
-            dims=("observations", "response_vars", "offset"),
-            coords={"offset": offsets},
-        )
-        for responsevar in respvar_intersection:
-            resp_predict_data = data.sel({"response_vars": responsevar})
-            X, be, _, m, Z = self.extract_data(resp_predict_data)
-            X_cov = self.inscalers[covariate].inverse_transform(X.sel({"covariates": covariate}, drop=False))
-            thrive_Z, thrive_X = get_thrive_Z_X(cormat.sel({"response_vars": responsevar}), X_cov, Z, span, z_thrive=z_thrive)
-            data["thrive_X"] = xr.DataArray(
-                self.inscalers[covariate].transform(thrive_X),
-                dims=("observations", "offset"),
-                coords={"offset": offsets},
-            )
-            data["thrive_Z"].loc[{"response_vars": responsevar}] = thrive_Z
-            for io, o in enumerate(offsets):
-                this_Z = thrive_Z[:, io]
-                offset_X = X.copy()
-                offset_X.loc[{"covariates": self.thrive_covariate}] = data.thrive_X.sel({"offset": o})
-                scaled_thrive_Y = self[responsevar].backward(X, be, this_Z)
-                data["thrive_Y"].loc[{"response_vars": responsevar, "offset": o}] = scaled_thrive_Y
-        # self.postprocess(data)
         return data
 
     def register_data_info(self, data: NormData) -> None:
