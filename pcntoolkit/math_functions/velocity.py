@@ -20,6 +20,9 @@ from sklearn.linear_model import LinearRegression
 if TYPE_CHECKING:
     from pcntoolkit.dataio.norm_data import NormData
 
+# ------------------------------------------------------------------- #
+# Correlation matrix
+# ------------------------------------------------------------------- #
 
 def compute_correlation_matrix(
     data: NormData,
