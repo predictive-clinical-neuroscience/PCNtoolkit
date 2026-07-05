@@ -51,6 +51,14 @@ class ZGainScore(LongitudinalScore):
     max_correlation : float, default 0.99
         Upper bound used to keep the correlation away from 1 and 
         the denominator away from zero. 
+
+    Attributes
+    ----------
+    zgain : xr.DataArray | None
+        The most recent z-gain scores produced by :meth:`score`. ``None`` until
+        :meth:`score` has been called at least once. It stores the same
+        ``xr.DataArray`` that :meth:`score` returns, so the result can be
+        retrieved later even if the return value was not saved.
     """
 
     def __init__(
@@ -83,6 +91,9 @@ class ZGainScore(LongitudinalScore):
         # Cache the correlation matrix after first use.
         self.correlation_matrix: xr.DataArray | None = None
 
+        # Hold the most recent z-gain scores; filled in by score().
+        self.zgain: xr.DataArray | None = None
+
     def get_correlation_matrix(self) -> xr.DataArray:
         """Estimate and cache the z-score correlation matrix. It computes
         the matrix once and then reuses it for all subsequent calls."""
@@ -114,7 +125,8 @@ class ZGainScore(LongitudinalScore):
         Returns
         -------
         xr.DataArray
-            One z-gain score per subject and response variable.
+            One z-gain score per subject and response variable. The same array
+            is also stored on the instance as :attr:`zgain` for later retrieval.
         """
         # Use the stored subject id name unless the caller overrides it.
         subject_id_col = subject_id_col or self.subject_id_col
@@ -193,9 +205,12 @@ class ZGainScore(LongitudinalScore):
                     z_rv[obs_last] - r * z_rv[obs_prev]
                 ) / denominator
 
-        return xr.DataArray(
+        # Store the result so it can be retrieved later via self.zgain, even
+        # if the caller does not keep the returned value.
+        self.zgain = xr.DataArray(
             scores,
             dims=("subjects", "response_vars"),
             coords={"subjects": subjects, "response_vars": response_vars},
             name="zgain",
         )
+        return self.zgain
