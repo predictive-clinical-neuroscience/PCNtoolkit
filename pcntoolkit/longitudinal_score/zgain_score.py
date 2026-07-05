@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 from dask.base import compute
 import numpy as np
 import xarray as xr
 
-from pcntoolkit.math_functions.velocity import compute_correlation_matrix
+from pcntoolkit.math_functions.velocity import (
+    compute_correlation_matrix,
+    compute_thrivelines,
+)
 
 from .longitudinal_score import LongitudinalScore
 
@@ -54,11 +58,21 @@ class ZGainScore(LongitudinalScore):
 
     Attributes
     ----------
+    correlation_matrix : xr.DataArray | None
+        The z-score correlation matrix used by this score. ``None`` until it is
+        computed on first use (via :meth:`get_correlation_matrix`, which is also
+        called by :meth:`score` and :meth:`compute_thrivelines`). Once computed
+        it is cached and reused.
     zgain : xr.DataArray | None
         The most recent z-gain scores produced by :meth:`score`. ``None`` until
         :meth:`score` has been called at least once. It stores the same
         ``xr.DataArray`` that :meth:`score` returns, so the result can be
         retrieved later even if the return value was not saved.
+    thrivelines : xr.Dataset | None
+        The most recent thrivelines produced by :meth:`compute_thrivelines`.
+        ``None`` until :meth:`compute_thrivelines` has been called at least
+        once. Holds the propagated z-scores and covariates as
+        ``thrivelines.Z`` and ``thrivelines.X``.
     """
 
     def __init__(
@@ -94,6 +108,9 @@ class ZGainScore(LongitudinalScore):
         # Hold the most recent z-gain scores; filled in by score().
         self.zgain: xr.DataArray | None = None
 
+        # Hold the most recent thrivelines; filled in by compute_thrivelines().
+        self.thrivelines: xr.Dataset | None = None
+
     def get_correlation_matrix(self) -> xr.DataArray:
         """Estimate and cache the z-score correlation matrix. It computes
         the matrix once and then reuses it for all subsequent calls."""
@@ -102,6 +119,54 @@ class ZGainScore(LongitudinalScore):
                 self.reference_data, self.bandwidth, self.covariate
             )
         return self.correlation_matrix
+
+    def compute_thrivelines(self, **kwargs) -> xr.Dataset:
+        """Compute thrivelines from this score's correlation matrix.
+
+        This is a thin wrapper around
+        :func:`pcntoolkit.math_functions.velocity.compute_thrivelines`. It first
+        ensures the z-score correlation matrix is computed and stored (via
+        :meth:`get_correlation_matrix`), then propagates thrivelines from it. If
+        the object has no correlation matrix yet, one is computed and a warning
+        is issued to let the user know.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments forwarded to
+            :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
+            (e.g. ``timepoint_diff``, ``z_thrive``, ``anchor_step``,
+            ``z_anchor_start``, ``z_anchor_end``, ``z_anchors``,
+            ``covariate_range``).
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset with two data variables, ``Z`` (propagated z-scores) and
+            ``X`` (matching covariate coordinates), each with dimensions
+            ``(segment, response_vars, offset)``. The same Dataset is stored on
+            the instance as :attr:`thrivelines`, so it can be retrieved later
+            even if the return value was not saved. Access the parts with
+            ``thrivelines.Z`` and ``thrivelines.X``.
+        """
+        # Compute the matrix only if this object doesn't have one yet;
+        # otherwise reuse the stored attribute without recomputing.
+        if self.correlation_matrix is None:
+            warnings.warn(
+                "This ZGainScore has no correlation matrix yet; computing it "
+                "from the reference data now.",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.correlation_matrix = self.get_correlation_matrix()
+        R = self.correlation_matrix
+        # Propagate thrivelines from the correlation matrix. This bare name
+        # resolves to the imported velocity function (a module global), not to
+        # this method, so it is not a recursive call.
+        thrive_Z, thrive_X = compute_thrivelines(R, **kwargs)
+        # Bundle the two arrays so callers can use thrivelines.Z / thrivelines.X.
+        self.thrivelines = xr.Dataset({"Z": thrive_Z, "X": thrive_X})
+        return self.thrivelines
 
     def score(
         self,
