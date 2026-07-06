@@ -19,6 +19,7 @@ from sklearn.linear_model import LinearRegression
 
 if TYPE_CHECKING:
     from pcntoolkit.dataio.norm_data import NormData
+    from pcntoolkit.normative_model import NormativeModel
 
 # ------------------------------------------------------------------- #
 # Correlation matrix
@@ -507,6 +508,208 @@ def compute_thrivelines(
     thrive_Z = thrive_Z.assign_coords(start_z=("segment", start_z.values))
     thrive_X = thrive_X.assign_coords(start_z=("segment", start_z.values))
     return thrive_Z, thrive_X
+
+
+def compute_thriveline_y(
+    model: "NormativeModel",
+    thrive_Z: xr.DataArray | xr.Dataset,
+    thrive_X: xr.DataArray | None = None,
+    *,
+    template: "NormData | None" = None,
+    covariate: str | None = None,
+    batch_effects: dict[str, str] | None = None,
+) -> xr.DataArray:
+    """Map propagated Z thrivelines to response-scale Y coordinates.
+
+    For each thriveline segment, response variable, and offset, covariate
+    values are taken from ``thrive_X``, non-thrive covariates are fixed to
+    the means in ``template``, and ``model[response_var].backward`` converts
+    z-scores to ``Y`` at the reference batch effect (when present).
+
+    When the model has a single covariate, ``covariate`` is not required.
+    When the model has multiple covariates, ``covariate`` names the thrive
+    axis and ``template`` is required to fix the other covariates.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Fitted normative model providing scalers and regional ``backward``
+        maps.
+    thrive_Z : xr.DataArray or xr.Dataset
+        Propagated z-scores from :func:`compute_thrivelines`, with dimensions
+        ``(segment, response_vars, offset)``. When an ``xr.Dataset`` is
+        passed (e.g. from :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.compute_thrivelines`),
+        it must contain data variables ``Z`` and ``X``; ``thrive_X`` may then
+        be omitted.
+    thrive_X : xr.DataArray, optional
+        Matching covariate coordinates, same shape as ``thrive_Z``. Required
+        when ``thrive_Z`` is not a Dataset with ``Z`` and ``X``.
+    template : NormData, optional
+        Reference grid used to fix non-thrive covariates to their mean and to
+        infer batch-effect levels when a key is absent from ``batch_effects``.
+        Required when the model has more than one covariate.
+    covariate : str, optional
+        Covariate along which thrivelines advance (e.g. ``"age"``). Required
+        when the model has more than one covariate; otherwise the sole model
+        covariate is used.
+    batch_effects : dict of str, optional
+        Reference batch labels keyed by batch-effect dimension
+        (e.g. ``{"site": "A"}``). Missing keys are filled from ``template`` or
+        the model's first allowed level. Ignored when the model has no batch
+        effects.
+
+    Returns
+    -------
+    thrive_Y : xr.DataArray
+        Response-scale thriveline values with the same dimensions and
+        coordinates as ``thrive_Z``.
+    """
+    covariates = list(model.covariates)
+    if len(covariates) == 1:
+        thrive_covariate = covariates[0]
+    else:
+        if covariate is None:
+            raise ValueError(
+                "covariate must be specified when the model has multiple "
+                f"covariates: {covariates}."
+            )
+        if covariate not in covariates:
+            raise ValueError(
+                f"covariate '{covariate}' is not among model covariates: "
+                f"{covariates}."
+            )
+        thrive_covariate = covariate
+
+    thrive_Z, thrive_X = _resolve_thriveline_inputs(thrive_Z, thrive_X)
+    other_covariates = [c for c in covariates if c != thrive_covariate]
+    if other_covariates and template is None:
+        raise ValueError(
+            "template is required when the model has covariates besides "
+            f"the thrive covariate '{thrive_covariate}'."
+        )
+
+    fixed_covariates = {}
+    if template is not None:
+        fixed_covariates = {
+            cov: float(template.X.sel(covariates=cov).mean().values)
+            for cov in other_covariates
+        }
+
+    response_vars = [str(r) for r in thrive_Z.coords["response_vars"].values]
+    thrive_Y = xr.DataArray(
+        np.full(thrive_Z.shape, np.nan),
+        dims=thrive_Z.dims,
+        coords=thrive_Z.coords,
+        attrs=thrive_Z.attrs,
+        name="thrive_Y",
+    )
+
+    n_segments = thrive_Z.sizes["segment"]
+    be_encoded = _encode_batch_effects(
+        model, batch_effects or {}, n_segments, template
+    )
+
+    for rv in response_vars:
+        z_rv = thrive_Z.sel(response_vars=rv, drop=True)
+        x_rv = thrive_X.sel(response_vars=rv, drop=True)
+        y_rv = np.full((n_segments, z_rv.sizes["offset"]), np.nan)
+
+        for o_idx, off in enumerate(z_rv.coords["offset"].values):
+            ages = x_rv.sel(offset=off).values.astype(float)
+            z_vals = z_rv.sel(offset=off).values.astype(float)
+            valid = np.isfinite(ages) & np.isfinite(z_vals)
+            if not valid.any():
+                continue
+
+            n_valid = int(valid.sum())
+            obs_coord = np.arange(n_valid)
+            X_scaled = np.zeros((n_valid, len(covariates)))
+            for i, cov in enumerate(covariates):
+                if cov == thrive_covariate:
+                    col = ages[valid].reshape(-1, 1)
+                else:
+                    col = np.full((n_valid, 1), fixed_covariates[cov])
+                X_scaled[:, i] = model.inscalers[cov].transform(col).ravel()
+
+            X_da = xr.DataArray(
+                X_scaled,
+                dims=("observations", "covariates"),
+                coords={"observations": obs_coord, "covariates": covariates},
+            )
+            Z_da = xr.DataArray(
+                z_vals[valid],
+                dims=("observations",),
+                coords={"observations": obs_coord},
+            )
+            be_slice = (
+                be_encoded.isel(observations=np.where(valid)[0])
+                if be_encoded is not None
+                else None
+            )
+            y_scaled = model[rv].backward(X_da, be_slice, Z_da).values
+            y_vals = model.outscalers[rv].inverse_transform(
+                y_scaled.reshape(-1, 1)
+            ).ravel()
+            y_rv[valid, o_idx] = y_vals
+
+        thrive_Y.loc[{"response_vars": rv}] = y_rv
+
+    return thrive_Y
+
+
+def _resolve_thriveline_inputs(
+    thrive_Z: xr.DataArray | xr.Dataset,
+    thrive_X: xr.DataArray | None,
+) -> tuple[xr.DataArray, xr.DataArray]:
+    """Return ``(thrive_Z, thrive_X)`` from separate arrays or a Dataset."""
+    if isinstance(thrive_Z, xr.Dataset):
+        if "Z" not in thrive_Z or "X" not in thrive_Z:
+            raise ValueError(
+                "When thrive_Z is an xr.Dataset it must contain data variables "
+                "'Z' and 'X'."
+            )
+        return thrive_Z["Z"], thrive_Z["X"]
+    if thrive_X is None:
+        raise ValueError(
+            "thrive_X is required when thrive_Z is not a Dataset with 'Z' and 'X'."
+        )
+    return thrive_Z, thrive_X
+
+
+def _encode_batch_effects(
+    model: "NormativeModel",
+    batch_effects: dict[str, str],
+    n_obs: int,
+    template: "NormData | None",
+) -> xr.DataArray | None:
+    """Build a model-encoded batch-effect array for thriveline backward passes.
+
+    Each thriveline segment is evaluated at the reference batch effect.
+    Missing batch-effect keys are filled from ``template`` or the model's
+    first allowed level.
+    """
+    if not model.unique_batch_effects:
+        return None
+    be_keys = sorted(model.unique_batch_effects.keys())
+    be_vals: dict[str, str] = {}
+    for k in be_keys:
+        if k in batch_effects:
+            be_vals[k] = batch_effects[k]
+        elif template is not None and hasattr(template, "batch_effects"):
+            be_vals[k] = str(
+                template.batch_effects.sel(batch_effect_dims=k)
+                .isel(observations=0)
+                .values.item()
+            )
+        else:
+            be_vals[k] = model.unique_batch_effects[k][0]
+    obs_coord = np.arange(n_obs)
+    raw_be = xr.DataArray(
+        np.tile([[str(be_vals[k]) for k in be_keys]], (n_obs, 1)),
+        dims=("observations", "batch_effect_dims"),
+        coords={"observations": obs_coord, "batch_effect_dims": be_keys},
+    )
+    return model.map_batch_effects(raw_be)
 
 
 def _covariate_bounds_from_R(R: xr.DataArray) -> tuple[int, int]:

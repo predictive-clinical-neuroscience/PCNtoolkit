@@ -9,6 +9,7 @@ import xarray as xr
 
 from pcntoolkit.math_functions.velocity import (
     compute_correlation_matrix,
+    compute_thriveline_y,
     compute_thrivelines,
 )
 
@@ -71,8 +72,8 @@ class ZGainScore(LongitudinalScore):
     thrivelines : xr.Dataset | None
         The most recent thrivelines produced by :meth:`compute_thrivelines`.
         ``None`` until :meth:`compute_thrivelines` has been called at least
-        once. Holds the propagated z-scores and covariates as
-        ``thrivelines.Z`` and ``thrivelines.X``.
+        once. Holds propagated z-scores, covariates, and response-scale values
+        as ``thrivelines.Z``, ``thrivelines.X``, and ``thrivelines.Y``.
     """
 
     def __init__(
@@ -123,12 +124,14 @@ class ZGainScore(LongitudinalScore):
     def compute_thrivelines(self, **kwargs) -> xr.Dataset:
         """Compute thrivelines from this score's correlation matrix.
 
-        This is a thin wrapper around
-        :func:`pcntoolkit.math_functions.velocity.compute_thrivelines`. It first
-        ensures the z-score correlation matrix is computed and stored (via
-        :meth:`get_correlation_matrix`), then propagates thrivelines from it. If
-        the object has no correlation matrix yet, one is computed and a warning
-        is issued to let the user know.
+        This wraps :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
+        and :func:`~pcntoolkit.math_functions.velocity.compute_thriveline_y`. It
+        first ensures the z-score correlation matrix is computed and stored,
+        propagates thrivelines in Z-space, then maps them to response-scale Y
+        via :attr:`normative_model`. Non-thrive covariates are fixed using
+        :attr:`reference_data`; batch effects use the first allowed level from
+        the normative model. If the object has no correlation matrix yet, one
+        is computed and a warning is issued.
 
         Parameters
         ----------
@@ -142,12 +145,10 @@ class ZGainScore(LongitudinalScore):
         Returns
         -------
         xr.Dataset
-            Dataset with two data variables, ``Z`` (propagated z-scores) and
-            ``X`` (matching covariate coordinates), each with dimensions
-            ``(segment, response_vars, offset)``. The same Dataset is stored on
-            the instance as :attr:`thrivelines`, so it can be retrieved later
-            even if the return value was not saved. Access the parts with
-            ``thrivelines.Z`` and ``thrivelines.X``.
+            Dataset with ``Z`` (propagated z-scores), ``X`` (covariate
+            coordinates), and ``Y`` (response-scale values), each with
+            dimensions ``(segment, response_vars, offset)``. Stored on the
+            instance as :attr:`thrivelines`.
         """
         # Compute the matrix only if this object doesn't have one yet;
         # otherwise reuse the stored attribute without recomputing.
@@ -164,8 +165,21 @@ class ZGainScore(LongitudinalScore):
         # resolves to the imported velocity function (a module global), not to
         # this method, so it is not a recursive call.
         thrive_Z, thrive_X = compute_thrivelines(R, **kwargs)
-        # Bundle the two arrays so callers can use thrivelines.Z / thrivelines.X.
-        self.thrivelines = xr.Dataset({"Z": thrive_Z, "X": thrive_X})
+        batch_effects = None
+        if self.normative_model.has_batch_effect:
+            batch_effects = {
+                k: self.normative_model.unique_batch_effects[k][0]
+                for k in self.normative_model.unique_batch_effects
+            }
+        thrive_Y = compute_thriveline_y(
+            self.normative_model,
+            thrive_Z,
+            thrive_X,
+            template=self.reference_data,
+            covariate=self.covariate,
+            batch_effects=batch_effects,
+        )
+        self.thrivelines = xr.Dataset({"Z": thrive_Z, "X": thrive_X, "Y": thrive_Y})
         return self.thrivelines
 
     def score(
