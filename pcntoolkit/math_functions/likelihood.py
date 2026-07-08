@@ -654,6 +654,87 @@ class BetaLikelihood(Likelihood):
     def get_var_names(self) -> List[str]:
         return ["alpha_samples", "beta_samples"]
 
+class NegativeBinomialLikelihood(Likelihood):
+    def __init__(self, mu: BasePrior, sigma: BasePrior):
+        super().__init__(name="NegativeBinomial")
+        self.mu = mu
+        self.mu.set_name("mu")
+        self.sigma = sigma
+        self.sigma.set_name("sigma")
+
+    def _compile(
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> pm.Model:
+        compiled_params = self.compile_params(model, X, be, be_maps, Y)
+        compiled_params = {k: v[0] for k, v in compiled_params.items()}
+        with model:
+            pm.NegativeBinomial("Yhat", **compiled_params, observed=model["Y"], dims="observations")
+        return model
+
+    def compile_params(
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> dict[str, Any]:
+        return {
+            "mu": (self.mu.compile(model, X, be, be_maps, Y), self.mu.sample_dims),
+            "sigma": (self.sigma.compile(model, X, be, be_maps, Y), self.sigma.sample_dims),
+        }
+
+    def transfer(self, idata: az.InferenceData, **kwargs) -> "Likelihood":
+        new_mu = self.mu.transfer(idata, **kwargs)
+        new_sigma = self.sigma.transfer(idata, **kwargs)
+        return NegativeBinomialLikelihood(new_mu, new_sigma)
+
+    def _update_data(
+        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+    ):
+        self.mu.update_data(model, X, be, be_maps, Y)
+        self.sigma.update_data(model, X, be, be_maps, Y)
+
+    def forward(self, *args, **kwargs):
+        mu, sigma = args
+        Y = kwargs.get("Y", None)
+        return (Y - mu) / sigma
+
+    def backward(self, *args, **kwargs):
+        mu, sigma = args
+        Z = kwargs.get("Z")
+        return Z * sigma + mu
+
+    def yhat(self, *args, **kwargs):
+        mu, _ = args
+        return mu
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"name": self.name, "mu": self.mu.to_dict(), "sigma": self.sigma.to_dict()}
+
+    @classmethod
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "NormalLikelihood":
+        return cls(
+            mu=BasePrior.from_dict(dct["mu"], version=version),
+            sigma=BasePrior.from_dict(dct["sigma"], version=version),
+        )
+
+    @classmethod
+    def _from_args(cls, args: Dict[str, Any]) -> "NormalLikelihood":
+        return cls(mu=prior_from_args("mu", args), sigma=prior_from_args("sigma", args))
+
+    def has_random_effect(self) -> bool:
+        return self.mu.has_random_effect or self.sigma.has_random_effect
+
 
 def get_default_normal_likelihood() -> NormalLikelihood:
     # Random effect in mu, and also bsplines for mu and sigma
