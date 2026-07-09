@@ -95,8 +95,8 @@ keywords:
   - "Bayesian modeling"
   - "software toolkit"
 license: "GPL-3.0-only"
-repository-code: "https://github.com/amarquand/PCNtoolkit"
-url: "https://github.com/amarquand/PCNtoolkit"
+repository-code: "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
+url: "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
 abstract: >
   PCNtoolkit is a lightweight Python package designed to support
   normative modeling workflows in neuroscience.
