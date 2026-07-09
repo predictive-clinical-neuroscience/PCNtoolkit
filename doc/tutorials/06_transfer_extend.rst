@@ -202,7 +202,8 @@ Fit and plot normative model
     plot_centiles_advanced(
         model,
         scatter_data=train,
-        batch_effects = 'all'
+        batch_effects = 'all',
+        show_legend = False
     )
 
 
@@ -217,6 +218,14 @@ Fit and plot normative model
 
 
 .. image:: 06_transfer_extend_files/06_transfer_extend_13_1.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 Extending
@@ -254,6 +263,14 @@ the small dataset, we can show how bad such a model would be:
 .. image:: 06_transfer_extend_files/06_transfer_extend_16_0.png
 
 
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
 The interpolation between ages 22 and 45 is very bad, and that’s because
 there was no train data there. This model will not perform well on new
 data. Now instead, let’s extend the model we fitted before to our
@@ -266,12 +283,21 @@ smaller dataset, and see how those centiles look:
     plot_centiles_advanced(
         extended_model,
         scatter_data=test,
-        batch_effects='all'
+        batch_effects='all',
+        show_legend = False
     )
 
 
 
 .. image:: 06_transfer_extend_files/06_transfer_extend_18_0.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 These centiles look much better in comparison to the ‘small model’ that
@@ -291,12 +317,21 @@ predictions on the original train data.
     plot_centiles_advanced(
         transfered_model,
         scatter_data=test,
-        batch_effects='all'
+        batch_effects='all',
+        show_legend = False
     )
 
 
 
 .. image:: 06_transfer_extend_files/06_transfer_extend_22_0.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 Here we see that the transfered model is also much better than the
