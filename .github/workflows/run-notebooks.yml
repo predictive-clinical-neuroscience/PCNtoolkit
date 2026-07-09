@@ -1,9 +1,11 @@
-# Manually execute all tutorial notebooks and commit the results.
+# Execute all tutorial notebooks and commit the results.
 #
-# Trigger: manual only.
-# - Open the Actions tab, select "Run Notebooks", click "Run workflow".
-# - Pick the branch you want to run against (e.g. your PR branch).
-# - Tick "Dry run" to execute notebooks without committing anything.
+# Triggers:
+# - Push: runs automatically when the commit title contains
+#   "[full doc]" (on any branch).
+# - Manual: open the Actions tab, select "Run Notebooks",
+#   click "Run workflow". Pick a branch and optionally tick
+#   "Dry run" to execute without committing.
 #
 # The workflow stops immediately if any notebook fails.
 # The failing notebook name and cell error are printed in the log.
@@ -14,6 +16,9 @@
 name: Run Notebooks
 
 on:
+  push:
+    branches:
+      - '**'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -28,6 +33,11 @@ permissions:
 
 jobs:
   run-notebooks:
+    # Run when the commit title contains [full doc], or when
+    # triggered manually via workflow_dispatch.
+    if: >
+      contains(github.event.head_commit.message, '[full doc]') ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -96,7 +106,10 @@ jobs:
 
       # ── 7. Commit and push ─────────────────────────────────────
       - name: Commit generated outputs
-        if: ${{ github.event.inputs.dry_run == 'false' }}
+        # Skip commit on manual dry-run; always commit on push
+        # trigger (dry_run input is empty for push events, so
+        # comparing != 'true' handles both cases correctly).
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email \
@@ -111,6 +124,6 @@ jobs:
             echo "Nothing changed — no commit needed."
           else
             git commit -m \
-              "chore: update executed notebook outputs [skip ci]"
+              "doc: update executed notebook outputs [skip ci]"
             git push
           fi
