@@ -18,4 +18,46 @@ url: "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
 abstract: >
   PCNtoolkit is a lightweight Python package designed to support
   normative modeling workflows in neuroscience.
+preferred-citation:
+  type: article
+  title: >
+    Protocol Update: The Normative Modelling Paradigm for
+    Computational Psychiatry
+  doi: "10.64898/2026.02.17.706268"
+  journal: "bioRxiv"
+  year: 2026
+  month: 2
+  authors:
+    - family-names: "de Boer"
+      given-names: "Augustijn A. A."
+    - family-names: "Bayer"
+      given-names: "Johanna M. M."
+    - family-names: "Fraza"
+      given-names: "Charlotte"
+    - family-names: "Chavanne"
+      given-names: "Alice V."
+    - family-names: "Rehak Buckova"
+      given-names: "Barbora"
+    - family-names: "Tsilimparis"
+      given-names: "Konstantinos"
+    - family-names: "Serin"
+      given-names: "Emin"
+    - family-names: "Bernas"
+      given-names: "Antoine"
+    - family-names: "Cirstian"
+      given-names: "Ramona"
+    - family-names: "Zabihi"
+      given-names: "Mariam"
+    - family-names: "Rutherford"
+      given-names: "Saige"
+    - family-names: "Al-Khaledi"
+      given-names: "Abdool"
+    - family-names: "Wolfers"
+      given-names: "Thomas"
+    - family-names: "Beckmann"
+      given-names: "Christian F."
+    - family-names: "Kia"
+      given-names: "Seyed Mostafa"
+    - family-names: "Marquand"
+      given-names: "Andre F."
 
