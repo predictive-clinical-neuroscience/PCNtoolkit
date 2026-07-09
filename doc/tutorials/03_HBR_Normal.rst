@@ -59,7 +59,7 @@ First we download a small example dataset from github.
     
     # Select only one feature to speed up the tutorial. Feel free to experiment with other features and see how the model performs on them.
     features_to_model = [
-        "WM-hypointensities"
+        "WM-hypointensities",
     ]
     norm_data = norm_data.sel({"response_vars": features_to_model})
     
@@ -228,11 +228,11 @@ NormalLikelihood, which we will use to model our response variable.
             # Mu is the mean of the intercept, which is normally distributed with a mean of 0 and a standard deviation of 1.
             mu=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
             # Sigma is the scale at which the intercepts vary. It is a positive parameter, so we have to map it to the positive domain.
-            sigma=make_prior(dist_name="Gamma", dist_params=(1.0, 1.0)
+            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0))
         ),
         # We use a B-spline basis function to allow for non-linearity in the mean.
         basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
-    ))
+    )
     sigma = make_prior(
         # Sigma is also linear, because we want to allow the standard deviation to vary as a function of the covariates: heteroskedasticity.
         linear=True,
@@ -266,9 +266,9 @@ NormalLikelihood, which we will use to model our response variable.
         # Whether to show a progress bar during the model fitting.
         progressbar=True,
         # The number of draws to sample from the posterior per chain.
-        draws=300, 
+        draws=1500,
         # The number of tuning steps to run.
-        tune=200,
+        tune=500,
         # The number of MCMC chains to run.
         chains=4,
         # The sampler to use for the model.
@@ -276,12 +276,6 @@ NormalLikelihood, which we will use to model our response variable.
         # The likelihood function to use for the model.
         likelihood=likelihood,
     )
-
-We select a low number of draws and tuning steps in the HR configuration
-above. This is to speed up the time it takes to run this specific
-tutorial. In your analysis, you would want to use more draws and tuning
-steps for better convergence. Typical numbers we recommend are
-draws=1500 and tune=500.
 
 After specifying the regression model, we can configure a normative
 model.
@@ -335,12 +329,12 @@ All results can be found in the save directory.
 
 .. parsed-literal::
 
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\pytensor\link\c\cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
     This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
     Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
     For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
       warnings.warn(
-
+    
 
 
 .. raw:: html
@@ -432,7 +426,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -447,7 +441,7 @@ All results can be found in the save directory.
             Finished Chains:
             <span id="active-chains">4</span>
         </p>
-        <p>Sampling for now</p>
+        <p>Sampling for 13 seconds</p>
         <p>
             Estimated Time to Completion:
             <span id="eta">now</span>
@@ -455,8 +449,8 @@ All results can be found in the save directory.
     
         <progress
             id="total-progress-bar"
-            max="2000"
-            value="2000">
+            max="8000"
+            value="8000">
         </progress>
         <table>
             <thead>
@@ -473,60 +467,60 @@ All results can be found in the save directory.
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
-                        <td>19</td>
-                        <td>0.24</td>
-                        <td>15</td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.13</td>
+                        <td>191</td>
                     </tr>
     
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
-                        <td>6</td>
-                        <td>0.25</td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.11</td>
                         <td>63</td>
                     </tr>
     
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
-                        <td>5</td>
-                        <td>0.24</td>
-                        <td>15</td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.13</td>
+                        <td>31</td>
                     </tr>
     
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
-                        <td>3</td>
-                        <td>0.28</td>
-                        <td>47</td>
+                        <td>2000</td>
+                        <td>1</td>
+                        <td>0.14</td>
+                        <td>95</td>
                     </tr>
     
                 </tr>
             </tbody>
         </table>
     </div>
-
+    
 
 
 Plot the results
@@ -552,7 +546,7 @@ Let’s start with the centiles.
 
 
 
-.. image:: 03_HBR_Normal_files/03_HBR_Normal_17_0.png
+.. image:: 03_HBR_Normal_files/03_HBR_Normal_16_0.png
 
 
 
@@ -571,7 +565,7 @@ Now let’s see the qq plots
 
 
 
-.. image:: 03_HBR_Normal_files/03_HBR_Normal_19_0.png
+.. image:: 03_HBR_Normal_files/03_HBR_Normal_18_0.png
 
 
 
@@ -591,7 +585,7 @@ We can also split the QQ plots by batch effects:
 
 
 
-.. image:: 03_HBR_Normal_files/03_HBR_Normal_21_0.png
+.. image:: 03_HBR_Normal_files/03_HBR_Normal_20_0.png
 
 
 And finally the ridge plot:
@@ -659,19 +653,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.210474</td>
-          <td>5.732098</td>
-          <td>0.088609</td>
-          <td>0.299828</td>
-          <td>0.878006</td>
-          <td>-0.540932</td>
-          <td>0.206294</td>
-          <td>727.606066</td>
-          <td>0.505365</td>
-          <td>4.549199e-57</td>
-          <td>0.793706</td>
-          <td>0.886112</td>
-          <td>1.74762</td>
+          <td>0.354731</td>
+          <td>5.898452</td>
+          <td>0.087768</td>
+          <td>0.308666</td>
+          <td>0.870916</td>
+          <td>-0.548023</td>
+          <td>0.35473</td>
+          <td>656.05035</td>
+          <td>0.504326</td>
+          <td>8.349288e-57</td>
+          <td>0.64527</td>
+          <td>0.879556</td>
+          <td>1.80218</td>
         </tr>
       </tbody>
     </table>
@@ -733,19 +727,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.283751</td>
-          <td>1.16368</td>
-          <td>0.165036</td>
-          <td>0.343766</td>
-          <td>0.809614</td>
-          <td>-0.309656</td>
-          <td>0.283646</td>
-          <td>512.254337</td>
-          <td>0.457544</td>
-          <td>1.422457e-12</td>
-          <td>0.716354</td>
-          <td>0.968318</td>
-          <td>0.740373</td>
+          <td>0.367656</td>
+          <td>1.286686</td>
+          <td>0.161708</td>
+          <td>0.341987</td>
+          <td>0.796284</td>
+          <td>-0.322985</td>
+          <td>0.364526</td>
+          <td>482.470339</td>
+          <td>0.493964</td>
+          <td>1.092281e-14</td>
+          <td>0.635474</td>
+          <td>0.96293</td>
+          <td>0.814839</td>
         </tr>
       </tbody>
     </table>
@@ -758,12 +752,12 @@ What’s next?
 Now we have a normative hierarchical Bayesian regression model, we can
 use it to:
 
--  Make predictions on new data
--  Harmonize data, this means that we ‘remove’ the batch effects from
-   the data, by simulating what the data would have looked like if all
-   data was from the same batch.
--  Synthesize new data
--  Extend the model using data from new batches
+- Make predictions on new data
+- Harmonize data, this means that we ‘remove’ the batch effects from the
+  data, by simulating what the data would have looked like if all data
+  was from the same batch.
+- Synthesize new data
+- Extend the model using data from new batches
 
 Predicting
 ~~~~~~~~~~
@@ -803,7 +797,7 @@ Harmonize
 
 
 
-.. image:: 03_HBR_Normal_files/03_HBR_Normal_29_0.png
+.. image:: 03_HBR_Normal_files/03_HBR_Normal_28_0.png
 
 
 Synthesize
@@ -840,7 +834,7 @@ site B.
 
 
 
-.. image:: 03_HBR_Normal_files/03_HBR_Normal_31_0.png
+.. image:: 03_HBR_Normal_files/03_HBR_Normal_30_0.png
 
 
 
@@ -875,7 +869,7 @@ site B.
 
 
 
-.. image:: 03_HBR_Normal_files/03_HBR_Normal_32_0.png
+.. image:: 03_HBR_Normal_files/03_HBR_Normal_31_0.png
 
 
 

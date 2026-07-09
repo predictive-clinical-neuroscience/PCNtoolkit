@@ -283,18 +283,12 @@ Likelihood, which we will use to model our response variable.
         name="template",
         cores=16,
         progressbar=True,
-        draws=300,
-        tune=200,
+        draws=1500,
+        tune=500,
         chains=4,
         nuts_sampler="nutpie",
         likelihood=SHASHbLikelihood(mu, sigma, epsilon, delta),
     )
-
-We select a low number of draws and tuning steps in the HR configuration
-above. This is to speed up the time it takes to run this specific
-tutorial. In your analysis, you would want to use more draws and tuning
-steps for better convergence. Typical numbers we recommend are
-draws=1500 and tune=500.
 
 After specifying the regression model, we can configure a normative
 model.
@@ -344,15 +338,6 @@ All results can be found in the save directory.
 .. code:: ipython3
 
     model.fit_predict(train, test);
-
-
-.. parsed-literal::
-
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
-    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
-    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
-    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
-      warnings.warn(
 
 
 
@@ -445,7 +430,7 @@ All results can be found in the save directory.
             }
         }
     </style>
-
+    
 
 
 
@@ -468,8 +453,8 @@ All results can be found in the save directory.
     
         <progress
             id="total-progress-bar"
-            max="2000"
-            value="2000">
+            max="8000"
+            value="8000">
         </progress>
         <table>
             <thead>
@@ -486,60 +471,60 @@ All results can be found in the save directory.
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
+                        <td>2000</td>
                         <td>0</td>
-                        <td>0.02</td>
-                        <td>1023</td>
+                        <td>0.09</td>
+                        <td>287</td>
                     </tr>
     
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
+                        <td>2000</td>
                         <td>0</td>
-                        <td>0.01</td>
-                        <td>1023</td>
+                        <td>0.08</td>
+                        <td>127</td>
                     </tr>
     
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
+                        <td>2000</td>
                         <td>0</td>
-                        <td>0.02</td>
-                        <td>1023</td>
+                        <td>0.09</td>
+                        <td>319</td>
                     </tr>
     
                     <tr>
                         <td class="progress-cell">
                             <progress
-                                max="500"
-                                value="500">
+                                max="2000"
+                                value="2000">
                             </progress>
                         </td>
-                        <td>500</td>
+                        <td>2000</td>
                         <td>0</td>
-                        <td>0.01</td>
-                        <td>1023</td>
+                        <td>0.08</td>
+                        <td>127</td>
                     </tr>
     
                 </tr>
             </tbody>
         </table>
     </div>
-
+    
 
 
 Plot the results
@@ -559,8 +544,8 @@ Let’s start with the centiles.
     plot_centiles_advanced(
         model,
         centiles=[0.05, 0.5, 0.95],  # Plot these centiles, the default is [0.05, 0.25, 0.5, 0.75, 0.95]
-        scatter_data=train,  # Scatter this data along with the centiles
-        batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},  # Highlight these groups
+        scatter_data=test,  # Scatter this data along with the centiles
+        batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},
         show_other_data=True,  # scatter data not in those groups as smaller black circles
         harmonize_data=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
         conditionals=[30]
@@ -568,16 +553,21 @@ Let’s start with the centiles.
 
 
 
-.. image:: 04_HBR_SHASH_files/04_HBR_SHASH_17_0.png
+.. image:: 04_HBR_SHASH_files/04_HBR_SHASH_16_0.png
 
 
 
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
+
+If we compare this centile plot (SHASHb likelihood) with the one from
+the previous tutorial (Normal likelihood) we see that the SHASHb fits
+better the non-Gaussian WM-hypointensities and does not leak to negative
+values.
 
 Now let’s see the qq plots
 
@@ -594,7 +584,7 @@ Now let’s see the qq plots
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
 
@@ -621,19 +611,19 @@ And finally the ridge plot:
 
 .. parsed-literal::
 
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1049: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\plotter.py:1051: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       g.figure.tight_layout()
-
+    
 
 
 .. image:: 04_HBR_SHASH_files/04_HBR_SHASH_23_1.png
@@ -710,19 +700,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.351912</td>
-          <td>2.023439</td>
-          <td>0.11712</td>
-          <td>0.320512</td>
-          <td>0.686523</td>
-          <td>-0.732415</td>
-          <td>0.351179</td>
-          <td>657.853047</td>
-          <td>0.488372</td>
-          <td>7.254891e-53</td>
-          <td>0.648821</td>
-          <td>0.965472</td>
-          <td>0.811961</td>
+          <td>0.350945</td>
+          <td>1.173475</td>
+          <td>0.081506</td>
+          <td>0.320968</td>
+          <td>0.686721</td>
+          <td>-0.732217</td>
+          <td>0.350142</td>
+          <td>658.378599</td>
+          <td>0.488698</td>
+          <td>6.054985e-53</td>
+          <td>0.649858</td>
+          <td>0.986314</td>
+          <td>0.327245</td>
         </tr>
       </tbody>
     </table>
@@ -784,19 +774,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.391676</td>
-          <td>0.413755</td>
-          <td>0.15996</td>
-          <td>0.347431</td>
-          <td>0.748361</td>
-          <td>-0.370908</td>
-          <td>0.383072</td>
-          <td>475.377983</td>
-          <td>0.512882</td>
-          <td>6.867042e-16</td>
-          <td>0.616928</td>
-          <td>0.993907</td>
-          <td>-0.126654</td>
+          <td>0.392384</td>
+          <td>0.450777</td>
+          <td>0.180911</td>
+          <td>0.347812</td>
+          <td>0.748561</td>
+          <td>-0.370708</td>
+          <td>0.38341</td>
+          <td>475.247706</td>
+          <td>0.513314</td>
+          <td>6.432733e-16</td>
+          <td>0.61659</td>
+          <td>0.980844</td>
+          <td>-0.495452</td>
         </tr>
       </tbody>
     </table>
@@ -809,12 +799,12 @@ What’s next?
 Now we have a normative hierarchical Bayesian regression model, we can
 use it to:
 
--  Make predictions on new data
--  Harmonize data, this means that we ‘remove’ the batch effects from
-   the data, by simulating what the data would have looked like if all
-   data was from the same batch.
--  Synthesize new data
--  Extend the model using data from new batches
+- Make predictions on new data
+- Harmonize data, this means that we ‘remove’ the batch effects from the
+  data, by simulating what the data would have looked like if all data
+  was from the same batch.
+- Synthesize new data
+- Extend the model using data from new batches
 
 Predicting
 ~~~~~~~~~~
@@ -852,7 +842,7 @@ Harmonize
     ax[1].set_ylabel(feature_to_plot)
     plt.tight_layout()
     plt.show()
-
+    
 
 
 

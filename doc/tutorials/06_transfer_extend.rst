@@ -174,7 +174,7 @@ Create HBR model
         nuts_sampler="nutpie",
         likelihood=likelihood,
     )
-
+    
 
 Create normative model
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -202,18 +202,19 @@ Fit and plot normative model
     plot_centiles_advanced(
         model,
         scatter_data=train,
-        batch_effects = 'all'
+        batch_effects = 'all',
+        show_legend = False
     )
 
 
 .. parsed-literal::
 
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\pytensor\link\c\cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
     This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
     Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
     For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
       warnings.warn(
-
+    
 
 
 .. image:: 06_transfer_extend_files/06_transfer_extend_13_1.png
@@ -282,7 +283,8 @@ smaller dataset, and see how those centiles look:
     plot_centiles_advanced(
         extended_model,
         scatter_data=test,
-        batch_effects='all'
+        batch_effects='all',
+        show_legend = False
     )
 
 
@@ -315,7 +317,8 @@ predictions on the original train data.
     plot_centiles_advanced(
         transfered_model,
         scatter_data=test,
-        batch_effects='all'
+        batch_effects='all',
+        show_legend = False
     )
 
 

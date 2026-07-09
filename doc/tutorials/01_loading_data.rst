@@ -65,7 +65,7 @@ Here are examples of both.
         	sex (2)
     	site (23)
         
-
+    
 
 
 
@@ -107,7 +107,7 @@ Here are examples of both.
         - 1 batch effects:
         	batch_effect_0 (2)
         
-
+    
 
 
 
@@ -1531,12 +1531,12 @@ will have new attributes holding the predictions.
 Specifically, the NormData object will be extended with new data
 variables:
 
--  ``Z``: The predicted Z scores for each response variable
--  ``centiles``: The predicted centiles
--  ``logp``: The predicted log-p-values for each response variable
--  ``Yhat``: The predicted mean of the response variable
--  ``Y_harmonized``: The harmonized response variables
--  ``statistics``: An array of statistics for each response variable
+- ``Z``: The predicted Z scores for each response variable
+- ``centiles``: The predicted centiles
+- ``logp``: The predicted log-p-values for each response variable
+- ``Yhat``: The predicted mean of the response variable
+- ``Y_harmonized``: The harmonized response variables
+- ``statistics``: An array of statistics for each response variable
 
 And the following new coordinates: - ``centile``: The specific centile
 values - ``statistic``: The name of the computed statistics
@@ -1593,7 +1593,7 @@ values - ``statistic``: The name of the computed statistics
     Process: 2581 - 2026-05-22 16:06:41 - Harmonizing data for Left-Lateral-Ventricle.
     Process: 2581 - 2026-05-22 16:06:41 - Harmonizing data for Brain-Stem.
     Process: 2581 - 2026-05-22 16:06:41 - Harmonizing data for WM-hypointensities.
-
+    
 
 .. code:: ipython3
 
@@ -3134,7 +3134,7 @@ applicable to both of them.
         	sex (2)
     	site (18)
         
-
+    
 
 .. code:: ipython3
 
@@ -3145,7 +3145,7 @@ applicable to both of them.
 .. parsed-literal::
 
     True
-
+    
 
 .. code:: ipython3
 

@@ -67,7 +67,7 @@ Compare normative models
         	sex (2)
     	site (23)
         
-
+    
 
 .. code:: ipython3
 
@@ -230,7 +230,7 @@ Compare normative models
 
     Process: 3265 - 2026-05-22 16:15:49 - Fitting models on 2 response variables.
     Process: 3265 - 2026-05-22 16:15:49 - Fitting model for WM-hypointensities.
-
+    
 
 .. parsed-literal::
 
@@ -239,7 +239,7 @@ Compare normative models
     Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
     For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
       warnings.warn(
-
+    
 
 
 .. raw:: html
@@ -331,7 +331,7 @@ Compare normative models
             }
         }
     </style>
-
+    
 
 
 
@@ -425,13 +425,13 @@ Compare normative models
             </tbody>
         </table>
     </div>
-
+    
 
 
 .. parsed-literal::
 
     Process: 3265 - 2026-05-22 16:16:24 - Fitting model for Right-Lateral-Ventricle.
-
+    
 
 
 .. raw:: html
@@ -523,7 +523,7 @@ Compare normative models
             }
         }
     </style>
-
+    
 
 
 
@@ -617,7 +617,7 @@ Compare normative models
             </tbody>
         </table>
     </div>
-
+    
 
 
 .. parsed-literal::
@@ -650,7 +650,7 @@ Compare normative models
     Process: 3265 - 2026-05-22 16:17:01 - Computing yhat for 2 response variables.
     Process: 3265 - 2026-05-22 16:17:02 - Fitting models on 2 response variables.
     Process: 3265 - 2026-05-22 16:17:02 - Fitting model for WM-hypointensities.
-
+    
 
 
 .. raw:: html
@@ -742,7 +742,7 @@ Compare normative models
             }
         }
     </style>
-
+    
 
 
 
@@ -836,13 +836,13 @@ Compare normative models
             </tbody>
         </table>
     </div>
-
+    
 
 
 .. parsed-literal::
 
     Process: 3265 - 2026-05-22 16:17:36 - Fitting model for Right-Lateral-Ventricle.
-
+    
 
 
 .. raw:: html
@@ -934,7 +934,7 @@ Compare normative models
             }
         }
     </style>
-
+    
 
 
 
@@ -1028,7 +1028,7 @@ Compare normative models
             </tbody>
         </table>
     </div>
-
+    
 
 
 .. parsed-literal::
@@ -1059,7 +1059,7 @@ Compare normative models
     Process: 3265 - 2026-05-22 16:18:16 - Computing log-probabilities for WM-hypointensities.
     Process: 3265 - 2026-05-22 16:18:17 - Computing log-probabilities for Right-Lateral-Ventricle.
     Process: 3265 - 2026-05-22 16:18:18 - Computing yhat for 2 response variables.
-
+    
 
 
 
@@ -2069,6 +2069,19 @@ Compare normative models
     Process: 3265 - 2026-05-22 16:18:33 - Computing log-probabilities for WM-hypointensities.
     Process: 3265 - 2026-05-22 16:18:34 - Computing log-probabilities for Right-Lateral-Ventricle.
     Process: 3265 - 2026-05-22 16:18:35 - Computing yhat for 2 response variables.
+    
+
+
+.. parsed-literal::
+
+    Output()
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+    
 
 
 
@@ -2081,7 +2094,28 @@ Compare normative models
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+    
 
+
+.. parsed-literal::
+
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
+      warnings.warn(
+    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
+      warnings.warn(
+    
+
+
+.. parsed-literal::
+
+    Output()
+
+
+
+.. raw:: html
+
+    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
+    
 
 
 
@@ -2094,41 +2128,7 @@ Compare normative models
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-.. parsed-literal::
-
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
-      warnings.warn(
-    /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
-      warnings.warn(
-
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
-
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-
+    
 
 
 .. parsed-literal::
@@ -2137,7 +2137,7 @@ Compare normative models
       warnings.warn(
     /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
-
+    
 
 .. code:: ipython3
 
@@ -2149,7 +2149,7 @@ Compare normative models
 .. parsed-literal::
 
     WM-hypointensities
-
+    
 
 
 .. raw:: html
@@ -2216,7 +2216,7 @@ Compare normative models
 .. parsed-literal::
 
     Right-Lateral-Ventricle
-
+    
 
 
 .. raw:: html

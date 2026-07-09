@@ -31,7 +31,7 @@
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
-
+    
 
 .. code:: ipython3
 
@@ -62,7 +62,7 @@
     CompositeBasisFunction(
             (BsplineBasisFunction(basis_column=0, degree=3, nknots=5), BsplineBasisFunction(basis_column=1, degree=3, nknots=5))
         ),
-
+    
 
 
 
@@ -170,7 +170,7 @@
     Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
     For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
       warnings.warn(
-
+    
 
 
 .. raw:: html
@@ -262,7 +262,7 @@
             }
         }
     </style>
-
+    
 
 
 
@@ -356,7 +356,7 @@
             </tbody>
         </table>
     </div>
-
+    
 
 
 
@@ -1334,7 +1334,7 @@
         show_legend=False,
         plt_kwargs={"figsize": (4, 3)},
     )
-
+    
 
 
 

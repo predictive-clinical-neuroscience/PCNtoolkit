@@ -38,7 +38,7 @@ Imports
     Some upcoming changes may be backward incompatible.
     For details and migration guidance, visit: https://python.arviz.org/en/latest/user_guide/migration_guide.html
       warn(
-
+    
 
 Load data
 ---------
