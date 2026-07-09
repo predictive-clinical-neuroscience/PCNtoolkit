@@ -654,13 +654,15 @@ class BetaLikelihood(Likelihood):
     def get_var_names(self) -> List[str]:
         return ["alpha_samples", "beta_samples"]
 
-class NegativeBinomialLikelihood(Likelihood):
-    def __init__(self, mu: BasePrior, sigma: BasePrior):
-        super().__init__(name="NegativeBinomial")
+class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
+    def __init__(self, mu: BasePrior, alpha: BasePrior, psi: BasePrior):
+        super().__init__(name="ZINB")
         self.mu = mu
         self.mu.set_name("mu")
-        self.sigma = sigma
-        self.sigma.set_name("sigma")
+        self.alpha = alpha
+        self.alpha.set_name("alpha")
+        self.psi = psi
+        self.psi.set_name("psi")
 
     def _compile(
         self,
@@ -673,7 +675,7 @@ class NegativeBinomialLikelihood(Likelihood):
         compiled_params = self.compile_params(model, X, be, be_maps, Y)
         compiled_params = {k: v[0] for k, v in compiled_params.items()}
         with model:
-            pm.NegativeBinomial("Yhat", **compiled_params, observed=model["Y"], dims="observations")
+            pm.ZeroInflatedNegativeBinomial("Yhat", **compiled_params, observed=model["Y"], dims="observations")
         return model
 
     def compile_params(
@@ -686,20 +688,32 @@ class NegativeBinomialLikelihood(Likelihood):
     ) -> dict[str, Any]:
         return {
             "mu": (self.mu.compile(model, X, be, be_maps, Y), self.mu.sample_dims),
-            "sigma": (self.sigma.compile(model, X, be, be_maps, Y), self.sigma.sample_dims),
+            "alpha": (self.alpha.compile(model, X, be, be_maps, Y), self.alpha.sample_dims),
+            "psi": (self.psi.compile(model, X, be, be_maps, Y), self.psi.sample_dims),
         }
 
     def transfer(self, idata: az.InferenceData, **kwargs) -> "Likelihood":
         new_mu = self.mu.transfer(idata, **kwargs)
-        new_sigma = self.sigma.transfer(idata, **kwargs)
-        return NegativeBinomialLikelihood(new_mu, new_sigma)
+        new_alpha = self.alpha.transfer(idata, **kwargs)
+        new_psi = self.psi.transfer(idata, **kwargs)
+        return ZeroInflatedNegativeBinomialLikelihood(new_mu, new_alpha, new_psi)
 
     def _update_data(
         self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
     ):
         self.mu.update_data(model, X, be, be_maps, Y)
-        self.sigma.update_data(model, X, be, be_maps, Y)
+        self.alpha.update_data(model, X, be, be_maps, Y)
+        self.psi.update_data(model, X, be, be_maps, Y)
 
+    #stopped here due to uncertainty about how to implement forward (to reference space) and backward (to data space) for ZINB
+    #normal likelihood and SHASH have invertible transformations. ZINB is a mixture distribution (psi defining the probability
+    #of zero inflation, mu and alpha defining the negative binomial distrbution). Therefore 0 can arise from either distribution
+    #which makes Y non-unique and therefore not invertible.
+    #I will need to think about how to implement this. Claude claims that randomized quantile residuals could be used but
+    #would love input on this - CDF of ZINB would be discrete, the inverse CDF would be step-wise.
+    #Would backward() return the corresponding count quantile? 
+    #Does forward() run inference internally to find corresponding Z? If yes, could it deal with a discrete mixture distribution?
+    
     def forward(self, *args, **kwargs):
         mu, sigma = args
         Y = kwargs.get("Y", None)
