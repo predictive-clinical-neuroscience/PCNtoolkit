@@ -139,7 +139,7 @@ The fit_predict function does all these operations in a single step. In some cas
     model.fit(train)
     model.predict(test)
 
-For further information, see the `developer documentation <https://pcntoolkit.readthedocs.io/en/latest/autoapi/pcntoolkit/normative/index.html>`_. The same can be achieved from the command line, using the ``-f`` argument, for example, by specifying ``-f predict``.
+For further information, see the `API reference documentation <https://pcntoolkit.readthedocs.io/en/latest/autoapi/pcntoolkit/normative/index.html>`_. The same can be achieved from the command line, using the ``-f`` argument, for example, by specifying ``-f predict``.
 
 Paralellising estimation to speed things up
 -----------------------------------------------------
