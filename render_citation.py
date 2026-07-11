@@ -367,11 +367,8 @@ def main() -> None:
     authors_yaml = build_authors_yaml(lines_by_author)
 
     # Template context with version, date, DOI, and
-    # the generated authors YAML block.  The DOI is
-    # the Zenodo *concept* DOI, which always resolves
-    # to the newest release; do not replace it with a
-    # per-version DOI, or it goes stale each release.
-    context = {
+    # the generated authors YAML block.  Use the Zenodo *concept* DOI
+    # that cites all versions of the software.
         "version": version,
         "date": date.today().isoformat(),
         "doi": "10.5281/zenodo.7498917",
