@@ -1,13 +1,4 @@
-<table border="0" cellspacing="0" cellpadding="0">
-  <tr>
-    <td valign="middle">
-      <img src="https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit/dev/doc/_static/pcn-icon.png" alt="PCNtoolkit logo" height="64" />
-    </td>
-    <td valign="middle">
-      <h1>&nbsp;PCNtoolkit</h1>
-    </td>
-  </tr>
-</table>
+# <img src="https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit/dev/doc/_static/pcn-icon.png" alt="PCNtoolkit logo" height="40" valign="middle" /> PCNtoolkit
 
 [![Downloads][downloads-badge]][downloads-link]
 [![DOI][doi-badge]][doi-link]
