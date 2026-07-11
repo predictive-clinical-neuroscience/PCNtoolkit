@@ -4,12 +4,11 @@
 </h1>
 
 [![Downloads][downloads-badge]][downloads-link]
-[![License: GPL v3][license-badge]][license-link]
 [![DOI][doi-badge]][doi-link]
+[![License: GPL v3][license-badge]][license-link]
 
 PCNtoolkit is an open-source Python package for Normative Modelling of neuroimaging data.
 
-# IMPORTANT 
 ## Deprecation warning
 
 With version 1.X.X (June 2025), PCNtoolkit was rewritten to be object-oriented, making it more extendable and maintainable. As a result, version 0.X.X is not compatible with 1.X.X and is no longer actively maintained.
@@ -42,13 +41,13 @@ model.fit_predict(train, test)
 ### Users
 The best place to learn Normative Modelling and the PCNtoolkit is our [website documentation](https://pcntoolkit.readthedocs.io/en/latest/).
 
-Feel free to ask you questions and engage in discussion with the community on the [NeuroStars online forum](https://neurostars.org/tags/pcntoolkit). Please add the tag *pcntoolkit* to your post so that it is easier for others to find it.
+Feel free to ask your questions and engage in discussions with the community on the [NeuroStars online forum](https://neurostars.org/tags/pcntoolkit). Please add the tag *pcntoolkit* to your post.
 
 ### Contributors
 
 Contributions are always welcome! To start see our [website contributing guidelines](https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html).
 
-More in depth guidelines you can find in our [GitHub Wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki).
+You can find more in depth guidelines in our [GitHub Wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki).
 
 
 ## License
