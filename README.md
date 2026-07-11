@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit/dev/doc/_static/pcn-icon.png" alt="PCNtoolkit logo" height="40" valign="middle" /> PCNtoolkit
+# <img src="https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit/dev/doc/_static/pcn-icon.png" alt="PCNtoolkit logo" height="52" align="top" style="vertical-align: middle; margin-bottom: 6px;" /> PCNtoolkit
 
 [![Downloads][downloads-badge]][downloads-link]
 [![DOI][doi-badge]][doi-link]
