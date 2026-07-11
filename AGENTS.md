@@ -46,12 +46,14 @@ What is *not* borrowed from scikit-learn:
 - No trailing-underscore learned-attribute convention.
 - Models are saved and loaded from readable json files with `to_dict` / `from_dict`, not raw pickling.
 
+For more detailed software architecture fetch and read the [architecture description from our github wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Software-architecture#architecture-description)
+
 ## CLI tooling
 
-Use these tools for the corresponding tasks (check `Makefile` and `doc/Makefile, `, pyproject.toml`,
-and `--help` for exact commands):
+Use these CLI tools for the corresponding tasks (check `--help` for exact commands):
 
-- **conda** — virtual environment setup (fetch and follow the guidelines from https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html)
-- **ruff** — lint and format. Use ruff, not black or autopep8.
-- **pytest** — tests, under `test/`
-- **gh** — branches and PRs. Branch from `dev`; open PRs against `dev`, not `master`.
+- **conda** -  virtual environment setup (fetch and follow the guidelines from https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html)
+- **ruff** - lint and format.
+- **pytest** - tests, under `test/`
+- **gh** - branches and PRs
+- **make** - automate dev tasks. The most useful task is building the website with `cd doc && make livehtml`) (for more tasks see `Makefile` and `doc/Makefile`)
