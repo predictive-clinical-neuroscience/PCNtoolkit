@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents working with this repository.
 
 ## What is PCNtoolkit
 
-PCNtoolkit is an open-source Python package for Normative Modelling of neuroimaging data.
+PCNtoolkit is an open-source Python package for Normative Modelling of neuroimaging data. Our target users are neuroscience researchers.
 
 ## Contribution guidelines
 ALWAYS follow our contribution guidelines. Fetch and read these before contributing:
@@ -50,10 +50,20 @@ For more detailed software architecture fetch and read the [architecture descrip
 
 ## CLI tooling
 
-Use these CLI tools for the corresponding tasks (check `--help` for exact commands):
+You MUST use these CLI tools for the corresponding tasks (check `--help` for exact commands):
 
 - **conda** -  virtual environment setup (fetch and follow the guidelines from https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html)
 - **ruff** - lint and format.
 - **pytest** - tests, under `test/`
 - **gh** - branches and PRs
 - **make** - automate dev tasks. The most useful task is building the website with `cd doc && make livehtml`) (for more tasks see `Makefile` and `doc/Makefile`)
+
+## Developing in Windows
+
+## CI/CD
+
+## Code Style and Standards
+
+### Docstrings
+### Comments
+### Type hints
