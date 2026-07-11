@@ -369,6 +369,7 @@ def main() -> None:
     # Template context with version, date, DOI, and
     # the generated authors YAML block.  Use the Zenodo *concept* DOI
     # that cites all versions of the software.
+    context = {
         "version": version,
         "date": date.today().isoformat(),
         "doi": "10.5281/zenodo.7498917",
