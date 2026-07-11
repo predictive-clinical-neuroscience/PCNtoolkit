@@ -12,21 +12,13 @@ PCNtoolkit is an open-source Python package for Normative Modelling of neuroimag
 # IMPORTANT 
 ## Deprecation warning
 
-This is PCNtoolkit version 1.X.X, released originally in June 2025. Any scripts, models, and results created with version 0.X.X are **not compatible** with this and future versions of the toolkit. 
-
-To use the models created with versions 0.35 and earlier, please install the appropriate version using `pip install pcntoolkit==0.35`, or replace 0.35 with your desired version. The old version of the toolbox is also still available on [GitHub](https://github.com/amarquand/PCNtoolkit/tree/v0.35).
+With version 1.X.X (June 2025), PCNtoolkit was rewritten to be object-oriented, making it more extendable and maintainable. As a result, version 0.X.X is not compatible with 1.X.X and is no longer actively maintained.
 
 ## Installation
 
 ```bash
 pip install pcntoolkit
 ```
-
-## Documentation
-
-See the [documentation](https://pcntoolkit.readthedocs.io/en/latest/) for more details.
-
-Documentation for the earlier version of the toolbox is available [here](https://pcntoolkit.readthedocs.io/en/v0.35/)
 
 ## Example usage
 
@@ -45,28 +37,19 @@ model = NormativeModel(BLR(heteroskedastic=True),
 model.fit_predict(train, test)
 ```
 
-## Getting help
+## Help and support
 
-- **Usage questions:** ask on [NeuroStars](https://neurostars.org/tags/pcntoolkit) using the tag `pcntoolkit`.
-- **Bugs and feature requests:** [open an issue](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/issues).
+### Users
+The best place to learn Normative Modelling and the PCNtoolkit is our [website documentation](https://pcntoolkit.readthedocs.io/en/latest/).
 
-When reporting a bug, please include your Python and PCNtoolkit versions, a minimal reproducible example, and the full traceback.
+Feel free to ask you questions and engage in discussion with the community on the [NeuroStars online forum](https://neurostars.org/tags/pcntoolkit). Please add the tag *pcntoolkit* to your post so that it is easier for others to find it.
 
-## Contributing
+### Contributors
 
-Contributions are welcome. See [CONTRIBUTING.md](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/blob/dev/CONTRIBUTING.md) for how to set up a development environment, run the tests, and format your code.
+Contributions are always welcome! To start see our [website contributing guidelines](https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html).
 
-Our [GitHub Wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki) has more depth: a **Contributors guide** (branching and PR workflow, adding tutorials to the website, software architecture) and a **Maintainers guide** (making a release, migrating saved models).
+More in depth guidelines you can find in our [GitHub Wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki).
 
-## Citing PCNtoolkit
-
-If you use PCNtoolkit in your research, please cite the software and the accompanying paper.
-
-**Software** — [10.5281/zenodo.7498917](https://doi.org/10.5281/zenodo.7498917). This DOI always resolves to the latest release. Full machine-readable metadata is in [CITATION.cff](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/blob/dev/CITATION.cff).
-
-**Paper (version 1.x)** — de Boer, A. A. A., Bayer, J. M. M., Fraza, C., et al. (2026). *Protocol Update: The Normative Modelling Paradigm for Computational Psychiatry.* bioRxiv. [10.64898/2026.02.17.706268](https://doi.org/10.64898/2026.02.17.706268)
-
-**Paper (version 0.x)** — Rutherford, S., Kia, S. M., Wolfers, T., et al. (2022). *The Normative Modeling Framework for Computational Psychiatry.* Nature Protocols. [10.1038/s41596-022-00696-5](https://doi.org/10.1038/s41596-022-00696-5)
 
 ## License
 
