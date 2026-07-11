@@ -1,4 +1,7 @@
-# Predictive Clinical Neuroscience Toolkit
+<h1>
+  <img src="https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit/dev/doc/_static/pcn-icon.png" alt="PCNtoolkit logo" height="64" align="left" style="margin-right: 12px;" />
+  &nbsp;Predictive Clinical Neuroscience Toolkit
+</h1>
 
 [![PyPI version](https://img.shields.io/pypi/v/pcntoolkit.svg)](https://pypi.org/project/pcntoolkit/)
 [![Python versions](https://img.shields.io/pypi/pyversions/pcntoolkit.svg)](https://pypi.org/project/pcntoolkit/)
