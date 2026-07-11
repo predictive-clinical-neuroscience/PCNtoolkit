@@ -1,17 +1,13 @@
 <h1>
   <img src="https://raw.githubusercontent.com/predictive-clinical-neuroscience/PCNtoolkit/dev/doc/_static/pcn-icon.png" alt="PCNtoolkit logo" height="64" align="left" style="margin-right: 12px;" />
-  &nbsp;Predictive Clinical Neuroscience Toolkit
+  &nbsp;PCNtoolkit
 </h1>
 
-[![PyPI version](https://img.shields.io/pypi/v/pcntoolkit.svg)](https://pypi.org/project/pcntoolkit/)
-[![Python versions](https://img.shields.io/pypi/pyversions/pcntoolkit.svg)](https://pypi.org/project/pcntoolkit/)
-[![Documentation Status](https://readthedocs.org/projects/pcntoolkit/badge/?version=latest)](https://pcntoolkit.readthedocs.io/en/latest/)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7498917.svg)](https://doi.org/10.5281/zenodo.7498917)
+[![Downloads][downloads-badge]][downloads-link]
+[![License: GPL v3][license-badge]][license-link]
+[![DOI][doi-badge]][doi-link]
 
-Predictive Clinical Neuroscience software toolkit (formerly nispat). 
-
-A Python package for normative modelling, spatial statistics and pattern recognition.
+PCNtoolkit is an open-source Python package for Normative Modelling of neuroimaging data.
 
 # IMPORTANT 
 ## Deprecation warning
@@ -75,4 +71,14 @@ If you use PCNtoolkit in your research, please cite the software and the accompa
 ## License
 
 PCNtoolkit is released under the [GPL-3.0-only](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/blob/dev/LICENSE) license.
+
+<!-- Badge and link definitions -->
+[downloads-badge]: https://img.shields.io/pypi/dm/pcntoolkit.svg?label=PyPI
+[downloads-link]: https://pypi.org/project/pcntoolkit/
+
+[license-badge]: https://img.shields.io/badge/License-GPLv3-blue.svg
+[license-link]: https://www.gnu.org/licenses/gpl-3.0
+
+[doi-badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.7498917.svg
+[doi-link]: https://doi.org/10.5281/zenodo.7498917
 
