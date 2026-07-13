@@ -71,7 +71,22 @@ Windows does not come with Make pre-installed. You can use Make via Git Bash. To
 
 ## Code Style and Standards
 
+When writing explanations, plans, docstrings, comments, commit messages and summaries you MUST:
+
+- Be concise. More text is not better. No filler, flattery, or marketing tone.
+- Audience: a neuroscientist who codes, but is not a statistician, software
+  engineer, or ML expert.
+
+### Commits/PRs
+- Do not commit or open a PR unless instructed to do so.
+- For commits use short subjects (≤50 chars), bodies wrapped at 72;
+  prefer prefixes: `fix|enh|doc|cos|test`
+- PR description must state which model was used and what it did.
+
 ### Docstrings
+- Use NumPy-style `Parameters`, `Returns`, `Raises` sections in the docstrings
+- For classes, also specify the attributes.
+
 ### Comments
 - Comment the non-obvious lines only
 
