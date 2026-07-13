@@ -97,3 +97,9 @@ When writing explanations, plans, docstrings, comments, commit messages and summ
 
 - All new or modified Python functions/methods must annotate
   every parameter and the return type.
+
+## Critical Reminders
+
+- This file must reflect the current codebase. If anything described here changes
+  (API, tooling, workflow, conventions), update the relevant line in the same PR.
+- Do not add anything else here unless asked.
