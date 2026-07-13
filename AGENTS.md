@@ -59,6 +59,13 @@ You MUST use these CLI tools for the corresponding tasks (check `--help` for exa
 - **make** - automate dev tasks. The most useful task is building the website with `cd doc && make livehtml`) (for more tasks see `Makefile` and `doc/Makefile`)
 
 ## Developing in Windows
+PCNtoolkit officially works in Linux and Mac. However, it is possible to contribute from a Windows laptop without WSL. 
+
+For Windows you have to manually install the g++ compiler (to compile C/C++ extensions when you run a HBR model), as it is not installed by default in Windows. To install it run:
+
+`conda install -c conda-forge m2w64-toolchain libpython`
+
+Windows does not come with Make pre-installed. You can use Make via Git Bash. To find instructions about that fetch and read https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/PCNtoolkit-from-Windows#2-installing-make-on-windows.
 
 ## CI/CD
 
@@ -66,4 +73,8 @@ You MUST use these CLI tools for the corresponding tasks (check `--help` for exa
 
 ### Docstrings
 ### Comments
+- Comment the non-obvious lines only
+
 ### Type hints
+- All new or modified Python functions/methods must annotate
+  every parameter and the return type.
