@@ -7,6 +7,7 @@ This file provides guidance to AI coding agents working with this repository.
 PCNtoolkit is an open-source Python package for Normative Modelling of neuroimaging data. Our target users are neuroscience researchers.
 
 ## Contribution guidelines
+
 ALWAYS follow our contribution guidelines. Fetch and read these before contributing:
 - Website: https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html
 - GitHub wiki: https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki
@@ -77,18 +78,22 @@ When writing explanations, plans, docstrings, comments, commit messages and summ
   engineer, or ML expert.
 
 ### Commits/PRs
+
 - Do not commit or open a PR unless instructed to do so.
 - For commits use short subjects (≤50 chars), bodies wrapped at 72;
   prefer prefixes: `fix|enh|doc|cos|test`
 - PR description must state which model was used and what it did.
 
 ### Docstrings
+
 - Use NumPy-style `Parameters`, `Returns`, `Raises` sections in the docstrings
 - For classes, also specify the attributes.
 
 ### Comments
+
 - Comment the non-obvious lines only
 
 ### Type hints
+
 - All new or modified Python functions/methods must annotate
   every parameter and the return type.
