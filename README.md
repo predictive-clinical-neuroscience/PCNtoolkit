@@ -52,12 +52,12 @@ You can find more in depth guidelines in our [GitHub Wiki](https://github.com/pr
 PCNtoolkit is released under the [GPL-3.0-only](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/blob/dev/LICENSE) license.
 
 <!-- Badge and link definitions -->
-[downloads-badge]: https://img.shields.io/pypi/dm/pcntoolkit.svg?label=PyPI
+[downloads-badge]: https://static.pepy.tech/personalized-badge/pcntoolkit?period=month&units=international_system&left_color=grey&right_color=blue&left_text=PyPI%20downloads/month
 [downloads-link]: https://pypi.org/project/pcntoolkit/
 
 [license-badge]: https://img.shields.io/badge/License-GPLv3-blue.svg
 [license-link]: https://www.gnu.org/licenses/gpl-3.0
 
-[doi-badge]: https://zenodo.org/badge/DOI/10.5281/zenodo.7498917.svg
+[doi-badge]: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.7498917-blue.svg
 [doi-link]: https://doi.org/10.5281/zenodo.7498917
 
