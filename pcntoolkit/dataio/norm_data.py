@@ -443,15 +443,25 @@ class NormData(xr.Dataset):
         new_data_vars = {}
         new_coords = {}
 
+        # Get the observations
+        self_obs = self.observations.to_numpy()
+        other_obs = other.observations.to_numpy()
+
+        # Preserve the observation labels so that an observation keeps pointing
+        # at the SAME subject after a merge. Only if the two merged datasets have the same
+        # observation labels, shift the labels of the second dataset to avoid duplicates.
+        if np.intersect1d(self_obs, other_obs).size > 0:
+            other_obs = other_obs + self_obs.max() + 1
+
+        new_coords["observations"] = list(np.concatenate([self_obs, other_obs]))
+
         if self.attrs["real_ids"] or other.attrs["real_ids"]:
             new_data_vars["subject_ids"] = (
                 ["observations"],
                 list(np.concatenate([self.subject_ids.to_numpy(), other.subject_ids.to_numpy()])),
             )
         else:
-            new_data_vars["subject_ids"] = (["observations"], list(np.arange(self.X.shape[0] + other.X.shape[0])))
-
-        new_coords["observations"] = list(np.arange(self.X.shape[0] + other.X.shape[0]))
+            new_data_vars["subject_ids"] = (["observations"], list(new_coords["observations"]))
         covar_intersection = [c for c in self.covariates.to_numpy() if c in other.covariates.to_numpy()]
         respvar_intersection = [r for r in self.response_vars.to_numpy() if r in other.response_vars.to_numpy()]
         batch_effect_dims_intersection = [b for b in self.batch_effect_dims.to_numpy() if b in other.batch_effect_dims.to_numpy()]
