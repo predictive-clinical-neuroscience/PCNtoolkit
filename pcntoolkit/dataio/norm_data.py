@@ -1109,8 +1109,9 @@ class NormData(xr.Dataset):
             )
             centiles.columns = [("centiles", col) for col in centiles.columns]
             acc.append(centiles)
+        # Keep the observations index sorted
         pandas_df = pd.concat(acc, axis=1)
-        pandas_df.index = self.observations.values.astype(str)
+        pandas_df.index = pandas_df.index.astype(str)
         return pandas_df
 
     def save_zscores(self, save_dir: str) -> None:

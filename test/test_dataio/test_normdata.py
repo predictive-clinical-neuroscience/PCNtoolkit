@@ -172,6 +172,86 @@ def test_to_dataframe():
     print(data.to_dataframe())
 
 
+def traceable_normdata(n: int = 10) -> NormData:
+    """Build data where the age encodes the subject: sub-03 always has age 3.
+
+    Any row that pairs a subject with another subject's data is therefore
+    directly detectable, without having to track row positions by hand.
+    """
+    df = pd.DataFrame(
+        {
+            "sub_id": [f"sub-{i:02d}" for i in range(n)],
+            "age": range(n),
+            "response_var_0": [100 + i for i in range(n)],
+            "site": ["A", "B"] * (n // 2),
+        }
+    )
+    return NormData.from_dataframe(
+        name="traceable",
+        dataframe=df,
+        covariates=["age"],
+        response_vars=["response_var_0"],
+        batch_effects=["site"],
+        subject_ids="sub_id",
+    )
+
+
+def subject_of(observation_label: str) -> int:
+    """Recover the subject number from a 'sub-XX' label."""
+    return int(observation_label.split("-")[1])
+
+
+def test_to_dataframe_aligns_subject_ids_with_their_own_data():
+    """to_dataframe must not pair a subject with another subject's covariates.
+
+    The pivoted blocks come back sorted by observation, so a block left in the
+    dataset's own (unsorted) order would be silently misaligned against them.
+    train_test_split produces exactly such an unsorted order.
+    """
+    train, _ = traceable_normdata().train_test_split(0.6)
+    assert not np.array_equal(train.observations.to_numpy(), np.sort(train.observations.to_numpy())), (
+        "test is vacuous unless the observations are unsorted"
+    )
+
+    df = train.to_dataframe()
+
+    for label, subject, age in zip(df.index, df[("subject_ids", "subject_ids")], df[("X", "age")]):
+        assert subject_of(subject) == int(age), f"{subject} was paired with age {age}"
+        assert int(label) == subject_of(subject), f"row labelled {label} holds {subject}"
+
+
+def test_merge_preserves_observation_labels():
+    """Splitting a dataset and merging it back must reconstruct the original.
+
+    Regenerating the labels on merge silently reassigns an observation to a
+    different subject.
+    """
+    data = traceable_normdata()
+    train, test = data.train_test_split(0.6)
+
+    merged = train.merge(test)
+
+    before = dict(zip(data.observations.to_numpy().tolist(), data.subject_ids.to_numpy().tolist()))
+    after = dict(zip(merged.observations.to_numpy().tolist(), merged.subject_ids.to_numpy().tolist()))
+    assert after == before
+
+
+def test_merge_keeps_observation_labels_unique_on_collision():
+    """Merging datasets that share labels must not produce duplicates.
+
+    Independently created datasets both start numbering at 0, so their labels
+    collide. Duplicates make to_dataframe raise and turn the joins in
+    save_zscores into a cartesian product.
+    """
+    data = traceable_normdata()
+
+    merged = copy.deepcopy(data).merge(data)
+
+    observations = merged.observations.to_numpy()
+    assert len(np.unique(observations)) == observations.size
+    merged.to_dataframe()  # raises on duplicate labels
+
+
 def test_netcdf(norm_data_from_arrays: NormData):
     norm_data_from_arrays.to_netcdf(os.path.join(gettempdir(), "test.nc"))
     norm_data_from_netcdf = NormData.from_netcdf("from_arrays", os.path.join(gettempdir(), "test.nc"))
