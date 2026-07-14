@@ -455,7 +455,8 @@ class NormData(xr.Dataset):
 
         new_coords["observations"] = list(np.concatenate([self_obs, other_obs]))
 
-        if self.attrs["real_ids"] or other.attrs["real_ids"]:
+        real_ids = self.attrs["real_ids"] or other.attrs["real_ids"]
+        if real_ids:
             new_data_vars["subject_ids"] = (
                 ["observations"],
                 list(np.concatenate([self.subject_ids.to_numpy(), other.subject_ids.to_numpy()])),
@@ -561,7 +562,7 @@ class NormData(xr.Dataset):
             name=name or (self.attrs["name"] + "_+_" + other.attrs["name"]),
             data_vars=new_data_vars,
             coords=new_coords,
-            attrs=self.attrs,
+            attrs={"real_ids": real_ids},
         )
         return new_normdata
 
