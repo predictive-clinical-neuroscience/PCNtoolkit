@@ -185,8 +185,7 @@ def test_merge_shifts_duplicate_observations(norm_data_from_arrays: NormData):
 
 
 def test_merge_knows_all_batch_effects(norm_data_from_arrays: NormData, transfer_norm_data_from_arrays: NormData):
-    """Merging A and B must give data that knows the batch effects of both.
-    """
+    """Merging A and B must give data that knows the batch effects of both."""
     # The transfer data was collected at a site the training data never saw.
     merged = norm_data_from_arrays.merge(transfer_norm_data_from_arrays)
 
@@ -239,7 +238,7 @@ def test_to_dataframe_preserves_ordered_observations(norm_data_from_arrays: Norm
 
     df = train.to_dataframe()
 
-    # Our simulated data here numbers the subjects 0,1,2,..., which on purpose 
+    # Our simulated data here numbers the subjects 0,1,2,..., which on purpose
     # is the same as the observations.
     # So if to_dataframe kept its observations sorted , then
     # the observations MUST equal its subject id.
