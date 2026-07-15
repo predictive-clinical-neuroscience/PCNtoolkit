@@ -34,7 +34,6 @@ from typing import (
 import numpy as np
 import pandas as pd  # type: ignore
 import xarray as xr
-from nibabel.loadsave import load
 from numpy.typing import ArrayLike
 from scipy import stats
 from sklearn.model_selection import StratifiedKFold, train_test_split  # type: ignore
