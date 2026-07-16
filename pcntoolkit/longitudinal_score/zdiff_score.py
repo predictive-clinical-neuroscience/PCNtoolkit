@@ -51,20 +51,18 @@ class ZDiffScore(LongitudinalScore):
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
-        timepoint_col: str = "visit",
     ) -> xr.DataArray:
         """Compute the z-diff score for every subject in ``score_data``.
 
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort with exactly two visits per subject and
-            predictions already computed.
+            Longitudinal cohort with exactly two visits per subject,
+            visit labels on the NormData object, and predictions already
+            computed.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
-        timepoint_col : str, default "visit"
-            Column used to order the two visits.
 
         Returns
         -------
@@ -101,7 +99,7 @@ class ZDiffScore(LongitudinalScore):
             # Learn the typical size of expected change from the reference
             # cohort (reference_data).
             delta_reference = self._compute_residual_change(
-                self.reference_data, rv, timepoint_col
+                self.reference_data, rv
             )
             # Convert the subject-level changes into a numeric vector.
             delta_reference_values = np.fromiter(
@@ -123,7 +121,6 @@ class ZDiffScore(LongitudinalScore):
             deltas_target = self._compute_residual_change(
                 score_data,
                 rv,
-                timepoint_col,
             )
             # Compute zdiff
             for subject, delta_target in deltas_target.items():
@@ -143,7 +140,6 @@ class ZDiffScore(LongitudinalScore):
         self,
         data: NormData,
         responsevar: str,
-        timepoint_col: str,
     ) -> dict[object, float]:
         """Compute the residual change from the first visit to the second for
         each subject."""
@@ -153,7 +149,7 @@ class ZDiffScore(LongitudinalScore):
         # Read subject ids so visits can be grouped per person.
         subject_ids = self._get_subject_ids(data)
         # Read the visit-order values used to sort repeated measures.
-        timepoints = self._get_timepoint_values(data, timepoint_col)
+        timepoints = self._get_timepoint_values(data)
 
         # Collect one change value per subject.
         deltas: dict[object, float] = {}

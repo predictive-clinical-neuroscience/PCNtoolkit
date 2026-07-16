@@ -182,20 +182,17 @@ class ZGainScore(LongitudinalScore):
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
-        timepoint_col: str = "visit",  
     ) -> xr.DataArray:
         """Compute the z-gain score for every subject in ``score_data``.
 
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort with at least two visits per subject and
-            z-scores already computed.
+            Longitudinal cohort with at least two distinct visits per subject,
+            visit labels on the NormData object, and z-scores already computed.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
-        timepoint_col : str, default "visit"
-            Column used to order multiple time points/visits.
 
         Returns
         -------
@@ -229,7 +226,7 @@ class ZGainScore(LongitudinalScore):
             score_data, self.covariate
         ).astype(float)
         # Read the visit-order values used to sort trajectories.
-        timepoints = self._get_timepoint_values(score_data, timepoint_col)
+        timepoints = self._get_timepoint_values(score_data)
 
         # Initialise an empty array filled with NaN to hold the scores.
         scores = np.full(

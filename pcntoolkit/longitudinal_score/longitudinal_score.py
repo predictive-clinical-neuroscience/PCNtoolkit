@@ -49,19 +49,17 @@ class LongitudinalScore(ABC):
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
-        timepoint_col: str = "visit",
     ) -> xr.DataArray:
         """Score subjects in ``score_data``.
 
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort to score.
+            Longitudinal cohort to score. Must include visit labels via
+            ``NormData.from_dataframe(..., visits='<column>')``.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
-        timepoint_col : str, default "visit"
-            Column used to order repeated visits within each subject.
 
         Returns
         -------
@@ -111,38 +109,16 @@ class LongitudinalScore(ABC):
             "NormData."
         )
 
-    @classmethod
-    def _get_timepoint_values(
-        cls,
-        data: NormData,
-        timepoint_col: str,
-    ) -> np.ndarray:
-        """Return per-observation timepoint labels used to order a subject's
-        visits.
-
-        Use ``timepoint_col`` when it is present. Otherwise fall back to the
-        first covariate, usually age, as a practical visit-order proxy.
-        TODO: Check if this fallback makes sense, eg if people don't have 
-        age in their data?
-        """
-        # First try to read the requested visit-order column.
-        try:
-            values = cls._get_observation_column(data, timepoint_col)
-
-        # If for example the visit-order column is missing, you can use the
-        # age column, e.g.
-        # visit 1 = age 34.2 (earlier)
-        # visit 2 = age 36.8 (later)
-        except ValueError as error:
-            if not hasattr(data, "covariates") or len(data.covariates.values) == 0:
-                raise ValueError(
-                    f"Could not find timepoint column '{timepoint_col}' and "
-                    "no covariate is available to order visits."
-                ) from error
-            # Use the first covariate as a simple visit-order proxy.
-            ordering_covariate = str(data.covariates.values[0])
-            values = cls._get_observation_column(data, ordering_covariate)
-        return cls._as_sortable(values)
+    @staticmethod
+    def _get_timepoint_values(data: NormData) -> np.ndarray:
+        """Return per-observation visit labels used to order a subject's visits."""
+        if "visits" not in data.data_vars:
+            raise ValueError(
+                "NormData has no visit labels. Build it with "
+                "NormData.from_dataframe(..., visits='<visit column>') before "
+                "computing longitudinal scores."
+            )
+        return LongitudinalScore._as_sortable(np.asarray(data.visits.values))
 
     @staticmethod
     def _ordered_unique(values: np.ndarray) -> np.ndarray:
@@ -188,10 +164,10 @@ class LongitudinalScore(ABC):
 
     @classmethod
     def _check_is_longitudinal(cls, data: NormData) -> None:
-        # TODO: This is for LONG DATAFRAME, not for WIDE.
-
         # Read subject ids so we can count visits per person.
         ids = cls._get_subject_ids(data)
+        visits = cls._get_timepoint_values(data)
+
         # Count how many observations belong to each subject.
         _, counts = np.unique(ids, return_counts=True)
         # At least one subject must have repeated measurements.
@@ -201,3 +177,16 @@ class LongitudinalScore(ABC):
                 "Longitudinal scores require multiple visits per subject. "
                 "Remove cross-sectional subjects before scoring."
             )
+
+        # Repeated rows must correspond to distinct visit labels per subject.
+        for subject in cls._ordered_unique(ids):
+            mask = ids == subject
+            if mask.sum() < 2:
+                continue
+            subject_visits = visits[mask]
+            if len(np.unique(subject_visits)) < 2:
+                raise ValueError(
+                    f"Subject {subject!r} has multiple rows with identical "
+                    "visit labels. Longitudinal data requires distinct visits "
+                    "per subject — check for duplicated wide-format columns."
+                )

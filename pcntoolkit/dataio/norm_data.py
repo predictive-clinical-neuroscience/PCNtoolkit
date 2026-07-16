@@ -77,6 +77,9 @@ class NormData(xr.Dataset):
         Z-score data
     centiles: xr.DataArray
         Centile data
+    visits : xr.DataArray, optional
+        Visit labels for longitudinal data (one value per observation).
+        Set via ``NormData.from_dataframe(..., visits='<column>')``.
 
 
     Examples
@@ -296,6 +299,7 @@ class NormData(xr.Dataset):
         batch_effects: List[str] | None = None,
         response_vars: List[str | LiteralString] | None = None,
         subject_ids: str | None = None,
+        visits: str | None = None,
         remove_Nan: bool = False,
         remove_outliers: bool = False,
         z_threshold: float = 3.0,
@@ -318,6 +322,10 @@ class NormData(xr.Dataset):
             The list of column names to be used as response variables in the dataset.
         subject_ids: str
             The name of the column containing the subject IDs
+        visits: str, optional
+            The name of the column containing visit labels for longitudinal
+            data (e.g. ``"visit"``). Required for velocity / longitudinal
+            modelling workflows.
         attrs : Mapping[str, Any] | None, optional
             Additional attributes for the dataset, by default None.
         remove_Nan: bool
@@ -339,6 +347,8 @@ class NormData(xr.Dataset):
             all_colums += batch_effects
         if subject_ids:
             all_colums += [subject_ids]
+        if visits:
+            all_colums += [visits]
         dataframe = dataframe[all_colums]
         if remove_Nan:
             dataframe = cls.remove_nan(dataframe)
@@ -358,6 +368,10 @@ class NormData(xr.Dataset):
         else:
             attrs["real_ids"] = False  # type: ignore
             data_vars["subject_ids"] = (["observations"], list(np.arange(len(dataframe))))
+
+        if visits is not None:
+            attrs["visit_col"] = visits  # type: ignore
+            data_vars["visits"] = (["observations"], dataframe[visits].to_numpy())
 
         coords["observations"] = list(np.arange(len(dataframe)))
 
@@ -450,6 +464,16 @@ class NormData(xr.Dataset):
             )
         else:
             new_data_vars["subject_ids"] = (["observations"], list(np.arange(self.X.shape[0] + other.X.shape[0])))
+
+        if "visits" in self.data_vars and "visits" in other.data_vars:
+            new_data_vars["visits"] = (
+                ["observations"],
+                list(
+                    np.concatenate(
+                        [self.visits.to_numpy(), other.visits.to_numpy()]
+                    )
+                ),
+            )
 
         new_coords["observations"] = list(np.arange(self.X.shape[0] + other.X.shape[0]))
         covar_intersection = [c for c in self.covariates.to_numpy() if c in other.covariates.to_numpy()]
@@ -1097,6 +1121,13 @@ class NormData(xr.Dataset):
             ("subject_ids", "subject_ids"),
         ]
         acc.append(subject_ids)
+        if "visits" in self.data_vars:
+            visit_col = self.attrs.get("visit_col", "visits")
+            visits_df = xr.DataArray.to_dataframe(self.visits, dim_order)[[
+                "visits"
+            ]]
+            visits_df.columns = [("visits", visit_col)]
+            acc.append(visits_df)
         if hasattr(self, "centiles"):
             centiles = (
                 xr.DataArray.to_dataframe(self.centiles, dim_order)
