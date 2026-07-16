@@ -565,6 +565,7 @@ def compute_thriveline_y(
         Response-scale thriveline values with the same dimensions and
         coordinates as ``thrive_Z``.
     """
+    # Identify the covariate that advances along each thriveline segment.
     covariates = list(model.covariates)
     if len(covariates) == 1:
         thrive_covariate = covariates[0]
@@ -582,6 +583,7 @@ def compute_thriveline_y(
         thrive_covariate = covariate
 
     thrive_Z, thrive_X = _resolve_thriveline_inputs(thrive_Z, thrive_X)
+    # Any covariate that does not change along the segment is held fixed.
     other_covariates = [c for c in covariates if c != thrive_covariate]
     if other_covariates and template is None:
         raise ValueError(
@@ -589,6 +591,7 @@ def compute_thriveline_y(
             f"the thrive covariate '{thrive_covariate}'."
         )
 
+    # Fix non-thrive covariates to their reference-cohort means.
     fixed_covariates = {}
     if template is not None:
         fixed_covariates = {
@@ -597,6 +600,7 @@ def compute_thriveline_y(
         }
 
     response_vars = [str(r) for r in thrive_Z.coords["response_vars"].values]
+    # Preallocate Y on the same (segment, response_vars, offset) grid as Z.
     thrive_Y = xr.DataArray(
         np.full(thrive_Z.shape, np.nan),
         dims=thrive_Z.dims,
@@ -606,6 +610,7 @@ def compute_thriveline_y(
     )
 
     n_segments = thrive_Z.sizes["segment"]
+    # One reference batch label per segment for the backward pass.
     be_encoded = _encode_batch_effects(model, batch_effects or {}, n_segments)
 
     for rv in response_vars:
@@ -613,9 +618,11 @@ def compute_thriveline_y(
         x_rv = thrive_X.sel(response_vars=rv, drop=True)
         y_rv = np.full((n_segments, z_rv.sizes["offset"]), np.nan)
 
+        # Map each offset slice (anchor and forward point) to response scale.
         for o_idx, off in enumerate(z_rv.coords["offset"].values):
             ages = x_rv.sel(offset=off).values.astype(float)
             z_vals = z_rv.sel(offset=off).values.astype(float)
+            # Segments with missing correlations stay NaN in Z and are skipped.
             valid = np.isfinite(ages) & np.isfinite(z_vals)
             if not valid.any():
                 continue
@@ -645,6 +652,7 @@ def compute_thriveline_y(
                 if be_encoded is not None
                 else None
             )
+            # Invert the regional normative map: (X, Z) -> scaled Y, then unscale.
             y_scaled = model[rv].backward(X_da, be_slice, Z_da).values
             y_vals = model.outscalers[rv].inverse_transform(
                 y_scaled.reshape(-1, 1)
@@ -656,6 +664,8 @@ def compute_thriveline_y(
     return thrive_Y
 
 
+# Public long-form schema: one row per point on a thriveline segment.
+# A segment is one (start_age, start_z) anchor propagated over timepoint_diff.
 THRIVELINE_DF_COLUMNS = (
     "segment",
     "start_age",
@@ -692,6 +702,7 @@ def thrivelines_to_dataframe(
         plotting.
     """
     rows: list[dict[str, object]] = []
+    # Segment-level anchor metadata attached by compute_thrivelines.
     start_ages = thrive_Z.coords["start_age"].values if "start_age" in thrive_Z.coords else None
     start_zs = thrive_Z.coords["start_z"].values if "start_z" in thrive_Z.coords else None
     offsets = thrive_Z.coords["offset"].values
@@ -712,6 +723,7 @@ def thrivelines_to_dataframe(
                 if start_zs is not None
                 else np.nan
             )
+            # Each segment has two points: offset 0 (anchor) and offset timepoint_diff.
             for off_idx, offset in enumerate(offsets):
                 rows.append(
                     {
@@ -727,6 +739,7 @@ def thrivelines_to_dataframe(
                 )
 
     df = pd.DataFrame(rows, columns=list(THRIVELINE_DF_COLUMNS))
+    # Preserve propagation metadata for downstream inspection.
     for key in ("timepoint_diff", "propagate"):
         if key in thrive_Z.attrs:
             df.attrs[key] = thrive_Z.attrs[key]
@@ -738,6 +751,7 @@ def _resolve_thriveline_inputs(
     thrive_X: xr.DataArray | None,
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Return ``(thrive_Z, thrive_X)`` from separate arrays or a Dataset."""
+    # Accept either paired DataArrays or a bundled Dataset with Z and X variables.
     if isinstance(thrive_Z, xr.Dataset):
         if "Z" not in thrive_Z or "X" not in thrive_Z:
             raise ValueError(
@@ -765,6 +779,7 @@ def _resolve_reference_batch_effects(
     if not model.unique_batch_effects:
         return {}
     overrides = batch_effects or {}
+    # Default to the first allowed level so thrivelines align with plot_centiles_advanced.
     return {
         k: overrides[k] if k in overrides else model.unique_batch_effects[k][0]
         for k in sorted(model.unique_batch_effects.keys())
@@ -786,6 +801,7 @@ def _encode_batch_effects(
     be_vals = _resolve_reference_batch_effects(model, batch_effects)
     be_keys = sorted(be_vals.keys())
     obs_coord = np.arange(n_obs)
+    # Repeat the same reference batch labels for every thriveline segment.
     raw_be = xr.DataArray(
         np.tile([[str(be_vals[k]) for k in be_keys]], (n_obs, 1)),
         dims=("observations", "batch_effect_dims"),

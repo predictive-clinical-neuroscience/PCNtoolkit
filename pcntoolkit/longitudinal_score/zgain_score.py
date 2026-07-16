@@ -162,10 +162,11 @@ class ZGainScore(LongitudinalScore):
             )
             self.correlation_matrix = self.get_correlation_matrix()
         R = self.correlation_matrix
-        # Propagate thrivelines from the correlation matrix. This bare name
-        # resolves to the imported velocity function (a module global), not to
-        # this method, so it is not a recursive call.
+        # Step 1: propagate anchor segments in Z-space from the correlation matrix.
+        # This bare name resolves to the imported velocity function (a module
+        # global), not to this method, so it is not a recursive call.
         thrive_Z, thrive_X = compute_thrivelines(R, **kwargs)
+        # Step 2: map each (X, Z) point to response-scale Y via the normative model.
         thrive_Y = compute_thriveline_y(
             self.normative_model,
             thrive_Z,
@@ -173,6 +174,7 @@ class ZGainScore(LongitudinalScore):
             template=self.reference_data,
             covariate=self.covariate,
         )
+        # Step 3: flatten to a long-form DataFrame for inspection and plotting.
         self.thrivelines = thrivelines_to_dataframe(thrive_Z, thrive_X, thrive_Y)
         return self.thrivelines
 

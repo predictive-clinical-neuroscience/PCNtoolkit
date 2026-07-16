@@ -276,6 +276,7 @@ def _validate_thrivelines(thrivelines: pd.DataFrame) -> None:
             "thrivelines must be a pandas DataFrame from "
             "ZGainScore.get_thrivelines()."
         )
+    # Require the full public schema produced by thrivelines_to_dataframe.
     missing = [col for col in THRIVELINE_DF_COLUMNS if col not in thrivelines.columns]
     if missing:
         raise ValueError(
@@ -292,6 +293,7 @@ def _extract_thriveline_xy(
     region_df = thrivelines.loc[thrivelines["response_var"] == response_var]
     thrive_x: list[np.ndarray] = []
     thrive_y: list[np.ndarray] = []
+    # Each segment is a short 2-point line (anchor + one forward step).
     for _, grp in region_df.groupby("segment", sort=True):
         ordered = grp.sort_values("offset")
         thrive_x.append(ordered["X"].to_numpy())
@@ -707,7 +709,7 @@ def _plot_centiles_advanced(
         # thrive_x and thrive_y are parallel lists of segment arrays.
         thrive_x, thrive_y = thrive_xy
         for seg_x, seg_y in zip(thrive_x, thrive_y):
-            # Draw each anchor trajectory in response space (covariate vs Y).
+            # Draw each 2-point anchor trajectory in response space (X vs Y).
             ax.plot(
                 seg_x,
                 seg_y,
