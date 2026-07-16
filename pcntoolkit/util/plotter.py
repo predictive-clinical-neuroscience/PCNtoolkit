@@ -285,6 +285,37 @@ def _validate_thrivelines(thrivelines: pd.DataFrame) -> None:
         )
 
 
+def _axis_limits_from_thrivelines(
+    thrive_x: list[np.ndarray],
+    thrive_y: list[np.ndarray],
+    margin: float = 0.1,
+) -> tuple[tuple[float, float], tuple[float, float]] | None:
+    """Return (xlim, ylim) spanning all thriveline segment points, with margin."""
+    if not thrive_x or not thrive_y:
+        return None
+    xs = np.concatenate([np.asarray(x, dtype=float) for x in thrive_x if len(x) > 0])
+    ys = np.concatenate([np.asarray(y, dtype=float) for y in thrive_y if len(y) > 0])
+    xs = xs[np.isfinite(xs)]
+    ys = ys[np.isfinite(ys)]
+    if xs.size == 0 or ys.size == 0:
+        return None
+    xmin, xmax = float(xs.min()), float(xs.max())
+    ymin, ymax = float(ys.min()), float(ys.max())
+    xmargin = margin * (xmax - xmin) if xmax > xmin else margin
+    ymargin = margin * (ymax - ymin) if ymax > ymin else margin
+    return (xmin - xmargin, xmax + xmargin), (ymin - ymargin, ymax + ymargin)
+
+
+def _filter_thrivelines_to_covariate_range(
+    thrivelines: pd.DataFrame,
+    x_min: float,
+    x_max: float,
+) -> pd.DataFrame:
+    """Keep thriveline points whose covariate X lies inside the plotted range."""
+    in_range = (thrivelines["X"] >= x_min) & (thrivelines["X"] <= x_max)
+    return thrivelines.loc[in_range].copy()
+
+
 def _extract_thriveline_xy(
     thrivelines: pd.DataFrame,
     response_var: str,
@@ -296,6 +327,9 @@ def _extract_thriveline_xy(
     # Each segment is a short 2-point line (anchor + one forward step).
     for _, grp in region_df.groupby("segment", sort=True):
         ordered = grp.sort_values("offset")
+        # Skip segments clipped at the plot boundary (need anchor + forward point).
+        if len(ordered) < 2:
+            continue
         thrive_x.append(ordered["X"].to_numpy())
         thrive_y.append(ordered["Y"].to_numpy())
     return thrive_x, thrive_y
@@ -491,6 +525,11 @@ def plot_centiles_advanced(
     if thrivelines is not None:
         # Fail early if the caller passed an incomplete dataset.
         _validate_thrivelines(thrivelines)
+        # Clip to the same covariate span used for the centile curves.
+        x_min, x_max = covariate_ranges[covariate]
+        thrivelines = _filter_thrivelines_to_covariate_range(
+            thrivelines, x_min, x_max
+        )
         # Read which response variables are available in the pre-computed grid.
         thrive_response_vars = set(thrivelines["response_var"].astype(str))
         for response_var in response_vars:
@@ -756,7 +795,16 @@ def _plot_centiles_advanced(
                 alpha=0.2,
             )
 
-    autoscale(ax=ax)
+    if thrive_xy is not None:
+        thrive_x, thrive_y = thrive_xy
+        limits = _axis_limits_from_thrivelines(thrive_x, thrive_y)
+        if limits is not None:
+            ax.set_xlim(*limits[0])
+            ax.set_ylim(*limits[1])
+        else:
+            autoscale(ax=ax)
+    else:
+        autoscale(ax=ax)
 
     ax.set_title(title)
     ax.set_xlabel(covariate)
