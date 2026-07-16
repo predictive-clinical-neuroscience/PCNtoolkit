@@ -554,9 +554,10 @@ def compute_thriveline_y(
     batch_effects : dict of str, optional
         Reference batch labels keyed by batch-effect dimension
         (e.g. ``{"site": "A"}``). When omitted or incomplete, missing keys
-        are filled from the most-populated training level in
-        ``model.batch_effect_counts``. Ignored when the model has no batch
-        effects.
+        are filled from the first allowed level in
+        ``model.unique_batch_effects`` (same rule as
+        :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`). Ignored when
+        the model has no batch effects.
 
     Returns
     -------
@@ -655,6 +656,83 @@ def compute_thriveline_y(
     return thrive_Y
 
 
+THRIVELINE_DF_COLUMNS = (
+    "segment",
+    "start_age",
+    "start_z",
+    "response_var",
+    "offset",
+    "X",
+    "Z",
+    "Y",
+)
+
+
+def thrivelines_to_dataframe(
+    thrive_Z: xr.DataArray,
+    thrive_X: xr.DataArray,
+    thrive_Y: xr.DataArray,
+) -> pd.DataFrame:
+    """Convert propagated thriveline arrays to a long-form table.
+
+    Each row is one point on one segment for one response variable. Columns are
+    ``segment``, ``start_age``, ``start_z``, ``response_var``, ``offset``,
+    ``X``, ``Z``, and ``Y``.
+
+    Parameters
+    ----------
+    thrive_Z, thrive_X, thrive_Y : xr.DataArray
+        Arrays with dimensions ``(segment, response_vars, offset)`` as returned
+        by :func:`compute_thrivelines` and :func:`compute_thriveline_y`.
+
+    Returns
+    -------
+    pd.DataFrame
+        Long-form thriveline table suitable for inspection, filtering, and
+        plotting.
+    """
+    rows: list[dict[str, object]] = []
+    start_ages = thrive_Z.coords["start_age"].values if "start_age" in thrive_Z.coords else None
+    start_zs = thrive_Z.coords["start_z"].values if "start_z" in thrive_Z.coords else None
+    offsets = thrive_Z.coords["offset"].values
+
+    for rv in thrive_Z.coords["response_vars"].values:
+        z_rv = thrive_Z.sel(response_vars=rv, drop=True)
+        x_rv = thrive_X.sel(response_vars=rv, drop=True)
+        y_rv = thrive_Y.sel(response_vars=rv, drop=True)
+        for seg_idx in range(z_rv.sizes["segment"]):
+            segment = int(z_rv.coords["segment"].values[seg_idx])
+            start_age = (
+                float(start_ages[seg_idx])
+                if start_ages is not None
+                else np.nan
+            )
+            start_z = (
+                float(start_zs[seg_idx])
+                if start_zs is not None
+                else np.nan
+            )
+            for off_idx, offset in enumerate(offsets):
+                rows.append(
+                    {
+                        "segment": segment,
+                        "start_age": start_age,
+                        "start_z": start_z,
+                        "response_var": str(rv),
+                        "offset": int(offset),
+                        "X": float(x_rv.isel(segment=seg_idx, offset=off_idx).item()),
+                        "Z": float(z_rv.isel(segment=seg_idx, offset=off_idx).item()),
+                        "Y": float(y_rv.isel(segment=seg_idx, offset=off_idx).item()),
+                    }
+                )
+
+    df = pd.DataFrame(rows, columns=list(THRIVELINE_DF_COLUMNS))
+    for key in ("timepoint_diff", "propagate"):
+        if key in thrive_Z.attrs:
+            df.attrs[key] = thrive_Z.attrs[key]
+    return df
+
+
 def _resolve_thriveline_inputs(
     thrive_Z: xr.DataArray | xr.Dataset,
     thrive_X: xr.DataArray | None,
@@ -681,24 +759,16 @@ def _resolve_reference_batch_effects(
     """Return reference batch labels used for thriveline backward passes.
 
     Explicit entries in ``batch_effects`` override the default. Otherwise each
-    dimension uses the most-populated level from ``model.batch_effect_counts``
-    (same rule as :func:`~pcntoolkit.util.plotter.plot_centiles`). When counts
-    are unavailable, the first allowed level in ``model.unique_batch_effects``
-    is used as a fallback.
+    dimension uses the first allowed level in ``model.unique_batch_effects``
+    (same rule as :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`).
     """
     if not model.unique_batch_effects:
         return {}
     overrides = batch_effects or {}
-    be_vals: dict[str, str] = {}
-    counts = getattr(model, "batch_effect_counts", None) or {}
-    for k in sorted(model.unique_batch_effects.keys()):
-        if k in overrides:
-            be_vals[k] = overrides[k]
-        elif k in counts and counts[k]:
-            be_vals[k] = max(counts[k].items(), key=lambda item: item[1])[0]
-        else:
-            be_vals[k] = model.unique_batch_effects[k][0]
-    return be_vals
+    return {
+        k: overrides[k] if k in overrides else model.unique_batch_effects[k][0]
+        for k in sorted(model.unique_batch_effects.keys())
+    }
 
 
 def _encode_batch_effects(

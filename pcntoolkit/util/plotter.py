@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  # type: ignore
 import seaborn as sns  # type: ignore
-import xarray as xr
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.math_functions.velocity import THRIVELINE_DF_COLUMNS
 from pcntoolkit.util.autoscale_plot import autoscale
 
 if TYPE_CHECKING:
@@ -269,45 +269,33 @@ def _plot_centiles(
     return fig
 
 
-def _validate_thrivelines(thrivelines: xr.Dataset) -> None:
-    """Check that a pre-computed thriveline dataset can be plotted."""
-    # The plotter expects an xarray Dataset, not separate Z/X/Y arrays.
-    if not isinstance(thrivelines, xr.Dataset):
+def _validate_thrivelines(thrivelines: pd.DataFrame) -> None:
+    """Check that a pre-computed thriveline table can be plotted."""
+    if not isinstance(thrivelines, pd.DataFrame):
         raise TypeError(
-            "thrivelines must be an xr.Dataset with 'X' and 'Y' data variables."
+            "thrivelines must be a pandas DataFrame from "
+            "ZGainScore.get_thrivelines()."
         )
-    # Response-scale plotting needs covariate coordinates (X) and Y values.
-    for var in ("X", "Y"):
-        if var not in thrivelines:
-            raise ValueError(
-                f"thrivelines must contain '{var}'. "
-                "Compute it with ZGainScore.get_thrivelines() first."
-            )
-    # Each region is stored along a shared response_vars dimension.
-    if "response_vars" not in thrivelines.dims:
+    missing = [col for col in THRIVELINE_DF_COLUMNS if col not in thrivelines.columns]
+    if missing:
         raise ValueError(
-            "thrivelines must have a 'response_vars' dimension."
+            f"thrivelines is missing columns {missing}. "
+            "Compute it with ZGainScore.get_thrivelines() first."
         )
 
 
 def _extract_thriveline_xy(
-    thrivelines: xr.Dataset,
+    thrivelines: pd.DataFrame,
     response_var: str,
 ) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """Return per-segment X and Y arrays for one response variable."""
-    # Select the covariate grid for this region (dims: segment, offset).
-    x_lines = thrivelines.X.sel(response_vars=response_var, drop=True)
-    # Select the matching response-scale trajectory for the same region.
-    y_lines = thrivelines.Y.sel(response_vars=response_var, drop=True)
-    # Split into one 1D array per thriveline segment for matplotlib.
-    thrive_x = [
-        x_lines.isel(segment=seg).values
-        for seg in range(x_lines.sizes["segment"])
-    ]
-    thrive_y = [
-        y_lines.isel(segment=seg).values
-        for seg in range(y_lines.sizes["segment"])
-    ]
+    region_df = thrivelines.loc[thrivelines["response_var"] == response_var]
+    thrive_x: list[np.ndarray] = []
+    thrive_y: list[np.ndarray] = []
+    for _, grp in region_df.groupby("segment", sort=True):
+        ordered = grp.sort_values("offset")
+        thrive_x.append(ordered["X"].to_numpy())
+        thrive_y.append(ordered["Y"].to_numpy())
     return thrive_x, thrive_y
 
 
@@ -324,7 +312,7 @@ def plot_centiles_advanced(
     hue_data: str = "site",
     markers_data: str = "sex",
     show_other_data: bool = False,
-    thrivelines: xr.Dataset | None = None,
+    thrivelines: pd.DataFrame | None = None,
     show_figure: bool = True,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
@@ -365,11 +353,11 @@ def plot_centiles_advanced(
         The column to use for marker styling the data. If None, the data will not be marker styled.
     show_other_data: bool, optional
         Whether to scatter data belonging to groups not in batch_effects.
-    thrivelines: xr.Dataset | None, optional
-        Pre-computed thriveline dataset (e.g. from
+    thrivelines: pd.DataFrame | None, optional
+        Pre-computed thriveline table (e.g. from
         :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_thrivelines`).
-        Must contain ``X`` and ``Y`` data variables. When provided, response-scale
-        thrivelines are overlaid on each centile plot.
+        Must contain ``X``, ``Y``, ``response_var``, ``segment``, and ``offset``.
+        When provided, response-scale thrivelines are overlaid on each centile plot.
     show_figure: bool, optional
         If True, call plt.show() after all figures are created.
         Defaults to True.
@@ -502,9 +490,7 @@ def plot_centiles_advanced(
         # Fail early if the caller passed an incomplete dataset.
         _validate_thrivelines(thrivelines)
         # Read which response variables are available in the pre-computed grid.
-        thrive_response_vars = {
-            str(rv) for rv in thrivelines.coords["response_vars"].values
-        }
+        thrive_response_vars = set(thrivelines["response_var"].astype(str))
         for response_var in response_vars:
             # Every plotted region must have a matching thriveline entry.
             if response_var not in thrive_response_vars:
@@ -725,10 +711,10 @@ def _plot_centiles_advanced(
             ax.plot(
                 seg_x,
                 seg_y,
-                color="#4c72b0",
-                alpha=0.12,
-                lw=0.8,
-                zorder=1,
+                color="#2171b5",
+                alpha=0.55,
+                lw=1.4,
+                zorder=3,
             )
 
     title = f"Centiles of {response_var}"

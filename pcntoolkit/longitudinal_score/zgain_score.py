@@ -3,14 +3,15 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-from dask.base import compute
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from pcntoolkit.math_functions.velocity import (
     compute_correlation_matrix,
     compute_thriveline_y,
     compute_thrivelines,
+    thrivelines_to_dataframe,
 )
 
 from .longitudinal_score import LongitudinalScore
@@ -69,11 +70,11 @@ class ZGainScore(LongitudinalScore):
         :meth:`score` has been called at least once. It stores the same
         ``xr.DataArray`` that :meth:`score` returns, so the result can be
         retrieved later even if the return value was not saved.
-    thrivelines : xr.Dataset | None
+    thrivelines : pd.DataFrame | None
         The most recent thrivelines produced by :meth:`get_thrivelines`.
         ``None`` until :meth:`get_thrivelines` has been called at least
-        once. Holds propagated z-scores, covariates, and response-scale values
-        as ``thrivelines.Z``, ``thrivelines.X``, and ``thrivelines.Y``.
+        once. A long-form table with columns ``segment``, ``start_age``,
+        ``start_z``, ``response_var``, ``offset``, ``X``, ``Z``, and ``Y``.
     """
 
     def __init__(
@@ -110,7 +111,7 @@ class ZGainScore(LongitudinalScore):
         self.zgain: xr.DataArray | None = None
 
         # Hold the most recent thrivelines; filled in by get_thrivelines().
-        self.thrivelines: xr.Dataset | None = None
+        self.thrivelines: pd.DataFrame | None = None
 
     def get_correlation_matrix(self) -> xr.DataArray:
         """Estimate and cache the z-score correlation matrix. It computes
@@ -121,7 +122,7 @@ class ZGainScore(LongitudinalScore):
             )
         return self.correlation_matrix
 
-    def get_thrivelines(self, **kwargs) -> xr.Dataset:
+    def get_thrivelines(self, **kwargs) -> pd.DataFrame:
         """Estimate and cache thrivelines from this score's correlation matrix.
 
         This wraps :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
@@ -129,11 +130,10 @@ class ZGainScore(LongitudinalScore):
         first ensures the z-score correlation matrix is computed and stored,
         propagates thrivelines in Z-space, then maps them to response-scale Y
         via :attr:`normative_model`. Non-thrive covariates are fixed using
-        :attr:`reference_data`; batch effects use the most-populated training
-        level resolved in
-        :func:`~pcntoolkit.math_functions.velocity.compute_thriveline_y`. If
-        the object has no correlation matrix yet, one is computed and a warning
-        is issued.
+        :attr:`reference_data`; batch effects use the first allowed level from
+        the normative model (same rule as
+        :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`). If the object
+        has no correlation matrix yet, one is computed and a warning is issued.
 
         Parameters
         ----------
@@ -146,11 +146,10 @@ class ZGainScore(LongitudinalScore):
 
         Returns
         -------
-        xr.Dataset
-            Dataset with ``Z`` (propagated z-scores), ``X`` (covariate
-            coordinates), and ``Y`` (response-scale values), each with
-            dimensions ``(segment, response_vars, offset)``. Stored on the
-            instance as :attr:`thrivelines`.
+        pd.DataFrame
+            Long-form thriveline table with columns ``segment``, ``start_age``,
+            ``start_z``, ``response_var``, ``offset``, ``X``, ``Z``, and ``Y``.
+            Stored on the instance as :attr:`thrivelines`.
         """
         # Compute the matrix only if this object doesn't have one yet;
         # otherwise reuse the stored attribute without recomputing.
@@ -174,7 +173,7 @@ class ZGainScore(LongitudinalScore):
             template=self.reference_data,
             covariate=self.covariate,
         )
-        self.thrivelines = xr.Dataset({"Z": thrive_Z, "X": thrive_X, "Y": thrive_Y})
+        self.thrivelines = thrivelines_to_dataframe(thrive_Z, thrive_X, thrive_Y)
         return self.thrivelines
 
     def score(
