@@ -538,15 +538,14 @@ def compute_thriveline_y(
     thrive_Z : xr.DataArray or xr.Dataset
         Propagated z-scores from :func:`compute_thrivelines`, with dimensions
         ``(segment, response_vars, offset)``. When an ``xr.Dataset`` is
-        passed (e.g. from :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.compute_thrivelines`),
+        passed (e.g. from :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_thrivelines`),
         it must contain data variables ``Z`` and ``X``; ``thrive_X`` may then
         be omitted.
     thrive_X : xr.DataArray, optional
         Matching covariate coordinates, same shape as ``thrive_Z``. Required
         when ``thrive_Z`` is not a Dataset with ``Z`` and ``X``.
     template : NormData, optional
-        Reference grid used to fix non-thrive covariates to their mean and to
-        infer batch-effect levels when a key is absent from ``batch_effects``.
+        Reference grid used to fix non-thrive covariates to their mean.
         Required when the model has more than one covariate.
     covariate : str, optional
         Covariate along which thrivelines advance (e.g. ``"age"``). Required
@@ -554,8 +553,9 @@ def compute_thriveline_y(
         covariate is used.
     batch_effects : dict of str, optional
         Reference batch labels keyed by batch-effect dimension
-        (e.g. ``{"site": "A"}``). Missing keys are filled from ``template`` or
-        the model's first allowed level. Ignored when the model has no batch
+        (e.g. ``{"site": "A"}``). When omitted or incomplete, missing keys
+        are filled from the most-populated training level in
+        ``model.batch_effect_counts``. Ignored when the model has no batch
         effects.
 
     Returns
@@ -605,9 +605,7 @@ def compute_thriveline_y(
     )
 
     n_segments = thrive_Z.sizes["segment"]
-    be_encoded = _encode_batch_effects(
-        model, batch_effects or {}, n_segments, template
-    )
+    be_encoded = _encode_batch_effects(model, batch_effects or {}, n_segments)
 
     for rv in response_vars:
         z_rv = thrive_Z.sel(response_vars=rv, drop=True)
@@ -676,33 +674,47 @@ def _resolve_thriveline_inputs(
     return thrive_Z, thrive_X
 
 
+def _resolve_reference_batch_effects(
+    model: "NormativeModel",
+    batch_effects: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Return reference batch labels used for thriveline backward passes.
+
+    Explicit entries in ``batch_effects`` override the default. Otherwise each
+    dimension uses the most-populated level from ``model.batch_effect_counts``
+    (same rule as :func:`~pcntoolkit.util.plotter.plot_centiles`). When counts
+    are unavailable, the first allowed level in ``model.unique_batch_effects``
+    is used as a fallback.
+    """
+    if not model.unique_batch_effects:
+        return {}
+    overrides = batch_effects or {}
+    be_vals: dict[str, str] = {}
+    counts = getattr(model, "batch_effect_counts", None) or {}
+    for k in sorted(model.unique_batch_effects.keys()):
+        if k in overrides:
+            be_vals[k] = overrides[k]
+        elif k in counts and counts[k]:
+            be_vals[k] = max(counts[k].items(), key=lambda item: item[1])[0]
+        else:
+            be_vals[k] = model.unique_batch_effects[k][0]
+    return be_vals
+
+
 def _encode_batch_effects(
     model: "NormativeModel",
     batch_effects: dict[str, str],
     n_obs: int,
-    template: "NormData | None",
 ) -> xr.DataArray | None:
     """Build a model-encoded batch-effect array for thriveline backward passes.
 
-    Each thriveline segment is evaluated at the reference batch effect.
-    Missing batch-effect keys are filled from ``template`` or the model's
-    first allowed level.
+    Each thriveline segment is evaluated at the reference batch effect resolved
+    by :func:`_resolve_reference_batch_effects`.
     """
     if not model.unique_batch_effects:
         return None
-    be_keys = sorted(model.unique_batch_effects.keys())
-    be_vals: dict[str, str] = {}
-    for k in be_keys:
-        if k in batch_effects:
-            be_vals[k] = batch_effects[k]
-        elif template is not None and hasattr(template, "batch_effects"):
-            be_vals[k] = str(
-                template.batch_effects.sel(batch_effect_dims=k)
-                .isel(observations=0)
-                .values.item()
-            )
-        else:
-            be_vals[k] = model.unique_batch_effects[k][0]
+    be_vals = _resolve_reference_batch_effects(model, batch_effects)
+    be_keys = sorted(be_vals.keys())
     obs_coord = np.arange(n_obs)
     raw_be = xr.DataArray(
         np.tile([[str(be_vals[k]) for k in be_keys]], (n_obs, 1)),

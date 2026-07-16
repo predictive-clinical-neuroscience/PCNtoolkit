@@ -62,7 +62,7 @@ class ZGainScore(LongitudinalScore):
     correlation_matrix : xr.DataArray | None
         The z-score correlation matrix used by this score. ``None`` until it is
         computed on first use (via :meth:`get_correlation_matrix`, which is also
-        called by :meth:`score` and :meth:`compute_thrivelines`). Once computed
+        called by :meth:`score` and :meth:`get_thrivelines`). Once computed
         it is cached and reused.
     zgain : xr.DataArray | None
         The most recent z-gain scores produced by :meth:`score`. ``None`` until
@@ -70,8 +70,8 @@ class ZGainScore(LongitudinalScore):
         ``xr.DataArray`` that :meth:`score` returns, so the result can be
         retrieved later even if the return value was not saved.
     thrivelines : xr.Dataset | None
-        The most recent thrivelines produced by :meth:`compute_thrivelines`.
-        ``None`` until :meth:`compute_thrivelines` has been called at least
+        The most recent thrivelines produced by :meth:`get_thrivelines`.
+        ``None`` until :meth:`get_thrivelines` has been called at least
         once. Holds propagated z-scores, covariates, and response-scale values
         as ``thrivelines.Z``, ``thrivelines.X``, and ``thrivelines.Y``.
     """
@@ -109,7 +109,7 @@ class ZGainScore(LongitudinalScore):
         # Hold the most recent z-gain scores; filled in by score().
         self.zgain: xr.DataArray | None = None
 
-        # Hold the most recent thrivelines; filled in by compute_thrivelines().
+        # Hold the most recent thrivelines; filled in by get_thrivelines().
         self.thrivelines: xr.Dataset | None = None
 
     def get_correlation_matrix(self) -> xr.DataArray:
@@ -121,17 +121,19 @@ class ZGainScore(LongitudinalScore):
             )
         return self.correlation_matrix
 
-    def compute_thrivelines(self, **kwargs) -> xr.Dataset:
-        """Compute thrivelines from this score's correlation matrix.
+    def get_thrivelines(self, **kwargs) -> xr.Dataset:
+        """Estimate and cache thrivelines from this score's correlation matrix.
 
         This wraps :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
         and :func:`~pcntoolkit.math_functions.velocity.compute_thriveline_y`. It
         first ensures the z-score correlation matrix is computed and stored,
         propagates thrivelines in Z-space, then maps them to response-scale Y
         via :attr:`normative_model`. Non-thrive covariates are fixed using
-        :attr:`reference_data`; batch effects use the first allowed level from
-        the normative model. If the object has no correlation matrix yet, one
-        is computed and a warning is issued.
+        :attr:`reference_data`; batch effects use the most-populated training
+        level resolved in
+        :func:`~pcntoolkit.math_functions.velocity.compute_thriveline_y`. If
+        the object has no correlation matrix yet, one is computed and a warning
+        is issued.
 
         Parameters
         ----------
@@ -165,19 +167,12 @@ class ZGainScore(LongitudinalScore):
         # resolves to the imported velocity function (a module global), not to
         # this method, so it is not a recursive call.
         thrive_Z, thrive_X = compute_thrivelines(R, **kwargs)
-        batch_effects = None
-        if self.normative_model.has_batch_effect:
-            batch_effects = {
-                k: self.normative_model.unique_batch_effects[k][0]
-                for k in self.normative_model.unique_batch_effects
-            }
         thrive_Y = compute_thriveline_y(
             self.normative_model,
             thrive_Z,
             thrive_X,
             template=self.reference_data,
             covariate=self.covariate,
-            batch_effects=batch_effects,
         )
         self.thrivelines = xr.Dataset({"Z": thrive_Z, "X": thrive_X, "Y": thrive_Y})
         return self.thrivelines
@@ -186,7 +181,7 @@ class ZGainScore(LongitudinalScore):
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
-        timepoint_col: str = "visit",  # TODO: The LNM_data.csv uses visits to group longitudinal data in a LONG DATAFRAME. Other datasets might use a WIDE DATAFRAME with multiple columns visit_1, visit_2 etc. How can we handle that?
+        timepoint_col: str = "visit",  
     ) -> xr.DataArray:
         """Compute the z-gain score for every subject in ``score_data``.
 
