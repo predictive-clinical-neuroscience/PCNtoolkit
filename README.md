@@ -46,6 +46,12 @@ Contributions are always welcome! To start see our [website contributing guideli
 
 You can find more in depth guidelines in our [GitHub Wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki).
 
+## Funding
+
+This software has received funding from the Wellcome Trust (Digital Innovator
+award 'BRAINCHART', 215698/Z/19/Z), the European Research Council (ERC grant
+'MENTALPRECISION', 101001118), the Dutch Research Council (NWO VIDI grant
+864.12.003), and the Dutch Sectorplan 'AI and data-driven Innovation'.
 
 ## License
 
