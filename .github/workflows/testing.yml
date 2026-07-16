@@ -32,24 +32,28 @@ jobs:
         pip install pytest-html 
 
     - name: Run Tests with coverage and save report
-      run: |
-        coverage run -m pytest test/ --junitxml=report.xml --html=report.html
-        coverage xml -o coverage.xml
-      continue-on-error: true  # Continue to the next step even if tests fail
+      run: coverage run -m pytest test/ --junitxml=report.xml --html=report.html
+
+    - name: Save coverage report
+      if: always()
+      run: coverage xml -o coverage.xml
 
     - name: Upload HTML Report
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-report-html
         path: report.html
 
     - name: Upload XML Report
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-report-xml
         path: report.xml
-      
+
     - name: Upload Coverage Report
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report
