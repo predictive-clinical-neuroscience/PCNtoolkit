@@ -41,7 +41,7 @@ dependencies = [
     "pytensor>=2.22.0,<3.0.0",
     "arviz>=0.21.0,<1.0.0",
     "nutpie>=0.16.5,<0.16.9",
-    "numba>=0.60.0",
+    "numba>=0.60.0", # required by nutpie's PyMC (numba) sampling backend
     "scikit-learn>=1.5.2",
 
     # Data I/O
