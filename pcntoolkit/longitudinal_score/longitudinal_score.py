@@ -179,6 +179,12 @@ class LongitudinalScore(ABC):
             )
 
         # Repeated rows must correspond to distinct visit labels per subject.
+        ages: np.ndarray | None = None
+        if hasattr(data, "covariates") and "age" in [
+            str(c) for c in data.covariates.values
+        ]:
+            ages = cls._get_observation_column(data, "age").astype(float)
+
         for subject in cls._ordered_unique(ids):
             mask = ids == subject
             if mask.sum() < 2:
@@ -190,3 +196,11 @@ class LongitudinalScore(ABC):
                     "visit labels. Longitudinal data requires distinct visits "
                     "per subject — check for duplicated wide-format columns."
                 )
+            if ages is not None:
+                subject_ages = ages[mask]
+                if len(np.unique(subject_ages)) < 2:
+                    raise ValueError(
+                        f"Subject {subject!r} has multiple visits with "
+                        "identical age values. Longitudinal scores require "
+                        "age to differ between visits within a subject."
+                    )

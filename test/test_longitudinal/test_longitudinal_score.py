@@ -62,3 +62,12 @@ def test_check_is_longitudinal_rejects_duplicate_visit_labels():
 def test_check_is_longitudinal_accepts_distinct_visits():
     data = _predicted_norm_data(_longitudinal_dataframe())
     LongitudinalScore._check_is_longitudinal(data)
+
+
+def test_check_is_longitudinal_rejects_identical_ages():
+    df = _longitudinal_dataframe()
+    df.loc[df["sub_id"] == "a", "age"] = 20.0
+    data = _predicted_norm_data(df)
+
+    with pytest.raises(ValueError, match="identical age values"):
+        LongitudinalScore._check_is_longitudinal(data)
