@@ -17,14 +17,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install Dependencies
       run: | # Install the project dependencies, including pytest-html for generating test reports in the next steps.
@@ -39,7 +43,7 @@ jobs:
       run: coverage xml -o coverage.xml
 
     - name: Upload coverage to Codecov
-      if: always()
+      if: always() && matrix.python-version == '3.12' # Only upload coverage from one Python version to avoid duplicate uploads.
       uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -50,12 +54,12 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-report-html
+        name: test-report-html-py${{ matrix.python-version }}
         path: report.html
 
     - name: Upload XML Report
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-report-xml
+        name: test-report-xml-py${{ matrix.python-version }}
         path: report.xml
