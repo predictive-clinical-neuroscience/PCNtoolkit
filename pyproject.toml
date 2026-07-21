@@ -62,9 +62,14 @@ dev = [
     "black>=24.10.0",
     "pydata-sphinx-theme>=0.15.2",
     "ruff>=0.8.6",
-    "pytest-cov>=6.0.0",
+    "coverage[toml]>=7.0.0",
     "nbconvert>=7.15.0",
 ]
+
+[tool.coverage]
+run.source_pkgs = ["pcntoolkit"]
+run.relative_files = true
+report.show_missing = true
 
 [project.scripts]
 normative = "pcntoolkit.normative:entrypoint"

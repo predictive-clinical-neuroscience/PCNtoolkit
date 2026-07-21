@@ -38,6 +38,14 @@ jobs:
       if: always()
       run: coverage xml -o coverage.xml
 
+    - name: Upload coverage to Codecov
+      if: always()
+      uses: codecov/codecov-action@v7
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage.xml
+        fail_ci_if_error: false
+
     - name: Upload HTML Report
       if: always()
       uses: actions/upload-artifact@v4
@@ -51,10 +59,3 @@ jobs:
       with:
         name: test-report-xml
         path: report.xml
-
-    - name: Upload Coverage Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: coverage.xml
