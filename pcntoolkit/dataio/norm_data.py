@@ -34,7 +34,6 @@ from typing import (
 import numpy as np
 import pandas as pd  # type: ignore
 import xarray as xr
-from nibabel.loadsave import load
 from numpy.typing import ArrayLike
 from scipy import stats
 from sklearn.model_selection import StratifiedKFold, train_test_split  # type: ignore
@@ -443,15 +442,26 @@ class NormData(xr.Dataset):
         new_data_vars = {}
         new_coords = {}
 
-        if self.attrs["real_ids"] or other.attrs["real_ids"]:
+        # Get the observations
+        self_obs = self.observations.to_numpy()
+        other_obs = other.observations.to_numpy()
+
+        # Preserve the observation labels so that an observation keeps pointing
+        # at the SAME subject after a merge. Only if the two merged datasets have the same
+        # observation labels, shift the labels of the second dataset to avoid duplicates.
+        if np.intersect1d(self_obs, other_obs).size > 0:
+            other_obs = other_obs + self_obs.max() + 1
+
+        new_coords["observations"] = list(np.concatenate([self_obs, other_obs]))
+
+        real_ids = self.attrs["real_ids"] or other.attrs["real_ids"]
+        if real_ids:
             new_data_vars["subject_ids"] = (
                 ["observations"],
                 list(np.concatenate([self.subject_ids.to_numpy(), other.subject_ids.to_numpy()])),
             )
         else:
-            new_data_vars["subject_ids"] = (["observations"], list(np.arange(self.X.shape[0] + other.X.shape[0])))
-
-        new_coords["observations"] = list(np.arange(self.X.shape[0] + other.X.shape[0]))
+            new_data_vars["subject_ids"] = (["observations"], list(new_coords["observations"]))
         covar_intersection = [c for c in self.covariates.to_numpy() if c in other.covariates.to_numpy()]
         respvar_intersection = [r for r in self.response_vars.to_numpy() if r in other.response_vars.to_numpy()]
         batch_effect_dims_intersection = [b for b in self.batch_effect_dims.to_numpy() if b in other.batch_effect_dims.to_numpy()]
@@ -551,7 +561,7 @@ class NormData(xr.Dataset):
             name=name or (self.attrs["name"] + "_+_" + other.attrs["name"]),
             data_vars=new_data_vars,
             coords=new_coords,
-            attrs=self.attrs,
+            attrs={"real_ids": real_ids},
         )
         return new_normdata
 
@@ -1109,8 +1119,9 @@ class NormData(xr.Dataset):
             )
             centiles.columns = [("centiles", col) for col in centiles.columns]
             acc.append(centiles)
+        # Keep the observations index sorted
         pandas_df = pd.concat(acc, axis=1)
-        pandas_df.index = self.observations.values.astype(str)
+        pandas_df.index = pandas_df.index.astype(str)
         return pandas_df
 
     def save_zscores(self, save_dir: str) -> None:
