@@ -12,7 +12,7 @@ from pcntoolkit.math_functions.velocity import (
     compute_correlation_matrix,
     compute_thriveline_y,
     compute_thrivelines,
-    propagate_jb,
+    propagate_thriveline_z,
     thrivelines_to_dataframe,
 )
 
@@ -131,7 +131,7 @@ class ZGainScore(LongitudinalScore):
         z_thrive: float = -1.96,
         propagate: Callable[
             [xr.DataArray, xr.DataArray | float, float], xr.DataArray
-        ] = propagate_jb,
+        ] = propagate_thriveline_z,
         anchor_step: int = 1,
         z_anchor_start: int = -3,
         z_anchor_end: int = 4,
@@ -157,7 +157,7 @@ class ZGainScore(LongitudinalScore):
             segment (e.g. one year).
         z_thrive : float, default -1.96
             Shrinkage term passed to the thriveline propagation update.
-        propagate : callable, default :func:`~pcntoolkit.math_functions.velocity.propagate_jb`
+        propagate : callable, default :func:`~pcntoolkit.math_functions.velocity.propagate_thriveline_z`
             Function that propagates z-scores along one segment:
             ``propagate(hop_correlations, start_z, z_thrive) -> xr.DataArray``.
         anchor_step : int, default 1

@@ -265,12 +265,12 @@ def design_matrix(bandwidth: int, Sigma: np.ndarray) -> pd.DataFrame:
 # ------------------------------------------------------------------- #
 
 
-def propagate_jb(
+def propagate_thriveline_z(
     correlations: xr.DataArray,
     start_z: xr.DataArray | float,
     z_thrive: float = -1.96,
 ) -> xr.DataArray:
-    """Propagate one thriveline segment using the Bayer et al. (2026) update.
+    """Propagate one thriveline segment in z-space using the Bayer et al. (2026) update.
 
     Each step applies
 
@@ -327,7 +327,7 @@ def compute_thrivelines(
     *,
     timepoint_diff: int = 1,
     z_thrive: float = -1.96,
-    propagate: Callable[[xr.DataArray, xr.DataArray | float, float], xr.DataArray] = propagate_jb,
+    propagate: Callable[[xr.DataArray, xr.DataArray | float, float], xr.DataArray] = propagate_thriveline_z,
     anchor_step: int = 1,
     z_anchor_start: int = -3,
     z_anchor_end: int = 4,
@@ -360,7 +360,7 @@ def compute_thrivelines(
         Covariate step between the two timepoints on each segment (e.g. 1 year).
     z_thrive : float, default -1.96
         Shrinkage term passed through to ``propagate``.
-    propagate : callable, default :func:`propagate_jb`
+    propagate : callable, default :func:`propagate_thriveline_z`
         Function that propagates z-scores along one segment:
         ``propagate(hop_correlations, start_z, z_thrive) -> xr.DataArray``.
         The default implements the update of Bayer et al. (2026); alternative
