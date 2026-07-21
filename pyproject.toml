@@ -28,29 +28,41 @@ authors = [
 requires-python = ">=3.11,<3.13"
 
 dependencies = [
-    "nibabel>=5.3.1",
-    "h5py>=3.11.0",
-    "h5netcdf>=1.3.0",
-
-    "scikit-learn>=1.5.2",
-    "scipy>=1.12",
-    "matplotlib>=3.9.2",
-    "seaborn>=0.13.2",
-    "ipywidgets>=8.1.5",
-    "ipykernel>=6.29.5",
-    "ipython>=8.0.0",
-    "dask>=2025.11.0",
-    "filelock>=3.13.0",
-    "packaging>=21.3",
+    # Arrays and dataframes
     "numpy>=2.0.0",
+    "scipy>=1.12",
     "pandas>=2.2.0",
     "xarray>=2024.1.0",
-    "cloudpickle>=3.0.0",
+
+    # Bayesian sampling / statistics
+    # For most of these packages we have upper-bounds as we had 
+    # issues in the past with their new releases
     "pymc>=5.19.1,<6.0.0",
     "pytensor>=2.22.0,<3.0.0",
     "arviz>=0.21.0,<1.0.0",
     "nutpie>=0.16.5,<0.16.9",
     "numba>=0.60.0",
+    "scikit-learn>=1.5.2",
+
+    # Data I/O
+    "nibabel>=5.3.1",
+    "h5py>=3.11.0",
+    "h5netcdf>=1.3.0",
+    "cloudpickle>=3.0.0",
+    "packaging>=21.3",
+
+    # Plotting
+    "matplotlib>=3.9.2",
+    "seaborn>=0.13.2",
+
+    # Parallelism and job orchestration
+    "dask>=2025.11.0",
+    "filelock>=3.13.0",
+
+    # Notebook / interactive environment
+    "ipywidgets>=8.1.5",
+    "ipykernel>=6.29.5",
+    "ipython>=8.0.0"
 ]
 
 [project.optional-dependencies]
