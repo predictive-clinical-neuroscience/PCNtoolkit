@@ -115,6 +115,8 @@ class Likelihood(ABC):
             #     return SHASHo2Likelihood._from_dict(dct, version=version)
             case "beta":
                 return BetaLikelihood._from_dict(dct, version=version)
+            case"ZINB":
+                return ZeroInflatedNegativeBinomialLikelihood._from_dict(dct, version=version)
             case _:
                 raise ValueError(f"Unknown likelihood: {likelihood}")
 
@@ -132,6 +134,8 @@ class Likelihood(ABC):
             #     return SHASHo2Likelihood._from_args(args)
             case "beta":
                 return BetaLikelihood._from_args(args)
+            case "ZINB":
+                return ZeroInflatedNegativeBinomialLikelihood._from_args(args)
             case _:
                 raise ValueError(f"Unknown likelihood: {likelihood}")
 
@@ -787,25 +791,30 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         return (1-psi) * mu
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"name": self.name, "mu": self.mu.to_dict(), "sigma": self.sigma.to_dict()}
+        return {"name": self.name, "mu": self.mu.to_dict(), "alpha": self.alpha.to_dict(), "psi": self.psi.to_dict()}
 
     @classmethod
     def _from_dict(
         cls,
         dct: Dict[str, Any],
         version: str | None = None,
-    ) -> "NormalLikelihood":
+    ) -> "ZeroInflatedNegativeBinomialLikelihood":
         return cls(
             mu=BasePrior.from_dict(dct["mu"], version=version),
-            sigma=BasePrior.from_dict(dct["sigma"], version=version),
+            alpha=BasePrior.from_dict(dct["alpha"], version=version),
+            psi=BasePrior.from_dict(dct["psi"], version=version),
         )
 
     @classmethod
-    def _from_args(cls, args: Dict[str, Any]) -> "NormalLikelihood":
-        return cls(mu=prior_from_args("mu", args), sigma=prior_from_args("sigma", args))
+    def _from_args(cls, args: Dict[str, Any]) -> "ZeroInflatedNegativeBinomialLikelihood":
+        return cls(
+            mu=prior_from_args("mu", args),
+            alpha=prior_from_args("alpha", args),
+            psi=prior_from_args("psi", args),
+        )
 
     def has_random_effect(self) -> bool:
-        return self.mu.has_random_effect or self.sigma.has_random_effect
+        return self.mu.has_random_effect or self.alpha.has_random_effect or self.psi.has_random_effect
 
 
 def get_default_normal_likelihood() -> NormalLikelihood:
