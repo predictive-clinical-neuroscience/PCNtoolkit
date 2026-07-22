@@ -743,6 +743,10 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         # Randomized uniform sample in [Fm1, Fy]
         U = np.random.uniform(Fm1, Fy)
         
+        # Ran into nan/inf during testing: avoid infinities in the CDF by clipping U to (0,1)
+        eps = np.finfo(float).eps
+        U = np.clip(U, eps, 1 - eps)
+        
         # Map to Z space
         Z = norm.ppf(U)
         
