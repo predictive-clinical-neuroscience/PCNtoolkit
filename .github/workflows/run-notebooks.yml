@@ -121,7 +121,7 @@ jobs:
             "github-actions[bot]@users.noreply.github.com"
 
           # Stage the executed notebooks and the generated RST files.
-          git add examples/ doc/pages/tutorials/
+          git add examples/ doc/tutorials/
 
           # Commit only if there are staged changes; exit cleanly
           # if nothing changed (idempotent re-runs are safe).
