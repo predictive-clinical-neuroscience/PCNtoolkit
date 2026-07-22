@@ -8,7 +8,7 @@ import numpy as np
 import pymc as pm  # type: ignore
 import scipy.stats as stats
 import xarray as xr
-from scipy.stats import nbinom # for ZINB
+from scipy.stats import norm, nbinom # for ZINB
 
 from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
 from pcntoolkit.math_functions.factorize import *
