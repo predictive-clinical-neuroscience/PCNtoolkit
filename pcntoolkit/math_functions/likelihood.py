@@ -704,29 +704,87 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         self.mu.update_data(model, X, be, be_maps, Y)
         self.alpha.update_data(model, X, be, be_maps, Y)
         self.psi.update_data(model, X, be, be_maps, Y)
-
-    #stopped here due to uncertainty about how to implement forward (to reference space) and backward (to data space) for ZINB
-    #normal likelihood and SHASH have invertible transformations. ZINB is a mixture distribution (psi defining the probability
-    #of zero inflation, mu and alpha defining the negative binomial distrbution). Therefore 0 can arise from either distribution
-    #which makes Y non-unique and therefore not invertible.
-    #I will need to think about how to implement this. Claude claims that randomized quantile residuals could be used but
-    #would love input on this - CDF of ZINB would be discrete, the inverse CDF would be step-wise.
-    #Would backward() return the corresponding count quantile? 
-    #Does forward() run inference internally to find corresponding Z? If yes, could it deal with a discrete mixture distribution?
     
     def forward(self, *args, **kwargs):
-        mu, sigma = args
-        Y = kwargs.get("Y", None)
-        return (Y - mu) / sigma
+        
+        """
+        ZINB is discrete and mixed, so mapping to Gaussian Z space could work like this
+
+        1. a point mass at zero with probability psi
+        2. a negative binomial count distribution with mean mu and dispersion alpha with probability 1-psi for the non-zero part
+        
+        So we cannot do one-to-one mapping to Z space, we use randomized quantile residuals to map to Z-space
+        1. compute CDF interval for the observed Y value, which is [F(Y-1), F(Y)]
+        2. sample a uniform random value in that interval
+        3. apply the inverse standard normal CDF
+        
+        This should yield Z that is approximately N(0,1) but is semi-randomized
+        """
+        mu, alpha, psi = args
+        Y = kwargs.get("Y")
+        
+        Y = np.asarray(Y)
+        
+        # NB parameterization
+        # If Var(Y_NB) = mu + alpha * mu^2, then the number of failures r = 1 / alpha and the success probability p = r / (r + mu)
+        r = 1 / alpha
+        p = r / (r + mu)
+        
+        # randomized CDF just below Y
+        Fm1 = np.where (Y > 0, psi + (1 - psi) * nbinom.cdf(Y - 1, r, p), 0.0)
+        
+        # CDF at Y
+        Fy = psi + (1 - psi) * nbinom.cdf(Y, r, p)
+        
+        # Randomized uniform sample in [Fm1, Fy]
+        U = np.random.uniform(Fm1, Fy)
+        
+        # Map to Z space
+        Z = norm.ppf(U)
+        
+        return Z
 
     def backward(self, *args, **kwargs):
-        mu, sigma = args
+        """
+        Map Z-space back to Y-space
+        
+        1. convert Gaussian Z to uniform U using standard normal CDF
+        2. invert the ZINB CDF using the quantile function to get Y
+        
+        Since ZINB is discrete the inverse could be obtained by finding the smallest integer Y such that F(Y) >= U
+        """
+        mu, alpha, psi = args
         Z = kwargs.get("Z")
-        return Z * sigma + mu
+        
+        Z = np.asarray(Z)
+        U = norm.cdf(Z)
+        
+        r = 1 / alpha
+        p = r / (r + mu)
+        
+        # Probability of 0 under the ZINB mixture
+        p0 = psi + (1 - psi) * nbinom.pmf(0, r, p)
+        
+        Y = np.zeros_like(U, dtype=int)
+        
+        # For probabilities beyond the point zero mass we invert the NB component
+        mask = U > p0
+        if np.any(mask):
+            # Remove the point mass at zero and scale U to the NB CDF
+            U_nb = (U[mask] - psi) / (1 - psi)
+            U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
+            
+            # Quantile from the NB component
+            y_nb = nbinom.ppf(U_nb, r, p).astype(int)
+            
+            # Ensure positive counts and assign to Y
+            Y[mask] = np.maximum(y_nb, 1)
+        
+        return Y
 
     def yhat(self, *args, **kwargs):
-        mu, _ = args
-        return mu
+        mu, alpha, psi = args
+        return (1-psi) * mu
 
     def to_dict(self) -> Dict[str, Any]:
         return {"name": self.name, "mu": self.mu.to_dict(), "sigma": self.sigma.to_dict()}
