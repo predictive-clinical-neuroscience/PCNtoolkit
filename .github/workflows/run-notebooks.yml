@@ -21,6 +21,12 @@ on:
       - '**'
   workflow_dispatch:
     inputs:
+      python_version:
+        description: >
+          Python version to run the notebooks on.
+        required: false
+        type: string
+        default: "3.13"
       dry_run:
         description: >
           Dry run — execute notebooks but do NOT commit results back.
@@ -50,10 +56,12 @@ jobs:
           persist-credentials: true
 
       # ── 2. Python ──────────────────────────────────────────────
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          # Use the dispatch input when provided (workflow_dispatch),
+          # otherwise fall back to 3.13 (push trigger has no input).
+          python-version: ${{ inputs.python_version || '3.13' }}
 
       # ── 3. System dependencies ─────────────────────────────────
       - name: Install pandoc
