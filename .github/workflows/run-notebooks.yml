@@ -50,10 +50,10 @@ jobs:
           persist-credentials: true
 
       # ── 2. Python ──────────────────────────────────────────────
-      - name: Set up Python 3.12
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       # ── 3. System dependencies ─────────────────────────────────
       - name: Install pandoc
