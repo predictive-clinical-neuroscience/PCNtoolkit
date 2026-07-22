@@ -25,6 +25,7 @@ __all__ = [
     "BetaLikelihood",
     "NormalLikelihood",
     "SHASHbLikelihood",
+    "ZeroInflatedNegativeBinomialLikelihood",
     "make_prior",
     "plot_centiles",
     "plot_qq",
