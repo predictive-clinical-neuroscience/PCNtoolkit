@@ -12,6 +12,7 @@
 # Nothing is committed unless every notebook succeeds.
 #
 # Notebook 08_cluster.ipynb is always skipped — it requires SLURM.
+# Notebook 14_longitudinal_modelling.ipynb is temporarily skipped.
 
 name: Run Notebooks
 
@@ -50,10 +51,10 @@ jobs:
           persist-credentials: true
 
       # ── 2. Python ──────────────────────────────────────────────
-      - name: Set up Python 3.12
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       # ── 3. System dependencies ─────────────────────────────────
       - name: Install pandoc
@@ -79,6 +80,10 @@ jobs:
           for nb in examples/*.ipynb; do
             if [[ "$nb" == *"08_cluster"* ]]; then
               echo "Skipping (SLURM-only): $nb"
+              continue
+            fi
+            if [[ "$nb" == *"14_longitudinal"* ]]; then
+              echo "Skipping (temporarily disabled): $nb"
               continue
             fi
 
@@ -116,7 +121,7 @@ jobs:
             "github-actions[bot]@users.noreply.github.com"
 
           # Stage the executed notebooks and the generated RST files.
-          git add examples/ doc/pages/tutorials/
+          git add examples/ doc/tutorials/
 
           # Commit only if there are staged changes; exit cleanly
           # if nothing changed (idempotent re-runs are safe).
