@@ -340,6 +340,15 @@ All results can be found in the save directory.
     model.fit_predict(train, test);
 
 
+.. parsed-literal::
+
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
+    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
+    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
+      warnings.warn(
+    
+
 
 .. raw:: html
 
@@ -478,7 +487,7 @@ All results can be found in the save directory.
                         <td>2000</td>
                         <td>0</td>
                         <td>0.09</td>
-                        <td>287</td>
+                        <td>63</td>
                     </tr>
     
                     <tr>
@@ -492,6 +501,19 @@ All results can be found in the save directory.
                         <td>0</td>
                         <td>0.08</td>
                         <td>127</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>0</td>
+                        <td>0.10</td>
+                        <td>255</td>
                     </tr>
     
                     <tr>
@@ -504,20 +526,7 @@ All results can be found in the save directory.
                         <td>2000</td>
                         <td>0</td>
                         <td>0.09</td>
-                        <td>319</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.08</td>
-                        <td>127</td>
+                        <td>31</td>
                     </tr>
     
                 </tr>
@@ -560,7 +569,7 @@ Let’s start with the centiles.
 
 .. parsed-literal::
 
-    [<Figure size 800x550 with 1 Axes>]
+    [<Figure size 640x480 with 1 Axes>]
 
 
 
@@ -584,7 +593,7 @@ Now let’s see the qq plots
 
 .. parsed-literal::
 
-    [<Figure size 800x550 with 1 Axes>]
+    [<Figure size 640x480 with 1 Axes>]
 
 
 
@@ -611,17 +620,17 @@ And finally the ridge plot:
 
 .. parsed-literal::
 
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\plotter.py:1051: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1051: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       g.figure.tight_layout()
     
 
@@ -700,19 +709,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.350945</td>
-          <td>1.173475</td>
-          <td>0.081506</td>
-          <td>0.320968</td>
-          <td>0.686721</td>
-          <td>-0.732217</td>
-          <td>0.350142</td>
-          <td>658.378599</td>
-          <td>0.488698</td>
-          <td>6.054985e-53</td>
-          <td>0.649858</td>
-          <td>0.986314</td>
-          <td>0.327245</td>
+          <td>0.351498</td>
+          <td>1.179647</td>
+          <td>0.081625</td>
+          <td>0.320857</td>
+          <td>0.686878</td>
+          <td>-0.732061</td>
+          <td>0.350722</td>
+          <td>658.08505</td>
+          <td>0.488126</td>
+          <td>8.311871e-53</td>
+          <td>0.649278</td>
+          <td>0.986262</td>
+          <td>0.329068</td>
         </tr>
       </tbody>
     </table>
@@ -774,19 +783,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.392384</td>
-          <td>0.450777</td>
-          <td>0.180911</td>
-          <td>0.347812</td>
-          <td>0.748561</td>
-          <td>-0.370708</td>
-          <td>0.38341</td>
-          <td>475.247706</td>
-          <td>0.513314</td>
-          <td>6.432733e-16</td>
-          <td>0.61659</td>
-          <td>0.980844</td>
-          <td>-0.495452</td>
+          <td>0.392423</td>
+          <td>0.449445</td>
+          <td>0.180117</td>
+          <td>0.347713</td>
+          <td>0.747721</td>
+          <td>-0.371548</td>
+          <td>0.383608</td>
+          <td>475.171215</td>
+          <td>0.512155</td>
+          <td>7.661168e-16</td>
+          <td>0.616392</td>
+          <td>0.981018</td>
+          <td>-0.493366</td>
         </tr>
       </tbody>
     </table>

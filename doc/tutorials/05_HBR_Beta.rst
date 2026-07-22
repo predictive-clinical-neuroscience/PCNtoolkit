@@ -318,7 +318,7 @@ All results can be found in the save directory.
 
 .. parsed-literal::
 
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\pytensor\link\c\cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
     This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
     Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
     For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
@@ -462,7 +462,7 @@ All results can be found in the save directory.
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.15</td>
+                        <td>0.13</td>
                         <td>63</td>
                     </tr>
     
@@ -475,7 +475,7 @@ All results can be found in the save directory.
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.15</td>
+                        <td>0.14</td>
                         <td>127</td>
                     </tr>
     
@@ -488,8 +488,8 @@ All results can be found in the save directory.
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.16</td>
-                        <td>63</td>
+                        <td>0.14</td>
+                        <td>127</td>
                     </tr>
     
                     <tr>
@@ -501,7 +501,7 @@ All results can be found in the save directory.
                         </td>
                         <td>2000</td>
                         <td>0</td>
-                        <td>0.15</td>
+                        <td>0.14</td>
                         <td>63</td>
                     </tr>
     
@@ -588,17 +588,17 @@ And finally the ridge plot:
 
 .. parsed-literal::
 
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\plotter.py:1051: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1051: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       g.figure.tight_layout()
     
 
@@ -677,19 +677,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.006848</td>
-          <td>1.961025</td>
-          <td>0.077111</td>
-          <td>0.343537</td>
-          <td>-1.986123</td>
-          <td>-0.756907</td>
-          <td>-0.001131</td>
-          <td>817.16923</td>
-          <td>0.515762</td>
-          <td>9.276483e-60</td>
-          <td>1.001131</td>
-          <td>0.971499</td>
-          <td>0.462182</td>
+          <td>0.006597</td>
+          <td>1.96506</td>
+          <td>0.077016</td>
+          <td>0.343306</td>
+          <td>-1.986229</td>
+          <td>-0.757013</td>
+          <td>-0.001295</td>
+          <td>817.236273</td>
+          <td>0.516377</td>
+          <td>6.386870e-60</td>
+          <td>1.001295</td>
+          <td>0.971418</td>
+          <td>0.462982</td>
         </tr>
       </tbody>
     </table>
@@ -751,19 +751,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>-0.472575</td>
-          <td>0.34908</td>
+          <td>-0.472459</td>
+          <td>0.346774</td>
           <td>0.165538</td>
-          <td>0.385015</td>
-          <td>-1.914659</td>
-          <td>-0.385773</td>
-          <td>-0.504613</td>
-          <td>742.393429</td>
-          <td>0.467802</td>
-          <td>3.823923e-13</td>
-          <td>1.504613</td>
-          <td>0.993952</td>
-          <td>0.229935</td>
+          <td>0.384746</td>
+          <td>-1.915401</td>
+          <td>-0.386516</td>
+          <td>-0.504351</td>
+          <td>742.328849</td>
+          <td>0.467311</td>
+          <td>4.075986e-13</td>
+          <td>1.504351</td>
+          <td>0.993945</td>
+          <td>0.230553</td>
         </tr>
       </tbody>
     </table>

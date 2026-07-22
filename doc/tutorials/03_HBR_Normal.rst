@@ -329,7 +329,7 @@ All results can be found in the save directory.
 
 .. parsed-literal::
 
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\pytensor\link\c\cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
     This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
     Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
     For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
@@ -441,7 +441,7 @@ All results can be found in the save directory.
             Finished Chains:
             <span id="active-chains">4</span>
         </p>
-        <p>Sampling for 13 seconds</p>
+        <p>Sampling for 15 seconds</p>
         <p>
             Estimated Time to Completion:
             <span id="eta">now</span>
@@ -472,7 +472,7 @@ All results can be found in the save directory.
                             </progress>
                         </td>
                         <td>2000</td>
-                        <td>0</td>
+                        <td>4</td>
                         <td>0.13</td>
                         <td>191</td>
                     </tr>
@@ -485,20 +485,7 @@ All results can be found in the save directory.
                             </progress>
                         </td>
                         <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
+                        <td>1</td>
                         <td>0.13</td>
                         <td>31</td>
                     </tr>
@@ -511,9 +498,22 @@ All results can be found in the save directory.
                             </progress>
                         </td>
                         <td>2000</td>
-                        <td>1</td>
+                        <td>0</td>
+                        <td>0.12</td>
+                        <td>63</td>
+                    </tr>
+    
+                    <tr>
+                        <td class="progress-cell">
+                            <progress
+                                max="2000"
+                                value="2000">
+                            </progress>
+                        </td>
+                        <td>2000</td>
+                        <td>4</td>
                         <td>0.14</td>
-                        <td>95</td>
+                        <td>31</td>
                     </tr>
     
                 </tr>
@@ -653,19 +653,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.354731</td>
-          <td>5.898452</td>
-          <td>0.087768</td>
-          <td>0.308666</td>
-          <td>0.870916</td>
-          <td>-0.548023</td>
-          <td>0.35473</td>
-          <td>656.05035</td>
-          <td>0.504326</td>
-          <td>8.349288e-57</td>
-          <td>0.64527</td>
-          <td>0.879556</td>
-          <td>1.80218</td>
+          <td>0.354476</td>
+          <td>5.906671</td>
+          <td>0.087624</td>
+          <td>0.308436</td>
+          <td>0.870895</td>
+          <td>-0.548044</td>
+          <td>0.354475</td>
+          <td>656.180417</td>
+          <td>0.504316</td>
+          <td>8.398966e-57</td>
+          <td>0.645525</td>
+          <td>0.879325</td>
+          <td>1.804153</td>
         </tr>
       </tbody>
     </table>
@@ -727,19 +727,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.367656</td>
-          <td>1.286686</td>
-          <td>0.161708</td>
-          <td>0.341987</td>
-          <td>0.796284</td>
-          <td>-0.322985</td>
-          <td>0.364526</td>
-          <td>482.470339</td>
-          <td>0.493964</td>
-          <td>1.092281e-14</td>
-          <td>0.635474</td>
-          <td>0.96293</td>
-          <td>0.814839</td>
+          <td>0.368419</td>
+          <td>1.291916</td>
+          <td>0.161827</td>
+          <td>0.341752</td>
+          <td>0.796182</td>
+          <td>-0.323087</td>
+          <td>0.365366</td>
+          <td>482.151416</td>
+          <td>0.495203</td>
+          <td>9.159731e-15</td>
+          <td>0.634634</td>
+          <td>0.962794</td>
+          <td>0.81684</td>
         </tr>
       </tbody>
     </table>
