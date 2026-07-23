@@ -780,7 +780,8 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         # Probability of 0 under the ZINB mixture
         p0 = psi + (1 - psi) * nbinom.pmf(0, r, p)
         
-        Y = np.zeros_like(U, dtype=int)
+        # Z turns out to have shape (9600,1) which centile calc cannot deal with. So we initialize Y with the same shape as mu and not U (which I did previously)
+        Y = np.zeros_like(mu, dtype=int)
         
         # For probabilities beyond the point zero mass we invert the NB component
         mask = U > p0
@@ -791,6 +792,8 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             
             # Quantile from the NB component
             y_nb = nbinom.ppf(U_nb, r, p).astype(int)
+            # Print shape for debugging
+            print("y_nb:", y_nb.shape)
             
             # Ensure positive counts and assign to Y
             Y[mask] = np.maximum(y_nb, 1)
