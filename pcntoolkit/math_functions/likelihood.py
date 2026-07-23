@@ -762,6 +762,11 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         
         Since ZINB is discrete the inverse could be obtained by finding the smallest integer Y such that F(Y) >= U
         """
+        print("mu", np.shape(mu))
+        print("alpha", np.shape(alpha))
+        print("psi", np.shape(psi))
+        print("Z", np.shape(Z))
+        
         mu, alpha, psi = args
         Z = kwargs.get("Z")
         
