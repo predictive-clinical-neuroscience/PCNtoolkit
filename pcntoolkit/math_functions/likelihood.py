@@ -789,11 +789,12 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         mask = U > p0
         if np.any(mask):
             # Remove the point mass at zero and scale U to the NB CDF
-            U_nb = (U[mask] - psi) / (1 - psi)
+            # Here is the issue, U is broadcasted to the shape of the mask but psi is not. We need to broadcast psi to the same shape as U before doing the subtraction and division.
+            U_nb = (U[mask] - p0[mask]) / (1 - p0[mask])
             U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
             
             # Quantile from the NB component
-            y_nb = nbinom.ppf(U_nb, r, p).astype(int)
+            y_nb = nbinom.ppf(U_nb, r[mask], p[mask]).astype(int)
             # Print shape for debugging
             print("y_nb:", y_nb.shape)
             
