@@ -773,6 +773,8 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         
         Z = np.asarray(Z)
         U = norm.cdf(Z)
+        # broadcast U to the shape of mu to avoid shape mismatch issues
+        U = np.broadcast_to(U, mu.shape)
         
         r = 1 / alpha
         p = r / (r + mu)
@@ -780,7 +782,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         # Probability of 0 under the ZINB mixture
         p0 = psi + (1 - psi) * nbinom.pmf(0, r, p)
         
-        # Z turns out to have shape (9600,1) which centile calc cannot deal with. So we initialize Y with the same shape as mu and not U (which I did previously)
+        # U turns out to have shape (9600,1) which I used to initialize Y. Now I initialize with the same shape as mu, which is (9600,). Should fix shape mismatch issues.
         Y = np.zeros_like(mu, dtype=int)
         
         # For probabilities beyond the point zero mass we invert the NB component
