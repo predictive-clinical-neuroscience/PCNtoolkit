@@ -33,6 +33,41 @@ html[data-theme="dark"] .bd-header {
     width: auto;
 }
 
+/* Stop the header wrapping onto a second line.
+   Browser zoom shrinks the effective viewport *and* enlarges the text, so a
+   fixed breakpoint is not enough: instead forbid wrapping and let the items
+   shrink. min-width:0 is required because flex children default to
+   min-width:auto and refuse to shrink below their content width. */
+.bd-header .bd-header__inner {
+    flex-wrap: nowrap;
+}
+.bd-header .navbar-header-items,
+.bd-header .navbar-header-items__start,
+.bd-header .navbar-header-items__center,
+.bd-header .navbar-header-items__end {
+    min-width: 0;
+}
+
+/* Let the brand text truncate rather than push the row wider. */
+.bd-header .navbar-brand {
+    min-width: 0;
+    overflow: hidden;
+}
+.bd-header .navbar-brand p.title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The version switcher is the widest single item: before JavaScript
+   rewrites it, the label reads "Choose version". Allow it to ellipsise. */
+.bd-header button.btn.version-switcher__button {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* White icon-link icons (e.g. GitHub icon) on the
    dark navbar. */
 .bd-header .pst-navbar-icon {
@@ -44,6 +79,21 @@ html[data-theme="dark"] .bd-header {
 .bd-header button.btn.version-switcher__button {
     color: rgba(255, 255, 255, 0.9) !important;
     border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* On phones the header collapses and the theme renders a second copy of
+   the icon links, theme switcher and version switcher inside the slide-out
+   sidebar. That copy is outside .bd-header, so the white-on-blue rules
+   above miss it and the icons fall back to a muted grey on the sidebar's
+   light background. Restate them here with the sidebar's own text colour. */
+.bd-sidebar-primary .sidebar-header-items .pst-navbar-icon {
+    color: var(--pst-color-text-base) !important;
+}
+.bd-sidebar-primary
+    .sidebar-header-items
+    button.btn.version-switcher__button {
+    color: var(--pst-color-text-base) !important;
+    border-color: var(--pst-color-border) !important;
 }
 
 /* Notebook printed output (parsed-literal / cell output)
@@ -72,6 +122,58 @@ html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre 
 html[data-theme="dark"] .bd-article .highlight-default .highlight pre *,
 html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre * {
     color: #ffffff !important;
+}
+
+/* Wide pandas output (e.g. `get_statistics_df()`, 14 columns) is emitted by
+   nbconvert as a bare, unclassed <div> around <table class="dataframe">. That
+   div has no overflow, so the only scroll container is the theme's
+   `.bd-article-container`, meaning a wide table scrolls the WHOLE article
+   sideways, dragging headings and prose with it. Give the wrapper its own
+   scroll context so scrolling stays inside the table. The `> ` combinator is
+   required, otherwise `:has()` also matches every ancestor div. */
+.bd-article div:has(> table.dataframe) {
+    overflow-x: auto;
+    max-width: 100%;
+    /* Firefox equivalent of the ::-webkit-scrollbar rules below. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.06);
+}
+
+/* Keep numbers and column names on one line. Without this the browser
+   resolves the overflow by wrapping inside cells, splitting floats like
+   1.2e-05 across two lines. The extra width is free now that the table
+   has its own scroll container. */
+.bd-article div:has(> table.dataframe) > table.dataframe th,
+.bd-article div:has(> table.dataframe) > table.dataframe td {
+    white-space: nowrap;
+}
+
+/* Show the scrollbar at rest, so readers can see there are more columns
+   off-screen. macOS Chrome/Safari use overlay scrollbars that stay hidden
+   until scrolling starts; `-webkit-appearance: none` defeats that and
+   reserves a permanent gutter. */
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar {
+    -webkit-appearance: none;
+    height: 10px;
+}
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 5px;
+}
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-radius: 5px;
+}
+
+/* Dark mode: light thumb on a dark track for the same contrast. */
+html[data-theme="dark"] .bd-article div:has(> table.dataframe) {
+    scrollbar-color: rgba(255, 255, 255, 0.40) rgba(255, 255, 255, 0.08);
+}
+html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+}
+html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.40);
 }
 
 /* Hide the RST header on the homepage; the HTML header (pcn-homepage-title)
