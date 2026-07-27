@@ -53,6 +53,12 @@ html_title = ""
 html_theme_options = {
     # Maximum depth of the sidebar navigation tree
     "navigation_depth": 4,
+    # Keep the nav links tight against the logo instead of centred, so the
+    # header row stays narrow on small screens.
+    "navbar_align": "left",
+    # Only the search button stays outside the collapsible menu; everything
+    # else folds into the hamburger sidebar on narrow screens.
+    "navbar_persistent": ["search-button"],
     # GitHub icon in the top-right header
     "github_url": (
         "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
