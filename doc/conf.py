@@ -70,12 +70,12 @@ html_theme_options = {
     # and "Built with PyData Sphinx Theme" text
     "footer_start": [],
     "footer_end": [],
-    # Version switcher shown in the top navbar, followed by
-    # the dark/light toggle, then the GitHub icon link
+    # Dark/light toggle in the top navbar, followed by the GitHub icon
+    # link, then the version switcher
     "navbar_end": [
-        "version-switcher",
         "theme-switcher",
         "navbar-icon-links",
+        "version-switcher",
     ],
     "switcher": {
         # Stable URL so every deployed version can load the JSON list
