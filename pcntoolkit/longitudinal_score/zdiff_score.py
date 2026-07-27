@@ -34,6 +34,14 @@ class ZDiffScore(LongitudinalScore):
 
     This score is intended for BLR-based models and subjects with at most two
     visits.
+
+    Attributes
+    ----------
+    zdiff : xr.DataArray | None
+        The most recent z-diff scores produced by :meth:`score`. ``None`` until
+        :meth:`score` has been called at least once. It stores the same
+        ``xr.DataArray`` that :meth:`score` returns, so the result can be
+        retrieved later even if the return value was not saved.
     """
 
     def __init__(
@@ -46,6 +54,9 @@ class ZDiffScore(LongitudinalScore):
         super().__init__(normative_model, reference_data, subject_id_col)
         # z-diff is defined only for BLR models.
         self._check_model_is_blr(normative_model)
+
+        # Hold the most recent z-diff scores; filled in by score().
+        self.zdiff: xr.DataArray | None = None
 
     def score(
         self,
@@ -69,7 +80,8 @@ class ZDiffScore(LongitudinalScore):
         Returns
         -------
         xr.DataArray
-            One z-diff score per subject and response variable.
+            One z-diff score per subject and response variable. The same array
+            is also stored on the instance as :attr:`zdiff` for later retrieval.
         """
         # Use the stored subject id name unless the caller overrides it.
         subject_id_col = subject_id_col or self.subject_id_col
@@ -129,12 +141,15 @@ class ZDiffScore(LongitudinalScore):
             for subject, delta_target in deltas_target.items():
                 scores[subject_index[subject], j] = delta_target / denominator
 
-        return xr.DataArray(
+        # Store the result so it can be retrieved later via self.zdiff, even
+        # if the caller does not keep the returned value.
+        self.zdiff = xr.DataArray(
             scores,
             dims=("subjects", "response_vars"),
             coords={"subjects": subjects, "response_vars": response_vars},
             name="zdiff",
         )
+        return self.zdiff
 
     # ------------------------------------------------------------------ #
     # Internals

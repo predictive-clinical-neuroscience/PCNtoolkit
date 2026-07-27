@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.math_functions.velocity import validate_thrivelines
 from pcntoolkit.util.autoscale_plot import autoscale
 
 if TYPE_CHECKING:
@@ -267,6 +268,7 @@ def _plot_centiles(
         plt.close(fig)
     return fig
 
+
 def plot_centiles_advanced(
     model: "NormativeModel",
     centiles: list[float] | np.ndarray | None = None,
@@ -280,8 +282,7 @@ def plot_centiles_advanced(
     hue_data: str = "site",
     markers_data: str = "sex",
     show_other_data: bool = False,
-    show_thrivelines: bool = False,
-    z_thrive: float = 0.0,
+    thrivelines: pd.DataFrame | None = None,
     show_figure: bool = True,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
@@ -322,6 +323,11 @@ def plot_centiles_advanced(
         The column to use for marker styling the data. If None, the data will not be marker styled.
     show_other_data: bool, optional
         Whether to scatter data belonging to groups not in batch_effects.
+    thrivelines: pd.DataFrame | None, optional
+        Pre-computed thriveline table (e.g. from
+        :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_thrivelines`).
+        Must contain ``X``, ``Y``, ``response_var``, ``segment``, and ``offset``.
+        When provided, response-scale thrivelines are overlaid on each centile plot.
     show_figure: bool, optional
         If True, call plt.show() after all figures are created.
         Defaults to True.
@@ -435,8 +441,6 @@ def plot_centiles_advanced(
 
     if not hasattr(centile_data, "centiles"):
         model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
-    if scatter_data and show_thrivelines:
-        model.compute_thrivelines(scatter_data, z_thrive=z_thrive)
     if show_yhat and not hasattr(centile_data, "Yhat"):
         model.compute_yhat(centile_data)
 
@@ -449,6 +453,25 @@ def plot_centiles_advanced(
             model.harmonize(scatter_data, reference_batch_effect=reference_batch_effect)
         else:
             model.harmonize(scatter_data)
+
+    # Prepare thriveline overlays: one (x segments, y segments) pair per region.
+    thrive_by_region: dict[str, tuple[list[np.ndarray], list[np.ndarray]]] = {}
+    if thrivelines is not None:
+        # Fail early if the caller passed an incomplete dataset.
+        validate_thrivelines(thrivelines)
+        # Read which response variables are available in the pre-computed grid.
+        thrive_response_vars = set(thrivelines["response_var"].astype(str))
+        for response_var in response_vars:
+            # Every plotted region must have a matching thriveline entry.
+            if response_var not in thrive_response_vars:
+                raise ValueError(
+                    f"thrivelines has no data for response variable "
+                    f"'{response_var}'. Available: {sorted(thrive_response_vars)}."
+                )
+            # Convert the xarray slice into plain arrays for _plot_centiles_advanced.
+            thrive_by_region[response_var] = _extract_thriveline_xy(
+                thrivelines, response_var
+            )
 
     figs: list[Figure] = []
     for response_var in response_vars:
@@ -464,7 +487,8 @@ def plot_centiles_advanced(
             hue_data=hue_data,
             markers_data=markers_data,
             show_other_data=show_other_data,
-            show_thrivelines=show_thrivelines,
+            # None when thrivelines were not passed for this plot.
+            thrive_xy=thrive_by_region.get(response_var),
             save_dir=save_dir,
             show_centile_labels=show_centile_labels,
             show_legend=show_legend,
@@ -489,7 +513,8 @@ def _plot_centiles_advanced(
     hue_data: str = "site",
     markers_data: str = "sex",
     show_other_data: bool = False,
-    show_thrivelines: bool = False,
+    # Per-segment (X, Y) arrays for thriveline overlay; None skips thrivelines.
+    thrive_xy: tuple[list[np.ndarray], list[np.ndarray]] | None = None,
     save_dir: str | None = None,
     show_centile_labels: bool = True,
     show_legend: bool = True,
@@ -574,9 +599,6 @@ def _plot_centiles_advanced(
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
         scatter_data_name = "Y_harmonized" if harmonize_data else "Y"
-        thriveline_data_name = (
-            "thrive_Y_harmonized" if harmonize_data else "thrive_Y"
-        )
         columns = [("X", covariate), (scatter_data_name, response_var)]
         columns.extend(
             [("batch_effects", be.item()) for be in scatter_data.batch_effect_dims]
@@ -597,11 +619,6 @@ def _plot_centiles_advanced(
                 linewidth=0,
                 ax=ax,
             )
-            if show_thrivelines:
-                ax.plot(
-                    scatter_filter.thrive_X.to_numpy().T,
-                    scatter_filter[thriveline_data_name].to_numpy().T,
-                )
         else:
             idx = np.full(len(df), True)
             for j in batch_effects:
@@ -622,12 +639,6 @@ def _plot_centiles_advanced(
                 linewidth=0,
                 ax=ax,
             )
-            if show_thrivelines:
-                ax.plot(
-                    scatter_filter.thrive_X.to_numpy().T,
-                    scatter_filter[thriveline_data_name].to_numpy().T,
-                )
-
             if show_other_data:
                 non_be_df = df[~idx]
                 markers = ["Other data"] * len(non_be_df)
@@ -660,6 +671,21 @@ def _plot_centiles_advanced(
                 legend = ax.get_legend()
                 if legend is not None:
                     legend.remove()
+
+    # Overlay pre-computed thrivelines (independent of scatter_data).
+    if thrive_xy is not None:
+        # thrive_x and thrive_y are parallel lists of segment arrays.
+        thrive_x, thrive_y = thrive_xy
+        for seg_x, seg_y in zip(thrive_x, thrive_y):
+            # Draw each 2-point anchor trajectory in response space (X vs Y).
+            ax.plot(
+                seg_x,
+                seg_y,
+                color="#2171b5",
+                alpha=0.55,
+                lw=1.4,
+                zorder=3,
+            )
 
     title = f"Centiles of {response_var}"
     plotname = f"centiles_{response_var}"
@@ -708,6 +734,23 @@ def _plot_centiles_advanced(
     if save_dir:
         fig.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
     return fig
+
+
+def _extract_thriveline_xy(
+    thrivelines: pd.DataFrame,
+    response_var: str,
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    """Return per-segment X and Y arrays for one response variable."""
+    region_df = thrivelines.loc[thrivelines["response_var"] == response_var]
+    thrive_x: list[np.ndarray] = []
+    thrive_y: list[np.ndarray] = []
+    # Each segment is a short 2-point line (anchor + one forward step).
+    for _, grp in region_df.groupby("segment", sort=True):
+        ordered = grp.sort_values("offset")
+        thrive_x.append(ordered["X"].to_numpy())
+        thrive_y.append(ordered["Y"].to_numpy())
+    return thrive_x, thrive_y
+
 
 def plot_qq(
     data: NormData,

@@ -19,6 +19,7 @@ from sklearn.linear_model import LinearRegression
 
 if TYPE_CHECKING:
     from pcntoolkit.dataio.norm_data import NormData
+    from pcntoolkit.normative_model import NormativeModel
 
 # ------------------------------------------------------------------- #
 # Correlation matrix
@@ -264,12 +265,12 @@ def design_matrix(bandwidth: int, Sigma: np.ndarray) -> pd.DataFrame:
 # ------------------------------------------------------------------- #
 
 
-def get_thrive_lines(
+def propagate_thriveline_z(
     correlations: xr.DataArray,
     start_z: xr.DataArray | float,
     z_thrive: float = -1.96,
 ) -> xr.DataArray:
-    """Propagate one thriveline segment using the Bayer et al. (2026) update.
+    """Propagate one thriveline segment in z-space using the Bayer et al. (2026) update.
 
     Each step applies
 
@@ -326,7 +327,7 @@ def compute_thrivelines(
     *,
     timepoint_diff: int = 1,
     z_thrive: float = -1.96,
-    propagate: Callable[[xr.DataArray, xr.DataArray | float, float], xr.DataArray] = get_thrive_lines,
+    propagate: Callable[[xr.DataArray, xr.DataArray | float, float], xr.DataArray] = propagate_thriveline_z,
     anchor_step: int = 1,
     z_anchor_start: int = -3,
     z_anchor_end: int = 4,
@@ -359,7 +360,7 @@ def compute_thrivelines(
         Covariate step between the two timepoints on each segment (e.g. 1 year).
     z_thrive : float, default -1.96
         Shrinkage term passed through to ``propagate``.
-    propagate : callable, default :func:`get_thrive_lines`
+    propagate : callable, default :func:`propagate_thriveline_z`
         Function that propagates z-scores along one segment:
         ``propagate(hop_correlations, start_z, z_thrive) -> xr.DataArray``.
         The default implements the update of Bayer et al. (2026); alternative
@@ -507,6 +508,321 @@ def compute_thrivelines(
     thrive_Z = thrive_Z.assign_coords(start_z=("segment", start_z.values))
     thrive_X = thrive_X.assign_coords(start_z=("segment", start_z.values))
     return thrive_Z, thrive_X
+
+
+def compute_thriveline_y(
+    model: "NormativeModel",
+    thrive_Z: xr.DataArray | xr.Dataset,
+    thrive_X: xr.DataArray | None = None,
+    *,
+    template: "NormData | None" = None,
+    covariate: str | None = None,
+    batch_effects: dict[str, str] | None = None,
+) -> xr.DataArray:
+    """Map propagated Z thrivelines to response-scale Y coordinates.
+
+    For each thriveline segment, response variable, and offset, covariate
+    values are taken from ``thrive_X``, non-thrive covariates are fixed to
+    the means in ``template``, and ``model[response_var].backward`` converts
+    z-scores to ``Y`` at the reference batch effect (when present).
+
+    When the model has a single covariate, ``covariate`` is not required.
+    When the model has multiple covariates, ``covariate`` names the thrive
+    axis and ``template`` is required to fix the other covariates.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Fitted normative model providing scalers and regional ``backward``
+        maps.
+    thrive_Z : xr.DataArray or xr.Dataset
+        Propagated z-scores from :func:`compute_thrivelines`, with dimensions
+        ``(segment, response_vars, offset)``. When an ``xr.Dataset`` is
+        passed (e.g. from :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_thrivelines`),
+        it must contain data variables ``Z`` and ``X``; ``thrive_X`` may then
+        be omitted.
+    thrive_X : xr.DataArray, optional
+        Matching covariate coordinates, same shape as ``thrive_Z``. Required
+        when ``thrive_Z`` is not a Dataset with ``Z`` and ``X``.
+    template : NormData, optional
+        Reference grid used to fix non-thrive covariates to their mean.
+        Required when the model has more than one covariate.
+    covariate : str, optional
+        Covariate along which thrivelines advance (e.g. ``"age"``). Required
+        when the model has more than one covariate; otherwise the sole model
+        covariate is used.
+    batch_effects : dict of str, optional
+        Reference batch labels keyed by batch-effect dimension
+        (e.g. ``{"site": "A"}``). When omitted or incomplete, missing keys
+        are filled from the first allowed level in
+        ``model.unique_batch_effects`` (same rule as
+        :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`). Ignored when
+        the model has no batch effects.
+
+    Returns
+    -------
+    thrive_Y : xr.DataArray
+        Response-scale thriveline values with the same dimensions and
+        coordinates as ``thrive_Z``.
+    """
+    # Identify the covariate that advances along each thriveline segment.
+    covariates = list(model.covariates)
+    if len(covariates) == 1:
+        thrive_covariate = covariates[0]
+    else:
+        if covariate is None:
+            raise ValueError(
+                "covariate must be specified when the model has multiple "
+                f"covariates: {covariates}."
+            )
+        if covariate not in covariates:
+            raise ValueError(
+                f"covariate '{covariate}' is not among model covariates: "
+                f"{covariates}."
+            )
+        thrive_covariate = covariate
+
+    thrive_Z, thrive_X = _resolve_thriveline_inputs(thrive_Z, thrive_X)
+    # Any covariate that does not change along the segment is held fixed.
+    other_covariates = [c for c in covariates if c != thrive_covariate]
+    if other_covariates and template is None:
+        raise ValueError(
+            "template is required when the model has covariates besides "
+            f"the thrive covariate '{thrive_covariate}'."
+        )
+
+    # Fix non-thrive covariates to their reference-cohort means.
+    fixed_covariates = {}
+    if template is not None:
+        fixed_covariates = {
+            cov: float(template.X.sel(covariates=cov).mean().values)
+            for cov in other_covariates
+        }
+
+    response_vars = [str(r) for r in thrive_Z.coords["response_vars"].values]
+    # Preallocate Y on the same (segment, response_vars, offset) grid as Z.
+    thrive_Y = xr.DataArray(
+        np.full(thrive_Z.shape, np.nan),
+        dims=thrive_Z.dims,
+        coords=thrive_Z.coords,
+        attrs=thrive_Z.attrs,
+        name="thrive_Y",
+    )
+
+    n_segments = thrive_Z.sizes["segment"]
+    # One reference batch label per segment for the backward pass.
+    be_encoded = _encode_batch_effects(model, batch_effects or {}, n_segments)
+
+    for rv in response_vars:
+        z_rv = thrive_Z.sel(response_vars=rv, drop=True)
+        x_rv = thrive_X.sel(response_vars=rv, drop=True)
+        y_rv = np.full((n_segments, z_rv.sizes["offset"]), np.nan)
+
+        # Map each offset slice (anchor and forward point) to response scale.
+        for o_idx, off in enumerate(z_rv.coords["offset"].values):
+            ages = x_rv.sel(offset=off).values.astype(float)
+            z_vals = z_rv.sel(offset=off).values.astype(float)
+            # Segments with missing correlations stay NaN in Z and are skipped.
+            valid = np.isfinite(ages) & np.isfinite(z_vals)
+            if not valid.any():
+                continue
+
+            n_valid = int(valid.sum())
+            obs_coord = np.arange(n_valid)
+            X_scaled = np.zeros((n_valid, len(covariates)))
+            for i, cov in enumerate(covariates):
+                if cov == thrive_covariate:
+                    col = ages[valid].reshape(-1, 1)
+                else:
+                    col = np.full((n_valid, 1), fixed_covariates[cov])
+                X_scaled[:, i] = model.inscalers[cov].transform(col).ravel()
+
+            X_da = xr.DataArray(
+                X_scaled,
+                dims=("observations", "covariates"),
+                coords={"observations": obs_coord, "covariates": covariates},
+            )
+            Z_da = xr.DataArray(
+                z_vals[valid],
+                dims=("observations",),
+                coords={"observations": obs_coord},
+            )
+            be_slice = (
+                be_encoded.isel(observations=np.where(valid)[0])
+                if be_encoded is not None
+                else None
+            )
+            # Invert the regional normative map: (X, Z) -> scaled Y, then unscale.
+            y_scaled = model[rv].backward(X_da, be_slice, Z_da).values
+            y_vals = model.outscalers[rv].inverse_transform(
+                y_scaled.reshape(-1, 1)
+            ).ravel()
+            y_rv[valid, o_idx] = y_vals
+
+        thrive_Y.loc[{"response_vars": rv}] = y_rv
+
+    return thrive_Y
+
+
+# Public long-form schema: one row per point on a thriveline segment.
+# A segment is one (start_age, start_z) anchor propagated over timepoint_diff.
+THRIVELINE_DF_COLUMNS = (
+    "segment",
+    "start_age",
+    "start_z",
+    "response_var",
+    "offset",
+    "X",
+    "Z",
+    "Y",
+)
+
+
+def validate_thrivelines(thrivelines: pd.DataFrame) -> None:
+    """Check that a pre-computed thriveline table can be plotted."""
+    if not isinstance(thrivelines, pd.DataFrame):
+        raise TypeError(
+            "thrivelines must be a pandas DataFrame from "
+            "ZGainScore.get_thrivelines()."
+        )
+    missing = [col for col in THRIVELINE_DF_COLUMNS if col not in thrivelines.columns]
+    if missing:
+        raise ValueError(
+            f"thrivelines is missing columns {missing}. "
+            "Compute it with ZGainScore.get_thrivelines() first."
+        )
+
+
+def thrivelines_to_dataframe(
+    thrive_Z: xr.DataArray,
+    thrive_X: xr.DataArray,
+    thrive_Y: xr.DataArray,
+) -> pd.DataFrame:
+    """Convert propagated thriveline arrays to a long-form table.
+
+    Each row is one point on one segment for one response variable. Columns are
+    ``segment``, ``start_age``, ``start_z``, ``response_var``, ``offset``,
+    ``X``, ``Z``, and ``Y``.
+
+    Parameters
+    ----------
+    thrive_Z, thrive_X, thrive_Y : xr.DataArray
+        Arrays with dimensions ``(segment, response_vars, offset)`` as returned
+        by :func:`compute_thrivelines` and :func:`compute_thriveline_y`.
+
+    Returns
+    -------
+    pd.DataFrame
+        Long-form thriveline table suitable for inspection, filtering, and
+        plotting.
+    """
+    rows: list[dict[str, object]] = []
+    # Segment-level anchor metadata attached by compute_thrivelines.
+    start_ages = thrive_Z.coords["start_age"].values if "start_age" in thrive_Z.coords else None
+    start_zs = thrive_Z.coords["start_z"].values if "start_z" in thrive_Z.coords else None
+    offsets = thrive_Z.coords["offset"].values
+
+    for rv in thrive_Z.coords["response_vars"].values:
+        z_rv = thrive_Z.sel(response_vars=rv, drop=True)
+        x_rv = thrive_X.sel(response_vars=rv, drop=True)
+        y_rv = thrive_Y.sel(response_vars=rv, drop=True)
+        for seg_idx in range(z_rv.sizes["segment"]):
+            segment = int(z_rv.coords["segment"].values[seg_idx])
+            start_age = (
+                float(start_ages[seg_idx])
+                if start_ages is not None
+                else np.nan
+            )
+            start_z = (
+                float(start_zs[seg_idx])
+                if start_zs is not None
+                else np.nan
+            )
+            # Each segment has two points: offset 0 (anchor) and offset timepoint_diff.
+            for off_idx, offset in enumerate(offsets):
+                rows.append(
+                    {
+                        "segment": segment,
+                        "start_age": start_age,
+                        "start_z": start_z,
+                        "response_var": str(rv),
+                        "offset": int(offset),
+                        "X": float(x_rv.isel(segment=seg_idx, offset=off_idx).item()),
+                        "Z": float(z_rv.isel(segment=seg_idx, offset=off_idx).item()),
+                        "Y": float(y_rv.isel(segment=seg_idx, offset=off_idx).item()),
+                    }
+                )
+
+    df = pd.DataFrame(rows, columns=list(THRIVELINE_DF_COLUMNS))
+    # Preserve propagation metadata for downstream inspection.
+    for key in ("timepoint_diff", "propagate"):
+        if key in thrive_Z.attrs:
+            df.attrs[key] = thrive_Z.attrs[key]
+    return df
+
+
+def _resolve_thriveline_inputs(
+    thrive_Z: xr.DataArray | xr.Dataset,
+    thrive_X: xr.DataArray | None,
+) -> tuple[xr.DataArray, xr.DataArray]:
+    """Return ``(thrive_Z, thrive_X)`` from separate arrays or a Dataset."""
+    # Accept either paired DataArrays or a bundled Dataset with Z and X variables.
+    if isinstance(thrive_Z, xr.Dataset):
+        if "Z" not in thrive_Z or "X" not in thrive_Z:
+            raise ValueError(
+                "When thrive_Z is an xr.Dataset it must contain data variables "
+                "'Z' and 'X'."
+            )
+        return thrive_Z["Z"], thrive_Z["X"]
+    if thrive_X is None:
+        raise ValueError(
+            "thrive_X is required when thrive_Z is not a Dataset with 'Z' and 'X'."
+        )
+    return thrive_Z, thrive_X
+
+
+def _resolve_reference_batch_effects(
+    model: "NormativeModel",
+    batch_effects: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Return reference batch labels used for thriveline backward passes.
+
+    Explicit entries in ``batch_effects`` override the default. Otherwise each
+    dimension uses the first allowed level in ``model.unique_batch_effects``
+    (same rule as :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`).
+    """
+    if not model.unique_batch_effects:
+        return {}
+    overrides = batch_effects or {}
+    # Default to the first allowed level so thrivelines align with plot_centiles_advanced.
+    return {
+        k: overrides[k] if k in overrides else model.unique_batch_effects[k][0]
+        for k in sorted(model.unique_batch_effects.keys())
+    }
+
+
+def _encode_batch_effects(
+    model: "NormativeModel",
+    batch_effects: dict[str, str],
+    n_obs: int,
+) -> xr.DataArray | None:
+    """Build a model-encoded batch-effect array for thriveline backward passes.
+
+    Each thriveline segment is evaluated at the reference batch effect resolved
+    by :func:`_resolve_reference_batch_effects`.
+    """
+    if not model.unique_batch_effects:
+        return None
+    be_vals = _resolve_reference_batch_effects(model, batch_effects)
+    be_keys = sorted(be_vals.keys())
+    obs_coord = np.arange(n_obs)
+    # Repeat the same reference batch labels for every thriveline segment.
+    raw_be = xr.DataArray(
+        np.tile([[str(be_vals[k]) for k in be_keys]], (n_obs, 1)),
+        dims=("observations", "batch_effect_dims"),
+        coords={"observations": obs_coord, "batch_effect_dims": be_keys},
+    )
+    return model.map_batch_effects(raw_be)
 
 
 def _covariate_bounds_from_R(R: xr.DataArray) -> tuple[int, int]:
