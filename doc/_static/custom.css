@@ -57,6 +57,14 @@ html[data-theme="dark"] .bd-header {
     border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
+/* Avoid the left dropdown menu to be cut off by the right boundary. 
+   This menu appears on phones or when zooming in PC screen. */
+.version-switcher__menu.dropdown-menu {
+    left: unset;
+    right: 0;
+    max-width: calc(100vw - 3rem);
+}
+
 /* Notebook printed output (parsed-literal / cell output)
    rendered in a light yellow box, visually distinct
    from normal code blocks. The more-specific selector
