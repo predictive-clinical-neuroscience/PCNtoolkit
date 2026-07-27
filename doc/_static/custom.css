@@ -117,6 +117,16 @@ html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre 
     white-space: nowrap;
 }
 
+/* Draw a light gray grid in every table. */
+.bd-article table.dataframe th,
+.bd-article table.dataframe td {
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+html[data-theme="dark"] .bd-article table.dataframe th,
+html[data-theme="dark"] .bd-article table.dataframe td {
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
 /* Show a scrollbar when there is a evaluation metrics printed */
 .bd-article div:has(> table.dataframe)::-webkit-scrollbar {
     -webkit-appearance: none;
