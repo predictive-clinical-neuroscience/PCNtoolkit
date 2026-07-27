@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 
 from pcntoolkit.dataio.norm_data import NormData
-from pcntoolkit.math_functions.velocity import THRIVELINE_DF_COLUMNS
+from pcntoolkit.math_functions.velocity import validate_thrivelines
 from pcntoolkit.util.autoscale_plot import autoscale
 
 if TYPE_CHECKING:
@@ -269,38 +269,6 @@ def _plot_centiles(
     return fig
 
 
-def _validate_thrivelines(thrivelines: pd.DataFrame) -> None:
-    """Check that a pre-computed thriveline table can be plotted."""
-    if not isinstance(thrivelines, pd.DataFrame):
-        raise TypeError(
-            "thrivelines must be a pandas DataFrame from "
-            "ZGainScore.get_thrivelines()."
-        )
-    # Require the full public schema produced by thrivelines_to_dataframe.
-    missing = [col for col in THRIVELINE_DF_COLUMNS if col not in thrivelines.columns]
-    if missing:
-        raise ValueError(
-            f"thrivelines is missing columns {missing}. "
-            "Compute it with ZGainScore.get_thrivelines() first."
-        )
-
-
-def _extract_thriveline_xy(
-    thrivelines: pd.DataFrame,
-    response_var: str,
-) -> tuple[list[np.ndarray], list[np.ndarray]]:
-    """Return per-segment X and Y arrays for one response variable."""
-    region_df = thrivelines.loc[thrivelines["response_var"] == response_var]
-    thrive_x: list[np.ndarray] = []
-    thrive_y: list[np.ndarray] = []
-    # Each segment is a short 2-point line (anchor + one forward step).
-    for _, grp in region_df.groupby("segment", sort=True):
-        ordered = grp.sort_values("offset")
-        thrive_x.append(ordered["X"].to_numpy())
-        thrive_y.append(ordered["Y"].to_numpy())
-    return thrive_x, thrive_y
-
-
 def plot_centiles_advanced(
     model: "NormativeModel",
     centiles: list[float] | np.ndarray | None = None,
@@ -490,7 +458,7 @@ def plot_centiles_advanced(
     thrive_by_region: dict[str, tuple[list[np.ndarray], list[np.ndarray]]] = {}
     if thrivelines is not None:
         # Fail early if the caller passed an incomplete dataset.
-        _validate_thrivelines(thrivelines)
+        validate_thrivelines(thrivelines)
         # Read which response variables are available in the pre-computed grid.
         thrive_response_vars = set(thrivelines["response_var"].astype(str))
         for response_var in response_vars:
@@ -766,6 +734,23 @@ def _plot_centiles_advanced(
     if save_dir:
         fig.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
     return fig
+
+
+def _extract_thriveline_xy(
+    thrivelines: pd.DataFrame,
+    response_var: str,
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    """Return per-segment X and Y arrays for one response variable."""
+    region_df = thrivelines.loc[thrivelines["response_var"] == response_var]
+    thrive_x: list[np.ndarray] = []
+    thrive_y: list[np.ndarray] = []
+    # Each segment is a short 2-point line (anchor + one forward step).
+    for _, grp in region_df.groupby("segment", sort=True):
+        ordered = grp.sort_values("offset")
+        thrive_x.append(ordered["X"].to_numpy())
+        thrive_y.append(ordered["Y"].to_numpy())
+    return thrive_x, thrive_y
+
 
 def plot_qq(
     data: NormData,

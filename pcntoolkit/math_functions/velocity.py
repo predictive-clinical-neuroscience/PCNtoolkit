@@ -678,6 +678,21 @@ THRIVELINE_DF_COLUMNS = (
 )
 
 
+def validate_thrivelines(thrivelines: pd.DataFrame) -> None:
+    """Check that a pre-computed thriveline table can be plotted."""
+    if not isinstance(thrivelines, pd.DataFrame):
+        raise TypeError(
+            "thrivelines must be a pandas DataFrame from "
+            "ZGainScore.get_thrivelines()."
+        )
+    missing = [col for col in THRIVELINE_DF_COLUMNS if col not in thrivelines.columns]
+    if missing:
+        raise ValueError(
+            f"thrivelines is missing columns {missing}. "
+            "Compute it with ZGainScore.get_thrivelines() first."
+        )
+
+
 def thrivelines_to_dataframe(
     thrive_Z: xr.DataArray,
     thrive_X: xr.DataArray,
