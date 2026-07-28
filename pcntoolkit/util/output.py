@@ -213,6 +213,8 @@ class Errors:
     ERROR_BLR_WARPS_NOT_PROVIDED = "A list of warp functions is required"
     ERROR_HBRDATA_X_NOT_PROVIDED = "X must be provided"
     ERROR_UNKNOWN_LIKELIHOOD = "Unsupported likelihood ({likelihood})"
+    ERROR_ZINB_Y_NOT_COUNTS = "The ZINB likelihood requires Y to contain non-negative integer counts."
+    ERROR_ZINB_Y_NOT_FINITE = "The ZINB likelihood requires all values of Y to be finite, but Y contains NaN or infinite values."
     ERROR_HBR_Y_NOT_PROVIDED = "y must be provided for z-score computation"
     ERROR_HBR_FITTED_BUT_NO_IDATA = "HBR model is fitted but does not have idata. This should not happen."
     ERROR_HBR_COULD_NOT_LOAD_IDATA = "Could not load idata from {path}"

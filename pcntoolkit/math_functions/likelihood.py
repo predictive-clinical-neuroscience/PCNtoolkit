@@ -742,16 +742,29 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         Y = kwargs.get("Y")
         Y = np.asarray(Y)
 
+        # Y must be counts so it must be a finite and non-negative integer
+        if not np.all(np.isfinite(Y)):
+            raise ValueError(Output.error(Errors.ERROR_ZINB_Y_NOT_FINITE))
+        if np.any(Y < 0) or np.any(Y != np.floor(Y)):
+            raise ValueError(Output.error(Errors.ERROR_ZINB_Y_NOT_COUNTS))
+
         # Randomized uniform sample in [F(y-1), F(y)]
         Fm1 = self._cdf(Y - 1, mu, alpha, psi)  # F(y-1)
         Fy = self._cdf(Y, mu, alpha, psi)  # F(y)
-        U = np.random.uniform(Fm1, Fy) # randomized quantile residuals
+
+        # Allow user to pass a specific number generator for reproducibility
+        rng = kwargs.get("rng")
+        # if user doesn't pass a generator, use the default one that is
+        # random and non-reproducible
+        rng = np.random.default_rng() if rng is None else rng
+
+        U = rng.uniform(Fm1, Fy)  # randomized quantile residuals
 
         # Keep U strictly inside (0, 1) so norm.ppf stays finite.
         eps = np.finfo(float).eps
         U = np.clip(U, eps, 1 - eps)
         Z = norm.ppf(U)
-        
+
         return Z
 
     def backward(self, *args, **kwargs):
@@ -761,7 +774,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         Inverts the mapping applied by ``forward``: the Z-score is turned into a
         cumulative probability, and the smallest count whose CDF reaches that
         probability is returned.
-        
+
         Probabilities at or below ``F(0)`` map to zero;
         above it the structural zero mass is removed and the remainder rescaled
         onto the negative binomial component before inverting it.
