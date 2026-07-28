@@ -8,7 +8,7 @@ import numpy as np
 import pymc as pm  # type: ignore
 import scipy.stats as stats
 import xarray as xr
-from scipy.stats import norm, nbinom # for ZINB
+from scipy.stats import norm, nbinom  # for ZINB
 
 from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
 from pcntoolkit.math_functions.factorize import *
@@ -709,103 +709,147 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         self.mu.update_data(model, X, be, be_maps, Y)
         self.alpha.update_data(model, X, be, be_maps, Y)
         self.psi.update_data(model, X, be, be_maps, Y)
-    
-    def forward(self, *args, **kwargs):
-        
-        """
-        ZINB is discrete and mixed, so mapping to Gaussian Z space could work like this
 
-        1. a point mass at zero with probability psi
-        2. a negative binomial count distribution with mean mu and dispersion alpha with probability 1-psi for the non-zero part
-        
-        So we cannot do one-to-one mapping to Z space, we use randomized quantile residuals to map to Z-space
-        1. compute CDF interval for the observed Y value, which is [F(Y-1), F(Y)]
-        2. sample a uniform random value in that interval
-        3. apply the inverse standard normal CDF
-        
-        This should yield Z that is approximately N(0,1) but is semi-randomized
+    @staticmethod
+    def _nb_params(mu, alpha):
+        """
+        Convert the ZINB parameters to the (n, p) parameterization used by scipy.
+
+        PyMC parameterizes the negative binomial component by its mean ``mu`` and
+        shape ``alpha``.
+        Scipy's ``nbinom`` takes the number of successes ``n`` and the success 
+        probability ``p``.
+
+        Returns
+        -------
+        tuple of ndarray
+            ``(n, p)`` suitable for passing to ``scipy.stats.nbinom``.
+        """
+        n = alpha # the PyMC docs state ``alpha = n``
+        p = alpha / (alpha + mu)
+        return n, p
+
+    @classmethod
+    def _cdf(cls, y, mu, alpha, psi):
+        """
+        Evaluate the ZINB cumulative distribution function.
+
+        The distribution mixes a point mass at zero with a negative binomial
+        component. The structural-zero component is a point mass at 0, so its 
+        CDF is 0 below zero and 1 from zero onward
+
+            F(y) = (1 - psi) + psi * F_NB(y)   for y >= 0
+            F(y) = 0                           for y < 0
+
+        Parameters
+        ----------
+        y : array_like
+            Count values at which to evaluate the CDF. Values below zero return 0.
+        mu : array_like
+            Mean of the negative binomial component, strictly positive.
+        alpha : array_like
+            Shape of the negative binomial component, strictly positive.
+        psi : array_like
+            Expected proportion of negative binomial draws, in (0, 1).
+
+        Returns
+        -------
+        ndarray
+            Cumulative probability at ``y``, in [0, 1], broadcast over the inputs.
+        """
+        n, p = cls._nb_params(mu, alpha)
+        return np.where(y < 0, 0.0, (1 - psi) + psi * nbinom.cdf(y, n, p))
+
+    def forward(self, *args, **kwargs):
+        """
+        Map counts to Z-space using randomized quantile residuals.
+
+        The ZINB distribution is discrete, so each count y is actually an interval of
+        probability rather than a single value: everything between F(y-1) and F(y), where
+        F is the CDF -- the fraction of people scoring at or below y. 
+
+        Because we want Z to be a distribution rather than a handful of single points --
+        and y being an interval is what allows that -- we draw uniformly from the interval (=randomized quantile residuals)
+        and map the result to Z through the inverse normal CDF.
+
+        This makes ``forward`` stochastic: the same count maps to a slightly
+        different Z on each call. ``backward`` remains deterministic, so centiles
+        are unaffected.
+
+        Parameters
+        ----------
+        Y : array_like
+            Observed counts, non-negative integers.
+
+        Returns
+        -------
+        ndarray
+            Z-scores
         """
         mu, alpha, psi = args
-        Y = kwargs.get("Y")
-        
-        Y = np.asarray(Y)
-        
-        # NB parameterization
-        # If Var(Y_NB) = mu + alpha * mu^2, then the number of failures r = 1 / alpha and the success probability p = r / (r + mu)
-        r = 1 / alpha
-        p = r / (r + mu)
-        
-        # randomized CDF just below Y
-        Fm1 = np.where (Y > 0, psi + (1 - psi) * nbinom.cdf(Y - 1, r, p), 0.0)
-        
-        # CDF at Y
-        Fy = psi + (1 - psi) * nbinom.cdf(Y, r, p)
-        
-        # Randomized uniform sample in [Fm1, Fy]
-        U = np.random.uniform(Fm1, Fy)
-        
-        # Ran into nan/inf during testing: avoid infinities in the CDF by clipping U to (0,1)
+        Y = np.asarray(kwargs.get("Y"))
+
+        # Randomized uniform sample in [F(y-1), F(y)]
+        Fm1 = self._cdf(Y - 1, mu, alpha, psi)  # F(y-1)
+        Fy = self._cdf(Y, mu, alpha, psi)  # F(y)
+        U = np.random.uniform(Fm1, Fy) # randomized quantile residuals
+
+        # Keep U strictly inside (0, 1) so norm.ppf stays finite.
         eps = np.finfo(float).eps
         U = np.clip(U, eps, 1 - eps)
-        
-        # Map to Z space
         Z = norm.ppf(U)
         
         return Z
 
     def backward(self, *args, **kwargs):
         """
-        Map Z-space back to Y-space
+        Map Z-space back to counts.
+
+        Inverts the mapping applied by ``forward``: the Z-score is turned into a
+        cumulative probability, and the smallest count whose CDF reaches that
+        probability is returned.
         
-        1. convert Gaussian Z to uniform U using standard normal CDF
-        2. invert the ZINB CDF using the quantile function to get Y
-        
-        Since ZINB is discrete the inverse could be obtained by finding the smallest integer Y such that F(Y) >= U
+        Probabilities at or below ``F(0)`` map to zero;
+        above it the structural zero mass is removed and the remainder rescaled
+        onto the negative binomial component before inverting it.
+
+        Unlike ``forward`` this mapping is deterministic, so centiles derived
+        from it are reproducible.
+
+        Parameters
+        ----------
+        Z : array_like
+            Z-scores to map back to count space.
+
+        Returns
+        -------
+        Y : ndarray
+            Non-negative integer counts
         """
-        
         mu, alpha, psi = args
-        Z = kwargs.get("Z")
-        
-        print("mu:", type(mu), np.shape(mu))
-        print("alpha:", type(alpha), np.shape(alpha))
-        print("psi:", type(psi), np.shape(psi))
-        print("Z:", type(Z), np.shape(Z))
-        
-        Z = np.asarray(Z)
-        U = norm.cdf(Z)
-        # broadcast U to the shape of mu to avoid shape mismatch issues
-        U = np.broadcast_to(U, mu.shape)
-        
-        r = 1 / alpha
-        p = r / (r + mu)
-        
-        # Probability of 0 under the ZINB mixture
-        p0 = psi + (1 - psi) * nbinom.pmf(0, r, p)
-        
-        # U turns out to have shape (9600,1) which I used to initialize Y. Now I initialize with the same shape as mu, which is (9600,). Should fix shape mismatch issues.
-        Y = np.zeros_like(mu, dtype=int)
-        
-        # For probabilities beyond the point zero mass we invert the NB component
-        mask = U > p0
+        Z = np.asarray(kwargs.get("Z"))
+
+        # Z arrives with a trailing singleton axis; align it and the parameters
+        # onto a common shape so the masked assignments below stay consistent.
+        shape = np.broadcast_shapes(np.shape(Z), np.shape(mu))
+        U = np.broadcast_to(norm.cdf(Z), shape)
+        mu, alpha, psi = (np.broadcast_to(v, shape) for v in (mu, alpha, psi))
+
+        Y = np.zeros(shape, dtype=np.int64)
+
+        # Everything at or below F(0) maps to zero; invert the NB part above it.
+        mask = U > self._cdf(0, mu, alpha, psi)
         if np.any(mask):
-            # Remove the point mass at zero and scale U to the NB CDF
-            # Here is the issue, U is broadcasted to the shape of the mask but psi is not. We need to broadcast psi to the same shape as U before doing the subtraction and division.
-            U_nb = (U[mask] - p0[mask]) / (1 - p0[mask])
-            U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
-            
-            # Quantile from the NB component
-            y_nb = nbinom.ppf(U_nb, r[mask], p[mask]).astype(int)
-            # Print shape for debugging
-            print("y_nb:", y_nb.shape)
-            
-            # Ensure positive counts and assign to Y
-            Y[mask] = np.maximum(y_nb, 1)
-        
+            # F(y) = (1 - psi) + psi * F_NB(y), so F_NB(y) = (U - (1 - psi)) / psi.
+            U_nb = np.clip((U[mask] - (1 - psi[mask])) / psi[mask], 0.0, 1.0)
+            n, p = self._nb_params(mu[mask], alpha[mask])
+            Y[mask] = nbinom.ppf(U_nb, n, p)
+
         return Y
 
     def yhat(self, *args, **kwargs):
         mu, alpha, psi = args
-        return (1-psi) * mu
+        return psi * mu
 
     def to_dict(self) -> Dict[str, Any]:
         return {"name": self.name, "mu": self.mu.to_dict(), "alpha": self.alpha.to_dict(), "psi": self.psi.to_dict()}
