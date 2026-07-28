@@ -19,9 +19,9 @@ pip install pcntoolkit
 ## Example usage
 
 ```python
-from pcntoolkit import {load_fcon, BLR, NormativeModel}
+from pcntoolkit import load_fcon1000, BLR, NormativeModel
 
-fcon1000 = load_fcon()
+fcon1000 = load_fcon1000()
 
 train, test = fcon1000.train_test_split()
 
