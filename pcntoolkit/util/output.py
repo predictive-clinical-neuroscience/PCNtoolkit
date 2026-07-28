@@ -96,6 +96,10 @@ Total failed jobs: {total_failed_jobs}
 
 
 class Warnings:
+    ZINB_SATURATED_QUANTILE = (
+        "Some Z-scores are so extreme (beyond about |Z| = 8.3) that no finite count exists for them; "
+        "returning inf. You may want to exclude these Z-scores."
+    )
     BATCH_SIZE_AND_N_BATCHES_SPECIFIED = "Batch size and number of batches specified. Batch size will be ignored."
     MISSING_COVARIATES = "The dataset {dataset_name} is missing the following covariates: {covariates}"
     EXTRA_COVARIATES = "The dataset {dataset_name} has too many covariates: {covariates}"

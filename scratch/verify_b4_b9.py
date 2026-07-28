@@ -15,15 +15,18 @@ mu, alpha, psi = 3.0, 0.4, 0.7
 M = lambda v, n=1: np.full(n, v)
 
 print("=== B5: extreme Z no longer wraps to a small/negative count ===")
-prev = -1
+prev = -1.0
 mono = True
+vals = []
 for z in [-10., -5., 0., 3., 5., 8., 10., 20., 38., np.inf]:
-    y = int(lik.backward(M(mu), M(alpha), M(psi), Z=M(z))[0])
+    y = float(lik.backward(M(mu), M(alpha), M(psi), Z=M(z))[0])
+    vals.append(y)
     print(f"    Z={z:<6} -> Y={y}")
     if y < prev:
         mono = False
     prev = y
-check("backward monotonic and non-negative at extreme Z", mono and prev > 0)
+check("backward monotonic and non-negative at extreme Z", mono and all(v >= 0 for v in vals))
+check("saturated region is inf, not a wrapped/fake count", np.isinf(vals[-1]))
 
 print()
 print("=== B4: no forced Y>=1 (a zero above F(0) stays possible / low centiles are 0) ===")

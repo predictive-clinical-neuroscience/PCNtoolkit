@@ -15,7 +15,7 @@ from pcntoolkit.math_functions.factorize import *
 from pcntoolkit.math_functions.prior import BasePrior, make_prior, prior_from_args
 from pcntoolkit.math_functions.shash import S, S_inv, SHASHb, SHASHo, SHASHo2, m1m2
 from pcntoolkit.util.migration import registry
-from pcntoolkit.util.output import Errors, Output
+from pcntoolkit.util.output import Errors, Output, Warnings
 
 
 class Likelihood(ABC):
@@ -790,7 +790,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         Returns
         -------
         Y : ndarray
-            Non-negative integer counts
+            Non-negative integer-valued counts, as floats.
         """
         mu, alpha, psi = args
         Z = kwargs.get("Z")
@@ -805,7 +805,8 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         # Probability of 0 under the ZINB mixture
         p0 = self._cdf(0, mu, alpha, psi)
 
-        Y = np.zeros_like(mu, dtype=int)
+        # These are quantiles rather than observed counts, so they can be floats
+        Y = np.zeros_like(mu, dtype=float)
 
         # For probabilities beyond the point zero mass we invert the NB component
         mask = U > p0
@@ -816,7 +817,10 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
 
             # Quantile from the NB component
-            y_nb = nbinom.ppf(U_nb, n[mask], p[mask]).astype(int)
+            y_nb = nbinom.ppf(U_nb, n[mask], p[mask])
+
+            if np.isinf(y_nb).any():
+                Output.warning(Warnings.ZINB_SATURATED_QUANTILE)
 
             Y[mask] = y_nb
 
