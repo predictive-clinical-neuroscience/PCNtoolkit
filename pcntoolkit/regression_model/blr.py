@@ -461,6 +461,8 @@ class BLR(RegressionModel):
 
         if self.warp:
             y = self.warp.f(Y.values, self.gamma)
+        else:
+            y = Y.values
 
         transfered_model = copy.deepcopy(self)
         transfered_model.correction_coefficients = {}
