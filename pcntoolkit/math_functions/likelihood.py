@@ -787,7 +787,9 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             Z-scores
         """
         mu, alpha, psi = args
-        Y = np.asarray(kwargs.get("Y"))
+        
+        Y = kwargs.get("Y")
+        Y = np.asarray(Y)
 
         # Randomized uniform sample in [F(y-1), F(y)]
         Fm1 = self._cdf(Y - 1, mu, alpha, psi)  # F(y-1)
@@ -827,23 +829,32 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             Non-negative integer counts
         """
         mu, alpha, psi = args
-        Z = np.asarray(kwargs.get("Z"))
+        Z = kwargs.get("Z")
 
-        # Z arrives with a trailing singleton axis; align it and the parameters
-        # onto a common shape so the masked assignments below stay consistent.
-        shape = np.broadcast_shapes(np.shape(Z), np.shape(mu))
-        U = np.broadcast_to(norm.cdf(Z), shape)
-        mu, alpha, psi = (np.broadcast_to(v, shape) for v in (mu, alpha, psi))
+        Z = np.asarray(Z)
+        U = norm.cdf(Z)
+        # broadcast U to the shape of mu to avoid shape mismatch issues
+        U = np.broadcast_to(U, mu.shape)
 
-        Y = np.zeros(shape, dtype=np.int64)
+        n, p = self._nb_params(mu, alpha)
 
-        # Everything at or below F(0) maps to zero; invert the NB part above it.
-        mask = U > self._cdf(0, mu, alpha, psi)
+        # Probability of 0 under the ZINB mixture
+        p0 = self._cdf(0, mu, alpha, psi)
+
+        Y = np.zeros_like(mu, dtype=int)
+
+        # For probabilities beyond the point zero mass we invert the NB component
+        mask = U > p0
         if np.any(mask):
-            # F(y) = (1 - psi) + psi * F_NB(y), so F_NB(y) = (U - (1 - psi)) / psi.
-            U_nb = np.clip((U[mask] - (1 - psi[mask])) / psi[mask], 0.0, 1.0)
-            n, p = self._nb_params(mu[mask], alpha[mask])
-            Y[mask] = nbinom.ppf(U_nb, n, p)
+            # Remove the structural-zero mass (1 - psi) and rescale onto the NB
+            # component, whose weight is psi: F(y) = (1 - psi) + psi * F_NB(y).
+            U_nb = (U[mask] - (1 - psi[mask])) / psi[mask]
+            U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
+
+            # Quantile from the NB component
+            y_nb = nbinom.ppf(U_nb, n[mask], p[mask]).astype(int)
+
+            Y[mask] = y_nb
 
         return Y
 
