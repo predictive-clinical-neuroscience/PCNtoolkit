@@ -772,7 +772,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         Map Z-space back to counts.
 
         Inverts the mapping applied by ``forward``: the Z-score is turned into a
-        cumulative probability, and the smallest count whose CDF reaches that
+        probability between 0 and 1, and the smallest count whose CDF reaches that
         probability is returned.
 
         Probabilities at or below ``F(0)`` map to zero;
@@ -805,10 +805,11 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         # Probability of 0 under the ZINB mixture
         p0 = self._cdf(0, mu, alpha, psi)
 
-        # These are quantiles rather than observed counts, so they can be floats
+        # These are centiles rather than observed counts, so they can be floats
         Y = np.zeros_like(mu, dtype=float)
 
-        # For probabilities beyond the point zero mass we invert the NB component
+        # For probabilities beyond the point zero mass we invert the NB
+        # component
         mask = U > p0
         if np.any(mask):
             # Remove the structural-zero mass (1 - psi) and rescale onto the NB
@@ -816,7 +817,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             U_nb = (U[mask] - (1 - psi[mask])) / psi[mask]
             U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
 
-            # Quantile from the NB component
+            # Centiles from the NB component
             y_nb = nbinom.ppf(U_nb, n[mask], p[mask])
 
             if np.isinf(y_nb).any():
@@ -845,7 +846,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         tuple of ndarray
             ``(n, p)`` suitable for passing to ``scipy.stats.nbinom``.
         """
-        n = alpha # the PyMC docs state ``alpha = n``
+        n = alpha  # the PyMC docs state ``alpha = n``
         p = alpha / (alpha + mu)
         return n, p
 
