@@ -8,7 +8,6 @@ import numpy as np
 import pymc as pm  # type: ignore
 import scipy.stats as stats
 import xarray as xr
-from scipy.stats import norm, nbinom  # for ZINB
 
 from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
 from pcntoolkit.math_functions.factorize import *
@@ -117,7 +116,7 @@ class Likelihood(ABC):
             #     return SHASHo2Likelihood._from_dict(dct, version=version)
             case "beta":
                 return BetaLikelihood._from_dict(dct, version=version)
-            case"ZINB":
+            case "ZINB":
                 return ZeroInflatedNegativeBinomialLikelihood._from_dict(dct, version=version)
             case _:
                 raise ValueError(f"Unknown likelihood: {likelihood}")
@@ -763,7 +762,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         # Keep U strictly inside (0, 1) so norm.ppf stays finite.
         eps = np.finfo(float).eps
         U = np.clip(U, eps, 1 - eps)
-        Z = norm.ppf(U)
+        Z = stats.norm.ppf(U)
 
         return Z
 
@@ -796,7 +795,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         Z = kwargs.get("Z")
 
         Z = np.asarray(Z)
-        U = norm.cdf(Z)
+        U = stats.norm.cdf(Z)
         # broadcast U to the shape of mu to avoid shape mismatch issues
         U = np.broadcast_to(U, mu.shape)
 
@@ -818,7 +817,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
 
             # Centiles from the NB component
-            y_nb = nbinom.ppf(U_nb, n[mask], p[mask])
+            y_nb = stats.nbinom.ppf(U_nb, n[mask], p[mask])
 
             if np.isinf(y_nb).any():
                 Output.warning(Warnings.ZINB_SATURATED_QUANTILE)
@@ -879,7 +878,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             Cumulative probability at ``y``, in [0, 1], broadcast over the inputs.
         """
         n, p = cls._nb_params(mu, alpha)
-        return np.where(y < 0, 0.0, (1 - psi) + psi * nbinom.cdf(y, n, p))
+        return np.where(y < 0, 0.0, (1 - psi) + psi * stats.nbinom.cdf(y, n, p))
 
     def to_dict(self) -> Dict[str, Any]:
         return {"name": self.name, "mu": self.mu.to_dict(), "alpha": self.alpha.to_dict(), "psi": self.psi.to_dict()}
