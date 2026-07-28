@@ -15,6 +15,7 @@ from pcntoolkit.math_functions.factorize import *
 from pcntoolkit.math_functions.prior import BasePrior, make_prior, prior_from_args
 from pcntoolkit.math_functions.shash import S, S_inv, SHASHb, SHASHo, SHASHo2, m1m2
 from pcntoolkit.util.migration import registry
+from pcntoolkit.util.output import Errors, Output
 
 
 class Likelihood(ABC):
@@ -710,56 +711,6 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         self.alpha.update_data(model, X, be, be_maps, Y)
         self.psi.update_data(model, X, be, be_maps, Y)
 
-    @staticmethod
-    def _nb_params(mu, alpha):
-        """
-        Convert the ZINB parameters to the (n, p) parameterization used by scipy.
-
-        PyMC parameterizes the negative binomial component by its mean ``mu`` and
-        shape ``alpha``.
-        Scipy's ``nbinom`` takes the number of successes ``n`` and the success 
-        probability ``p``.
-
-        Returns
-        -------
-        tuple of ndarray
-            ``(n, p)`` suitable for passing to ``scipy.stats.nbinom``.
-        """
-        n = alpha # the PyMC docs state ``alpha = n``
-        p = alpha / (alpha + mu)
-        return n, p
-
-    @classmethod
-    def _cdf(cls, y, mu, alpha, psi):
-        """
-        Evaluate the ZINB cumulative distribution function.
-
-        The distribution mixes a point mass at zero with a negative binomial
-        component. The structural-zero component is a point mass at 0, so its 
-        CDF is 0 below zero and 1 from zero onward
-
-            F(y) = (1 - psi) + psi * F_NB(y)   for y >= 0
-            F(y) = 0                           for y < 0
-
-        Parameters
-        ----------
-        y : array_like
-            Count values at which to evaluate the CDF. Values below zero return 0.
-        mu : array_like
-            Mean of the negative binomial component, strictly positive.
-        alpha : array_like
-            Shape of the negative binomial component, strictly positive.
-        psi : array_like
-            Expected proportion of negative binomial draws, in (0, 1).
-
-        Returns
-        -------
-        ndarray
-            Cumulative probability at ``y``, in [0, 1], broadcast over the inputs.
-        """
-        n, p = cls._nb_params(mu, alpha)
-        return np.where(y < 0, 0.0, (1 - psi) + psi * nbinom.cdf(y, n, p))
-
     def forward(self, *args, **kwargs):
         """
         Map counts to Z-space using randomized quantile residuals.
@@ -787,7 +738,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
             Z-scores
         """
         mu, alpha, psi = args
-        
+
         Y = kwargs.get("Y")
         Y = np.asarray(Y)
 
@@ -862,6 +813,56 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         mu, alpha, psi = args
         return psi * mu
 
+    @staticmethod
+    def _nb_params(mu, alpha):
+        """
+        Convert the ZINB parameters to the (n, p) parameterization used by scipy.
+
+        PyMC parameterizes the negative binomial component by its mean ``mu`` and
+        shape ``alpha``.
+        Scipy's ``nbinom`` takes the number of successes ``n`` and the success 
+        probability ``p``.
+
+        Returns
+        -------
+        tuple of ndarray
+            ``(n, p)`` suitable for passing to ``scipy.stats.nbinom``.
+        """
+        n = alpha # the PyMC docs state ``alpha = n``
+        p = alpha / (alpha + mu)
+        return n, p
+
+    @classmethod
+    def _cdf(cls, y, mu, alpha, psi):
+        """
+        Evaluate the ZINB cumulative distribution function.
+
+        The distribution mixes a point mass at zero with a negative binomial
+        component. The structural-zero component is a point mass at 0, so its 
+        CDF is 0 below zero and 1 from zero onward
+
+            F(y) = (1 - psi) + psi * F_NB(y)   for y >= 0
+            F(y) = 0                           for y < 0
+
+        Parameters
+        ----------
+        y : array_like
+            Count values at which to evaluate the CDF. Values below zero return 0.
+        mu : array_like
+            Mean of the negative binomial component, strictly positive.
+        alpha : array_like
+            Shape of the negative binomial component, strictly positive.
+        psi : array_like
+            Expected proportion of negative binomial draws, in (0, 1).
+
+        Returns
+        -------
+        ndarray
+            Cumulative probability at ``y``, in [0, 1], broadcast over the inputs.
+        """
+        n, p = cls._nb_params(mu, alpha)
+        return np.where(y < 0, 0.0, (1 - psi) + psi * nbinom.cdf(y, n, p))
+
     def to_dict(self) -> Dict[str, Any]:
         return {"name": self.name, "mu": self.mu.to_dict(), "alpha": self.alpha.to_dict(), "psi": self.psi.to_dict()}
 
@@ -887,6 +888,9 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
 
     def has_random_effect(self) -> bool:
         return self.mu.has_random_effect or self.alpha.has_random_effect or self.psi.has_random_effect
+
+    def get_var_names(self) -> List[str]:
+        return ["mu_samples", "alpha_samples", "psi_samples"]
 
 
 def get_default_normal_likelihood() -> NormalLikelihood:
