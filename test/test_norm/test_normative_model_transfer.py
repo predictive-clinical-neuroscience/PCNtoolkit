@@ -1,14 +1,17 @@
+import os
 import re
+import shutil
+from collections.abc import Callable
 
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.util.output import Output, Warnings
-from test.fixtures.blr_model_fixtures import *  # noqa: F401,F403
-from test.fixtures.data_fixtures import *  # noqa: F401,F403
-from test.fixtures.norm_data_fixtures import *  # noqa: F401,F403
-from test.fixtures.path_fixtures import *  # noqa: F401,F403
+from test.fixtures.blr_model_fixtures import *
+from test.fixtures.data_fixtures import *
+from test.fixtures.norm_data_fixtures import *
+from test.fixtures.path_fixtures import *
 
 """
 Tests for NormativeModel.transfer()
@@ -25,7 +28,7 @@ def transfer_norm_data_1be(
     n_response_vars: int,
     batch_effect_values: list[list[int]],
 ) -> NormData:
-    """Build a transfer NormData with 1 batch effect column which is fewer 
+    """Build a transfer NormData with 1 batch effect column which is fewer
     than the training data that has 2.
 
     Parameters
@@ -126,3 +129,44 @@ def test_003_transfer_should_warn_when_fewerBatchEffects(
         fitted_norm_blr_model.transfer(
             transfer_norm_data_1be,
         )
+
+
+def test_004_transfer_should_fit_when_unwarped(
+    blr_model_factory: Callable,
+    save_dir_blr: str,
+    norm_data_from_arrays: NormData,
+    transfer_norm_data_from_arrays: NormData,
+) -> None:
+    """Transfer must succeed for a BLR model with no warp function.
+
+    Regression test for #437: BLR.transfer() raised UnboundLocalError
+    when self.warp was None, because y was only assigned inside the
+    `if self.warp:` branch.
+
+    Parameters
+    ----------
+    blr_model_factory : Callable
+        Fixture that builds BLR models with optional overrides.
+    save_dir_blr : str
+        Save directory for BLR tests. The fixture selects the temp dir,
+        otherwise NormativeModel will save to its default directory.
+    norm_data_from_arrays : NormData
+        Training dataset.
+    transfer_norm_data_from_arrays : NormData
+        Transfer dataset.
+    """
+    blr_model = blr_model_factory(warp_name=None)
+    if os.path.exists(save_dir_blr):
+        shutil.rmtree(save_dir_blr)
+    os.makedirs(save_dir_blr, exist_ok=True)
+    model = NormativeModel(
+        blr_model,
+        save_dir=save_dir_blr,
+        inscaler="standardize",
+        outscaler="standardize",
+    )
+    model.fit(norm_data_from_arrays)
+
+    transferred = model.transfer(transfer_norm_data_from_arrays)
+
+    assert transferred.is_fitted
