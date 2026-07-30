@@ -41,14 +41,14 @@ You can access the evaluation metrics with the code below:
 
 .. code:: python
 
-    # fit and predict with a normative model
-    model.predict(test_data)
-    
-    # Access the statistics DataArray
-    test_data['statistics']  # shape: (n_response_vars, n_metrics)
-    
-    # As a readable DataFrame
-    test_all.get_statistics_df()
+   # fit and predict with a normative model
+   model.predict(test_data)
+
+   # Access the statistics DataArray
+   test_data['statistics']  # shape: (n_response_vars, n_metrics)
+
+   # As a readable DataFrame
+   test_data.get_statistics_df()
 
 Point prediction metrics
 ------------------------

@@ -147,7 +147,7 @@ class TestRunner:
             os.path.join(
                 extended_model.save_dir,
                 "plots",
-                f"centiles_{self.norm_data.response_vars.values[0]}_{self.norm_data.name}_harmonized.png",
+                f"centiles_{self.norm_data.response_vars.values[0]}_from_arrays_+_synthesized_harmonized.png",
             )
         )
         self.cleanup(extended_model, runner)

@@ -361,6 +361,16 @@ into a single dataset and train one model.
     baseline_model.fit_predict(
         train_all, test_all);
 
+
+.. parsed-literal::
+
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
+    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
+    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
+      warnings.warn(
+    
+
 Part 2: FL with ``extend()``
 ----------------------------
 
@@ -405,6 +415,14 @@ The central location trains an HBR model using only its own 19 sites.
 .. image:: 12_federated_learning_files/12_federated_learning_15_0.png
 
 
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
 Step 2: Extend the central model to remote locations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -421,6 +439,10 @@ No real data is exchanged only model parameters.
 
 .. code:: ipython3
 
+    # extend() synthesizes random data, so we set a seed to make sure in this tutorial the results are always the same
+    import numpy as np
+    np.random.seed(42)
+    
     # Location 1 loads the central model from disk
     central_model = NormativeModel.load("resources/federated/central")
     
@@ -448,6 +470,14 @@ No real data is exchanged only model parameters.
 .. image:: 12_federated_learning_files/12_federated_learning_18_0.png
 
 
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
 The extended model from location 1 knows about both the central sites
 (via synthetic data) and its own local sites.
 
@@ -456,6 +486,10 @@ Location 2 extends the model further with their own data.
 
 .. code:: ipython3
 
+    # extend() synthesizes random data, so we set a seed to make sure in this tutorial the results are always the same
+    import numpy as np
+    np.random.seed(42)
+    
     # Location 2 loads the extended model from disk
     extended_location_1 = NormativeModel.load("resources/federated/extended_location_1")
     
@@ -480,6 +514,14 @@ Location 2 extends the model further with their own data.
 
 
 .. image:: 12_federated_learning_files/12_federated_learning_22_0.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 The extended model from location 2 knows about both the central and
@@ -536,6 +578,14 @@ Centile curves
 
 
 .. image:: 12_federated_learning_files/12_federated_learning_25_3.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 Conclusions

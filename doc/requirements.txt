@@ -3,3 +3,4 @@ pydata-sphinx-theme>=0.15.2
 sphinx-autoapi>=2.0.0
 sphinx-autodoc-typehints>=1.18.0
 sphinx-autobuild>=2024.4.16
+ipython-pygments-lexers>=1.0

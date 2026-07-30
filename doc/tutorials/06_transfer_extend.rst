@@ -202,13 +202,14 @@ Fit and plot normative model
     plot_centiles_advanced(
         model,
         scatter_data=train,
-        batch_effects = 'all'
+        batch_effects = 'all',
+        show_legend = False
     )
 
 
 .. parsed-literal::
 
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\pytensor\link\c\cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
+    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
     This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
     Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
     For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
@@ -217,6 +218,14 @@ Fit and plot normative model
 
 
 .. image:: 06_transfer_extend_files/06_transfer_extend_13_1.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 Extending
@@ -254,6 +263,14 @@ the small dataset, we can show how bad such a model would be:
 .. image:: 06_transfer_extend_files/06_transfer_extend_16_0.png
 
 
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
 The interpolation between ages 22 and 45 is very bad, and that’s because
 there was no train data there. This model will not perform well on new
 data. Now instead, let’s extend the model we fitted before to our
@@ -266,12 +283,21 @@ smaller dataset, and see how those centiles look:
     plot_centiles_advanced(
         extended_model,
         scatter_data=test,
-        batch_effects='all'
+        batch_effects='all',
+        show_legend = False
     )
 
 
 
 .. image:: 06_transfer_extend_files/06_transfer_extend_18_0.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 These centiles look much better in comparison to the ‘small model’ that
@@ -291,12 +317,21 @@ predictions on the original train data.
     plot_centiles_advanced(
         transfered_model,
         scatter_data=test,
-        batch_effects='all'
+        batch_effects='all',
+        show_legend = False
     )
 
 
 
 .. image:: 06_transfer_extend_files/06_transfer_extend_22_0.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
 
 
 Here we see that the transfered model is also much better than the
