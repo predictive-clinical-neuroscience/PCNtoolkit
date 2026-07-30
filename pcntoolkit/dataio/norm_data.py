@@ -593,11 +593,16 @@ class NormData(xr.Dataset):
                 )
             new_data_vars["batch_effects"] = (["observations", "batch_effect_dims"], new_batch_effects.data)
 
+        # Preserve the original visit column name
+        new_attrs = {"real_ids": real_ids}
+        if "visits" in new_data_vars:
+            new_attrs["visit_col"] = self.attrs.get("visit_col", other.attrs.get("visit_col", "visits"))
+
         new_normdata = NormData(
             name=name or (self.attrs["name"] + "_+_" + other.attrs["name"]),
             data_vars=new_data_vars,
             coords=new_coords,
-            attrs={"real_ids": real_ids},
+            attrs=new_attrs,
         )
         return new_normdata
 
