@@ -77,8 +77,9 @@ class NormData(xr.Dataset):
     centiles: xr.DataArray
         Centile data
     visits : xr.DataArray, optional
-        Visit labels for longitudinal data (one value per observation).
-        Set via ``NormData.from_dataframe(..., visits='<column>')``.
+        Numeric visit labels for longitudinal data (one value per
+        observation), e.g. 1, 2, 3. Set via
+        ``NormData.from_dataframe(..., visits='<column>')``.
 
 
     Examples
@@ -323,8 +324,9 @@ class NormData(xr.Dataset):
             The name of the column containing the subject IDs
         visits: str, optional
             The name of the column containing visit labels for longitudinal
-            data (e.g. ``"visit"``). Required for velocity / longitudinal
-            modelling workflows.
+            data (e.g. ``"visit"``). Labels must be numeric (e.g. 1, 2, 3) so
+            that visits can be ordered in time. Required by the longitudinal
+            scores (``ZDiffScore`` / ``ZGainScore``).
         attrs : Mapping[str, Any] | None, optional
             Additional attributes for the dataset, by default None.
         remove_Nan: bool

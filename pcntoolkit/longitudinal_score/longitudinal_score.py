@@ -55,8 +55,8 @@ class LongitudinalScore(ABC):
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort to score. Must include visit labels via
-            ``NormData.from_dataframe(..., visits='<column>')``.
+            Longitudinal cohort to score. Must include numeric visit labels
+            via ``NormData.from_dataframe(..., visits='<column>')``.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
@@ -110,30 +110,44 @@ class LongitudinalScore(ABC):
         )
 
     @staticmethod
-    def _get_timepoint_values(data: NormData) -> np.ndarray:
-        """Return per-observation visit labels used to order a subject's visits."""
+    def _get_visits(data: NormData) -> np.ndarray:
+        """Return per-observation numeric visit labels used to order visits.
+
+        Returns
+        -------
+        np.ndarray
+            Visit labels cast to float, so that a subject's visits sort into
+            time order.
+
+        Raises
+        ------
+        ValueError
+            If the NormData carries no visit labels, or the labels are not
+            numeric. Visits must be encoded as numbers (e.g. 1, 2, 3) so they
+            can be sorted into time order. Non-numeric labels
+            (e.g. "pre", "post") are not allowed.
+        """
         if "visits" not in data.data_vars:
             raise ValueError(
                 "NormData has no visit labels. Build it with "
                 "NormData.from_dataframe(..., visits='<visit column>') before "
                 "computing longitudinal scores."
             )
-        return LongitudinalScore._as_sortable(np.asarray(data.visits.values))
+        values = np.asarray(data.visits.values)
+        visit_col = data.attrs.get("visit_col", "visits")
+        try:
+            return values.astype(float)
+        except (ValueError, TypeError) as error:
+            raise ValueError(
+                f"Visit labels in column '{visit_col}' must be numeric so that "
+                "visits can be ordered in time (e.g. 1, 2, 3). Instead got non-numeric "
+                f"labels {np.unique(values).tolist()}."
+            ) from error
 
     @staticmethod
     def _ordered_unique(values: np.ndarray) -> np.ndarray:
         """Preserve subject order as it first appears in the data."""
         return pd.unique(np.asarray(values))
-
-    @staticmethod
-    def _as_sortable(values: np.ndarray) -> np.ndarray:
-        """Cast labels to float when possible so visits sort numerically."""
-        # Try numeric sorting first for ages or numbered visits.
-        try:
-            return np.asarray(values, dtype=float)
-        # Keep original labels when numeric conversion is impossible.
-        except (ValueError, TypeError):
-            return np.asarray(values)
 
     # ------------------------------------------------------------------ #
     # Validation functions
@@ -166,7 +180,7 @@ class LongitudinalScore(ABC):
     def _check_is_longitudinal(cls, data: NormData) -> None:
         # Read subject ids so we can count visits per person.
         ids = cls._get_subject_ids(data)
-        visits = cls._get_timepoint_values(data)
+        visits = cls._get_visits(data)
 
         # Count how many observations belong to each subject.
         _, counts = np.unique(ids, return_counts=True)

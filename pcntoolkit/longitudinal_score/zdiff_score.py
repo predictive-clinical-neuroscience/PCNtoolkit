@@ -68,7 +68,7 @@ class ZDiffScore(LongitudinalScore):
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort with exactly two visits per subject,
+            Longitudinal cohort with exactly two visits per subject, numeric
             visit labels on the NormData object, and predictions already
             computed.
         subject_id_col : str, optional
@@ -87,10 +87,10 @@ class ZDiffScore(LongitudinalScore):
         # Run checks first for both the reference and score data.
         self._check_is_predicted(self.reference_data)
         self._check_is_longitudinal(self.reference_data)
-        self._check_at_most_two_timepoints(self.reference_data)
+        self._check_at_most_two_visits(self.reference_data)
         self._check_is_predicted(score_data)
         self._check_is_longitudinal(score_data)
-        self._check_at_most_two_timepoints(score_data)
+        self._check_at_most_two_visits(score_data)
 
         # Read response-variable names for the output array.
         response_vars = [str(r) for r in score_data.response_vars.values]
@@ -164,7 +164,7 @@ class ZDiffScore(LongitudinalScore):
         # Read subject ids so visits can be grouped per person.
         subject_ids = self._get_subject_ids(data)
         # Read the visit-order values used to sort repeated measures.
-        timepoints = self._get_timepoint_values(data)
+        visits = self._get_visits(data)
 
         # Collect one change value per subject.
         deltas: dict[object, float] = {}
@@ -175,7 +175,7 @@ class ZDiffScore(LongitudinalScore):
             if len(idx) < 2:
                 continue
             # Put the two visits into chronological order.
-            ordered = idx[np.argsort(timepoints[idx])]
+            ordered = idx[np.argsort(visits[idx])]
             # Read the residual at visit 1 and visit 2.
             r1, r2 = residuals[ordered[0]], residuals[ordered[1]]
             # Store the change from the first visit to the second.
@@ -219,7 +219,7 @@ class ZDiffScore(LongitudinalScore):
     # ------------------------------------------------------------------ #
     # Validation functions
     # ------------------------------------------------------------------ #
-    def _check_at_most_two_timepoints(self, data: NormData) -> None:
+    def _check_at_most_two_visits(self, data: NormData) -> None:
         # Read subject ids so visit counts can be checked.
         ids = self._get_subject_ids(data)
         # Count how many visits each subject contributes.
@@ -228,9 +228,9 @@ class ZDiffScore(LongitudinalScore):
         if np.any(counts > 2):
             # Tell the user to switch to z-gain for longer trajectories.
             raise ValueError(
-                "ZDiffScore supports at most two timepoints per subject. "
+                "ZDiffScore supports at most two visits per subject. "
                 "Some subjects have more than two visits. You can use ZGainScore "
-                "for three or more timepoints."
+                "for three or more visits."
             )
 
     @staticmethod

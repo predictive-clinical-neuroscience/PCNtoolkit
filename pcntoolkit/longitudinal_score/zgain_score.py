@@ -228,7 +228,8 @@ class ZGainScore(LongitudinalScore):
         ----------
         score_data : NormData
             Longitudinal cohort with at least two distinct visits per subject,
-            visit labels on the NormData object, and z-scores already computed.
+            numeric visit labels on the NormData object, and z-scores already
+            computed.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
@@ -265,7 +266,7 @@ class ZGainScore(LongitudinalScore):
             score_data, self.covariate
         ).astype(float)
         # Read the visit-order values used to sort trajectories.
-        timepoints = self._get_timepoint_values(score_data)
+        visits = self._get_visits(score_data)
 
         # Initialise an empty array filled with NaN to hold the scores.
         scores = np.full(
@@ -290,7 +291,7 @@ class ZGainScore(LongitudinalScore):
                 if len(idx) < 2:
                     continue
                 # Sort the visits into time order.
-                ordered = idx[np.argsort(timepoints[idx])]
+                ordered = idx[np.argsort(visits[idx])]
                 # For longer trajectories, use the last observed step.
                 # Keep only the last two visits for this score.
                 obs_prev, obs_last = ordered[-2], ordered[-1]
