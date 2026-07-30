@@ -182,25 +182,27 @@ class LongitudinalScore(ABC):
         ids = cls._get_subject_ids(data)
         visits = cls._get_visits(data)
 
-        # Count how many observations belong to each subject.
-        _, counts = np.unique(ids, return_counts=True)
+        # Count rows and distinct visit labels per subject
+        grouped = pd.DataFrame({"subject": ids, "visit": visits}).groupby(
+            "subject", sort=False
+        )["visit"]
+        n_rows = grouped.size()
+        n_distinct_visits = grouped.nunique()
+
         # At least one subject must have repeated measurements.
-        if not np.any(counts >= 2):
+        if not (n_rows >= 2).any():
             raise ValueError(
                 "The data appears to have only single-visit observations. "
                 "Longitudinal scores require multiple visits per subject. "
                 "Remove cross-sectional subjects before scoring."
             )
 
-        # Repeated rows must correspond to distinct visit labels per subject.
-        for subject in cls._ordered_unique(ids):
-            mask = ids == subject
-            if mask.sum() < 2:
-                continue
-            subject_visits = visits[mask]
-            if len(np.unique(subject_visits)) < 2:
-                raise ValueError(
-                    f"Subject {subject!r} has multiple rows with identical "
-                    "visit labels. Longitudinal data requires distinct visits "
-                    "per subject — check for duplicated wide-format columns."
-                )
+        # A subject with repeated rows but only one distinct visit label is
+        # invalid
+        offenders = n_distinct_visits[(n_rows >= 2) & (n_distinct_visits < 2)]
+        if len(offenders) > 0:
+            raise ValueError(
+                f"Subject {offenders.index[0]!r} has multiple rows with "
+                "identical visit labels. Longitudinal data requires distinct "
+                "visits per subject."
+            )
