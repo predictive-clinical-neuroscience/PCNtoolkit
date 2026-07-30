@@ -147,12 +147,17 @@ class NormData(xr.Dataset):
         Y: np.ndarray,
         batch_effects: np.ndarray | None = None,
         subject_ids: np.ndarray | None = None,
+        visits: np.ndarray | None = None,
         attrs: Mapping[str, Any] | None = None,
         remove_outliers: bool = False,
         z_threshold: float = 3.0,
         remove_Nan: bool = False,
     ) -> NormData:
-        """Create a NormData object from numpy arrays via DataFrame conversion."""
+        """Create a NormData object from numpy arrays via DataFrame conversion.
+
+        ``visits`` holds one numeric visit label per observation (e.g. 1, 2, 3)
+        and is required by the longitudinal scores.
+        """
         attrs = attrs or {}
 
         # Create DataFrame from arrays
@@ -172,6 +177,9 @@ class NormData(xr.Dataset):
         if subject_ids is not None:
             df_data["subject_ids"] = subject_ids
 
+        if visits is not None:
+            df_data["visits"] = visits
+
         return cls.from_dataframe(
             name=name,
             dataframe=pd.DataFrame(df_data),
@@ -182,6 +190,7 @@ class NormData(xr.Dataset):
             ),
             response_vars=attrs.get("response_vars", [f"response_var_{i}" for i in range(Y.shape[1])] if Y is not None else None),
             subject_ids="subject_ids" if subject_ids is not None else None,
+            visits="visits" if visits is not None else None,
             attrs=attrs,
             remove_outliers=remove_outliers,
             z_threshold=z_threshold,
