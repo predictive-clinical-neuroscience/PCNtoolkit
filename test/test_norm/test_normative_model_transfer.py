@@ -142,6 +142,18 @@ def test_004_transfer_should_fit_when_unwarped(
     Regression test for #437: BLR.transfer() raised UnboundLocalError
     when self.warp was None, because y was only assigned inside the
     `if self.warp:` branch.
+
+    Parameters
+    ----------
+    blr_model_factory : Callable
+        Fixture that builds BLR models with optional overrides.
+    save_dir_blr : str
+        Save directory for BLR tests. The fixture selects the temp dir,
+        otherwise NormativeModel will save to its default directory.
+    norm_data_from_arrays : NormData
+        Training dataset.
+    transfer_norm_data_from_arrays : NormData
+        Transfer dataset.
     """
     blr_model = blr_model_factory(warp_name=None)
     if os.path.exists(save_dir_blr):
