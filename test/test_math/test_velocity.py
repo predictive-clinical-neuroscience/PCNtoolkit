@@ -9,7 +9,12 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from pcntoolkit.math_functions.velocity import compute_thrivelines, propagate_thriveline_z
+from pcntoolkit.math_functions.velocity import (
+    _resolve_reference_batch_effects,
+    compute_thrivelines,
+    thrivelines_to_dataframe,
+    propagate_thriveline_z
+)
 
 
 def _make_correlation_matrix(
@@ -144,3 +149,63 @@ def test_compute_thrivelines_respects_covariate_range():
 
     assert set(thrive_Z.coords["start_age"].values) <= {1, 2}
     assert np.all(np.isfinite(thrive_X.sel(response_vars="metric_a").values))
+
+
+class _BatchEffectModel:
+    unique_batch_effects = {"site": ["A", "B", "C"], "sex": ["F", "M"]}
+    batch_effect_counts = {
+        "site": {"A": 10, "B": 50, "C": 5},
+        "sex": {"F": 30, "M": 35},
+    }
+
+
+def test_resolve_reference_batch_effects_uses_first_level():
+    resolved = _resolve_reference_batch_effects(_BatchEffectModel())
+    assert resolved == {"site": "A", "sex": "F"}
+
+
+def test_resolve_reference_batch_effects_honours_overrides():
+    resolved = _resolve_reference_batch_effects(
+        _BatchEffectModel(),
+        batch_effects={"site": "C"},
+    )
+    assert resolved == {"site": "C", "sex": "F"}
+
+
+def test_resolve_reference_batch_effects_without_counts():
+    model = type(
+        "Model",
+        (),
+        {"unique_batch_effects": {"site": ["A", "B"]}, "batch_effect_counts": None},
+    )()
+    resolved = _resolve_reference_batch_effects(model)
+    assert resolved == {"site": "A"}
+
+
+def test_thrivelines_to_dataframe_long_format():
+    R = _make_correlation_matrix(max_age=2, offset_correlations={1: 0.8})
+    thrive_Z, thrive_X = compute_thrivelines(
+        R,
+        z_anchors=[0.0, 1.0],
+        covariate_range=(0, 1),
+    )
+    thrive_Y = thrive_Z.copy()
+    thrive_Y.values = thrive_Z.values + 10.0
+    thrive_Y.name = "thrive_Y"
+
+    df = thrivelines_to_dataframe(thrive_Z, thrive_X, thrive_Y)
+
+    assert list(df.columns) == [
+        "segment",
+        "start_age",
+        "start_z",
+        "response_var",
+        "offset",
+        "X",
+        "Z",
+        "Y",
+    ]
+    assert len(df) == thrive_Z.sizes["segment"] * thrive_Z.sizes["offset"]
+    assert set(df["response_var"]) == {"metric_a"}
+    assert set(df["offset"]) == {0, 1}
+    assert df.attrs.get("timepoint_diff") == 1
