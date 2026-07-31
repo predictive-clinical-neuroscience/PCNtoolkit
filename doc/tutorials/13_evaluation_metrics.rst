@@ -14,18 +14,18 @@ Two families of metrics
 | Family                 | Uses            | Metrics                   |
 +========================+=================+===========================+
 | **Point prediction**   | Only ``Yhat``   | MAPE, RMSE, SMSE, R²,     |
-|                        | (median         | EXPV, Rho                 |
+|                        | (mean           | EXPV, Rho                 |
 |                        | prediction)     |                           |
 +------------------------+-----------------+---------------------------+
-| **Probabilistic**      | Full predicted  | MACE, MSLL, MLL, ShapiroW |
-|                        | distribution    |                           |
-|                        | (``logp``,      |                           |
+| **Probabilistic**      | Full predicted  | MACE, MSLL, MLL,          |
+|                        | distribution    | ShapiroW, Skewness,       |
+|                        | (``logp``,      | Kurtosis                  |
 |                        | centiles,       |                           |
 |                        | Z-scores)       |                           |
 +------------------------+-----------------+---------------------------+
 
 **Point prediction metrics** only look at whether the model’s best guess
-(the median prediction) is close to the true value, like checking if a
+(the mean prediction) is close to the true value, like checking if a
 weather forecast said “18°C” when it was actually 20°C.
 
 **Probabilistic metrics** check whether the model’s uncertainty
@@ -54,7 +54,7 @@ Point prediction metrics
 ------------------------
 
 These metrics all compare ``Y`` (true values) against ``Yhat`` (the
-model’s median prediction). They tell you how well the model tracks the
+model’s mean prediction). They tell you how well the model tracks the
 central tendency of the data, but they say nothing about the quality of
 the uncertainty estimates.
 
@@ -85,11 +85,13 @@ Similar to R², but it measures how much of the **variance** in the true
 values is explained by the model, after removing any systematic mean
 offset from the residuals.
 
-- Range: 0 to 1 — higher is better
+- Range: ≤ 1 — higher is better
 - A score of 1 means the model perfectly explains the variance in the
   data
 - A score of 0 means the model explains no more variance than simply
   predicting the mean
+- Negative scores mean the residuals are more spread out than the data
+  itself. Like R², EXPV has no lower bound
 
 --------------
 
@@ -117,7 +119,7 @@ scale-independent and comparable across different response variables.
 - SMSE = 1 means your model does no better than always predicting the
   mean
 - SMSE < 1 means improvement over the mean predictor
-- SMSE is directly related to R²: SMSE ≈ 1 − R²
+- SMSE is directly related to R²: SMSE = 1 − R².
 
 --------------
 
@@ -182,7 +184,7 @@ assigns to the true value given the test input
 
 Measures how “surprised” the model is by the data y, on average.
 
-- Range: 0 to ∞
+- Range: −∞ to ∞
 - lower is better
 
 ..
@@ -205,10 +207,10 @@ MSLL — Mean standardized log loss
 .. math:: \text{MSLL} = \underbrace{-\frac{1}{n}\sum_i \log p(y \mid \mathcal{D}, x_*)}_{\text{MLL}_{\text{model}}} - \underbrace{\left(-\frac{1}{n}\sum_i \log \mathcal{N}\!\left(y \mid \bar{y},\, \hat{\sigma}^2\right)\right)}_{\text{MLL}_{\text{Gaussian baseline}}}
 
 where the Gaussian baseline fits a single normal distribution to the
-training responses: - :math:`\bar{y} = \frac{1}{n}\sum_i y_i` — training
-sample mean -
-:math:`\hat{\sigma}^2 = \frac{1}{n}\sum_i (y_i - \bar{y})^2` — training
-sample variance
+responses of the dataset being evaluated: -
+:math:`\bar{y} = \frac{1}{n}\sum_i y_i` — sample mean -
+:math:`\hat{\sigma}^2 = \frac{1}{n}\sum_i (y_i - \bar{y})^2` — sample
+variance
 
 MSLL is a relative metric. It compares the model’s mean log loss against
 a Gaussian baseline. The “standardized” in the name refers to this
@@ -411,7 +413,7 @@ Summary table
 +============+=================+===============+==============+===========+
 | R²         | Point           | Y, Yhat       | Higher       | ≤ 1       |
 +------------+-----------------+---------------+--------------+-----------+
-| EXPV       | Point           | Y, Yhat       | Higher       | 0-1       |
+| EXPV       | Point           | Y, Yhat       | Higher       | ≤ 1       |
 +------------+-----------------+---------------+--------------+-----------+
 | Rho        | Point           | Y, Yhat       | Higher       | −1 to 1   |
 +------------+-----------------+---------------+--------------+-----------+
@@ -421,7 +423,7 @@ Summary table
 +------------+-----------------+---------------+--------------+-----------+
 | MAPE       | Point           | Y, Yhat       | Lower        | ≥ 0       |
 +------------+-----------------+---------------+--------------+-----------+
-| MLL        | Probabilistic   | logp          | Lower        | ≥ 0       |
+| MLL        | Probabilistic   | logp          | Lower        | unbounded |
 +------------+-----------------+---------------+--------------+-----------+
 | MSLL       | Probabilistic   | logp,         | Lower        | unbounded |
 |            |                 | baseline_logp | (negative)   |           |
