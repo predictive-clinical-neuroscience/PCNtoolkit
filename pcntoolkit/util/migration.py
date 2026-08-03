@@ -148,6 +148,10 @@ class MigrationRegistry:
         if component not in self._migrations:
             return d
 
+        # The version the user is actually running, not the version a
+        # migration was introduced in.
+        current_version: str = importlib.metadata.version("pcntoolkit")
+
         # Apply migrations in ascending version order.
         for introduced_in, fn in self._migrations[component]:
             if saved_version < introduced_in:
@@ -155,7 +159,7 @@ class MigrationRegistry:
                 Output.warning(
                     Warnings.MODEL_MIGRATION_APPLIED,
                     saved_version=str(saved_version),
-                    current_version=str(introduced_in),
+                    current_version=current_version,
                 )
                 d = fn(d)
 
