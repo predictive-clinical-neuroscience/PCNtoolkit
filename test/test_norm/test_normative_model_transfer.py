@@ -170,3 +170,26 @@ def test_004_transfer_should_fit_when_unwarped(
     transferred = model.transfer(transfer_norm_data_from_arrays)
 
     assert transferred.is_fitted
+
+
+def test_005_split_should_keepOnlyItsOwnBatchEffects(
+    transfer_norm_data_from_arrays: NormData,
+) -> None:
+    """A split must not keep listing the batch effects it dropped.
+
+    Regression test for commit 3f1a01301a35b2e19c17003f565c9c46e78d5bfd:
+    Both splits of NormData.batch_effects_split() kept listing batch effect
+    values they no longer contained. A model transferred to such a split
+    then claimed batches it had never seen.
+
+    Parameters
+    ----------
+    transfer_norm_data_from_arrays : NormData
+        Transfer dataset, with 2 levels on the first batch effect.
+    """
+    first, second = transfer_norm_data_from_arrays.batch_effects_split(
+        {"batch_effect_0": ["0"]}, names=("first", "second")
+    )
+
+    assert first.unique_batch_effects["batch_effect_0"] == ["0"]
+    assert second.unique_batch_effects["batch_effect_0"] == ["1"]
