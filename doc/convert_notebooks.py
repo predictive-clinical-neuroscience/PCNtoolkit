@@ -14,6 +14,12 @@ TUTORIALS_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "tutorials")
 )
 
+# Notebooks that are not ready for the website. Names are without the
+# ".ipynb" extension.
+SKIP_NOTEBOOKS = {
+    "14_longitudinal_modelling",
+}
+
 os.makedirs(TUTORIALS_DIR, exist_ok=True)
 
 
@@ -41,6 +47,10 @@ def convert_notebooks() -> None:
     for nb_path in notebooks:
         # Derive the rst filename from the notebook name
         nb_name = os.path.splitext(os.path.basename(nb_path))[0]
+
+        if nb_name in SKIP_NOTEBOOKS:
+            print(f"Skipping {nb_name}")
+            continue
 
         subprocess.run(
             [

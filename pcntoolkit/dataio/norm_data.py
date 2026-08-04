@@ -780,11 +780,23 @@ class NormData(xr.Dataset):
 
         return True
 
-    def register_batch_effects(self) -> None:
+    def register_batch_effects(self, force: bool = False) -> None:
         """
         Create a mapping of batch effects to unique values.
+
+        Parameters
+        ----------
+        force : bool, optional
+                Recompute the list of batch effects even if one already exists.
+                Example, splitting the fcon1000 in 2 smaller datasets should
+                recompute the batch effects for each smaller dataset. 
+                Default is False.
+
+        Returns
+        -------
+        None
         """
-        if self.has_registered_metadata():
+        if self.has_registered_metadata() and not force:
             return
         my_be: xr.DataArray = self.batch_effects
         # create a dictionary with for each column in the batch effects, a dict from value to int
@@ -1097,7 +1109,8 @@ class NormData(xr.Dataset):
         to_return = self.where(mask).dropna(dim="observations", how="all")
         if isinstance(to_return, xr.Dataset):
             to_return = NormData.from_xarray(name, to_return)
-        to_return.register_batch_effects()
+        # Force a recompute
+        to_return.register_batch_effects(force=True)
         return to_return
 
     def to_dataframe(self, dim_order: Sequence[Hashable] | None = None) -> pd.DataFrame:
