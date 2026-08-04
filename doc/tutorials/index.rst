@@ -27,4 +27,4 @@ Tutorials
 
    06_transfer_extend
    10_merge
-   12_federated_learning
+   12_transfer_pretrained
