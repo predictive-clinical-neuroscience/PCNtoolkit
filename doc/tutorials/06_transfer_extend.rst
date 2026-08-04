@@ -1,25 +1,22 @@
-Transfer and extend normative models
-====================================
+Transfer and extend
+===================
 
-Welcome to this tutorial notebook that will go through the transfering
-and extending of existing models on new data.
+Training a normative model on a large reference cohort takes a lot of
+data and a lot of compute. Rather than training one from scratch,
+PCNtoolkit lets you take a model that was already trained on tens of
+thousands of subjects and adapt it to your own, much smaller, dataset.
+There are two ways to do this: *transfer and extend*.
 
-Transfer and extend are both useful for when you have only a small
-dataset to your disposal, but you still want to derive a well-calibrated
-model from that. To get this well-calibrated model we use a large
-reference model (that was already trained before) and transfer it or
-extend it to our small dataset. As a result, we derive a new model that
-is better than a model that would be trained solely on our small
-dataset.
-
-**For transfer**, the new model will only be able to handle data from
-the batches in the small dataset; a small model is derived from a large
-reference model.
-
-**For extend**, the new model will be able to handle data from batches
-in the reference training set, as well as the batches in the new small
-dataset; a larger reference model is derived from a large reference
-model.
+There is a second reason to work this way. Building a normative model
+usually means many sites collaborating, but data often cannot leave the
+hospital or institution where it was collected, because of privacy
+regulations such as the GDPR. *Extend and transfer* are
+privacy-preserving, since each site adapts the model locally and shares
+only the model parameters, never the raw data. The two, however, play
+different roles: - Extend allows the model to be extended sequentially:
+the first site extends it and passes it to the second, which extends it
+again, and so on across the consortium. - On the other hand, a model
+should not be transferred sequentially but only once.
 
 Imports
 -------
@@ -33,13 +30,11 @@ Imports
     import pandas as pd
     import matplotlib.pyplot as plt
     from pcntoolkit import (
-        HBR,
+        BLR,
         BsplineBasisFunction,
         NormativeModel,
         NormData,
         load_fcon1000,
-        NormalLikelihood,
-        make_prior,
         plot_centiles_advanced,
     )
     
@@ -49,11 +44,6 @@ Imports
     sns.set_style("darkgrid")
     
     # Suppress some annoying warnings and logs
-    pymc_logger = logging.getLogger("pymc")
-    
-    pymc_logger.setLevel(logging.WARNING)
-    pymc_logger.propagate = False
-    
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
@@ -61,7 +51,12 @@ Imports
 Load data
 ---------
 
-First we download a small example dataset from github.
+We use the
+`fcon1000 <https://fcon_1000.projects.nitrc.org/fcpClassic/FcpTable.html>`__.
+This dataset contains derived structural MRI phenotypes from 1,078
+subjects collected across 23 sites. To show how transfer and extend work
+we will split it into two: - A reference dataset with 21 sites - a
+smaller datasets with 2 sites
 
 .. code:: ipython3
 
@@ -81,6 +76,9 @@ First we download a small example dataset from github.
     # Split into train and test sets
     train, test = fit_data.train_test_split()
     transfer_train, transfer_test = transfer_data.train_test_split()
+
+Visualize the data
+------------------
 
 .. code:: ipython3
 
@@ -132,49 +130,24 @@ First we download a small example dataset from github.
 
 
 
-.. image:: 06_transfer_extend_files/06_transfer_extend_6_0.png
+.. image:: 06_transfer_extend_files/06_transfer_extend_7_0.png
 
 
 Normative model
 ---------------
 
-Create HBR model
+Create BLR model
 ~~~~~~~~~~~~~~~~
 
 .. code:: ipython3
 
-    mu = make_prior(
-        linear=True,
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 10.0)),
-        intercept=make_prior(
-            random=True,
-            mu=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
-            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0), mapping="softplus", mapping_params=(0.0, 3.0)),
-        ),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
-    )
-    sigma = make_prior(
-        linear=True,
-        slope=make_prior(dist_name="Normal", dist_params=(0.0, 2.0)),
-        intercept=make_prior(dist_name="Normal", dist_params=(1.0, 1.0)),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
-        mapping="softplus",
-        mapping_params=(0.0, 3.0),
-    )
-    
-    likelihood = NormalLikelihood(mu, sigma)
-    
-    template_hbr = HBR(
+    template_blr = BLR(
         name="template",
-        cores=16,
-        progressbar=False,
-        draws=1500,
-        tune=500,
-        chains=4,
-        nuts_sampler="nutpie",
-        likelihood=likelihood,
+        heteroskedastic=True,
+        warp_name="WarpSinhArcsinh",
+        basis_function_mean=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+        basis_function_var=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
     )
-    
 
 Create normative model
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -182,18 +155,19 @@ Create normative model
 .. code:: ipython3
 
     model = NormativeModel(
-        template_regression_model=template_hbr,
-        savemodel=True,
-        evaluate_model=True,
-        saveresults=True,
+        template_regression_model=template_blr,
+        savemodel=False,
+        evaluate_model=False,
+        saveresults=False,
         saveplots=False,
-        save_dir="resources/hbr/save_dir",
         inscaler="standardize",
         outscaler="standardize",
     )
 
-Fit and plot normative model
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fit normative model on the big reference dataset
+------------------------------------------------
+
+We first fit a BLR model on the dataset with 21 sites.
 
 .. code:: ipython3
 
@@ -207,17 +181,8 @@ Fit and plot normative model
     )
 
 
-.. parsed-literal::
 
-    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
-    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
-    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
-    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
-      warnings.warn(
-    
-
-
-.. image:: 06_transfer_extend_files/06_transfer_extend_13_1.png
+.. image:: 06_transfer_extend_files/06_transfer_extend_15_0.png
 
 
 
@@ -228,11 +193,8 @@ Fit and plot normative model
 
 
 
-Extending
----------
-
-Now that we have a fitted model, we can extend it using the data that we
-held out of the train set. This is from previously unseen sites.
+Fit normative model on the small dataset
+----------------------------------------
 
 And just to show why we prefer extend over just fitting a new model on
 the small dataset, we can show how bad such a model would be:
@@ -240,12 +202,12 @@ the small dataset, we can show how bad such a model would be:
 .. code:: ipython3
 
     small_model = NormativeModel(
-        template_regression_model=template_hbr,
+        template_regression_model=template_blr,
         savemodel=True,
         evaluate_model=True,
         saveresults=True,
         saveplots=False,
-        save_dir="resources/hbr_transfer/save_dir_small",
+        save_dir="resources/blr_transfer/save_dir_small",
         inscaler="standardize",
         outscaler="standardize",
     )
@@ -256,35 +218,6 @@ the small dataset, we can show how bad such a model would be:
         small_model,
         scatter_data=transfer_test,
         batch_effects='all'
-    )
-
-
-
-.. image:: 06_transfer_extend_files/06_transfer_extend_16_0.png
-
-
-
-
-.. parsed-literal::
-
-    [<Figure size 640x480 with 1 Axes>]
-
-
-
-The interpolation between ages 22 and 45 is very bad, and that’s because
-there was no train data there. This model will not perform well on new
-data. Now instead, let’s extend the model we fitted before to our
-smaller dataset, and see how those centiles look:
-
-.. code:: ipython3
-
-    extended_model = model.extend_predict(transfer_train, transfer_test);
-    
-    plot_centiles_advanced(
-        extended_model,
-        scatter_data=test,
-        batch_effects='all',
-        show_legend = False
     )
 
 
@@ -300,30 +233,59 @@ smaller dataset, and see how those centiles look:
 
 
 
-These centiles look much better in comparison to the ‘small model’ that
-we trained directly on the small dataset.
+The interpolation between ages 22 and 45 is very bad, and that’s because
+there was no train data there.
 
-Transfering
------------
+Now instead, let’s extend and transfer to our smaller dataset the big
+model we fitted earlier, and see how those centiles look.
 
-Transfering looks very similar to extending, but the underlying
-mathematics is very different. Besides that, it leads to a smaller model
-instead of a bigger one; we can *not* use a transfered model to make
-predictions on the original train data.
+Extend
+------
+
+Extend synthesizes data from the central model’s learned distribution,
+merges it with the real local data, and refits a full model.
 
 .. code:: ipython3
 
-    transfered_model = model.transfer_predict(transfer_train, transfer_test);
+    extended_model = model.extend_predict(transfer_train, transfer_test);
+    
     plot_centiles_advanced(
-        transfered_model,
+        extended_model,
         scatter_data=test,
         batch_effects='all',
-        show_legend = False
+        show_legend = False,
+        covariate_ranges = {"age": (20, 65)} # for comparison reasons: force the x-axis to be the same as the transfer plot
     )
 
 
+.. parsed-literal::
 
-.. image:: 06_transfer_extend_files/06_transfer_extend_22_0.png
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.4374536951328396e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:295: UserWarning: Process: 8024 - 2026-08-03 23:12:59 - Posterior estimation failed: 
+    Matrix is not positive definite. 
+    The optimizer could not find a stable solution. Retrying optimization.
+      warnings.warn(message, category)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.214057563446112e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.2079019777145647e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.2551514238264925e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.416109766795953e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.4369354212062313e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.015174144158092e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.904144774168133e-32.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\scipy\optimize\_numdiff.py:687: RuntimeWarning: overflow encountered in divide
+      df_dx = [delf / delx for delf, delx in zip(df, dx)]
+    
+
+
+.. image:: 06_transfer_extend_files/06_transfer_extend_22_1.png
 
 
 
@@ -334,7 +296,115 @@ predictions on the original train data.
 
 
 
-Here we see that the transfered model is also much better than the
-‘small model’ that we trained directly on the small dataset.
+These centiles look much better in comparison to the model we fit on the
+small dataset (especially at the age range 22-45).
 
+This extended model can be extended again to another dataset. Such an
+example exists
+`here <https://github.com/predictive-clinical-neuroscience/pu25_code/blob/main/notebooks/additional_worflows/federated_learning_extend.ipynb>`__.
+
+Transfer
+--------
+
+Transfering looks very similar to extending.
+
+But the underlying mathematics is very different. It adapts a
+pre-trained reference model to new data by re-estimating parameters
+*based on prior information derived from the reference model*.
+
+For this reason, we can *not* use a transfered model to make predictions
+on the original train data and a model is not meant to be transferred
+more than once.
+
+Another consequence is that a transferred model centiles cover the age
+range present in the data you transferred to (see x-axis range in the
+centiles plot below), not the age range of the reference model.
+
+.. code:: ipython3
+
+    transfered_model = model.transfer_predict(transfer_train, transfer_test);
+    
+    plot_centiles_advanced(
+        transfered_model,
+        scatter_data=transfer_test, # note you can not select scatter_data=test as with transfer we lose info about the reference model sites 
+        batch_effects='all',
+        show_legend = False
+    )
+
+
+
+.. image:: 06_transfer_extend_files/06_transfer_extend_26_0.png
+
+
+
+
+.. parsed-literal::
+
+    [<Figure size 640x480 with 1 Axes>]
+
+
+
+Similar to extend, we see that the transfered model is also much better
+than the model we fit on the small dataset (especially at the age range
+22-45).
+
+Fit normative model on all data
+-------------------------------
+
+Transfer and extend exist because the data cannot be pooled. But what if
+it could? Fitting a single model on all 23 sites at once gives us the
+reference point that both methods are trying to approximate.
+
+.. code:: ipython3
+
+    # Split the full dataset (all 23 sites) into train and test
+    all_train, all_test = norm_data.train_test_split()
+    
+    pooled_model = NormativeModel(
+        template_regression_model=template_blr,
+        savemodel=False,
+        evaluate_model=False,
+        saveresults=False,
+        saveplots=False,
+        inscaler="standardize",
+        outscaler="standardize",
+    )
+    
+    pooled_model.fit_predict(all_train, all_test);
+    
+    plot_centiles_advanced(
+        pooled_model,
+        scatter_data=all_test,
+        batch_effects="all",
+        show_legend=False,
+        covariate_ranges = {"age": (20, 65)} # for comparison reasons: force the x-axis to be the same as the transfer plot
+    );
+
+
+.. parsed-literal::
+
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6928204946457924e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:295: UserWarning: Process: 8024 - 2026-08-03 23:14:49 - Posterior estimation failed: 
+    Matrix is not positive definite. 
+    The optimizer could not find a stable solution. Retrying optimization.
+      warnings.warn(message, category)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.9626010741685792e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6079551777131047e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.621390513519887e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6838127920727597e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6925807577914705e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.5317273255736646e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.8708559802049616e-18.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    
+
+
+.. image:: 06_transfer_extend_files/06_transfer_extend_29_1.png
 
