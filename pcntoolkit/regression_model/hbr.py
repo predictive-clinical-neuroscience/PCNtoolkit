@@ -35,7 +35,7 @@ class HBR(RegressionModel):
         cores: int = 4,
         chains: int = 4,
         nuts_sampler: str = "nutpie",
-        init: str = "jitter+adapt_diag",
+        init: str = "auto",
         progressbar: bool = True,
         is_fitted: bool = False,
         is_from_dict: bool = False,
@@ -61,7 +61,8 @@ class HBR(RegressionModel):
         nuts_sampler : str, optional
             NUTS sampler to use for parallel sampling, by default "nutpie"
         init : str, optional
-            Initialization method for the model, by default "jitter+adapt_diag"
+            Initialization method for the model, by default "auto". External
+            samplers such as nutpie ignore this and use their own initialization.
         progressbar : bool, optional
             Whether to display a progress bar during sampling, by default True
         is_fitted : bool, optional
