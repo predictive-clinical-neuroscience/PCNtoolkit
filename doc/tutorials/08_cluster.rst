@@ -1,6 +1,10 @@
 Fit normative models on a compute cluster
 =========================================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/08_cluster.ipynb>`
+
 This notebook will go through the options of the runner class. We will
 show how to fit and evaluate a model in parallel, and how to do
 cross-validation.

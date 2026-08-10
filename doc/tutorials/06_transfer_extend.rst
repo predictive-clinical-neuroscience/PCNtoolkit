@@ -1,6 +1,10 @@
 Transfer and extend
 ===================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/06_transfer_extend.ipynb>`
+
 Training a normative model on a large reference cohort takes a lot of
 data and a lot of compute. Rather than training one from scratch,
 PCNtoolkit lets you take a model that was already trained on tens of

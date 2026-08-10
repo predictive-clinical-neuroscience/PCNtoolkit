@@ -1,6 +1,10 @@
 Compare normative models
 ========================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/07_model_comparison.ipynb>`
+
 .. code:: ipython3
 
     import logging

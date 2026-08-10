@@ -1,6 +1,10 @@
 Merge normative model
 =====================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/10_merge.ipynb>`
+
 Suppose two remote locations independently train a normative model on
 their own patient population. These remote locations do not want to
 share their data with you. They can however share their trained models

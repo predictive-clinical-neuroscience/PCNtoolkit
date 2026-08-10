@@ -1,6 +1,10 @@
 Getting started with normative modelling
 ========================================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/00_getting_started.ipynb>`
+
 Welcome to this tutorial notebook that will show you the very basics of
 normative modeling. It’s like the “Hello World” of normative modeling.
 

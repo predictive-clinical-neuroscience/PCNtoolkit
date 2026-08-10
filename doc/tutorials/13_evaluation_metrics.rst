@@ -1,6 +1,10 @@
 Evaluation metrics
 ==================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/13_evaluation_metrics.ipynb>`
+
 After fitting a normative model and running predictions, PCNtoolkit
 computes a set of evaluation metrics. This notebook explains what each
 metric measures, how it is computed, and how to interpret the values.

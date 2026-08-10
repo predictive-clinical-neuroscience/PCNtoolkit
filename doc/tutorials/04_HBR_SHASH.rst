@@ -1,6 +1,10 @@
 HBR with SHASH likelihood
 =========================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/04_HBR_SHASH.ipynb>`
+
 Welcome to this tutorial notebook that will go through the fitting and
 evaluation of Normative models with a Hierarchical Bayesian Regression
 (HBR) model using a SHASH likelihood.

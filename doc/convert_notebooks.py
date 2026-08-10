@@ -88,6 +88,7 @@ def write_stripped_notebooks() -> None:
 
     That way the notebooks take less memory and are faster to download.
     """
+    print("Adding example notebooks for download")
     os.makedirs(NOTEBOOKS_DIR, exist_ok=True)
 
     for nb_path in glob.glob(os.path.join(EXAMPLES_DIR, "*.ipynb")):
@@ -96,7 +97,7 @@ def write_stripped_notebooks() -> None:
             continue
 
         notebook = nbformat.read(nb_path, as_version=4)
-        
+
         # remove the outputs and execution counts from the notebook
         notebook, _ = ClearOutputPreprocessor().preprocess(notebook, {})
 

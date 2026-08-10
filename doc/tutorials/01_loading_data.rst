@@ -1,6 +1,10 @@
 The NormData class
 ==================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/01_loading_data.ipynb>`
+
 A key component of the PCNtoolkit is the NormData object. It is a
 container for the data that will be used to fit the normative model. The
 NormData object keeps track of the all the dimensions of your data, the
