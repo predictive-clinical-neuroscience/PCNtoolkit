@@ -25,7 +25,6 @@ This page describes the future goals of PCNtoolkit.
 **Redesign website**
 
 * Make it more modular, extendable and improve the aesthetic.
-* Allow for users to download the tutorials as ipynbs.
 
 **Expand website documentation**
 
