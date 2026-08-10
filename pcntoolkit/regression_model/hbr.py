@@ -79,7 +79,7 @@ class HBR(RegressionModel):
         self.nuts_sampler = nuts_sampler
         self.init = init
         self.progressbar = progressbar
-        self.idata: az.InferenceData = None  # type: ignore
+        self.idata: xr.DataTree = None  # type: ignore
         self.pymc_model: pm.Model = None  # type: ignore
         self.be_maps: dict = None  # type:ignore
 
@@ -228,6 +228,7 @@ class HBR(RegressionModel):
             )
         return az.extract(logp, "log_likelihood", var_names=["Yhat"]).mean("sample")
 
+
     def model_specific_evaluation(self, path: str) -> None:
         """
         Save model-specific evaluation metrics.
@@ -241,19 +242,19 @@ class HBR(RegressionModel):
                 az.summary(self.idata, fmt="wide", var_names=["~_per_subject"], filter_vars="like").to_csv(
                     os.path.join(resultsdir, self.name + "_summary.csv")
                 )
-                az.plot_trace(self.idata, var_names="~_per_subject", filter_vars="like")
-                plt.tight_layout()
-                plt.savefig(os.path.join(plotdir, self.name + "_trace.png"))
-                plt.close()
-                az.plot_autocorr(self.idata, var_names="~_per_subject", filter_vars="like")
-                plt.tight_layout()
-                plt.savefig(os.path.join(plotdir, self.name + "_autocorr.png"))
-                plt.close()
-                if hasattr(self.idata, "posterior_predictive"):
-                    az.plot_ppc(self.idata)
-                    plt.tight_layout()
-                    plt.savefig(os.path.join(plotdir, self.name + "_ppc.png"))
-                    plt.close()
+                self._save_plot(
+                    az.plot_trace_dist(self.idata, var_names="~_per_subject", filter_vars="like"),
+                    os.path.join(plotdir, self.name + "_trace.png"),
+                )
+                self._save_plot(
+                    az.plot_autocorr(self.idata, var_names="~_per_subject", filter_vars="like"),
+                    os.path.join(plotdir, self.name + "_autocorr.png"),
+                )
+                if "posterior_predictive" in self.idata.children:
+                    self._save_plot(
+                        az.plot_ppc_dist(self.idata),
+                        os.path.join(plotdir, self.name + "_ppc.png"),
+                    )
             if self.pymc_model is not None:
                 self.pymc_model.to_graphviz(save=os.path.join(plotdir, self.name + "_model.png"))
         else:
@@ -425,6 +426,14 @@ class HBR(RegressionModel):
         self = cls(name, likelihood, draws, tune, cores, chains, nuts_sampler, init, progressbar, is_fitted, is_from_dict)
         return self
 
+    def compute_yhat(self, data, responsevar, X, be):
+        fn = self.likelihood.yhat
+        Y = xr.DataArray(np.squeeze(data.Y.values), dims=("observations",))
+        yhat = self.generic_MCMC_apply(X, be, Y, fn, kwargs={})
+        return yhat
+
+# ------- Helpers -------
+
     def save_idata(self, path: str) -> None:
         """
         Save inference data to NetCDF file.
@@ -445,7 +454,7 @@ class HBR(RegressionModel):
         """
         if self.is_fitted:
             if hasattr(self, "idata"):
-                self.idata.to_netcdf(path, groups=["posterior"])
+                xr.DataTree.from_dict({"posterior": self.idata["posterior"].dataset}).to_netcdf(path)
             else:
                 raise ValueError(Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_IDATA))
 
@@ -473,8 +482,25 @@ class HBR(RegressionModel):
             except Exception as exc:
                 raise ValueError(Output.error(Errors.ERROR_HBR_COULD_NOT_LOAD_IDATA, path=path)) from exc
 
-    def compute_yhat(self, data, responsevar, X, be):
-        fn = self.likelihood.yhat
-        Y = xr.DataArray(np.squeeze(data.Y.values), dims=("observations",))
-        yhat = self.generic_MCMC_apply(X, be, Y, fn, kwargs={})
-        return yhat
+    @staticmethod
+    def _save_plot(plot_collection: Any, path: str) -> None:
+        """
+        Save an ArviZ plot to disk.
+
+        ArviZ 1.0 returns a PlotCollection instead of matplotlib axes, so we
+        save its figure directly rather than relying on the current figure.
+
+        Parameters
+        ----------
+        plot_collection : Any
+            PlotCollection returned by an ArviZ plotting function
+        path : str
+            Path to save the figure to
+
+        Returns
+        -------
+        None
+        """
+        figure = plot_collection.viz["figure"].item()
+        figure.savefig(path, bbox_inches="tight")
+        plt.close(figure)
