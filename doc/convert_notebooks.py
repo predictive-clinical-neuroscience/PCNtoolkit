@@ -88,7 +88,6 @@ def write_stripped_notebooks() -> None:
 
     That way the notebooks take less memory and are faster to download.
     """
-    print("Adding example notebooks for download")
     os.makedirs(NOTEBOOKS_DIR, exist_ok=True)
 
     for nb_path in glob.glob(os.path.join(EXAMPLES_DIR, "*.ipynb")):
@@ -107,6 +106,7 @@ def write_stripped_notebooks() -> None:
             cell.get("metadata", {}).pop("papermill", None)
             cell.get("metadata", {}).pop("execution", None)
 
+        print(f"Adding {nb_name}.ipynb to {NOTEBOOKS_DIR} for download")
         nbformat.write(
             notebook, os.path.join(NOTEBOOKS_DIR, f"{nb_name}.ipynb")
         )
