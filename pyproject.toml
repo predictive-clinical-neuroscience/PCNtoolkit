@@ -32,15 +32,15 @@ dependencies = [
     "numpy>=2.1.0",
     "scipy>=1.14.1",
     "pandas>=2.2.3",
-    "xarray>=2024.1.0",
+    # 2024.11.0 is the first release with a stable xarray.DataTree
+    # used by arviz>=1.0.0 and pymc>=6.0.0
+    "xarray>=2024.11.0",
 
     # Bayesian sampling / statistics
-    # For most of these packages we have upper-bounds as we had 
-    # issues in the past with their new releases
-    "pymc>=5.21.1,<6.0.0",
-    "pytensor>=2.28.0,<3.0.0",
-    "arviz>=0.21.0,<1.0.0",
-    "nutpie>=0.16.5,<0.16.9",
+    "pymc>=6.0.0",
+    "pytensor>=3.0.0",
+    "arviz>=1.0.0",
+    "nutpie>=0.16.9",
     "numba>=0.61.0", # required by nutpie's PyMC (numba) sampling backend
     "scikit-learn>=1.5.2",
 
