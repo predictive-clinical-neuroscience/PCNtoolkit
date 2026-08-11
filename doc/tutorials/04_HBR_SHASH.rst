@@ -282,7 +282,8 @@ Likelihood, which we will use to model our response variable.
     shashb1_regression_model = HBR(
         name="template",
         cores=16,
-        progressbar=True,
+        # Enable the progress bar to see the progress of the model sampling
+        progressbar=False,
         draws=1500,
         tune=500,
         chains=4,
@@ -339,20 +340,6 @@ All results can be found in the save directory.
 
     model.fit_predict(train, test);
 
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-    
-
-
 Plot the results
 ----------------
 
@@ -386,7 +373,7 @@ Let’s start with the centiles.
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
 
@@ -410,7 +397,7 @@ Now let’s see the qq plots
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
 
@@ -526,19 +513,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.350683</td>
-          <td>1.178682</td>
-          <td>0.081702</td>
-          <td>0.3208</td>
-          <td>0.686712</td>
-          <td>-0.732226</td>
-          <td>0.349929</td>
-          <td>658.486637</td>
-          <td>0.488483</td>
-          <td>6.819904e-53</td>
-          <td>0.650071</td>
-          <td>0.98629</td>
-          <td>0.32701</td>
+          <td>0.350799</td>
+          <td>1.180602</td>
+          <td>0.082455</td>
+          <td>0.321128</td>
+          <td>0.686822</td>
+          <td>-0.732116</td>
+          <td>0.350002</td>
+          <td>658.44965</td>
+          <td>0.48847</td>
+          <td>6.868300e-53</td>
+          <td>0.649998</td>
+          <td>0.986246</td>
+          <td>0.328759</td>
         </tr>
       </tbody>
     </table>
@@ -600,19 +587,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.392641</td>
-          <td>0.454173</td>
+          <td>0.39246</td>
+          <td>0.45288</td>
           <td>0.180117</td>
-          <td>0.347716</td>
-          <td>0.748392</td>
-          <td>-0.370878</td>
-          <td>0.383862</td>
-          <td>475.073413</td>
-          <td>0.513295</td>
-          <td>6.451271e-16</td>
-          <td>0.616138</td>
-          <td>0.98076</td>
-          <td>-0.497448</td>
+          <td>0.348079</td>
+          <td>0.748077</td>
+          <td>-0.371192</td>
+          <td>0.383477</td>
+          <td>475.222026</td>
+          <td>0.512888</td>
+          <td>6.860878e-16</td>
+          <td>0.616523</td>
+          <td>0.980956</td>
+          <td>-0.494952</td>
         </tr>
       </tbody>
     </table>
@@ -822,7 +809,7 @@ with the covariates, this is the model for you:
     shashb2_regression_model = HBR(
         name="template",
         cores=16,
-        progressbar=True,
+        progressbar=False,
         draws=1500,
         tune=500,
         chains=4,

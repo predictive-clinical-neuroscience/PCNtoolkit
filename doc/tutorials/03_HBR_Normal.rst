@@ -263,8 +263,8 @@ NormalLikelihood, which we will use to model our response variable.
         name="template",
         # The number of cores to use for sampling.
         cores=16,
-        # Whether to show a progress bar during the model fitting.
-        progressbar=True,
+        # Enable the progress bar to see the progress of the model sampling
+        progressbar=False,
         # The number of draws to sample from the posterior per chain.
         draws=1500,
         # The number of tuning steps to run.
@@ -326,20 +326,6 @@ All results can be found in the save directory.
 
     model.fit_predict(train, test);
 
-
-
-.. parsed-literal::
-
-    Output()
-
-
-
-.. raw:: html
-
-    <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
-    
-
-
 Plot the results
 ----------------
 
@@ -370,7 +356,7 @@ Let’s start with the centiles.
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
 
@@ -389,7 +375,7 @@ Now let’s see the qq plots
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
 
@@ -470,19 +456,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.355024</td>
-          <td>5.909568</td>
-          <td>0.088178</td>
-          <td>0.308473</td>
-          <td>0.87108</td>
-          <td>-0.547859</td>
-          <td>0.355023</td>
-          <td>655.901751</td>
-          <td>0.504146</td>
-          <td>9.277073e-57</td>
-          <td>0.644977</td>
-          <td>0.879331</td>
-          <td>1.804291</td>
+          <td>0.354625</td>
+          <td>5.910348</td>
+          <td>0.087678</td>
+          <td>0.308367</td>
+          <td>0.871006</td>
+          <td>-0.547932</td>
+          <td>0.354623</td>
+          <td>656.104842</td>
+          <td>0.50446</td>
+          <td>7.723401e-57</td>
+          <td>0.645377</td>
+          <td>0.87945</td>
+          <td>1.803624</td>
         </tr>
       </tbody>
     </table>
@@ -544,19 +530,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.368492</td>
-          <td>1.288402</td>
+          <td>0.368105</td>
+          <td>1.293957</td>
           <td>0.161827</td>
-          <td>0.341821</td>
-          <td>0.796199</td>
-          <td>-0.32307</td>
-          <td>0.365467</td>
-          <td>482.112872</td>
-          <td>0.493961</td>
-          <td>1.092650e-14</td>
-          <td>0.634533</td>
-          <td>0.962855</td>
-          <td>0.816325</td>
+          <td>0.341647</td>
+          <td>0.796115</td>
+          <td>-0.323154</td>
+          <td>0.365075</td>
+          <td>482.262081</td>
+          <td>0.493969</td>
+          <td>1.091451e-14</td>
+          <td>0.634925</td>
+          <td>0.962756</td>
+          <td>0.817352</td>
         </tr>
       </tbody>
     </table>
