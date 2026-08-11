@@ -13,6 +13,7 @@ from pcntoolkit.math_functions.factorize import *
 from pcntoolkit.math_functions.prior import BasePrior, make_prior, prior_from_args
 from pcntoolkit.math_functions.shash import S, S_inv, SHASHb, SHASHo, SHASHo2, m1m2
 from pcntoolkit.util.migration import registry
+from pcntoolkit.util.output import Errors, Output, Warnings
 
 
 class Likelihood(ABC):
@@ -114,6 +115,8 @@ class Likelihood(ABC):
             #     return SHASHo2Likelihood._from_dict(dct, version=version)
             case "beta":
                 return BetaLikelihood._from_dict(dct, version=version)
+            case "ZINB":
+                return ZeroInflatedNegativeBinomialLikelihood._from_dict(dct, version=version)
             case _:
                 raise ValueError(f"Unknown likelihood: {likelihood}")
 
@@ -131,6 +134,8 @@ class Likelihood(ABC):
             #     return SHASHo2Likelihood._from_args(args)
             case "beta":
                 return BetaLikelihood._from_args(args)
+            case "ZINB":
+                return ZeroInflatedNegativeBinomialLikelihood._from_args(args)
             case _:
                 raise ValueError(f"Unknown likelihood: {likelihood}")
 
@@ -652,6 +657,256 @@ class BetaLikelihood(Likelihood):
 
     def get_var_names(self) -> List[str]:
         return ["alpha_samples", "beta_samples"]
+
+class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
+    def __init__(self, mu: BasePrior, alpha: BasePrior, psi: BasePrior):
+        super().__init__(name="ZINB")
+        self.mu = mu
+        self.mu.set_name("mu")
+        self.alpha = alpha
+        self.alpha.set_name("alpha")
+        self.psi = psi
+        self.psi.set_name("psi")
+
+    def _compile(
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> pm.Model:
+        compiled_params = self.compile_params(model, X, be, be_maps, Y)
+        compiled_params = {k: v[0] for k, v in compiled_params.items()}
+        with model:
+            pm.ZeroInflatedNegativeBinomial("Yhat", **compiled_params, observed=model["Y"], dims="observations")
+        return model
+
+    def compile_params(
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> dict[str, Any]:
+        return {
+            "mu": (self.mu.compile(model, X, be, be_maps, Y), self.mu.sample_dims),
+            "alpha": (self.alpha.compile(model, X, be, be_maps, Y), self.alpha.sample_dims),
+            "psi": (self.psi.compile(model, X, be, be_maps, Y), self.psi.sample_dims),
+        }
+
+    def transfer(self, idata: az.InferenceData, **kwargs) -> "Likelihood":
+        new_mu = self.mu.transfer(idata, **kwargs)
+        new_alpha = self.alpha.transfer(idata, **kwargs)
+        new_psi = self.psi.transfer(idata, **kwargs)
+        return ZeroInflatedNegativeBinomialLikelihood(new_mu, new_alpha, new_psi)
+
+    def _update_data(
+        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+    ):
+        self.mu.update_data(model, X, be, be_maps, Y)
+        self.alpha.update_data(model, X, be, be_maps, Y)
+        self.psi.update_data(model, X, be, be_maps, Y)
+
+    def forward(self, *args, **kwargs):
+        """
+        Map counts to Z-space using randomized quantile residuals.
+
+        The ZINB distribution is discrete, so each count y is actually an interval of
+        probability rather than a single value: everything between F(y-1) and F(y), where
+        F is the CDF -- the fraction of people scoring at or below y. 
+
+        Because we want Z to be a distribution rather than a handful of single points --
+        and y being an interval is what allows that -- we draw uniformly from the interval (=randomized quantile residuals)
+        and map the result to Z through the inverse normal CDF.
+
+        This makes ``forward`` stochastic: the same count maps to a slightly
+        different Z on each call. ``backward`` remains deterministic, so centiles
+        are unaffected.
+
+        Parameters
+        ----------
+        Y : array_like
+            Observed counts, non-negative integers.
+
+        Returns
+        -------
+        ndarray
+            Z-scores
+        """
+        mu, alpha, psi = args
+
+        Y = kwargs.get("Y")
+        Y = np.asarray(Y)
+
+        # Y must be counts so it must be a finite and non-negative integer
+        if not np.all(np.isfinite(Y)):
+            raise ValueError(Output.error(Errors.ERROR_ZINB_Y_NOT_FINITE))
+        if np.any(Y < 0) or np.any(Y != np.floor(Y)):
+            raise ValueError(Output.error(Errors.ERROR_ZINB_Y_NOT_COUNTS))
+
+        # Randomized uniform sample in [F(y-1), F(y)]
+        Fm1 = self._cdf(Y - 1, mu, alpha, psi)  # F(y-1)
+        Fy = self._cdf(Y, mu, alpha, psi)  # F(y)
+
+        # Allow user to pass a specific number generator for reproducibility
+        rng = kwargs.get("rng")
+        # if user doesn't pass a generator, use the default one that is
+        # random and non-reproducible
+        rng = np.random.default_rng() if rng is None else rng
+
+        U = rng.uniform(Fm1, Fy)  # randomized quantile residuals
+
+        # Keep U strictly inside (0, 1) so norm.ppf stays finite.
+        eps = np.finfo(float).eps
+        U = np.clip(U, eps, 1 - eps)
+        Z = stats.norm.ppf(U)
+
+        return Z
+
+    def backward(self, *args, **kwargs):
+        """
+        Map Z-space back to counts.
+
+        Inverts the mapping applied by ``forward``: the Z-score is turned into a
+        probability between 0 and 1, and the smallest count whose CDF reaches that
+        probability is returned.
+
+        Probabilities at or below ``F(0)`` map to zero;
+        above it the structural zero mass is removed and the remainder rescaled
+        onto the negative binomial component before inverting it.
+
+        Unlike ``forward`` this mapping is deterministic, so centiles derived
+        from it are reproducible.
+
+        Parameters
+        ----------
+        Z : array_like
+            Z-scores to map back to count space.
+
+        Returns
+        -------
+        Y : ndarray
+            Non-negative integer-valued counts, as floats.
+        """
+        mu, alpha, psi = args
+        Z = kwargs.get("Z")
+
+        Z = np.asarray(Z)
+        U = stats.norm.cdf(Z)
+        # broadcast U to the shape of mu to avoid shape mismatch issues
+        U = np.broadcast_to(U, mu.shape)
+
+        n, p = self._nb_params(mu, alpha)
+
+        # Probability of 0 under the ZINB mixture
+        p0 = self._cdf(0, mu, alpha, psi)
+
+        # These are centiles rather than observed counts, so they can be floats
+        Y = np.zeros_like(mu, dtype=float)
+
+        # For probabilities beyond the point zero mass we invert the NB
+        # component
+        mask = U > p0
+        if np.any(mask):
+            # Remove the structural-zero mass (1 - psi) and rescale onto the NB
+            # component, whose weight is psi: F(y) = (1 - psi) + psi * F_NB(y).
+            U_nb = (U[mask] - (1 - psi[mask])) / psi[mask]
+            U_nb = np.clip(U_nb, 0, 1)  # Ensure U_nb is in [0,1]
+
+            # Centiles from the NB component
+            y_nb = stats.nbinom.ppf(U_nb, n[mask], p[mask])
+
+            if np.isinf(y_nb).any():
+                Output.warning(Warnings.ZINB_SATURATED_QUANTILE)
+
+            Y[mask] = y_nb
+
+        return Y
+
+    def yhat(self, *args, **kwargs):
+        mu, alpha, psi = args
+        return psi * mu
+
+    @staticmethod
+    def _nb_params(mu, alpha):
+        """
+        Convert the ZINB parameters to the (n, p) parameterization used by scipy.
+
+        PyMC parameterizes the negative binomial component by its mean ``mu`` and
+        shape ``alpha``.
+        Scipy's ``nbinom`` takes the number of successes ``n`` and the success 
+        probability ``p``.
+
+        Returns
+        -------
+        tuple of ndarray
+            ``(n, p)`` suitable for passing to ``scipy.stats.nbinom``.
+        """
+        n = alpha  # the PyMC docs state ``alpha = n``
+        p = alpha / (alpha + mu)
+        return n, p
+
+    @classmethod
+    def _cdf(cls, y, mu, alpha, psi):
+        """
+        Evaluate the ZINB cumulative distribution function.
+
+        The distribution mixes a point mass at zero with a negative binomial
+        component. The structural-zero component is a point mass at 0, so its 
+        CDF is 0 below zero and 1 from zero onward
+
+            F(y) = (1 - psi) + psi * F_NB(y)   for y >= 0
+            F(y) = 0                           for y < 0
+
+        Parameters
+        ----------
+        y : array_like
+            Count values at which to evaluate the CDF. Values below zero return 0.
+        mu : array_like
+            Mean of the negative binomial component, strictly positive.
+        alpha : array_like
+            Shape of the negative binomial component, strictly positive.
+        psi : array_like
+            Expected proportion of negative binomial draws, in (0, 1).
+
+        Returns
+        -------
+        ndarray
+            Cumulative probability at ``y``, in [0, 1], broadcast over the inputs.
+        """
+        n, p = cls._nb_params(mu, alpha)
+        return np.where(y < 0, 0.0, (1 - psi) + psi * stats.nbinom.cdf(y, n, p))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"name": self.name, "mu": self.mu.to_dict(), "alpha": self.alpha.to_dict(), "psi": self.psi.to_dict()}
+
+    @classmethod
+    def _from_dict(
+        cls,
+        dct: Dict[str, Any],
+        version: str | None = None,
+    ) -> "ZeroInflatedNegativeBinomialLikelihood":
+        return cls(
+            mu=BasePrior.from_dict(dct["mu"], version=version),
+            alpha=BasePrior.from_dict(dct["alpha"], version=version),
+            psi=BasePrior.from_dict(dct["psi"], version=version),
+        )
+
+    @classmethod
+    def _from_args(cls, args: Dict[str, Any]) -> "ZeroInflatedNegativeBinomialLikelihood":
+        return cls(
+            mu=prior_from_args("mu", args),
+            alpha=prior_from_args("alpha", args),
+            psi=prior_from_args("psi", args),
+        )
+
+    def has_random_effect(self) -> bool:
+        return self.mu.has_random_effect or self.alpha.has_random_effect or self.psi.has_random_effect
+
+    def get_var_names(self) -> List[str]:
+        return ["mu_samples", "alpha_samples", "psi_samples"]
 
 
 def get_default_normal_likelihood() -> NormalLikelihood:

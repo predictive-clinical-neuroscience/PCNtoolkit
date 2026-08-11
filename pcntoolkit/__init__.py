@@ -1,7 +1,7 @@
 from .dataio.data_factory import load_fcon1000
 from .dataio.norm_data import NormData
 from .math_functions.basis_function import BsplineBasisFunction, LinearBasisFunction, PolynomialBasisFunction, CompositeBasisFunction, FractionalPolynomialBasisFunction
-from .math_functions.likelihood import BetaLikelihood, NormalLikelihood, SHASHbLikelihood
+from .math_functions.likelihood import BetaLikelihood, NormalLikelihood, SHASHbLikelihood, ZeroInflatedNegativeBinomialLikelihood
 from .math_functions.prior import make_prior
 from .longitudinal_score import LongitudinalScore, ZDiffScore, ZGainScore
 from .normative_model import NormativeModel
@@ -25,6 +25,7 @@ __all__ = [
     "BetaLikelihood",
     "NormalLikelihood",
     "SHASHbLikelihood",
+    "ZeroInflatedNegativeBinomialLikelihood",
     "make_prior",
     "plot_centiles",
     "plot_qq",

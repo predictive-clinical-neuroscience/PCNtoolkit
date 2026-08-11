@@ -142,8 +142,13 @@ class BasePrior(ABC):
             toreturn = math.exp((x - a) / b) * b
         elif self.mapping == "softplus":
             toreturn = math.log(1 + math.exp((x - a) / b)) * b  # type: ignore
+        elif self.mapping == "sigmoid":
+            # Maps to (0, 1), for parameters that are probabilities (e.g. the psi
+            # of a ZINB likelihood)
+            return math.sigmoid((x - a) / b)
         else:
             raise ValueError(Output.error(Errors.ERROR_UNKNOWN_MAPPING, mapping=self.mapping))
+        # This adds a third parameter to the mapping that does a verical shift
         if len(self.mapping_params) > 2:
             toreturn = toreturn + self.mapping_params[2]
         return toreturn
