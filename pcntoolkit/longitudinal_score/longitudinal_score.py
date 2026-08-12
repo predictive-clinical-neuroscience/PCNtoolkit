@@ -42,7 +42,7 @@ class LongitudinalScore(ABC):
         self.subject_id_col = subject_id_col
 
         # Fail early if the user passed an unfitted model.
-        self._check_model_is_fitted(normative_model)
+        normative_model.check_is_fitted()
 
     @abstractmethod
     def score(
@@ -152,17 +152,6 @@ class LongitudinalScore(ABC):
     # ------------------------------------------------------------------ #
     # Validation functions
     # ------------------------------------------------------------------ #
-    @staticmethod
-    def _check_model_is_fitted(normative_model: NormativeModel) -> None:
-        # Reject models that have not been fit yet.
-        if not getattr(normative_model, "is_fitted", False):
-            # Explain how to create the missing fitted state.
-            raise ValueError(
-                "The normative model must be fitted before computing "
-                "longitudinal scores. Call model.fit(...) or "
-                "model.fit_predict(...) first."
-            )
-
     @staticmethod
     def _check_is_predicted(data: NormData) -> None:
         # Check the prediction fields needed by longitudinal scores.
