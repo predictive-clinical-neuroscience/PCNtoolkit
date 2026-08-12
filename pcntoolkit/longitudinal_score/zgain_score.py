@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,6 +12,7 @@ from pcntoolkit.math_functions.velocity import (
     compute_correlation_matrix,
     compute_thriveline_y,
     compute_thrivelines,
+    propagate_thriveline_z,
     thrivelines_to_dataframe,
 )
 
@@ -122,7 +124,20 @@ class ZGainScore(LongitudinalScore):
             )
         return self.correlation_matrix
 
-    def get_thrivelines(self, **kwargs) -> pd.DataFrame:
+    def get_thrivelines(
+        self,
+        *,
+        timepoint_diff: int = 1,
+        z_thrive: float = -1.96,
+        propagate: Callable[
+            [xr.DataArray, xr.DataArray | float, float], xr.DataArray
+        ] = propagate_thriveline_z,
+        anchor_step: int = 1,
+        z_anchor_start: int = -3,
+        z_anchor_end: int = 4,
+        z_anchors: list[float] | np.ndarray | None = None,
+        covariate_range: tuple[int, int] | None = None,
+    ) -> pd.DataFrame:
         """Estimate and cache thrivelines from this score's correlation matrix.
 
         This wraps :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
@@ -137,12 +152,26 @@ class ZGainScore(LongitudinalScore):
 
         Parameters
         ----------
-        **kwargs
-            Keyword arguments forwarded to
-            :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
-            (e.g. ``timepoint_diff``, ``z_thrive``, ``anchor_step``,
-            ``z_anchor_start``, ``z_anchor_end``, ``z_anchors``,
-            ``covariate_range``).
+        timepoint_diff : int, default 1
+            Covariate step between the two timepoints on each thriveline
+            segment (e.g. one year).
+        z_thrive : float, default -1.96
+            Shrinkage term passed to the thriveline propagation update.
+        propagate : callable, default :func:`~pcntoolkit.math_functions.velocity.propagate_thriveline_z`
+            Function that propagates z-scores along one segment:
+            ``propagate(hop_correlations, start_z, z_thrive) -> xr.DataArray``.
+        anchor_step : int, default 1
+            Spacing between starting covariate anchors on the overlay grid.
+        z_anchor_start, z_anchor_end : int, default -3 and 4
+            Half-open range ``[z_anchor_start, z_anchor_end)`` of integer
+            starting z-scores used when ``z_anchors`` is not provided.
+        z_anchors : array-like of float, optional
+            Explicit starting z-scores (e.g. ``norm.ppf(centiles)``). When
+            given, ``z_anchor_start`` and ``z_anchor_end`` are ignored.
+        covariate_range : tuple of int, optional
+            ``(min, max)`` covariate bounds used to slice the correlation
+            matrix and place grid anchors. When omitted, anchors span the
+            covariate coordinates in the stored correlation matrix.
 
         Returns
         -------
@@ -165,7 +194,17 @@ class ZGainScore(LongitudinalScore):
         # Step 1: propagate anchor segments in Z-space from the correlation matrix.
         # This bare name resolves to the imported velocity function (a module
         # global), not to this method, so it is not a recursive call.
-        thrive_Z, thrive_X = compute_thrivelines(R, **kwargs)
+        thrive_Z, thrive_X = compute_thrivelines(
+            R,
+            timepoint_diff=timepoint_diff,
+            z_thrive=z_thrive,
+            propagate=propagate,
+            anchor_step=anchor_step,
+            z_anchor_start=z_anchor_start,
+            z_anchor_end=z_anchor_end,
+            z_anchors=z_anchors,
+            covariate_range=covariate_range,
+        )
         # Step 2: map each (X, Z) point to response-scale Y via the normative model.
         thrive_Y = compute_thriveline_y(
             self.normative_model,
@@ -182,20 +221,18 @@ class ZGainScore(LongitudinalScore):
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
-        timepoint_col: str = "visit",  
     ) -> xr.DataArray:
         """Compute the z-gain score for every subject in ``score_data``.
 
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort with at least two visits per subject and
-            z-scores already computed.
+            Longitudinal cohort with at least two distinct visits per subject,
+            numeric visit labels on the NormData object, and z-scores already
+            computed.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
-        timepoint_col : str, default "visit"
-            Column used to order multiple time points/visits.
 
         Returns
         -------
@@ -229,7 +266,7 @@ class ZGainScore(LongitudinalScore):
             score_data, self.covariate
         ).astype(float)
         # Read the visit-order values used to sort trajectories.
-        timepoints = self._get_timepoint_values(score_data, timepoint_col)
+        visits = self._get_visits(score_data)
 
         # Initialise an empty array filled with NaN to hold the scores.
         scores = np.full(
@@ -254,7 +291,7 @@ class ZGainScore(LongitudinalScore):
                 if len(idx) < 2:
                     continue
                 # Sort the visits into time order.
-                ordered = idx[np.argsort(timepoints[idx])]
+                ordered = idx[np.argsort(visits[idx])]
                 # For longer trajectories, use the last observed step.
                 # Keep only the last two visits for this score.
                 obs_prev, obs_last = ordered[-2], ordered[-1]

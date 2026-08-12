@@ -34,7 +34,6 @@ from typing import (
 import numpy as np
 import pandas as pd  # type: ignore
 import xarray as xr
-from nibabel.loadsave import load
 from numpy.typing import ArrayLike
 from scipy import stats
 from sklearn.model_selection import StratifiedKFold, train_test_split  # type: ignore
@@ -77,6 +76,10 @@ class NormData(xr.Dataset):
         Z-score data
     centiles: xr.DataArray
         Centile data
+    visits : xr.DataArray, optional
+        Numeric visit labels for longitudinal data (one value per
+        observation), e.g. 1, 2, 3. Set via
+        ``NormData.from_dataframe(..., visits='<column>')``.
 
 
     Examples
@@ -144,12 +147,17 @@ class NormData(xr.Dataset):
         Y: np.ndarray,
         batch_effects: np.ndarray | None = None,
         subject_ids: np.ndarray | None = None,
+        visits: np.ndarray | None = None,
         attrs: Mapping[str, Any] | None = None,
         remove_outliers: bool = False,
         z_threshold: float = 3.0,
         remove_Nan: bool = False,
     ) -> NormData:
-        """Create a NormData object from numpy arrays via DataFrame conversion."""
+        """Create a NormData object from numpy arrays via DataFrame conversion.
+
+        ``visits`` holds one numeric visit label per observation (e.g. 1, 2, 3)
+        and is required by the longitudinal scores.
+        """
         attrs = attrs or {}
 
         # Create DataFrame from arrays
@@ -169,6 +177,9 @@ class NormData(xr.Dataset):
         if subject_ids is not None:
             df_data["subject_ids"] = subject_ids
 
+        if visits is not None:
+            df_data["visits"] = visits
+
         return cls.from_dataframe(
             name=name,
             dataframe=pd.DataFrame(df_data),
@@ -179,6 +190,7 @@ class NormData(xr.Dataset):
             ),
             response_vars=attrs.get("response_vars", [f"response_var_{i}" for i in range(Y.shape[1])] if Y is not None else None),
             subject_ids="subject_ids" if subject_ids is not None else None,
+            visits="visits" if visits is not None else None,
             attrs=attrs,
             remove_outliers=remove_outliers,
             z_threshold=z_threshold,
@@ -296,6 +308,7 @@ class NormData(xr.Dataset):
         batch_effects: List[str] | None = None,
         response_vars: List[str | LiteralString] | None = None,
         subject_ids: str | None = None,
+        visits: str | None = None,
         remove_Nan: bool = False,
         remove_outliers: bool = False,
         z_threshold: float = 3.0,
@@ -318,6 +331,11 @@ class NormData(xr.Dataset):
             The list of column names to be used as response variables in the dataset.
         subject_ids: str
             The name of the column containing the subject IDs
+        visits: str, optional
+            The name of the column containing visit labels for longitudinal
+            data (e.g. ``"visit"``). Labels must be numeric (e.g. 1, 2, 3) so
+            that visits can be ordered in time. Required by the longitudinal
+            scores (``ZDiffScore`` / ``ZGainScore``).
         attrs : Mapping[str, Any] | None, optional
             Additional attributes for the dataset, by default None.
         remove_Nan: bool
@@ -339,6 +357,8 @@ class NormData(xr.Dataset):
             all_colums += batch_effects
         if subject_ids:
             all_colums += [subject_ids]
+        if visits:
+            all_colums += [visits]
         dataframe = dataframe[all_colums]
         if remove_Nan:
             dataframe = cls.remove_nan(dataframe)
@@ -358,6 +378,10 @@ class NormData(xr.Dataset):
         else:
             attrs["real_ids"] = False  # type: ignore
             data_vars["subject_ids"] = (["observations"], list(np.arange(len(dataframe))))
+
+        if visits is not None:
+            attrs["visit_col"] = visits  # type: ignore
+            data_vars["visits"] = (["observations"], dataframe[visits].to_numpy())
 
         coords["observations"] = list(np.arange(len(dataframe)))
 
@@ -443,15 +467,37 @@ class NormData(xr.Dataset):
         new_data_vars = {}
         new_coords = {}
 
-        if self.attrs["real_ids"] or other.attrs["real_ids"]:
+        # Get the observations
+        self_obs = self.observations.to_numpy()
+        other_obs = other.observations.to_numpy()
+
+        # Preserve the observation labels so that an observation keeps pointing
+        # at the SAME subject after a merge. Only if the two merged datasets have the same
+        # observation labels, shift the labels of the second dataset to avoid duplicates.
+        if np.intersect1d(self_obs, other_obs).size > 0:
+            other_obs = other_obs + self_obs.max() + 1
+
+        new_coords["observations"] = list(np.concatenate([self_obs, other_obs]))
+
+        real_ids = self.attrs["real_ids"] or other.attrs["real_ids"]
+        if real_ids:
             new_data_vars["subject_ids"] = (
                 ["observations"],
                 list(np.concatenate([self.subject_ids.to_numpy(), other.subject_ids.to_numpy()])),
             )
         else:
-            new_data_vars["subject_ids"] = (["observations"], list(np.arange(self.X.shape[0] + other.X.shape[0])))
+            new_data_vars["subject_ids"] = (["observations"], list(new_coords["observations"]))
 
-        new_coords["observations"] = list(np.arange(self.X.shape[0] + other.X.shape[0]))
+        if "visits" in self.data_vars and "visits" in other.data_vars:
+            new_data_vars["visits"] = (
+                ["observations"],
+                list(
+                    np.concatenate(
+                        [self.visits.to_numpy(), other.visits.to_numpy()]
+                    )
+                ),
+            )
+
         covar_intersection = [c for c in self.covariates.to_numpy() if c in other.covariates.to_numpy()]
         respvar_intersection = [r for r in self.response_vars.to_numpy() if r in other.response_vars.to_numpy()]
         batch_effect_dims_intersection = [b for b in self.batch_effect_dims.to_numpy() if b in other.batch_effect_dims.to_numpy()]
@@ -547,11 +593,16 @@ class NormData(xr.Dataset):
                 )
             new_data_vars["batch_effects"] = (["observations", "batch_effect_dims"], new_batch_effects.data)
 
+        # Preserve the original visit column name
+        new_attrs = {"real_ids": real_ids}
+        if "visits" in new_data_vars:
+            new_attrs["visit_col"] = self.attrs.get("visit_col", other.attrs.get("visit_col", "visits"))
+
         new_normdata = NormData(
             name=name or (self.attrs["name"] + "_+_" + other.attrs["name"]),
             data_vars=new_data_vars,
             coords=new_coords,
-            attrs=self.attrs,
+            attrs=new_attrs,
         )
         return new_normdata
 
@@ -729,11 +780,23 @@ class NormData(xr.Dataset):
 
         return True
 
-    def register_batch_effects(self) -> None:
+    def register_batch_effects(self, force: bool = False) -> None:
         """
         Create a mapping of batch effects to unique values.
+
+        Parameters
+        ----------
+        force : bool, optional
+                Recompute the list of batch effects even if one already exists.
+                Example, splitting the fcon1000 in 2 smaller datasets should
+                recompute the batch effects for each smaller dataset. 
+                Default is False.
+
+        Returns
+        -------
+        None
         """
-        if self.has_registered_metadata():
+        if self.has_registered_metadata() and not force:
             return
         my_be: xr.DataArray = self.batch_effects
         # create a dictionary with for each column in the batch effects, a dict from value to int
@@ -1046,7 +1109,8 @@ class NormData(xr.Dataset):
         to_return = self.where(mask).dropna(dim="observations", how="all")
         if isinstance(to_return, xr.Dataset):
             to_return = NormData.from_xarray(name, to_return)
-        to_return.register_batch_effects()
+        # Force a recompute
+        to_return.register_batch_effects(force=True)
         return to_return
 
     def to_dataframe(self, dim_order: Sequence[Hashable] | None = None) -> pd.DataFrame:
@@ -1097,6 +1161,13 @@ class NormData(xr.Dataset):
             ("subject_ids", "subject_ids"),
         ]
         acc.append(subject_ids)
+        if "visits" in self.data_vars:
+            visit_col = self.attrs.get("visit_col", "visits")
+            visits_df = xr.DataArray.to_dataframe(self.visits, dim_order)[[
+                "visits"
+            ]]
+            visits_df.columns = [("visits", visit_col)]
+            acc.append(visits_df)
         if hasattr(self, "centiles"):
             centiles = (
                 xr.DataArray.to_dataframe(self.centiles, dim_order)
@@ -1109,8 +1180,9 @@ class NormData(xr.Dataset):
             )
             centiles.columns = [("centiles", col) for col in centiles.columns]
             acc.append(centiles)
+        # Keep the observations index sorted
         pandas_df = pd.concat(acc, axis=1)
-        pandas_df.index = self.observations.values.astype(str)
+        pandas_df.index = pandas_df.index.astype(str)
         return pandas_df
 
     def save_zscores(self, save_dir: str) -> None:

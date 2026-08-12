@@ -150,6 +150,56 @@ def test_merge(norm_data_from_arrays: NormData):
     assert merged.X.to_numpy().shape[0] == 2 * norm_data_from_arrays.X.to_numpy().shape[0]
 
 
+def test_merge_preserves_observations(norm_data_from_arrays: NormData):
+    """An observation must keep pointing at the same subject after a merge.
+
+    Splitting the data and merging it back must therefore return the
+    same observations as the data we started with.
+    """
+    # Split the data in two, then put the same rows back together.
+    train, test = norm_data_from_arrays.train_test_split(0.6)
+    merged = train.merge(test)
+
+    # Ask both datasets for the same observations and compare the covariates they
+    # hand back. If the observations are not preserved, then the covariates
+    # will be different.
+    observations = merged.observations
+    assert np.allclose(
+        merged.X.sel(observations=observations).to_numpy(),
+        norm_data_from_arrays.X.sel(observations=observations).to_numpy(),
+    )
+
+
+def test_merge_shifts_duplicate_observations(norm_data_from_arrays: NormData):
+    """Merging two datasets that use the same observations must not duplicate
+    them. Instead the merged dataset must shift the observations of the second
+    dataset to make them unique.
+    """
+    # Merging the data with a copy of itself: every observation collides.
+    merged = copy.deepcopy(norm_data_from_arrays).merge(norm_data_from_arrays)
+
+    # The shifted observations must not repeat any of the originals.
+    observations = merged.observations.to_numpy()
+    assert len(np.unique(observations)) == observations.size
+    merged.to_dataframe()  # raises on duplicate labels
+
+
+def test_merge_knows_all_batch_effects(norm_data_from_arrays: NormData, transfer_norm_data_from_arrays: NormData):
+    """Merging A and B must give data that knows the batch effects of both."""
+    # The transfer data was collected at a site the training data never saw.
+    merged = norm_data_from_arrays.merge(transfer_norm_data_from_arrays)
+
+    for dim in merged.batch_effect_dims.to_numpy():
+        # The merged data must know every site of A and every site of B.
+        both = set(norm_data_from_arrays.unique_batch_effects[dim]) | set(
+            transfer_norm_data_from_arrays.unique_batch_effects[dim]
+        )
+        assert set(merged.unique_batch_effects[dim]) == both
+
+        # And it must have counted all of its rows, not just the ones from A.
+        assert sum(merged.batch_effect_counts[dim].values()) == merged.observations.size
+
+
 def test_to_dataframe():
     # create data with duplicate subject IDs
     n_subjects = 100
@@ -170,6 +220,32 @@ def test_to_dataframe():
 
     print(df)
     print(data.to_dataframe())
+
+
+def test_to_dataframe_preserves_ordered_observations(norm_data_from_arrays: NormData):
+    """The contents of to_dataframe come back sorted, so the observations must be sorted too.
+
+    X, Y and the batch effects come back ordered 0,1,2,3,... If the observations
+    keep the old unsorted order (3,1,5,10,...), each row is labelled with someone
+    else's observation.
+    """
+    # Splitting shuffles the observations, so they are no longer sorted.
+    train, _ = norm_data_from_arrays.train_test_split(0.6)
+
+    # The bug only shows up on unsorted observations, so make sure they are.
+    observations = train.observations.to_numpy()
+    assert not np.array_equal(observations, np.sort(observations))
+
+    df = train.to_dataframe()
+
+    # Our simulated data here numbers the subjects 0,1,2,..., which on purpose
+    # is the same as the observations.
+    # So if to_dataframe kept its observations sorted , then
+    # the observations MUST equal its subject id.
+    assert np.array_equal(
+        df.index.to_numpy().astype(int),
+        df[("subject_ids", "subject_ids")].to_numpy().astype(int),
+    )
 
 
 def test_netcdf(norm_data_from_arrays: NormData):

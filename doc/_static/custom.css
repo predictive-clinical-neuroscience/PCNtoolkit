@@ -33,6 +33,17 @@ html[data-theme="dark"] .bd-header {
     width: auto;
 }
 
+/* Stop the header wrapping onto a second line.*/
+.bd-header .bd-header__inner {
+    flex-wrap: nowrap;
+}
+.bd-header .navbar-header-items,
+.bd-header .navbar-header-items__start,
+.bd-header .navbar-header-items__center,
+.bd-header .navbar-header-items__end {
+    min-width: 0;
+}
+
 /* White icon-link icons (e.g. GitHub icon) on the
    dark navbar. */
 .bd-header .pst-navbar-icon {
@@ -72,6 +83,65 @@ html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre 
 html[data-theme="dark"] .bd-article .highlight-default .highlight pre *,
 html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre * {
     color: #ffffff !important;
+}
+
+/* Wide pandas output (e.g. `get_statistics_df()`, 14 columns) is emitted by
+   nbconvert as a bare, unclassed <div> around <table class="dataframe">. That
+   div has no overflow, so the only scroll container is the theme's
+   `.bd-article-container`, meaning a wide table scrolls the WHOLE article
+   sideways, dragging headings and prose with it. Give the wrapper its own
+   scroll context so scrolling stays inside the table. The `> ` combinator is
+   required, otherwise `:has()` also matches every ancestor div. */
+.bd-article div:has(> table.dataframe) {
+    overflow-x: auto;
+    max-width: 100%;
+    /* Firefox equivalent of the ::-webkit-scrollbar rules below. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.06);
+}
+
+/* Keep numbers and column names on one line. Without this the browser
+   resolves the overflow by wrapping inside cells, splitting floats like
+   1.2e-05 across two lines. The extra width is free now that the table
+   has its own scroll container. */
+.bd-article div:has(> table.dataframe) > table.dataframe th,
+.bd-article div:has(> table.dataframe) > table.dataframe td {
+    white-space: nowrap;
+}
+
+/* Draw a light gray grid in every table. */
+.bd-article table.dataframe th,
+.bd-article table.dataframe td {
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+html[data-theme="dark"] .bd-article table.dataframe th,
+html[data-theme="dark"] .bd-article table.dataframe td {
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Show a scrollbar when there is a evaluation metrics printed */
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar {
+    -webkit-appearance: none;
+    height: 10px;
+}
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 5px;
+}
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-radius: 5px;
+}
+
+/* Dark mode for scrollbar */
+html[data-theme="dark"] .bd-article div:has(> table.dataframe) {
+    scrollbar-color: rgba(255, 255, 255, 0.40) rgba(255, 255, 255, 0.08);
+}
+html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+}
+html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.40);
 }
 
 /* Hide the RST header on the homepage; the HTML header (pcn-homepage-title)

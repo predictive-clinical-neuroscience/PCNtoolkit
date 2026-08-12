@@ -42,7 +42,7 @@ def savemodel():
 
 @pytest.fixture
 def blr_model_factory() -> Callable:
-    """Allow tests to build BLR models with custom overrides. By default, 
+    """Allow tests to build BLR models with custom overrides. By default,
     the factory builds a BLR with the settings in BLR_BASE_CONFIG.
 
     Examples

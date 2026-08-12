@@ -37,8 +37,8 @@ import numpy as np
 import scipy.special as spp  # type: ignore
 from numpy.random import Generator
 from numpy.typing import ArrayLike, NDArray
-from pymc import floatX  # type: ignore
 from pymc.distributions import Continuous  # type: ignore
+from pymc.pytensorf import floatX  # type: ignore
 from pytensor import tensor as pt
 from pytensor.gradient import grad_not_implemented
 from pytensor.graph.basic import Variable

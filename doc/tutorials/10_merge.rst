@@ -181,7 +181,6 @@ Visualize the individual models
 
     plot_centiles_advanced(location1_model, 
                            scatter_data=location1_train, 
-                           covariate_range=(10, 80), 
                            batch_effects="all",
                            show_legend=False
                            )
@@ -203,7 +202,6 @@ Visualize the individual models
 
     plot_centiles_advanced(location2_model, 
                            scatter_data=location2_train, 
-                           covariate_range=(10, 80), 
                            batch_effects="all",
                            show_legend=False
                            )
@@ -238,7 +236,7 @@ The models are now trained and saved to disk. Each remote location
 shares only the saved model JSON files with you, and not the raw patient
 data.
 
-To do the merge, you first need to load both models from disk abd then
+To do the merge, you first need to load both models from disk and then
 call ``NormativeModel.merge()``. Internally, this works by:
 
 1. Generating **synthetic data** from each model’s learned distribution
@@ -271,7 +269,6 @@ Visualize the merged model
 
     plot_centiles_advanced(merged_model, 
                            scatter_data=data, 
-                           covariate_range=(10, 80), 
                            batch_effects="all",
                            show_legend=False)
 

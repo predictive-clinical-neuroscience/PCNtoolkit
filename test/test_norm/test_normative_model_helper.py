@@ -306,13 +306,14 @@ def test_log1p_transform(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
 
-    # Check that Y are non-negative in the original data
+    # Check that Y are non-negative in the original data. Y has to be > -1
+    # for the log(Y+1) transform to work.
     assert bool(
         np.all(test_norm_data_from_arrays["Y"].values >= 0)
     )
 
-    # Both training and test centiles should be bigger than 0 due to the 
-    # exp(Y) - 1 transform
+    # Both training and test centiles should be bigger than -1 (not 0) due to
+    # the exp(Y) - 1 transform
     assert bool(
         np.all(norm_data_from_arrays["centiles"].values > -1)
     )
@@ -320,12 +321,14 @@ def test_log1p_transform(
         np.all(test_norm_data_from_arrays["centiles"].values > -1)
     )
 
-    # We dont expect any negative yhat values in the train and test dataset
+    # Yhat is a mean predicted in log1p space and mapped back with expm1, so it
+    # should be bigger than -1 (not 0). A predicted mean below 0 in log1p space
+    # maps to a Y between -1 and 0 due to  the exp(Y) - 1 transform
     assert bool(
-        np.all(norm_data_from_arrays["Yhat"].values >= 0)
+        np.all(norm_data_from_arrays["Yhat"].values > -1)
     )
     assert bool(
-        np.all(test_norm_data_from_arrays["Yhat"].values >= 0)
+        np.all(test_norm_data_from_arrays["Yhat"].values > -1)
     )
 
 
@@ -334,8 +337,12 @@ def test_log_transformed(
     norm_data_from_arrays: NormData,
     test_norm_data_from_arrays: NormData,
 ) -> None:
-    # Force the data to be >= 1e-6
-    test_norm_data_from_arrays["Y"].values.clip(min=1e-6)
+    # Force the BOTH test and train data to be >= 1e-6. 
+    # We do that as Y has to be > 0 for the log(Y) transform to work.
+    norm_data_from_arrays["Y"].values = (
+        norm_data_from_arrays["Y"].values.clip(min=1e-6))
+    test_norm_data_from_arrays["Y"].values = (
+        test_norm_data_from_arrays["Y"].values.clip(min=1e-6))
 
     log_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays

@@ -18,7 +18,7 @@ GitHub Issues
 
 If you have identified a bug or would like to request a new
 feature, please `open an issue
-<https://github.com/amarquand/PCNtoolkit/issues>`_ on our
+<https://github.com/predictive-clinical-neuroscience/PCNtoolkit/issues>`_ on our
 GitHub account. Following the guidelines below can help the
 maintainers and the community better understand your issue and
 reproduce the behavior:
