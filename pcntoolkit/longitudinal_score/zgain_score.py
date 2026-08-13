@@ -255,18 +255,16 @@ class ZGainScore(LongitudinalScore):
         # Read response-variable names for the output array.
         response_vars = [str(r) for r in score_data.response_vars.values]
         # Read subject ids so visits can be grouped per person.
-        subject_ids = self._get_subject_ids(score_data)
+        subject_ids = score_data.get_subject_ids()
         # Keep subjects in the same order as the input data.
         subjects = self._ordered_unique(subject_ids)
         # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
         # Read the age value for every visit.
-        ages = self._get_observation_column(
-            score_data, self.covariate
-        ).astype(float)
+        ages = score_data.get_observation_column(self.covariate).astype(float)
         # Read the visit-order values used to sort trajectories.
-        visits = self._get_visits(score_data)
+        visits = score_data.get_visits()
 
         # Initialise an empty array filled with NaN to hold the scores.
         scores = np.full(

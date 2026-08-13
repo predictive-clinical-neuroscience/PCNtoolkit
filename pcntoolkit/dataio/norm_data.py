@@ -617,6 +617,99 @@ class NormData(xr.Dataset):
         """
         return {k: [v[0]] for k, v in self.unique_batch_effects.items()}
 
+    def get_subject_ids(self) -> np.ndarray:
+        """
+        Get the subject identifier of every observation.
+
+        Returns
+        -------
+        np.ndarray
+            One subject id per observation.
+
+        Raises
+        ------
+        ValueError
+            If the data carries no subject identifiers.
+        """
+        if not hasattr(self, "subject_ids"):
+            raise ValueError(
+                "The NormData has no 'subject_ids'. Build it with "
+                "NormData.from_dataframe(..., "
+                "subject_ids='<your subject column>')."
+            )
+        # Return ids as a plain NumPy array for grouping logic.
+        return np.asarray(self.subject_ids.values)
+
+    def get_observation_column(self, name: str) -> np.ndarray:
+        """
+        Get a single named column with one value per observation.
+
+        Batch effects are searched first, then covariates.
+
+        Parameters
+        ----------
+        name : str
+            Name of the batch effect or covariate to return.
+
+        Returns
+        -------
+        np.ndarray
+            One value per observation.
+
+        Raises
+        ------
+        ValueError
+            If no batch effect or covariate has this name.
+        """
+        # First look for the column among batch effects.
+        if hasattr(self, "batch_effect_dims") and name in [str(b) for b in self.batch_effect_dims.values]:
+            return np.asarray(self.batch_effects.sel(batch_effect_dims=name).values)
+
+        # If needed, look for the column among covariates.
+        if hasattr(self, "covariates") and name in [str(c) for c in self.covariates.values]:
+            return np.asarray(self.X.sel(covariates=name).values)
+
+        raise ValueError(
+            f"Could not find column '{name}' in the data. "
+            "Include it as a batch effect or covariate when building the "
+            "NormData."
+        )
+
+    def get_visits(self) -> np.ndarray:
+        """
+        Get the numeric visit label of every observation.
+
+        Returns
+        -------
+        np.ndarray
+            Visit labels cast to float, so that a subject's visits sort into
+            time order.
+
+        Raises
+        ------
+        ValueError
+            If the data carries no visit labels, or the labels are not
+            numeric. Visits must be encoded as numbers (e.g. 1, 2, 3) so they
+            can be sorted into time order. Non-numeric labels
+            (e.g. "pre", "post") are not allowed.
+        """
+        if "visits" not in self.data_vars:
+            raise ValueError(
+                "NormData has no visit labels. Build it with "
+                "NormData.from_dataframe(..., visits='<visit column>') before "
+                "computing longitudinal scores."
+            )
+        values = np.asarray(self.visits.values)
+        visit_col = self.attrs.get("visit_col", "visits")
+        try:
+            return values.astype(float)
+        except (ValueError, TypeError) as error:
+            raise ValueError(
+                f"Visit labels in column '{visit_col}' must be numeric so that "
+                "visits can be ordered in time (e.g. 1, 2, 3). Instead got non-numeric "
+                f"labels {np.unique(values).tolist()}."
+            ) from error
+
     def concatenate_string_arrays(self, *arrays: Any) -> np.ndarray:
         """
         Concatenate arrays of strings.

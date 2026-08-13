@@ -68,83 +68,6 @@ class LongitudinalScore(ABC):
         """
 
     @staticmethod
-    def _get_subject_ids(data: NormData) -> np.ndarray:
-        # Make sure the dataset carries subject identifiers.
-        if not hasattr(data, "subject_ids"):
-            raise ValueError(
-                "The NormData has no 'subject_ids'. Build it with "
-                "NormData.from_dataframe(..., "
-                "subject_ids='<your subject column>')."
-            )
-        # Return ids as a plain NumPy array for grouping logic.
-        return np.asarray(data.subject_ids.values)
-
-    @staticmethod
-    def _get_observation_column(data: NormData, name: str) -> np.ndarray:
-        """Return a per-observation 1D array for ``name``.
-
-        Batch effects are checked first, then covariates.
-        """
-        # First look for the column among batch effects.
-        if (
-            hasattr(data, "batch_effect_dims")
-            and name in [str(b) for b in data.batch_effect_dims.values]
-        ):
-            # Return the matching batch-effect values per observation.
-            return np.asarray(data.batch_effects.sel(
-                batch_effect_dims=name).values)
-
-        # If needed, look for the column among covariates.
-        if (
-            hasattr(data, "covariates")
-            and name in [str(c) for c in data.covariates.values]
-        ):
-            # Return the matching covariate values per observation.
-            return np.asarray(data.X.sel(covariates=name).values)
-
-        # If no column is found then throw error
-        raise ValueError(
-            f"Could not find column '{name}' in the data. "
-            "Include it as a batch effect or covariate when building the "
-            "NormData."
-        )
-
-    @staticmethod
-    def _get_visits(data: NormData) -> np.ndarray:
-        """Return per-observation numeric visit labels used to order visits.
-
-        Returns
-        -------
-        np.ndarray
-            Visit labels cast to float, so that a subject's visits sort into
-            time order.
-
-        Raises
-        ------
-        ValueError
-            If the NormData carries no visit labels, or the labels are not
-            numeric. Visits must be encoded as numbers (e.g. 1, 2, 3) so they
-            can be sorted into time order. Non-numeric labels
-            (e.g. "pre", "post") are not allowed.
-        """
-        if "visits" not in data.data_vars:
-            raise ValueError(
-                "NormData has no visit labels. Build it with "
-                "NormData.from_dataframe(..., visits='<visit column>') before "
-                "computing longitudinal scores."
-            )
-        values = np.asarray(data.visits.values)
-        visit_col = data.attrs.get("visit_col", "visits")
-        try:
-            return values.astype(float)
-        except (ValueError, TypeError) as error:
-            raise ValueError(
-                f"Visit labels in column '{visit_col}' must be numeric so that "
-                "visits can be ordered in time (e.g. 1, 2, 3). Instead got non-numeric "
-                f"labels {np.unique(values).tolist()}."
-            ) from error
-
-    @staticmethod
     def _ordered_unique(values: np.ndarray) -> np.ndarray:
         """Preserve subject order as it first appears in the data."""
         return pd.unique(np.asarray(values))
@@ -168,8 +91,8 @@ class LongitudinalScore(ABC):
     @classmethod
     def _check_is_longitudinal(cls, data: NormData) -> None:
         # Read subject ids so we can count visits per person.
-        ids = cls._get_subject_ids(data)
-        visits = cls._get_visits(data)
+        ids = data.get_subject_ids()
+        visits = data.get_visits()
 
         # Count rows and distinct visit labels per subject
         grouped = pd.DataFrame({"subject": ids, "visit": visits}).groupby(
