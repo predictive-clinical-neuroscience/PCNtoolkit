@@ -52,6 +52,13 @@ class ZDiffScore(LongitudinalScore):
     ):
         # Reuse the shared setup from the base class.
         super().__init__(normative_model, reference_data, subject_id_col)
+        # Unlike ZGainScore, this score reads the reference cohort at scoring
+        # time to estimate the spread of expected change.
+        if reference_data is None:
+            raise ValueError(
+                "ZDiffScore needs a longitudinal reference cohort to estimate "
+                "the typical size of change. Pass reference_data."
+            )
         # z-diff is defined only for BLR models.
         self._check_model_is_blr(normative_model)
 

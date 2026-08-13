@@ -351,8 +351,6 @@ def compute_thrivelines(
         with shape ``(response_vars, covariate_1, covariate_2)``. The two
         covariate axes index integer timepoint values (e.g. age in years); each
         entry is the Pearson correlation of z-scores between those timepoints.
-        A typical source is :func:`compute_correlation_matrix` or
-        :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_correlation_matrix`.
         To obtain valid thrivelines, the correlations at ``timepoint_diff``
         must be greater than zero; missing or zero entries usually indicate
         uncomputed offsets and those segments are omitted with a warning.
@@ -515,20 +513,15 @@ def compute_thriveline_y(
     thrive_Z: xr.DataArray | xr.Dataset,
     thrive_X: xr.DataArray | None = None,
     *,
-    template: "NormData | None" = None,
     covariate: str | None = None,
     batch_effects: dict[str, str] | None = None,
 ) -> xr.DataArray:
     """Map propagated Z thrivelines to response-scale Y coordinates.
 
     For each thriveline segment, response variable, and offset, covariate
-    values are taken from ``thrive_X``, non-thrive covariates are fixed to
-    the means in ``template``, and ``model[response_var].backward`` converts
-    z-scores to ``Y`` at the reference batch effect (when present).
-
-    When the model has a single covariate, ``covariate`` is not required.
-    When the model has multiple covariates, ``covariate`` names the thrive
-    axis and ``template`` is required to fix the other covariates.
+    values are taken from ``thrive_X``, the remaining covariates are held
+    fixed, and ``model[response_var].backward`` converts z-scores to ``Y`` at
+    the reference batch effect (when present).
 
     Parameters
     ----------
@@ -544,9 +537,6 @@ def compute_thriveline_y(
     thrive_X : xr.DataArray, optional
         Matching covariate coordinates, same shape as ``thrive_Z``. Required
         when ``thrive_Z`` is not a Dataset with ``Z`` and ``X``.
-    template : NormData, optional
-        Reference grid used to fix non-thrive covariates to their mean.
-        Required when the model has more than one covariate.
     covariate : str, optional
         Covariate along which thrivelines advance (e.g. ``"age"``). Required
         when the model has more than one covariate; otherwise the sole model
@@ -585,19 +575,7 @@ def compute_thriveline_y(
     thrive_Z, thrive_X = _resolve_thriveline_inputs(thrive_Z, thrive_X)
     # Any covariate that does not change along the segment is held fixed.
     other_covariates = [c for c in covariates if c != thrive_covariate]
-    if other_covariates and template is None:
-        raise ValueError(
-            "template is required when the model has covariates besides "
-            f"the thrive covariate '{thrive_covariate}'."
-        )
-
-    # Fix non-thrive covariates to their reference-cohort means.
-    fixed_covariates = {}
-    if template is not None:
-        fixed_covariates = {
-            cov: float(template.X.sel(covariates=cov).mean().values)
-            for cov in other_covariates
-        }
+    fixed_covariates = _resolve_fixed_covariates(model, other_covariates)
 
     response_vars = [str(r) for r in thrive_Z.coords["response_vars"].values]
     # Preallocate Y on the same (segment, response_vars, offset) grid as Z.
@@ -955,3 +933,41 @@ def _drop_out_of_range_anchors(
     )
     # Return filtered covariate and z anchors with matching segment indices.
     return start_ages.isel(segment=valid), start_z.isel(segment=valid)
+
+
+def _resolve_fixed_covariates(
+    model: "NormativeModel",
+    other_covariates: list[str],
+) -> dict[str, float]:
+    """
+    Set any other covariates to the midpoint of their range in the model.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Fitted model, read for its covariate ranges.
+    other_covariates : list of str
+        Covariates that do not advance along the thriveline.
+
+    Returns
+    -------
+    dict of float
+        One value per covariate in ``other_covariates``.
+
+    Raises
+    ------
+    ValueError
+        If the model has no recorded range for one of the covariates.
+    """
+    ranges = getattr(model, "covariate_ranges", None)
+    resolved: dict[str, float] = {}
+    for cov in other_covariates:
+        if not ranges or cov not in ranges:
+            # Throw error for models with no recorded covariate range
+            raise ValueError(
+                f"No value available for covariate '{cov}': the model has no "
+                "recorded range for it. Refit the model, or use one saved with "
+                "a newer version of PCNtoolkit."
+            )
+        resolved[cov] = (ranges[cov]["min"] + ranges[cov]["max"]) / 2
+    return resolved
