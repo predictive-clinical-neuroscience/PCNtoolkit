@@ -1,6 +1,10 @@
 Transfer a pretrained model to your own data
 ============================================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/12_transfer_pretrained.ipynb>`
+
 The `PCN lab <https://predictiveclinicalneuroscience.com/>`__ shares a
 collection of pretrained models on
 `SURFdrive <https://surfdrive.surf.nl/s/Mb6mZyFmJeCaPcZ?dir=/zip>`__,

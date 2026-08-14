@@ -1,6 +1,10 @@
 Bayesian Linear Regression
 ==========================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/02_BLR.ipynb>`
+
 Welcome to this tutorial notebook that will go through the fitting and
 evaluation of Normative models with Bayesian Linear Regression (BLR).
 

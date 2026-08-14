@@ -1,6 +1,10 @@
 Transfer and extend
 ===================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/06_transfer_extend.ipynb>`
+
 Training a normative model on a large reference cohort takes a lot of
 data and a lot of compute. Rather than training one from scratch,
 PCNtoolkit lets you take a model that was already trained on tens of
@@ -13,10 +17,13 @@ hospital or institution where it was collected, because of privacy
 regulations such as the GDPR. *Extend and transfer* are
 privacy-preserving, since each site adapts the model locally and shares
 only the model parameters, never the raw data. The two, however, play
-different roles: - Extend allows the model to be extended sequentially:
-the first site extends it and passes it to the second, which extends it
-again, and so on across the consortium. - On the other hand, a model
-should not be transferred sequentially but only once.
+different roles:
+
+- Extend allows the model to be extended sequentially: the first site
+  extends it and passes it to the second, which extends it again, and so
+  on across the consortium.
+- On the other hand, a model should not be transferred sequentially but
+  only once.
 
 Imports
 -------

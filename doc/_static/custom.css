@@ -169,3 +169,26 @@ html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollba
     font-weight: bold;
     margin-top: 0;
 }
+
+/* Notebook download link under each tutorial title. Written by
+   doc/convert_notebooks.py as a `.. container:: notebook-download`. */
+.notebook-download {
+    margin: 0.5rem 0 2.0rem;
+}
+.notebook-download a.reference.download {
+    text-decoration: none !important;
+}
+.notebook-download a.reference.download:hover {
+    text-decoration: underline !important;
+}
+
+/* The :download: role wraps its text in <code>, which would render the
+   link in monospace on a grey background. Undo that so it reads as an
+   ordinary link. */
+.notebook-download a.reference.download code.download {
+    background-color: transparent !important;
+    border: none !important;
+    color: inherit;
+    font-family: inherit !important;
+    font-size: inherit;
+}

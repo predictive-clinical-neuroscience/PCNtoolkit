@@ -1,6 +1,10 @@
 Command line interface
 ======================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/09_command_line_interface.ipynb>`
+
 The PCNtoolkit is a python package, but it can also be used from the
 command line.
 
