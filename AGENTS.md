@@ -97,3 +97,7 @@ When writing explanations, plans, docstrings, comments, commit messages and summ
 
 - All new or modified Python functions/methods must annotate
   every parameter and the return type.
+
+### Testing
+
+- Run locally only tests related to your change and NEVER the full test suite.
