@@ -81,7 +81,7 @@ right amygdala, a deep brain structure.
     train, test = norm_data.train_test_split()
 
 
-.. parsed-literal::
+.. code:: text
 
     Process: 2602 - 2026-07-22 18:46:13 - Removed 0 NANs
     Process: 2602 - 2026-07-22 18:46:13 - Dataset "fcon1000" created.
@@ -230,7 +230,7 @@ All results can be found in the save directory.
     model_blr_no_be.fit_predict(train, test);
 
 
-.. parsed-literal::
+.. code:: text
 
     Process: 2602 - 2026-07-22 18:46:14 - Fitting models on 1 response variables.
     Process: 2602 - 2026-07-22 18:46:14 - Fitting model for Right-Amygdala.
@@ -282,7 +282,7 @@ Let’s start with the centiles plot:
     plot_centiles(model_blr_no_be, scatter_data=train);
 
 
-.. parsed-literal::
+.. code:: text
 
     Process: 2602 - 2026-07-22 18:46:14 - Dataset "centile" created.
         - 150 observations
@@ -751,7 +751,7 @@ Fit the model
     model_wblr_with_be.fit_predict(train, test);
 
 
-.. parsed-literal::
+.. code:: text
 
     /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:630: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.7553100480988225e-41.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
@@ -1046,7 +1046,7 @@ females):
     plot_ridge(test, "Y", split_by="sex");
 
 
-.. parsed-literal::
+.. code:: text
 
     /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
@@ -1066,7 +1066,7 @@ females):
 .. image:: 02_BLR_files/02_BLR_40_1.png
 
 
-.. parsed-literal::
+.. code:: text
 
     /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
@@ -1104,7 +1104,7 @@ Compare the three models
     
 
 
-.. parsed-literal::
+.. code:: text
 
     BLR (no be)
     
@@ -1113,7 +1113,7 @@ Compare the three models
 .. image:: 02_BLR_files/02_BLR_42_1.png
 
 
-.. parsed-literal::
+.. code:: text
 
     w-BLR (no be)
     
@@ -1122,7 +1122,7 @@ Compare the three models
 .. image:: 02_BLR_files/02_BLR_42_3.png
 
 
-.. parsed-literal::
+.. code:: text
 
     w-BLR (with be)
     

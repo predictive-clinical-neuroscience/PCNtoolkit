@@ -194,7 +194,7 @@ We first fit a BLR model on the dataset with 21 sites.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -234,7 +234,7 @@ the small dataset, we can show how bad such a model would be:
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -265,7 +265,7 @@ merges it with the real local data, and refits a full model.
     )
 
 
-.. parsed-literal::
+.. code:: text
 
     C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.4374536951328396e-32.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
@@ -297,7 +297,7 @@ merges it with the real local data, and refits a full model.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -345,7 +345,7 @@ centiles plot below), not the age range of the reference model.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -388,7 +388,7 @@ reference point that both methods are trying to approximate.
     );
 
 
-.. parsed-literal::
+.. code:: text
 
     C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6928204946457924e-18.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)

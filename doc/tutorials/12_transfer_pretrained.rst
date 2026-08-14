@@ -26,7 +26,7 @@ Install requests manually as it is not install with
     !pip install requests
 
 
-.. parsed-literal::
+.. code:: text
 
     Requirement already satisfied: requests in C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages (2.32.5)
     Requirement already satisfied: charset_normalizer<4,>=2 in C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages (from requests) (3.4.4)
@@ -88,7 +88,7 @@ first ask the server which ones are available.
     print("\n".join(zip_files))
 
 
-.. parsed-literal::
+.. code:: text
 
     Available models:
     BLRw_sc_lifespan_67K_89sites.zip
@@ -184,7 +184,7 @@ parcellation, trained on 67.000 subjects from 89 sites.
     print(f"Model available at {model_dir}")
 
 
-.. parsed-literal::
+.. code:: text
 
     Model available at c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\pretrained\BLRw_ct_DES_lifespan_67K_89sites
     
@@ -216,7 +216,7 @@ models published earlier.
     print(f"Response vars : {len(model.response_vars)}")
 
 
-.. parsed-literal::
+.. code:: text
 
     C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:295: UserWarning: Process: 5004 - 2026-08-03 21:38:32 - This model was saved with PCNtoolkit v1.1.1, but you are running v1.2.0.post1. Loading this model in v1.2.0.post1...
       warnings.warn(message, category)
@@ -226,7 +226,7 @@ models published earlier.
       warnings.warn(message, category)
     
 
-.. parsed-literal::
+.. code:: text
 
     Covariates    : ['age']
     Batch effects : ['site', 'sex']
@@ -235,7 +235,7 @@ models published earlier.
     Response vars : 150
     
 
-.. parsed-literal::
+.. code:: text
 
     C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:295: UserWarning: Process: 5004 - 2026-08-03 21:38:33 - This model was saved with PCNtoolkit v1.1.1, but you are running v1.2.0.post1. Loading this model in v1.2.0.post1...
       warnings.warn(message, category)
@@ -278,7 +278,7 @@ b. **The batch effects must use the same encoding.** The BLR lifespan
     print(f"Skipped (not fitted)             : {sorted(set(shared) - set(response_vars))}")
 
 
-.. parsed-literal::
+.. code:: text
 
     Shared with the pretrained model : 150
     Of which successfully fitted     : 150
@@ -310,7 +310,7 @@ to several sites together.
     print(fcon["site"].value_counts().to_string())
 
 
-.. parsed-literal::
+.. code:: text
 
     FCON1000 contains 23 sites:
     
@@ -350,7 +350,7 @@ to several sites together.
     print(my_data["sex"].value_counts().to_string())
 
 
-.. parsed-literal::
+.. code:: text
 
     Selected 1 site(s): 198 subjects
     Age range: 18.0 - 26.0
@@ -389,7 +389,7 @@ set can be any size, down to a single patient.
     print(f"Test set      : {test.X.shape[0]} subjects")
 
 
-.. parsed-literal::
+.. code:: text
 
     Adaptation set: 99 subjects
     Test set      : 99 subjects

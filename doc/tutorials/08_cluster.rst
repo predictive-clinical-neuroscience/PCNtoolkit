@@ -101,7 +101,7 @@ Imports
     pcntoolkit.util.output.Output.set_show_messages(True)
 
 
-.. parsed-literal::
+.. code:: text
 
     This should be the conda environment path: /project/3022000.05/projects/stijdboe/envs/pcntoolkit_cluster_tutorial
     
@@ -254,7 +254,7 @@ Now we can just do:
     )  # With observe=True, you will see a job status monitor until the jobs are done. With observe=False, the runner will just create and start the jobs and release the notebook.
 
 
-.. parsed-literal::
+.. code:: text
 
     
     ---------------------------------------------------------
@@ -283,7 +283,7 @@ Now we can just do:
 
 
 
-.. parsed-literal::
+.. code:: text
 
     <pcntoolkit.normative_model.NormativeModel at 0x7f85753189e0>
 
@@ -302,7 +302,7 @@ inspect and use to predict on new data.
     plot_centiles(model, scatter_data=train)
 
 
-.. parsed-literal::
+.. code:: text
 
     Process: 2343784 - 2025-05-13 18:58:22 - Dataset "synthesized" created.
         - 150 observations
@@ -356,7 +356,7 @@ BLR models can only be extended, not transferred (yet).
     runner.extend_predict(model, transfer_train, transfer_test)
 
 
-.. parsed-literal::
+.. code:: text
 
     
     ---------------------------------------------------------
@@ -385,7 +385,7 @@ BLR models can only be extended, not transferred (yet).
 
 
 
-.. parsed-literal::
+.. code:: text
 
     <pcntoolkit.normative_model.NormativeModel at 0x7f8572962ea0>
 

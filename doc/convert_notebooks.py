@@ -180,9 +180,29 @@ def find_title_end(lines: list[str]) -> int | None:
     return None
 
 
+def fix_output_blocks() -> None:
+    """Print ALL cell outputs in a light yellow box, visually distinct from
+    normal code blocks.
+
+    nbconvert writes every cell output as ``.. parsed-literal::``, which
+    renders in a grey box instead of a yellow one, and drops the
+    backslashes from Windows paths. The new``.. code:: text`` in the RST
+    fixes that.
+    """
+    for rst_path in glob.glob(os.path.join(TUTORIALS_DIR, "*.rst")):
+        with open(rst_path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+
+        fixed = content.replace(".. parsed-literal::", ".. code:: text")
+
+        if fixed != content:
+            with open(rst_path, "w", encoding="utf-8") as fh:
+                fh.write(fixed)
+
+
 def fix_image_paths() -> None:
     """Fix image paths in generated RST files in Windows.
-    """    
+    """
     # Iterate over every generated RST file in the tutorials dir
     for rst_path in glob.glob(os.path.join(TUTORIALS_DIR, "*.rst")):
         # Read the file content as text
@@ -203,5 +223,6 @@ if __name__ == "__main__":
     convert_notebooks()
     write_stripped_notebooks()
     insert_download_link()
+    fix_output_blocks() # fix the light yellow output boxes
     if os.name == "nt": # Only fix image paths on Windows
         fix_image_paths()

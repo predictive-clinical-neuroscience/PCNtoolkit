@@ -59,7 +59,7 @@ Compare normative models
     train, test = norm_data.train_test_split()
 
 
-.. parsed-literal::
+.. code:: text
 
     Process: 3884 - 2026-08-11 19:25:32 - Removed 0 NANs
     Process: 3884 - 2026-08-11 19:25:32 - Dataset "fcon1000" created.
@@ -230,7 +230,7 @@ Compare normative models
     model2.fit_predict(train, test)
 
 
-.. parsed-literal::
+.. code:: text
 
     Process: 3884 - 2026-08-11 19:25:32 - Fitting models on 2 response variables.
     Process: 3884 - 2026-08-11 19:25:32 - Fitting model for WM-hypointensities.
@@ -1250,7 +1250,7 @@ Compare normative models
     comparison = compare_hbr_models(dct)
 
 
-.. parsed-literal::
+.. code:: text
 
     Process: 3884 - 2026-08-11 19:28:16 - Dataset "synthesized" created.
         - 92 observations
@@ -1303,7 +1303,7 @@ Compare normative models
     
 
 
-.. parsed-literal::
+.. code:: text
 
     Output()
 
@@ -1316,7 +1316,7 @@ Compare normative models
 
 
 
-.. parsed-literal::
+.. code:: text
 
     Output()
 
@@ -1328,7 +1328,7 @@ Compare normative models
     
 
 
-.. parsed-literal::
+.. code:: text
 
     c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\arviz_stats\loo\helper_loo.py:1146: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
@@ -1337,7 +1337,7 @@ Compare normative models
     
 
 
-.. parsed-literal::
+.. code:: text
 
     Output()
 
@@ -1350,7 +1350,7 @@ Compare normative models
 
 
 
-.. parsed-literal::
+.. code:: text
 
     Output()
 
@@ -1362,7 +1362,7 @@ Compare normative models
     
 
 
-.. parsed-literal::
+.. code:: text
 
     c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\arviz_stats\loo\helper_loo.py:1146: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
@@ -1377,7 +1377,7 @@ Compare normative models
         display(v)
 
 
-.. parsed-literal::
+.. code:: text
 
     Right-Lateral-Ventricle
     
@@ -1447,7 +1447,7 @@ Compare normative models
     </div>
 
 
-.. parsed-literal::
+.. code:: text
 
     WM-hypointensities
     

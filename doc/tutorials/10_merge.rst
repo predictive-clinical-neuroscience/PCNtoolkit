@@ -196,7 +196,7 @@ Visualize the individual models
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -217,7 +217,7 @@ Visualize the individual models
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -283,7 +283,7 @@ Visualize the merged model
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 

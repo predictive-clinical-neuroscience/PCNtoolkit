@@ -375,7 +375,7 @@ Let’s start with the centiles.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 
@@ -399,7 +399,7 @@ Now let’s see the qq plots
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 
@@ -426,7 +426,7 @@ And finally the ridge plot:
     )  # We can also show the 'Y' variable, and that will show the marginal distribution of the response variable, per batch effect.
 
 
-.. parsed-literal::
+.. code:: text
 
     c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\seaborn\axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
@@ -448,7 +448,7 @@ And finally the ridge plot:
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 750x100 with 2 Axes>]
 
@@ -702,7 +702,7 @@ site B.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 
@@ -740,7 +740,7 @@ site B.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 

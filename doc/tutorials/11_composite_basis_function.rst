@@ -67,7 +67,7 @@
 
 
 
-.. parsed-literal::
+.. code:: text
 
     (<pcntoolkit.math_functions.basis_function.CompositeBasisFunction at 0x7f120864c1a0>,)
 
@@ -163,7 +163,7 @@
     model.fit_predict(train, test)
 
 
-.. parsed-literal::
+.. code:: text
 
     /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
     This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
@@ -1286,7 +1286,7 @@
 
 
 
-.. parsed-literal::
+.. code:: text
 
     ['age', 'EstimatedTotalIntraCranialVol']
 
@@ -1355,7 +1355,7 @@
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 400x300 with 1 Axes>]
 
@@ -1423,7 +1423,7 @@
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 400x300 with 1 Axes>]
 

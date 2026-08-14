@@ -358,7 +358,7 @@ Let’s start with the centiles.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 
@@ -377,7 +377,7 @@ Now let’s see the qq plots
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 
@@ -646,7 +646,7 @@ site B.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 
@@ -681,7 +681,7 @@ site B.
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 800x550 with 1 Axes>]
 
