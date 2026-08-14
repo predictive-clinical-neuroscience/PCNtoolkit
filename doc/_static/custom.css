@@ -191,5 +191,4 @@ html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollba
     color: inherit;
     font-family: inherit !important;
     font-size: inherit;
-    padding: 2;
 }
