@@ -52,6 +52,13 @@ class ZDiffScore(LongitudinalScore):
     ):
         # Reuse the shared setup from the base class.
         super().__init__(normative_model, reference_data, subject_id_col)
+        # Unlike ZGainScore, this score reads the reference cohort at scoring
+        # time to estimate the spread of expected change.
+        if reference_data is None:
+            raise ValueError(
+                "ZDiffScore needs a longitudinal reference cohort to estimate "
+                "the typical size of change. Pass reference_data."
+            )
         # z-diff is defined only for BLR models.
         self._check_model_is_blr(normative_model)
 
@@ -95,7 +102,7 @@ class ZDiffScore(LongitudinalScore):
         # Read response-variable names for the output array.
         response_vars = [str(r) for r in score_data.response_vars.values]
         # Keep subjects in the same order as the input data.
-        subjects = self._ordered_unique(self._get_subject_ids(score_data))
+        subjects = self._ordered_unique(score_data.get_subject_ids())
         # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
@@ -162,9 +169,9 @@ class ZDiffScore(LongitudinalScore):
         residuals = self._compute_residual(data, responsevar)
 
         # Read subject ids so visits can be grouped per person.
-        subject_ids = self._get_subject_ids(data)
+        subject_ids = data.get_subject_ids()
         # Read the visit-order values used to sort repeated measures.
-        visits = self._get_visits(data)
+        visits = data.get_visits()
 
         # Collect one change value per subject.
         deltas: dict[object, float] = {}
@@ -221,7 +228,7 @@ class ZDiffScore(LongitudinalScore):
     # ------------------------------------------------------------------ #
     def _check_at_most_two_visits(self, data: NormData) -> None:
         # Read subject ids so visit counts can be checked.
-        ids = self._get_subject_ids(data)
+        ids = data.get_subject_ids()
         # Count how many visits each subject contributes.
         _, counts = np.unique(ids, return_counts=True)
         # Reject any subject with more than two visits.

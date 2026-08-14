@@ -49,7 +49,7 @@ def test_get_visits_requires_visits_on_norm_data():
     data["Z"] = (["observations", "response_vars"], np.zeros(data.Y.shape))
 
     with pytest.raises(ValueError, match="no visit labels"):
-        LongitudinalScore._get_visits(data)
+        data.get_visits()
 
 
 def test_get_visits_rejects_non_numeric_labels():
@@ -58,7 +58,7 @@ def test_get_visits_rejects_non_numeric_labels():
     data = _predicted_norm_data(df)
 
     with pytest.raises(ValueError, match="must be numeric"):
-        LongitudinalScore._get_visits(data)
+        data.get_visits()
 
 
 def test_check_is_longitudinal_rejects_duplicate_visit_labels():

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -8,8 +7,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from pcntoolkit.math_functions.correlation_matrix import CorrelationMatrix
 from pcntoolkit.math_functions.velocity import (
-    compute_correlation_matrix,
     compute_thriveline_y,
     compute_thrivelines,
     propagate_thriveline_z,
@@ -45,28 +44,13 @@ class ZGainScore(LongitudinalScore):
     ----------
     normative_model : NormativeModel
         A fitted normative model.
-    reference_data : NormData
-        Longitudinal reference cohort used to learn how z-scores
-        correlate across ages.
-    subject_id_col : str
-        Name of the column that identifies subjects inside both
-        ``reference_data`` and the ``score_data``.
-    bandwidth : int, default 5
-        Age-offset range, in years, for direct correlation estimates.
-    covariate : str, default "age"
-        The dimension for which the correlations are calculated in the
-        correlation matrix.
-    max_correlation : float, default 0.99
-        Upper bound used to keep the correlation away from 1 and 
-        the denominator away from zero. 
+    correlation_matrix : CorrelationMatrix
+        Age-to-age z-score correlations, estimated with
+        :meth:`~pcntoolkit.math_functions.correlation_matrix.CorrelationMatrix.compute`
+        or loaded from a saved file.
 
     Attributes
     ----------
-    correlation_matrix : xr.DataArray | None
-        The z-score correlation matrix used by this score. ``None`` until it is
-        computed on first use (via :meth:`get_correlation_matrix`, which is also
-        called by :meth:`score` and :meth:`get_thrivelines`). Once computed
-        it is cached and reused.
     zgain : xr.DataArray | None
         The most recent z-gain scores produced by :meth:`score`. ``None`` until
         :meth:`score` has been called at least once. It stores the same
@@ -82,47 +66,19 @@ class ZGainScore(LongitudinalScore):
     def __init__(
         self,
         normative_model: NormativeModel,
-        reference_data: NormData,
-        subject_id_col: str,
-        bandwidth: int = 5,
-        covariate: str = "age",
-        max_correlation: float = 0.99,
+        correlation_matrix: CorrelationMatrix,
     ):
         # Reuse the shared setup from the base class.
-        super().__init__(normative_model, reference_data, subject_id_col)
+        super().__init__(normative_model)
 
-        # Run the checks
-        self._check_is_predicted(self.reference_data)
-        self._check_is_longitudinal(self.reference_data)
-
-        self.bandwidth = bandwidth
-        self.covariate = covariate
-        self.max_correlation = max_correlation
-
-        # Keep the clipping threshold inside a mathematically safe range.
-        if not 0.0 < self.max_correlation < 1.0:
-            # Explain that the denominator must stay strictly positive.
-            raise ValueError(
-                "max_correlation must be strictly between 0 and 1."
-            )
-
-        # Cache the correlation matrix after first use.
-        self.correlation_matrix: xr.DataArray | None = None
+        self.correlation_matrix = correlation_matrix
+        self.covariate = correlation_matrix.covariate
 
         # Hold the most recent z-gain scores; filled in by score().
         self.zgain: xr.DataArray | None = None
 
         # Hold the most recent thrivelines; filled in by get_thrivelines().
         self.thrivelines: pd.DataFrame | None = None
-
-    def get_correlation_matrix(self) -> xr.DataArray:
-        """Estimate and cache the z-score correlation matrix. It computes
-        the matrix once and then reuses it for all subsequent calls."""
-        if self.correlation_matrix is None:
-            self.correlation_matrix = compute_correlation_matrix(
-                self.reference_data, self.bandwidth, self.covariate
-            )
-        return self.correlation_matrix
 
     def get_thrivelines(
         self,
@@ -142,13 +98,13 @@ class ZGainScore(LongitudinalScore):
 
         This wraps :func:`~pcntoolkit.math_functions.velocity.compute_thrivelines`
         and :func:`~pcntoolkit.math_functions.velocity.compute_thriveline_y`. It
-        first ensures the z-score correlation matrix is computed and stored,
         propagates thrivelines in Z-space, then maps them to response-scale Y
-        via :attr:`normative_model`. Non-thrive covariates are fixed using
-        :attr:`reference_data`; batch effects use the first allowed level from
-        the normative model (same rule as
-        :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`). If the object
-        has no correlation matrix yet, one is computed and a warning is issued.
+        via :attr:`normative_model`. Covariates other than the thrive covariate
+        are fixed to the midpoint of each covariate's range in the normative
+        model, the same rule
+        :func:`~pcntoolkit.util.plotter.plot_centiles` uses when it is given no
+        scatter data. Batch effects use the first allowed level from the
+        normative model.
 
         Parameters
         ----------
@@ -180,22 +136,11 @@ class ZGainScore(LongitudinalScore):
             ``start_z``, ``response_var``, ``offset``, ``X``, ``Z``, and ``Y``.
             Stored on the instance as :attr:`thrivelines`.
         """
-        # Compute the matrix only if this object doesn't have one yet;
-        # otherwise reuse the stored attribute without recomputing.
-        if self.correlation_matrix is None:
-            warnings.warn(
-                "This ZGainScore has no correlation matrix yet; computing it "
-                "from the reference data now.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.correlation_matrix = self.get_correlation_matrix()
-        R = self.correlation_matrix
         # Step 1: propagate anchor segments in Z-space from the correlation matrix.
         # This bare name resolves to the imported velocity function (a module
         # global), not to this method, so it is not a recursive call.
         thrive_Z, thrive_X = compute_thrivelines(
-            R,
+            self.correlation_matrix.matrix,
             timepoint_diff=timepoint_diff,
             z_thrive=z_thrive,
             propagate=propagate,
@@ -210,7 +155,6 @@ class ZGainScore(LongitudinalScore):
             self.normative_model,
             thrive_Z,
             thrive_X,
-            template=self.reference_data,
             covariate=self.covariate,
         )
         # Step 3: flatten to a long-form DataFrame for inspection and plotting.
@@ -231,8 +175,8 @@ class ZGainScore(LongitudinalScore):
             numeric visit labels on the NormData object, and z-scores already
             computed.
         subject_id_col : str, optional
-            Subject id column name override. Defaults to the value supplied
-            at construction.
+            Subject id column name. Kept for backwards compatibility; the
+            subject ids are read from ``score_data`` itself.
 
         Returns
         -------
@@ -240,33 +184,23 @@ class ZGainScore(LongitudinalScore):
             One z-gain score per subject and response variable. The same array
             is also stored on the instance as :attr:`zgain` for later retrieval.
         """
-        # Use the stored subject id name unless the caller overrides it.
-        subject_id_col = subject_id_col or self.subject_id_col
-
         # Run checks
         self._check_is_predicted(score_data)
         self._check_is_longitudinal(score_data)
 
-        # Read or estimate the correlation matrix.
-        R = self.get_correlation_matrix()
-        # Read the largest supported age index from that matrix.
-        max_age = int(R[f"{self.covariate}_1"].max())
-
         # Read response-variable names for the output array.
         response_vars = [str(r) for r in score_data.response_vars.values]
         # Read subject ids so visits can be grouped per person.
-        subject_ids = self._get_subject_ids(score_data)
+        subject_ids = score_data.get_subject_ids()
         # Keep subjects in the same order as the input data.
         subjects = self._ordered_unique(subject_ids)
         # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
         # Read the age value for every visit.
-        ages = self._get_observation_column(
-            score_data, self.covariate
-        ).astype(float)
+        ages = score_data.get_observation_column(self.covariate).astype(float)
         # Read the visit-order values used to sort trajectories.
-        visits = self._get_visits(score_data)
+        visits = score_data.get_visits()
 
         # Initialise an empty array filled with NaN to hold the scores.
         scores = np.full(
@@ -276,8 +210,6 @@ class ZGainScore(LongitudinalScore):
         )
         # Score one response variable at a time.
         for j, rv in enumerate(response_vars):
-            # Select the correlation matrix for this response variable.
-            R_rv = R.sel(response_vars=rv).values
             # Read the z-scores for this single response variable.
             z_rv = score_data.Z.sel(response_vars=rv).values
             # Score one subject at a time.
@@ -295,22 +227,14 @@ class ZGainScore(LongitudinalScore):
                 # For longer trajectories, use the last observed step.
                 # Keep only the last two visits for this score.
                 obs_prev, obs_last = ordered[-2], ordered[-1]
-                # Round and clip these two visits. We clip to the maximum
-                # age supported by the correlation matrix.
                 # TODO: Discuss with Johanna if it makes sense to round the
                 # age here.
-                age_prev = int(np.clip(round(ages[obs_prev]), 0, max_age))
-                age_last = int(np.clip(round(ages[obs_last]), 0, max_age))
+                age_prev = int(round(ages[obs_prev]))
+                age_last = int(round(ages[obs_last]))
 
-                # Read the specific correlation for this visit pair and keep
-                # the denominator away from zero.
-                r = float(
-                    np.clip(
-                        R_rv[age_prev, age_last],
-                        -self.max_correlation,
-                        self.max_correlation,
-                    )
-                )
+                # Read the correlation for this visit pair. get() clamps the
+                # ages to the matrix and keeps the denominator away from zero.
+                r = self.correlation_matrix.get(rv, age_prev, age_last)
                 denominator = np.sqrt(1.0 - r**2)
                 # Compute zgain
                 scores[subject_index[subject], j] = (
