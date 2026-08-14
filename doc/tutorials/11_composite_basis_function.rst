@@ -124,7 +124,7 @@
         # The number of cores to use for sampling.
         cores=16,
         # Whether to show a progress bar during the model fitting.
-        progressbar=True,
+        progressbar=False,
         # The number of draws to sample from the posterior per chain.
         draws=1500,
         # The number of tuning steps to run.

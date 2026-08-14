@@ -267,8 +267,8 @@ NormalLikelihood, which we will use to model our response variable.
         name="template",
         # The number of cores to use for sampling.
         cores=16,
-        # Whether to show a progress bar during the model fitting.
-        progressbar=True,
+        # Enable the progress bar to see the progress of the model sampling
+        progressbar=False,
         # The number of draws to sample from the posterior per chain.
         draws=1500,
         # The number of tuning steps to run.
@@ -330,203 +330,6 @@ All results can be found in the save directory.
 
     model.fit_predict(train, test);
 
-
-.. parsed-literal::
-
-    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
-    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
-    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
-    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
-      warnings.warn(
-    
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for 15 seconds</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>4</td>
-                        <td>0.13</td>
-                        <td>191</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>1</td>
-                        <td>0.13</td>
-                        <td>31</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.12</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>4</td>
-                        <td>0.14</td>
-                        <td>31</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
 Plot the results
 ----------------
 
@@ -557,7 +360,7 @@ Let’s start with the centiles.
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
 
@@ -576,7 +379,7 @@ Now let’s see the qq plots
 
 .. parsed-literal::
 
-    [<Figure size 640x480 with 1 Axes>]
+    [<Figure size 800x550 with 1 Axes>]
 
 
 
@@ -657,19 +460,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.354476</td>
-          <td>5.906671</td>
-          <td>0.087624</td>
-          <td>0.308436</td>
-          <td>0.870895</td>
-          <td>-0.548044</td>
-          <td>0.354475</td>
-          <td>656.180417</td>
-          <td>0.504316</td>
-          <td>8.398966e-57</td>
-          <td>0.645525</td>
-          <td>0.879325</td>
-          <td>1.804153</td>
+          <td>0.354625</td>
+          <td>5.910348</td>
+          <td>0.087678</td>
+          <td>0.308367</td>
+          <td>0.871006</td>
+          <td>-0.547932</td>
+          <td>0.354623</td>
+          <td>656.104842</td>
+          <td>0.50446</td>
+          <td>7.723401e-57</td>
+          <td>0.645377</td>
+          <td>0.87945</td>
+          <td>1.803624</td>
         </tr>
       </tbody>
     </table>
@@ -731,19 +534,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.368419</td>
-          <td>1.291916</td>
+          <td>0.368105</td>
+          <td>1.293957</td>
           <td>0.161827</td>
-          <td>0.341752</td>
-          <td>0.796182</td>
-          <td>-0.323087</td>
-          <td>0.365366</td>
-          <td>482.151416</td>
-          <td>0.495203</td>
-          <td>9.159731e-15</td>
-          <td>0.634634</td>
-          <td>0.962794</td>
-          <td>0.81684</td>
+          <td>0.341647</td>
+          <td>0.796115</td>
+          <td>-0.323154</td>
+          <td>0.365075</td>
+          <td>482.262081</td>
+          <td>0.493969</td>
+          <td>1.091451e-14</td>
+          <td>0.634925</td>
+          <td>0.962756</td>
+          <td>0.817352</td>
         </tr>
       </tbody>
     </table>

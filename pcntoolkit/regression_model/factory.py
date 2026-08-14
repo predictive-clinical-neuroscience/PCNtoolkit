@@ -51,7 +51,7 @@ def Normal_HBR():
         cores=4,
         chains=4,
         nuts_sampler="nutpie",
-        init="jitter+adapt_diag",
+        init="auto",
         progressbar=True,
     )
     return HBR_model
@@ -109,7 +109,7 @@ def SHASHb1_HBR():
         cores=4,
         chains=4,
         nuts_sampler="nutpie",
-        init="jitter+adapt_diag",
+        init="auto",
         progressbar=True,
     )
 
@@ -183,6 +183,6 @@ def SHASHb2_HBR():
         cores=4,
         chains=4,
         nuts_sampler="nutpie",
-        init="jitter+adapt_diag",
+        init="auto",
         progressbar=True,
     )

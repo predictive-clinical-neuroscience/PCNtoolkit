@@ -61,8 +61,8 @@ Compare normative models
 
 .. parsed-literal::
 
-    Process: 3202 - 2026-07-22 18:58:52 - Removed 0 NANs
-    Process: 3202 - 2026-07-22 18:58:52 - Dataset "fcon1000" created.
+    Process: 3884 - 2026-08-11 19:25:32 - Removed 0 NANs
+    Process: 3884 - 2026-08-11 19:25:32 - Dataset "fcon1000" created.
         - 1078 observations
         - 1078 unique subjects
         - 1 covariates
@@ -116,7 +116,7 @@ Compare normative models
         # The number of cores to use for sampling.
         cores=16,
         # Whether to show a progress bar during the model fitting.
-        progressbar=True,
+        progressbar=False,
         # The number of draws to sample from the posterior per chain.
         draws=1500,
         # The number of tuning steps to run.
@@ -193,7 +193,7 @@ Compare normative models
         # The number of cores to use for sampling.
         cores=16,
         # Whether to show a progress bar during the model fitting.
-        progressbar=True,
+        progressbar=False,
         # The number of draws to sample from the posterior per chain.
         draws=1500,
         # The number of tuning steps to run.
@@ -232,837 +232,64 @@ Compare normative models
 
 .. parsed-literal::
 
-    Process: 3202 - 2026-07-22 18:58:52 - Fitting models on 2 response variables.
-    Process: 3202 - 2026-07-22 18:58:52 - Fitting model for WM-hypointensities.
-    
-
-.. parsed-literal::
-
-    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
-    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
-    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
-    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
-      warnings.warn(
-    
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for 23 seconds</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>191</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>127</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>319</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>127</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
-.. parsed-literal::
-
-    Process: 3202 - 2026-07-22 18:59:25 - Fitting model for Right-Lateral-Ventricle.
-    
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for 20 seconds</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.14</td>
-                        <td>255</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.13</td>
-                        <td>159</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.13</td>
-                        <td>239</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.13</td>
-                        <td>127</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
-.. parsed-literal::
-
-    Process: 3202 - 2026-07-22 18:59:50 - Saving model to:
+    Process: 3884 - 2026-08-11 19:25:32 - Fitting models on 2 response variables.
+    Process: 3884 - 2026-08-11 19:25:32 - Fitting model for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:26:00 - Fitting model for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:26:33 - Saving model to:
     	resources/compare_hbr/model1.
-    Process: 3202 - 2026-07-22 18:59:50 - Making predictions on 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:50 - Computing z-scores for 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:50 - Computing z-scores for WM-hypointensities.
-    Process: 3202 - 2026-07-22 18:59:51 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 18:59:51 - Computing centiles for 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:51 - Computing centiles for WM-hypointensities.
-    Process: 3202 - 2026-07-22 18:59:54 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 18:59:56 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:56 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:56 - Computing log-probabilities for WM-hypointensities.
-    Process: 3202 - 2026-07-22 18:59:57 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 18:59:58 - Computing yhat for 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:59 - Making predictions on 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:59 - Computing z-scores for 2 response variables.
-    Process: 3202 - 2026-07-22 18:59:59 - Computing z-scores for WM-hypointensities.
-    Process: 3202 - 2026-07-22 18:59:59 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:00:00 - Computing centiles for 2 response variables.
-    Process: 3202 - 2026-07-22 19:00:00 - Computing centiles for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:00:01 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:00:03 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:00:03 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:00:03 - Computing log-probabilities for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:00:03 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:00:03 - Computing yhat for 2 response variables.
-    Process: 3202 - 2026-07-22 19:00:04 - Fitting models on 2 response variables.
-    Process: 3202 - 2026-07-22 19:00:04 - Fitting model for WM-hypointensities.
-    
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for 21 seconds</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.11</td>
-                        <td>191</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.09</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.12</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.10</td>
-                        <td>127</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
-.. parsed-literal::
-
-    Process: 3202 - 2026-07-22 19:00:39 - Fitting model for Right-Lateral-Ventricle.
-    
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for 12 seconds</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.13</td>
-                        <td>127</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.14</td>
-                        <td>31</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.13</td>
-                        <td>31</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>0.13</td>
-                        <td>31</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-
-
-.. parsed-literal::
-
-    Process: 3202 - 2026-07-22 19:01:00 - Saving model to:
+    Process: 3884 - 2026-08-11 19:26:33 - Making predictions on 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:33 - Computing z-scores for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:33 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:26:34 - Computing z-scores for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:26:35 - Computing centiles for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:35 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:26:38 - Computing centiles for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:26:41 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:41 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:41 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:26:42 - Computing log-probabilities for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:26:42 - Computing yhat for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:44 - Making predictions on 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:44 - Computing z-scores for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:44 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:26:45 - Computing z-scores for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:26:45 - Computing centiles for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:45 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:26:47 - Computing centiles for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:26:50 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:50 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:50 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:26:50 - Computing log-probabilities for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:26:51 - Computing yhat for 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:52 - Fitting models on 2 response variables.
+    Process: 3884 - 2026-08-11 19:26:52 - Fitting model for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:27:30 - Fitting model for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:27:55 - Saving model to:
     	resources/compare_hbr/model2.
-    Process: 3202 - 2026-07-22 19:01:00 - Making predictions on 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:00 - Computing z-scores for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:00 - Computing z-scores for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:01 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:02 - Computing centiles for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:02 - Computing centiles for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:06 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:09 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:09 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:09 - Computing log-probabilities for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:11 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:12 - Computing yhat for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:13 - Making predictions on 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:13 - Computing z-scores for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:13 - Computing z-scores for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:14 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:14 - Computing centiles for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:14 - Computing centiles for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:17 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:20 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:20 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:20 - Computing log-probabilities for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:20 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:21 - Computing yhat for 2 response variables.
+    Process: 3884 - 2026-08-11 19:27:55 - Making predictions on 2 response variables.
+    Process: 3884 - 2026-08-11 19:27:55 - Computing z-scores for 2 response variables.
+    Process: 3884 - 2026-08-11 19:27:55 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:27:56 - Computing z-scores for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:27:56 - Computing centiles for 2 response variables.
+    Process: 3884 - 2026-08-11 19:27:56 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:00 - Computing centiles for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:03 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:03 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:03 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:04 - Computing log-probabilities for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:05 - Computing yhat for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:07 - Making predictions on 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:07 - Computing z-scores for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:07 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:07 - Computing z-scores for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:08 - Computing centiles for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:08 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:11 - Computing centiles for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:14 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:14 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:14 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:14 - Computing log-probabilities for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:15 - Computing yhat for 2 response variables.
     
 
 
@@ -1626,11 +853,11 @@ Compare normative models
         Y                  (observations, response_vars) float64 3kB 2.721e+03 .....
         X                  (observations, covariates) float64 2kB 63.0 ... 23.0
         batch_effects      (observations, batch_effect_dims) &lt;U17 29kB &#x27;F&#x27; ... &#x27;Q...
-        Z                  (observations, response_vars) float64 3kB 0.5312 ... 1...
+        Z                  (observations, response_vars) float64 3kB 0.5342 ... 1...
         baseline_logp      (observations, response_vars) float64 3kB -3.66 ... -1...
-        logp               (observations, response_vars) float64 3kB -1.711 ... -...
-        Yhat               (observations, response_vars) float64 3kB 1.937e+03 .....
-        statistics         (response_vars, statistic) float64 208B 0.3614 ... 1.445
+        logp               (observations, response_vars) float64 3kB -1.709 ... -...
+        Yhat               (observations, response_vars) float64 3kB 1.934e+03 .....
+        statistics         (response_vars, statistic) float64 208B 0.361 ... 1.446
         centiles           (centile, observations, response_vars) float64 17kB -5...
     Attributes:
         real_ids:                       True
@@ -1639,8 +866,8 @@ Compare normative models
         unique_batch_effects:           {np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;sit...
         batch_effect_counts:            defaultdict(&lt;function NormData.register_b...
         covariate_ranges:               {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}
-        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-851e8fd6-9b1f-47ac-a336-0f9e7755c778' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-851e8fd6-9b1f-47ac-a336-0f9e7755c778' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 2</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>statistic</span>: 13</li><li><span class='xr-has-index'>centile</span>: 5</li></ul></div></li><li class='xr-section-item'><input id='section-600fb9e0-ce99-4d2c-862e-b2234f7c75ce' class='xr-section-summary-in' type='checkbox' checked /><label for='section-600fb9e0-ce99-4d2c-862e-b2234f7c75ce' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-8d071f23-d3d9-496b-8639-f2e3f1768f9f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-8d071f23-d3d9-496b-8639-f2e3f1768f9f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e6a79c3b-43db-4b80-a250-fc3c70989342' class='xr-var-data-in' type='checkbox'><label for='data-e6a79c3b-43db-4b80-a250-fc3c70989342' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U23</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; &#x27;Right-Late...</div><input id='attrs-1644ef6d-627b-4057-ac67-0dee667e0974' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-1644ef6d-627b-4057-ac67-0dee667e0974' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ef46f919-a8c5-4006-a224-55b5478e6950' class='xr-var-data-in' type='checkbox'><label for='data-ef46f919-a8c5-4006-a224-55b5478e6950' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;], dtype=&#x27;&lt;U23&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-b53c26dc-24ac-4612-8f3c-291ab3ca3f62' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b53c26dc-24ac-4612-8f3c-291ab3ca3f62' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b4f85fe4-900d-4229-837f-09a43db2c52a' class='xr-var-data-in' type='checkbox'><label for='data-b4f85fe4-900d-4229-837f-09a43db2c52a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-3321ac60-b891-4f7d-833a-adcd15952b18' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-3321ac60-b891-4f7d-833a-adcd15952b18' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-40340139-e2e3-4c2f-a193-31eecea28e64' class='xr-var-data-in' type='checkbox'><label for='data-40340139-e2e3-4c2f-a193-31eecea28e64' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;Kurtosis&#x27; ... &#x27;Skewness&#x27;</div><input id='attrs-9bcf7b5f-d16b-408b-b56f-86c4303cfc24' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9bcf7b5f-d16b-408b-b56f-86c4303cfc24' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-6792d8b1-cc5f-4e3a-9a8e-750a5ceb1c98' class='xr-var-data-in' type='checkbox'><label for='data-6792d8b1-cc5f-4e3a-9a8e-750a5ceb1c98' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;Kurtosis&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MLL&#x27;, &#x27;MSLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;,
-           &#x27;Rho_p&#x27;, &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;, &#x27;Skewness&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-d1742840-a272-4ad7-a798-c57fb4c35bdd' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-d1742840-a272-4ad7-a798-c57fb4c35bdd' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5945c380-9472-40af-a393-7960781c03dc' class='xr-var-data-in' type='checkbox'><label for='data-5945c380-9472-40af-a393-7960781c03dc' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-060f7310-f661-4035-9f57-b147644afb15' class='xr-section-summary-in' type='checkbox' checked /><label for='section-060f7310-f661-4035-9f57-b147644afb15' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;Munchen_sub96752&#x27; ... &#x27;Queensla...</div><input id='attrs-da03c2d7-0ea7-49c6-9a08-9cb9d117ca31' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-da03c2d7-0ea7-49c6-9a08-9cb9d117ca31' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b449ddb8-474c-4060-87e9-89e63eb7d200' class='xr-var-data-in' type='checkbox'><label for='data-b449ddb8-474c-4060-87e9-89e63eb7d200' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;Munchen_sub96752&#x27;, &#x27;NewYork_a_sub18638&#x27;, &#x27;Leiden_2200_sub87320&#x27;,
+        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-a49406b6-1c33-4eb7-83a7-2de499c81037' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-a49406b6-1c33-4eb7-83a7-2de499c81037' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 2</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>statistic</span>: 13</li><li><span class='xr-has-index'>centile</span>: 5</li></ul></div></li><li class='xr-section-item'><input id='section-2fad12f7-3f97-4f36-a6e1-00458378d563' class='xr-section-summary-in' type='checkbox' checked /><label for='section-2fad12f7-3f97-4f36-a6e1-00458378d563' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-8ab3769f-1cf8-4cc0-80db-24689c7ea30a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-8ab3769f-1cf8-4cc0-80db-24689c7ea30a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-aaf97217-70fd-4912-9e4c-af2506dc8d1d' class='xr-var-data-in' type='checkbox'><label for='data-aaf97217-70fd-4912-9e4c-af2506dc8d1d' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U23</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; &#x27;Right-Late...</div><input id='attrs-f31a228c-8801-46ab-81b5-7d6b1383b7c4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f31a228c-8801-46ab-81b5-7d6b1383b7c4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-18ffdc24-268f-42de-b26a-8c654f7ea60a' class='xr-var-data-in' type='checkbox'><label for='data-18ffdc24-268f-42de-b26a-8c654f7ea60a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Right-Lateral-Ventricle&#x27;], dtype=&#x27;&lt;U23&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-4fbb03bd-91cb-4285-8123-d3a1f5db4e67' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-4fbb03bd-91cb-4285-8123-d3a1f5db4e67' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5b1b1168-40cb-414c-a63b-4aa42aef3c5e' class='xr-var-data-in' type='checkbox'><label for='data-5b1b1168-40cb-414c-a63b-4aa42aef3c5e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-af4af8a4-000e-4223-bf50-ace017ee08f2' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-af4af8a4-000e-4223-bf50-ace017ee08f2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3bfb07cc-9097-4d5a-9ce0-327de58634d1' class='xr-var-data-in' type='checkbox'><label for='data-3bfb07cc-9097-4d5a-9ce0-327de58634d1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;Kurtosis&#x27; ... &#x27;Skewness&#x27;</div><input id='attrs-6542aeb6-7daf-459c-a599-d657fcc67422' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-6542aeb6-7daf-459c-a599-d657fcc67422' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b24d1c47-56cb-426d-9d2f-713576abf45c' class='xr-var-data-in' type='checkbox'><label for='data-b24d1c47-56cb-426d-9d2f-713576abf45c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;Kurtosis&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MLL&#x27;, &#x27;MSLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;,
+           &#x27;Rho_p&#x27;, &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;, &#x27;Skewness&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-be657dce-285e-4560-b5b5-0be7c3a03905' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-be657dce-285e-4560-b5b5-0be7c3a03905' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1e33d1b5-0223-4d1e-98ee-784c0a4b9272' class='xr-var-data-in' type='checkbox'><label for='data-1e33d1b5-0223-4d1e-98ee-784c0a4b9272' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-0a322d1b-ac2f-474f-ae08-efea7349c8b8' class='xr-section-summary-in' type='checkbox' checked /><label for='section-0a322d1b-ac2f-474f-ae08-efea7349c8b8' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;Munchen_sub96752&#x27; ... &#x27;Queensla...</div><input id='attrs-48b620d0-2a64-4055-8e47-7a2311a25c9a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-48b620d0-2a64-4055-8e47-7a2311a25c9a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-78bf5777-a381-47d0-81a2-0df381249ec7' class='xr-var-data-in' type='checkbox'><label for='data-78bf5777-a381-47d0-81a2-0df381249ec7' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;Munchen_sub96752&#x27;, &#x27;NewYork_a_sub18638&#x27;, &#x27;Leiden_2200_sub87320&#x27;,
            &#x27;ICBM_sub47658&#x27;, &#x27;AnnArbor_b_sub45569&#x27;, &#x27;Beijing_Zang_sub18960&#x27;,
            &#x27;Leiden_2200_sub18456&#x27;, &#x27;Berlin_Margulies_sub27711&#x27;,
            &#x27;Beijing_Zang_sub87776&#x27;, &#x27;Milwaukee_b_sub63196&#x27;,
@@ -1680,7 +907,7 @@ Compare normative models
            &#x27;AnnArbor_b_sub30250&#x27;, &#x27;Berlin_Margulies_sub86111&#x27;,
            &#x27;Beijing_Zang_sub89592&#x27;, &#x27;Beijing_Zang_sub68012&#x27;,
            &#x27;NewYork_a_sub50559&#x27;, &#x27;Munchen_sub66933&#x27;,
-           &#x27;Cambridge_Buckner_sub59729&#x27;, &#x27;Queensland_sub86245&#x27;], dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.721e+03 1.289e+04 ... 1.07e+04</div><input id='attrs-4ecee1b4-3f41-4bf5-940b-590a63f44683' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-4ecee1b4-3f41-4bf5-940b-590a63f44683' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-633f26cd-f5ec-4369-b791-4b5cc9deac2f' class='xr-var-data-in' type='checkbox'><label for='data-633f26cd-f5ec-4369-b791-4b5cc9deac2f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 2721.4, 12891.6],
+           &#x27;Cambridge_Buckner_sub59729&#x27;, &#x27;Queensland_sub86245&#x27;], dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.721e+03 1.289e+04 ... 1.07e+04</div><input id='attrs-256c979d-f39a-4f25-ab29-603fdf8f1ac9' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-256c979d-f39a-4f25-ab29-603fdf8f1ac9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2ae977e2-88d3-4ece-8a0a-73ae9cf2b6f8' class='xr-var-data-in' type='checkbox'><label for='data-2ae977e2-88d3-4ece-8a0a-73ae9cf2b6f8' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 2721.4, 12891.6],
            [ 1143.1,  9919.1],
            [  955.8,  7477.3],
            [ 1473.9, 14302.1],
@@ -1720,7 +947,7 @@ Compare normative models
            [  604.7,  7590.8],
            [ 2343.2, 17192.3],
            [ 2721.7,  6086. ],
-           [  703.5, 10700.3]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 23.27 22.0 ... 72.0 23.0 23.0</div><input id='attrs-dea42bfc-8b6d-451f-a3fa-02da7c6171b2' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-dea42bfc-8b6d-451f-a3fa-02da7c6171b2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-7385346d-d35b-4738-8d06-4d13368380dc' class='xr-var-data-in' type='checkbox'><label for='data-7385346d-d35b-4738-8d06-4d13368380dc' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[63.  ],
+           [  703.5, 10700.3]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 23.27 22.0 ... 72.0 23.0 23.0</div><input id='attrs-9b56ad9b-09af-40f1-b5b0-a011565d476f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9b56ad9b-09af-40f1-b5b0-a011565d476f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-951586de-5fb3-43ce-a6b1-b00d58ed2224' class='xr-var-data-in' type='checkbox'><label for='data-951586de-5fb3-43ce-a6b1-b00d58ed2224' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[63.  ],
            [23.27],
            [22.  ],
            [42.  ],
@@ -1760,7 +987,7 @@ Compare normative models
            [22.79],
            [72.  ],
            [23.  ],
-           [23.  ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-e7538a44-d865-403b-b77e-66f6be832916' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-e7538a44-d865-403b-b77e-66f6be832916' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ec03b2d2-20ba-48ad-bd48-7d950233ad28' class='xr-var-data-in' type='checkbox'><label for='data-ec03b2d2-20ba-48ad-bd48-7d950233ad28' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
+           [23.  ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-93499e68-47df-4f8e-a1a6-f4a27b24fc5d' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-93499e68-47df-4f8e-a1a6-f4a27b24fc5d' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1ddfff22-c7de-4b53-98f3-68dc27fb06a8' class='xr-var-data-in' type='checkbox'><label for='data-1ddfff22-c7de-4b53-98f3-68dc27fb06a8' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;F&#x27;, &#x27;Leiden_2200&#x27;],
            [&#x27;M&#x27;, &#x27;ICBM&#x27;],
@@ -1800,47 +1027,47 @@ Compare normative models
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;M&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;Cambridge_Buckner&#x27;],
-           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.5312 0.1837 ... -1.062 1.173</div><input id='attrs-910e0902-2dd3-4007-ad21-e4423ed6cb97' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-910e0902-2dd3-4007-ad21-e4423ed6cb97' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d5c7b860-77bb-4a81-a0b0-e4742b4e1c79' class='xr-var-data-in' type='checkbox'><label for='data-d5c7b860-77bb-4a81-a0b0-e4742b4e1c79' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 5.31178896e-01,  1.83697367e-01],
-           [ 3.36498502e-02,  9.83101814e-01],
-           [ 2.89515303e-01,  2.55034063e-01],
-           [ 4.33255027e-02,  1.50702648e+00],
-           [-8.64880758e-01, -1.10533267e+00],
-           [-8.03920622e-01, -6.44359854e-01],
-           [ 5.14785130e-01,  3.58184122e+00],
-           [ 6.97394257e-02, -5.89374542e-01],
-           [-8.53747096e-01,  6.34505172e-01],
-           [-9.50531001e-01, -4.55261827e-01],
-           [ 1.12272926e+00, -1.07393621e+00],
-           [-8.16703188e-01, -3.33594996e-01],
-           [ 1.05893208e+00, -3.58574240e-01],
-           [ 1.82249363e+00, -6.82132024e-01],
-           [ 1.05743419e+00, -1.18780781e+00],
-           [-1.43235466e+00, -7.61643382e-01],
-           [-6.35283824e-01,  4.32269919e-01],
-           [-4.29599568e-01,  4.96614757e-01],
-           [-4.50019840e-01, -2.02721924e-01],
-           [ 1.26652597e+00, -3.85383756e-01],
+           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.5342 0.1856 ... -1.066 1.178</div><input id='attrs-19d73969-a2c9-4c6d-bc32-06bf8d544e69' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-19d73969-a2c9-4c6d-bc32-06bf8d544e69' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f0bdabc1-50b9-4242-a668-56836d9aaaae' class='xr-var-data-in' type='checkbox'><label for='data-f0bdabc1-50b9-4242-a668-56836d9aaaae' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 5.34220032e-01,  1.85567802e-01],
+           [ 3.32295667e-02,  9.82830918e-01],
+           [ 2.90704054e-01,  2.56813177e-01],
+           [ 3.98473460e-02,  1.50304164e+00],
+           [-8.63592518e-01, -1.11181240e+00],
+           [-8.03559019e-01, -6.46091543e-01],
+           [ 5.17477045e-01,  3.58110329e+00],
+           [ 6.46138798e-02, -5.88442814e-01],
+           [-8.54362431e-01,  6.33353444e-01],
+           [-9.49672785e-01, -4.59398731e-01],
+           [ 1.12547912e+00, -1.07506237e+00],
+           [-8.15511510e-01, -3.35963767e-01],
+           [ 1.06050688e+00, -3.59201058e-01],
+           [ 1.82213334e+00, -6.83935652e-01],
+           [ 1.05209076e+00, -1.18694164e+00],
+           [-1.43959277e+00, -7.57491049e-01],
+           [-6.34413601e-01,  4.30390989e-01],
+           [-4.29809538e-01,  4.95136899e-01],
+           [-4.49107540e-01, -2.07505359e-01],
+           [ 1.26845104e+00, -3.86894901e-01],
     ...
-           [ 2.06792254e-01, -1.46280602e-01],
-           [ 2.23177112e+00, -7.83056117e-01],
-           [-1.39313556e+00,  9.60886842e-02],
-           [-6.44433968e-01,  1.48865240e-01],
-           [-9.15287436e-01,  4.21659689e-01],
-           [ 2.02526338e-01,  1.04151674e-01],
-           [-8.24588368e-01, -3.86750449e-01],
-           [ 1.85201870e-01, -5.38875293e-01],
-           [ 2.33149431e+00,  1.00994542e+00],
-           [-6.87262261e-01,  1.33174991e+00],
-           [-3.03233262e-01,  2.79140679e-01],
-           [-1.52610878e+00, -1.99740111e-01],
-           [-3.99176108e-01,  2.72278735e-01],
-           [-3.09720491e-01, -1.48013948e-01],
-           [-5.39685876e-01,  8.86234449e-01],
-           [-1.56663351e+00, -4.19144142e-01],
-           [-1.38183591e+00,  2.16863535e-01],
-           [-4.23510102e-01,  2.32744172e-01],
-           [ 3.59444706e+00, -2.40604422e-01],
-           [-1.06201573e+00,  1.17309071e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-3.66 -2.043 ... -0.9959 -1.366</div><input id='attrs-68ab0805-e417-4126-a253-9a8ea6fad64d' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-68ab0805-e417-4126-a253-9a8ea6fad64d' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-044185c7-31da-4bd5-9fb8-81133345dea6' class='xr-var-data-in' type='checkbox'><label for='data-044185c7-31da-4bd5-9fb8-81133345dea6' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -3.66025491,  -2.04288507],
+           [ 2.09900838e-01, -1.40807699e-01],
+           [ 2.23556487e+00, -7.85015966e-01],
+           [-1.39401640e+00,  9.52764536e-02],
+           [-6.53763853e-01,  1.47289248e-01],
+           [-9.20715779e-01,  4.19443117e-01],
+           [ 2.01300231e-01,  1.00669047e-01],
+           [-8.25464981e-01, -3.88039831e-01],
+           [ 1.80767819e-01, -5.39211314e-01],
+           [ 2.33039342e+00,  1.00883507e+00],
+           [-6.87812805e-01,  1.32950334e+00],
+           [-3.04439506e-01,  2.78951998e-01],
+           [-1.52710469e+00, -2.00453875e-01],
+           [-4.01566375e-01,  2.72834035e-01],
+           [-3.14572309e-01, -1.46578829e-01],
+           [-5.38882606e-01,  8.83975229e-01],
+           [-1.56797563e+00, -4.20142962e-01],
+           [-1.38323581e+00,  2.16743497e-01],
+           [-4.23532828e-01,  2.33598380e-01],
+           [ 3.59778924e+00, -2.42954639e-01],
+           [-1.06646692e+00,  1.17827038e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-3.66 -2.043 ... -0.9959 -1.366</div><input id='attrs-18a4c93d-1b7a-4b44-b18c-929fe84c5271' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-18a4c93d-1b7a-4b44-b18c-929fe84c5271' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b582a0de-19c1-45aa-bed7-cb90b27bc861' class='xr-var-data-in' type='checkbox'><label for='data-b582a0de-19c1-45aa-bed7-cb90b27bc861' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -3.66025491,  -2.04288507],
            [ -0.62929369,  -1.20018059],
            [ -0.72099829,  -0.94007561],
            [ -0.70127013,  -2.64484182],
@@ -1880,134 +1107,134 @@ Compare normative models
            [ -1.1509269 ,  -0.94352785],
            [ -2.31442671,  -4.28458605],
            [ -3.66147746,  -0.96619251],
-           [ -0.99591923,  -1.36569557]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.711 -1.351 ... -0.752 -1.382</div><input id='attrs-3a1482f9-56c1-4ee7-a415-9f17abfd8276' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-3a1482f9-56c1-4ee7-a415-9f17abfd8276' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-63b60e98-587c-43d1-8296-180731768695' class='xr-var-data-in' type='checkbox'><label for='data-63b60e98-587c-43d1-8296-180731768695' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -1.7112038 ,  -1.35130285],
-           [ -0.1648488 ,  -1.15706664],
-           [ -0.23696291,  -0.690663  ],
-           [ -0.70218092,  -2.16195834],
-           [ -1.90781095,  -1.91977612],
-           [ -0.48093267,  -0.8664382 ],
-           [ -0.3390299 ,  -7.05234261],
-           [ -0.19224262,  -0.93725935],
-           [ -0.54104452,  -0.80268544],
-           [ -1.45716909,  -1.20679183],
-           [ -0.8264689 ,  -1.15227551],
-           [ -0.5148877 ,  -0.73911473],
-           [ -0.75586535,  -0.63863784],
-           [ -1.83042415,  -0.97338852],
-           [ -0.96700511,  -1.63460496],
-           [ -1.21997032,  -0.90873695],
-           [ -0.36906754,  -0.72606541],
-           [ -0.31151799,  -0.67228664],
-           [ -0.47878444,  -0.94000625],
-           [ -1.05291651,  -0.60028596],
+           [ -0.99591923,  -1.36569557]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.709 -1.346 ... -0.7591 -1.388</div><input id='attrs-c4e81c81-3fa4-40df-b65b-8b0270eb89fd' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c4e81c81-3fa4-40df-b65b-8b0270eb89fd' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b24e5f06-9531-4ffb-b543-9a2a33817fba' class='xr-var-data-in' type='checkbox'><label for='data-b24e5f06-9531-4ffb-b543-9a2a33817fba' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -1.70861959,  -1.34630835],
+           [ -0.16464214,  -1.15679158],
+           [ -0.23614856,  -0.6917763 ],
+           [ -0.70185133,  -2.15805331],
+           [ -1.90446714,  -1.92485187],
+           [ -0.47977441,  -0.86752214],
+           [ -0.33959299,  -7.05020917],
+           [ -0.19219658,  -0.93717071],
+           [ -0.54060642,  -0.80236776],
+           [ -1.45523559,  -1.20976038],
+           [ -0.82849955,  -1.15400348],
+           [ -0.51364968,  -0.74024452],
+           [ -0.75652995,  -0.6394451 ],
+           [ -1.82954235,  -0.9745814 ],
+           [ -0.96132547,  -1.63380569],
+           [ -1.22880232,  -0.90501305],
+           [ -0.36764303,  -0.72569174],
+           [ -0.31037107,  -0.67245159],
+           [ -0.47832981,  -0.94121623],
+           [ -1.05405393,  -0.60176072],
     ...
-           [ -0.21703443,  -0.63486213],
-           [ -2.68877358,  -0.88194624],
-           [ -1.13749167,  -0.63644098],
-           [ -0.39474195,  -0.74955843],
-           [ -0.6228641 ,  -0.8405181 ],
-           [ -2.02338158,  -1.57950661],
-           [ -0.5037609 ,  -0.70412375],
-           [ -0.23326878,  -0.95422304],
-           [ -2.94424305,  -1.32702822],
-           [ -0.45564994,  -1.43685318],
-           [ -0.27090252,  -0.64224151],
-           [ -1.33175108,  -0.65177599],
-           [ -0.32802172,  -0.61613432],
-           [ -0.22959461,  -0.72513444],
-           [ -0.32276209,  -0.99509168],
-           [ -1.38385853,  -0.77434004],
-           [ -1.12246667,  -0.68367051],
-           [ -2.05169548,  -1.57940804],
-           [ -6.62357465,  -0.68762246],
-           [ -0.75200213,  -1.3824195 ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.937e+03 1.188e+04 ... 7.237e+03</div><input id='attrs-e64b36e8-9637-48d3-ab39-0dd78024ec81' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-e64b36e8-9637-48d3-ab39-0dd78024ec81' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-56b9b56b-b24a-4a04-bc22-b8ca70a5b51f' class='xr-var-data-in' type='checkbox'><label for='data-56b9b56b-b24a-4a04-bc22-b8ca70a5b51f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 1936.99032928, 11878.10086884],
-           [ 1130.29083525,  6994.16570713],
-           [  845.22108326,  6745.23484492],
-           [ 1445.31596947,  7966.1693407 ],
-           [ 2036.11630655, 10209.53286708],
-           [ 1175.91174778,  6933.52789483],
-           [ 1008.19362921,  7870.44676672],
-           [  568.46773838,  6894.25208882],
-           [ 1012.75096868,  5515.73302118],
-           [ 1271.41827586,  7801.83060465],
-           [ 1177.53682974,  6629.59486997],
-           [  912.46923379,  6285.69985827],
-           [ 1015.12900056,  5402.8970626 ],
-           [ 1212.43565615,  5762.44193936],
-           [ 1324.17938129,  7821.19995347],
-           [ 1014.05085759,  6111.53648351],
-           [ 1452.73508175,  7480.78812069],
-           [ 1019.25127919,  5279.23566288],
-           [ 1203.84592142,  7805.71166969],
-           [ 1208.06232482,  5008.38410835],
+           [ -0.21665334,  -0.63578382],
+           [ -2.69633573,  -0.88387849],
+           [ -1.13778397,  -0.63648805],
+           [ -0.40028959,  -0.75046001],
+           [ -0.62803768,  -0.84130036],
+           [ -2.0224025 ,  -1.58342586],
+           [ -0.50353464,  -0.70493182],
+           [ -0.23303669,  -0.95497417],
+           [ -2.94256024,  -1.32614091],
+           [ -0.45479499,  -1.43482232],
+           [ -0.26801812,  -0.64315431],
+           [ -1.33234434,  -0.65203758],
+           [ -0.32600016,  -0.61767017],
+           [ -0.2313022 ,  -0.72519715],
+           [ -0.32125477,  -0.99346399],
+           [ -1.38514286,  -0.77467621],
+           [ -1.12416275,  -0.68373737],
+           [ -2.04925005,  -1.58004694],
+           [ -6.63509461,  -0.68809621],
+           [ -0.75911322,  -1.38813706]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>1.934e+03 1.187e+04 ... 7.22e+03</div><input id='attrs-f9367f32-d093-4cfd-87c4-e0383ce1e915' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f9367f32-d093-4cfd-87c4-e0383ce1e915' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-038cfbc4-c13b-47cf-a4bb-e082ea03630b' class='xr-var-data-in' type='checkbox'><label for='data-038cfbc4-c13b-47cf-a4bb-e082ea03630b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 1933.90082021, 11867.23307829],
+           [ 1130.47872113,  6994.46772657],
+           [  844.84698627,  6739.75643462],
+           [ 1447.73155028,  7974.54333004],
+           [ 2031.88832927, 10234.67606665],
+           [ 1175.5673836 ,  6938.90804003],
+           [ 1007.34041134,  7867.62287281],
+           [  570.38023207,  6890.79454448],
+           [ 1012.67215985,  5518.15163645],
+           [ 1269.92720422,  7823.04256371],
+           [ 1177.00359332,  6634.89450558],
+           [  911.76572851,  6293.50439269],
+           [ 1015.00980064,  5405.50321333],
+           [ 1212.90162877,  5768.12475831],
+           [ 1326.98865919,  7822.60873448],
+           [ 1016.24665059,  6100.91684757],
+           [ 1452.17652413,  7485.77898979],
+           [ 1019.12276236,  5282.29224887],
+           [ 1203.58817349,  7824.29390988],
+           [ 1208.06161548,  5013.72036199],
     ...
-           [  705.79503221,  6117.00683922],
-           [ 1360.55041833,  6492.70552447],
-           [ 1290.32725258,  6254.09031332],
-           [ 1684.76307968,  6240.63878513],
-           [ 1165.55268736,  8066.37757999],
-           [ 3303.99347527, 15104.29285184],
-           [ 1195.1998405 ,  5480.32956124],
-           [  751.27023176,  8187.61595984],
-           [ 1179.36926913,  7251.03100809],
-           [ 1019.25127919,  5279.23566288],
-           [ 1453.31155318,  6222.62922989],
-           [ 1290.32725258,  6254.09031332],
-           [ 1295.02600264,  4872.2700228 ],
-           [  555.81870796,  6778.96273543],
-           [ 1175.15879785,  6742.43082854],
-           [ 1016.77303713,  5784.04193147],
-           [ 1129.16709817,  6954.26729192],
-           [ 3290.75789957, 15579.12217075],
-           [ 1358.92533638,  6796.63854932],
-           [ 1106.15925302,  7236.58776963]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.3614 1.118 ... 0.8924 1.445</div><input id='attrs-7d9e26d3-c248-40cc-9cde-02a986b0ca3a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-7d9e26d3-c248-40cc-9cde-02a986b0ca3a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1ef4720e-82b7-4e70-ab0e-9a42e96258e3' class='xr-var-data-in' type='checkbox'><label for='data-1ef4720e-82b7-4e70-ab0e-9a42e96258e3' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 3.61400485e-01,  1.11811357e+00,  1.60835397e-01,
-             3.42289121e-01,  8.00470743e-01, -3.18798296e-01,
-             3.58240295e-01,  4.84850670e+02,  4.90089683e-01,
-             1.88525232e-14,  6.41759705e-01,  9.68217919e-01,
-             7.39947874e-01],
-           [ 1.96018160e-01,  2.62787653e+00,  1.77431043e-01,
-             4.23312805e-01,  1.35385865e+00, -8.07620886e-02,
-             1.95224223e-01,  3.50859661e+03,  2.62211340e-01,
-             9.62730095e-05,  8.04775777e-01,  8.92431663e-01,
-             1.44490418e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-515.5 2.736e+03 ... 1.21e+04</div><input id='attrs-b877b744-dff1-4066-842e-3ff89feb88df' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b877b744-dff1-4066-842e-3ff89feb88df' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5bce34df-341f-4d06-bef5-e39b69e835f8' class='xr-var-data-in' type='checkbox'><label for='data-5bce34df-341f-4d06-bef5-e39b69e835f8' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[ -515.4569917 ,  2736.12987488],
-            [  506.78029048,  2096.15470245],
-            [  216.2812481 ,  2020.14484626],
+           [  704.61814913,  6102.35942004],
+           [ 1360.11685123,  6499.53509677],
+           [ 1290.18273145,  6256.38769754],
+           [ 1688.23196917,  6245.90224038],
+           [ 1167.47050874,  8074.86677561],
+           [ 3303.95142977, 15119.5099344 ],
+           [ 1195.28578537,  5484.3170817 ],
+           [  752.95797559,  8188.21663258],
+           [ 1180.1092155 ,  7254.89163686],
+           [ 1019.12276236,  5282.29224887],
+           [ 1453.66067479,  6222.36207314],
+           [ 1290.18273145,  6256.38769754],
+           [ 1295.77984383,  4869.75981643],
+           [  557.5298989 ,  6774.42175789],
+           [ 1174.66595253,  6747.5429287 ],
+           [ 1016.93803768,  5787.11138054],
+           [ 1129.31143855,  6954.41751414],
+           [ 3289.63830295, 15569.59197515],
+           [ 1358.68064151,  6803.54863122],
+           [ 1107.52487055,  7220.23033841]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.361 1.114 0.1608 ... 0.8923 1.446</div><input id='attrs-74f885f0-164d-4a0b-9cd7-132ec6788616' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-74f885f0-164d-4a0b-9cd7-132ec6788616' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-08c1bb05-08d5-493c-bc4f-68e760b05a4b' class='xr-var-data-in' type='checkbox'><label for='data-08c1bb05-08d5-493c-bc4f-68e760b05a4b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 3.61033556e-01,  1.11358710e+00,  1.60835397e-01,
+             3.42412977e-01,  8.00382477e-01, -3.18886563e-01,
+             3.57862695e-01,  4.84993287e+02,  4.88973815e-01,
+             2.20339554e-14,  6.42137305e-01,  9.68456177e-01,
+             7.37250041e-01],
+           [ 1.96415759e-01,  2.62927600e+00,  1.77431043e-01,
+             4.23471559e-01,  1.35329982e+00, -8.13209146e-02,
+             1.95681868e-01,  3.50759886e+03,  2.62482864e-01,
+             9.46221103e-05,  8.04318132e-01,  8.92322967e-01,
+             1.44566227e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-514.1 2.739e+03 ... 1.208e+04</div><input id='attrs-479a9017-60d5-4875-8329-a05100ddbc98' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-479a9017-60d5-4875-8329-a05100ddbc98' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b6053318-3aa7-4deb-9123-187ca87efc4f' class='xr-var-data-in' type='checkbox'><label for='data-b6053318-3aa7-4deb-9123-187ca87efc4f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[ -514.05792878,  2739.42752765],
+            [  507.39846406,  2095.85740492],
+            [  216.44776868,  2013.23002377],
             ...,
-            [ -427.92577354,  3998.05199632],
-            [  734.70630293,  1935.84390183],
-            [  481.94021958,  2375.79312213]],
+            [ -428.180898  ,  3951.60572939],
+            [  734.91474972,  1941.98977837],
+            [  483.75897876,  2358.67148556]],
     
-           [[  931.33818261,  8129.33828536],
-            [  874.61369493,  4985.68412258],
-            [  587.31760458,  4807.66136079],
+           [[  930.0892603 ,  8124.27918573],
+            [  874.97802486,  4985.74038572],
+            [  587.16519359,  4801.59393438],
             ...,
-            [ 1765.87204916, 10830.1809878 ],
-            [ 1102.95767273,  4803.41792846],
-            [  850.19158937,  5243.36714876]],
+            [ 1765.10693856, 10805.51296393],
+            [ 1102.89879343,  4810.01463981],
+            [  851.74302246,  5226.696347  ]],
     
-           [[ 1936.99032928, 11878.10086884],
-            [ 1130.29083525,  6994.16570713],
-            [  845.22108326,  6745.23484492],
+           [[ 1933.90082021, 11867.23307829],
+            [ 1130.47872113,  6994.46772657],
+            [  844.84698627,  6739.75643462],
             ...,
-            [ 3290.75789957, 15579.12217075],
-            [ 1358.92533638,  6796.63854932],
-            [ 1106.15925302,  7236.58776963]],
+            [ 3289.63830295, 15569.59197515],
+            [ 1358.68064151,  6803.54863122],
+            [ 1107.52487055,  7220.23033841]],
     
-           [[ 2942.64247595, 15626.86345232],
-            [ 1385.96797558,  9002.64729167],
-            [ 1103.12456194,  8682.80832905],
+           [[ 2937.71238011, 15610.18697085],
+            [ 1385.97941739,  9003.19506742],
+            [ 1102.52877896,  8677.91893487],
             ...,
-            [ 4815.64374999, 20328.0633537 ],
-            [ 1614.89300002,  8789.85917019],
-            [ 1362.12691667,  9229.80839049]],
+            [ 4814.16966735, 20333.67098637],
+            [ 1614.4624896 ,  8797.08262263],
+            [ 1363.30671864,  9213.76432982]],
     
-           [[ 4389.43765027, 21020.07186281],
-            [ 1753.80138003, 11892.17671181],
-            [ 1474.16091842, 11470.32484358],
+           [[ 4381.85956919, 20995.03862893],
+            [ 1753.55897819, 11893.07804822],
+            [ 1473.24620387, 11466.28284547],
             ...,
-            [ 7009.44157269, 27160.19234518],
-            [ 1983.14436982, 11657.43319682],
-            [ 1730.37828646, 12097.38241712]]], shape=(5, 216, 2))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-00b72835-164b-4e6d-9739-1c5a829ce1f1' class='xr-section-summary-in' type='checkbox' checked /><label for='section-00b72835-164b-4e6d-9739-1c5a829ce1f1' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x7fc32ad3e700&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}}}}</dd></dl></div></li></ul></div></div>
+            [ 7007.4575039 , 27187.57822091],
+            [ 1982.4465333 , 11665.10748407],
+            [ 1731.29076234, 12081.78919125]]], shape=(5, 216, 2))</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-89314ddb-9aea-4266-95ff-019101b4e714' class='xr-section-summary-in' type='checkbox' checked /><label for='section-89314ddb-9aea-4266-95ff-019101b4e714' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x000001C5FF9BB100&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}}}}</dd></dl></div></li></ul></div></div>
 
 
 
@@ -2025,7 +1252,7 @@ Compare normative models
 
 .. parsed-literal::
 
-    Process: 3202 - 2026-07-22 19:01:22 - Dataset "synthesized" created.
+    Process: 3884 - 2026-08-11 19:28:16 - Dataset "synthesized" created.
         - 92 observations
         - 92 unique subjects
         - 1 covariates
@@ -2034,45 +1261,45 @@ Compare normative models
         	sex (2)
     	site (20)
         
-    Process: 3202 - 2026-07-22 19:01:22 - Synthesizing data for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:22 - Synthesizing data for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:23 - Synthesizing data for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:23 - Making predictions on 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:23 - Computing z-scores for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:23 - Computing z-scores for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:23 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:23 - Computing centiles for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:23 - Computing centiles for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:25 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:26 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:26 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:26 - Computing log-probabilities for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:26 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:27 - Computing yhat for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:28 - Dataset "synthesized" created.
+    Process: 3884 - 2026-08-11 19:28:16 - Synthesizing data for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:16 - Synthesizing data for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:17 - Synthesizing data for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:17 - Making predictions on 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:17 - Computing z-scores for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:17 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:17 - Computing z-scores for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:18 - Computing centiles for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:18 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:20 - Computing centiles for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:22 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:22 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:22 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:22 - Computing log-probabilities for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:22 - Computing yhat for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:23 - Dataset "synthesized" created.
         - 92 observations
         - 92 unique subjects
         - 1 covariates
         - 2 response variables
         - 2 batch effects:
         	sex (2)
-    	site (20)
+    	site (19)
         
-    Process: 3202 - 2026-07-22 19:01:28 - Synthesizing data for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:28 - Synthesizing data for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:29 - Synthesizing data for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:29 - Making predictions on 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:29 - Computing z-scores for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:29 - Computing z-scores for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:30 - Computing z-scores for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:31 - Computing centiles for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:31 - Computing centiles for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:33 - Computing centiles for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:36 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:36 - Computing log-probabilities for 2 response variables.
-    Process: 3202 - 2026-07-22 19:01:36 - Computing log-probabilities for WM-hypointensities.
-    Process: 3202 - 2026-07-22 19:01:37 - Computing log-probabilities for Right-Lateral-Ventricle.
-    Process: 3202 - 2026-07-22 19:01:38 - Computing yhat for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:23 - Synthesizing data for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:23 - Synthesizing data for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:23 - Synthesizing data for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:24 - Making predictions on 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:24 - Computing z-scores for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:24 - Computing z-scores for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:25 - Computing z-scores for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:25 - Computing centiles for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:25 - Computing centiles for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:28 - Computing centiles for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:31 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:31 - Computing log-probabilities for 2 response variables.
+    Process: 3884 - 2026-08-11 19:28:31 - Computing log-probabilities for Right-Lateral-Ventricle.
+    Process: 3884 - 2026-08-11 19:28:32 - Computing log-probabilities for WM-hypointensities.
+    Process: 3884 - 2026-08-11 19:28:32 - Computing yhat for 2 response variables.
     
 
 
@@ -2101,19 +1328,21 @@ Compare normative models
     
 
 
-
 .. parsed-literal::
 
-    Output()
-
-
-.. parsed-literal::
-
-    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\arviz_stats\loo\helper_loo.py:1146: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
+      warnings.warn(
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\arviz_stats\loo\helper_loo.py:1146: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
     
 
 
+.. parsed-literal::
+
+    Output()
+
+
+
 .. raw:: html
 
     <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre>
@@ -2135,9 +1364,9 @@ Compare normative models
 
 .. parsed-literal::
 
-    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\arviz_stats\loo\helper_loo.py:1146: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
-    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/arviz/stats/stats.py:782: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
+    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\arviz_stats\loo\helper_loo.py:1146: UserWarning: Estimated shape parameter of Pareto distribution is greater than 0.70 for one or more samples. You should consider using a more robust model, this is because importance sampling is less likely to work well if the marginal posterior and LOO posterior are very different. This is more likely to happen with a non-robust model and highly influential observations.
       warnings.warn(
     
 
@@ -2146,73 +1375,6 @@ Compare normative models
     for k, v in comparison.items():
         print(k)
         display(v)
-
-
-.. parsed-literal::
-
-    WM-hypointensities
-    
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-    
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-    
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>rank</th>
-          <th>elpd_loo</th>
-          <th>p_loo</th>
-          <th>elpd_diff</th>
-          <th>weight</th>
-          <th>se</th>
-          <th>dse</th>
-          <th>warning</th>
-          <th>scale</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>model1</th>
-          <td>0</td>
-          <td>-140.539482</td>
-          <td>2.901111</td>
-          <td>0.000000</td>
-          <td>0.495583</td>
-          <td>8.281167</td>
-          <td>0.000000</td>
-          <td>False</td>
-          <td>log</td>
-        </tr>
-        <tr>
-          <th>model2</th>
-          <td>1</td>
-          <td>-172.081426</td>
-          <td>36.353269</td>
-          <td>31.541945</td>
-          <td>0.504417</td>
-          <td>32.302338</td>
-          <td>32.829892</td>
-          <td>True</td>
-          <td>log</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
 
 
 .. parsed-literal::
@@ -2242,40 +1404,113 @@ Compare normative models
         <tr style="text-align: right;">
           <th></th>
           <th>rank</th>
-          <th>elpd_loo</th>
-          <th>p_loo</th>
           <th>elpd_diff</th>
-          <th>weight</th>
-          <th>se</th>
           <th>dse</th>
-          <th>warning</th>
-          <th>scale</th>
+          <th>p_worse</th>
+          <th>diag_diff</th>
+          <th>diag_elpd</th>
+          <th>p</th>
+          <th>elpd</th>
+          <th>se</th>
+          <th>weight</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <th>model1</th>
           <td>0</td>
-          <td>-141.278879</td>
-          <td>3.624968</td>
-          <td>0.000000</td>
-          <td>0.570338</td>
-          <td>5.855701</td>
-          <td>0.000000</td>
-          <td>True</td>
-          <td>log</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>NaN</td>
+          <td></td>
+          <td>4 k̂ &gt; 0.70</td>
+          <td>15.1</td>
+          <td>-160.0</td>
+          <td>14.0</td>
+          <td>0.54</td>
         </tr>
         <tr>
           <th>model2</th>
           <td>1</td>
-          <td>-172.239006</td>
-          <td>33.485580</td>
-          <td>30.960127</td>
-          <td>0.429662</td>
-          <td>25.036833</td>
-          <td>26.859775</td>
-          <td>True</td>
-          <td>log</td>
+          <td>-0.0</td>
+          <td>20.0</td>
+          <td>0.53</td>
+          <td>N &lt; 100</td>
+          <td>7 k̂ &gt; 0.70</td>
+          <td>22.6</td>
+          <td>-160.0</td>
+          <td>14.0</td>
+          <td>0.46</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+.. parsed-literal::
+
+    WM-hypointensities
+    
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>rank</th>
+          <th>elpd_diff</th>
+          <th>dse</th>
+          <th>p_worse</th>
+          <th>diag_diff</th>
+          <th>diag_elpd</th>
+          <th>p</th>
+          <th>elpd</th>
+          <th>se</th>
+          <th>weight</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>model1</th>
+          <td>0</td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>NaN</td>
+          <td></td>
+          <td>1 k̂ &gt; 0.70</td>
+          <td>4.6</td>
+          <td>-150.0</td>
+          <td>10.0</td>
+          <td>0.64</td>
+        </tr>
+        <tr>
+          <th>model2</th>
+          <td>1</td>
+          <td>-70.0</td>
+          <td>38.0</td>
+          <td>0.96</td>
+          <td>N &lt; 100</td>
+          <td>8 k̂ &gt; 0.70</td>
+          <td>62.9</td>
+          <td>-210.0</td>
+          <td>36.0</td>
+          <td>0.36</td>
         </tr>
       </tbody>
     </table>
