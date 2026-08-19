@@ -546,7 +546,7 @@ def compute_thriveline_y(
         (e.g. ``{"site": "A"}``). When omitted or incomplete, missing keys
         are filled from the first allowed level in
         ``model.unique_batch_effects`` (same rule as
-        :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`). Ignored when
+        :func:`~pcntoolkit.util.plotter.plot_thrivelines`). Ignored when
         the model has no batch effects.
 
     Returns
@@ -767,12 +767,12 @@ def _resolve_reference_batch_effects(
 
     Explicit entries in ``batch_effects`` override the default. Otherwise each
     dimension uses the first allowed level in ``model.unique_batch_effects``
-    (same rule as :func:`~pcntoolkit.util.plotter.plot_centiles_advanced`).
+    (same rule as :func:`~pcntoolkit.util.plotter.plot_thrivelines`).
     """
     if not model.unique_batch_effects:
         return {}
     overrides = batch_effects or {}
-    # Default to the first allowed level so thrivelines align with plot_centiles_advanced.
+    # Default to the first allowed level so thrivelines align with plot_thrivelines.
     return {
         k: overrides[k] if k in overrides else model.unique_batch_effects[k][0]
         for k in sorted(model.unique_batch_effects.keys())

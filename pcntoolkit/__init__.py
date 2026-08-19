@@ -8,7 +8,7 @@ from .longitudinal_score import LongitudinalScore, ZDiffScore, ZGainScore
 from .normative_model import NormativeModel
 from .regression_model.blr import BLR
 from .regression_model.hbr import HBR
-from .util.plotter import plot_centiles, plot_qq, plot_ridge, plot_centiles_advanced
+from .util.plotter import plot_centiles, plot_qq, plot_ridge, plot_centiles_advanced, plot_thrivelines
 from .util.runner import Runner
 from importlib.metadata import version
 
@@ -34,6 +34,7 @@ __all__ = [
     "load_fcon1000",
     "Runner",
     "plot_centiles_advanced",
+    "plot_thrivelines",
     "LongitudinalScore",
     "ZDiffScore",
     "ZGainScore",
