@@ -34,6 +34,14 @@ class ZDiffScore(LongitudinalScore):
 
     This score is intended for BLR-based models and subjects with at most two
     visits.
+
+    Attributes
+    ----------
+    zdiff : xr.DataArray | None
+        The most recent z-diff scores produced by :meth:`score`. ``None`` until
+        :meth:`score` has been called at least once. It stores the same
+        ``xr.DataArray`` that :meth:`score` returns, so the result can be
+        retrieved later even if the return value was not saved.
     """
 
     def __init__(
@@ -44,32 +52,41 @@ class ZDiffScore(LongitudinalScore):
     ):
         # Reuse the shared setup from the base class.
         super().__init__(normative_model, reference_data, subject_id_col)
+        # Unlike ZGainScore, this score reads the reference cohort at scoring
+        # time to estimate the spread of expected change.
+        if reference_data is None:
+            raise ValueError(
+                "ZDiffScore needs a longitudinal reference cohort to estimate "
+                "the typical size of change. Pass reference_data."
+            )
         # z-diff is defined only for BLR models.
         self._check_model_is_blr(normative_model)
+
+        # Hold the most recent z-diff scores; filled in by score().
+        self.zdiff: xr.DataArray | None = None
 
     def score(
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
-        timepoint_col: str = "visit",
     ) -> xr.DataArray:
         """Compute the z-diff score for every subject in ``score_data``.
 
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort with exactly two visits per subject and
-            predictions already computed.
+            Longitudinal cohort with exactly two visits per subject, numeric
+            visit labels on the NormData object, and predictions already
+            computed.
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
-        timepoint_col : str, default "visit"
-            Column used to order the two visits.
 
         Returns
         -------
         xr.DataArray
-            One z-diff score per subject and response variable.
+            One z-diff score per subject and response variable. The same array
+            is also stored on the instance as :attr:`zdiff` for later retrieval.
         """
         # Use the stored subject id name unless the caller overrides it.
         subject_id_col = subject_id_col or self.subject_id_col
@@ -77,15 +94,15 @@ class ZDiffScore(LongitudinalScore):
         # Run checks first for both the reference and score data.
         self._check_is_predicted(self.reference_data)
         self._check_is_longitudinal(self.reference_data)
-        self._check_at_most_two_timepoints(self.reference_data)
+        self._check_at_most_two_visits(self.reference_data)
         self._check_is_predicted(score_data)
         self._check_is_longitudinal(score_data)
-        self._check_at_most_two_timepoints(score_data)
+        self._check_at_most_two_visits(score_data)
 
         # Read response-variable names for the output array.
         response_vars = [str(r) for r in score_data.response_vars.values]
         # Keep subjects in the same order as the input data.
-        subjects = self._ordered_unique(self._get_subject_ids(score_data))
+        subjects = self._ordered_unique(score_data.get_subject_ids())
         # Map each subject id to its row in the output array.
         subject_index = {s: i for i, s in enumerate(subjects)}
 
@@ -101,7 +118,7 @@ class ZDiffScore(LongitudinalScore):
             # Learn the typical size of expected change from the reference
             # cohort (reference_data).
             delta_reference = self._compute_residual_change(
-                self.reference_data, rv, timepoint_col
+                self.reference_data, rv
             )
             # Convert the subject-level changes into a numeric vector.
             delta_reference_values = np.fromiter(
@@ -123,18 +140,20 @@ class ZDiffScore(LongitudinalScore):
             deltas_target = self._compute_residual_change(
                 score_data,
                 rv,
-                timepoint_col,
             )
             # Compute zdiff
             for subject, delta_target in deltas_target.items():
                 scores[subject_index[subject], j] = delta_target / denominator
 
-        return xr.DataArray(
+        # Store the result so it can be retrieved later via self.zdiff, even
+        # if the caller does not keep the returned value.
+        self.zdiff = xr.DataArray(
             scores,
             dims=("subjects", "response_vars"),
             coords={"subjects": subjects, "response_vars": response_vars},
             name="zdiff",
         )
+        return self.zdiff
 
     # ------------------------------------------------------------------ #
     # Internals
@@ -143,7 +162,6 @@ class ZDiffScore(LongitudinalScore):
         self,
         data: NormData,
         responsevar: str,
-        timepoint_col: str,
     ) -> dict[object, float]:
         """Compute the residual change from the first visit to the second for
         each subject."""
@@ -151,9 +169,9 @@ class ZDiffScore(LongitudinalScore):
         residuals = self._compute_residual(data, responsevar)
 
         # Read subject ids so visits can be grouped per person.
-        subject_ids = self._get_subject_ids(data)
+        subject_ids = data.get_subject_ids()
         # Read the visit-order values used to sort repeated measures.
-        timepoints = self._get_timepoint_values(data, timepoint_col)
+        visits = data.get_visits()
 
         # Collect one change value per subject.
         deltas: dict[object, float] = {}
@@ -164,7 +182,7 @@ class ZDiffScore(LongitudinalScore):
             if len(idx) < 2:
                 continue
             # Put the two visits into chronological order.
-            ordered = idx[np.argsort(timepoints[idx])]
+            ordered = idx[np.argsort(visits[idx])]
             # Read the residual at visit 1 and visit 2.
             r1, r2 = residuals[ordered[0]], residuals[ordered[1]]
             # Store the change from the first visit to the second.
@@ -208,18 +226,18 @@ class ZDiffScore(LongitudinalScore):
     # ------------------------------------------------------------------ #
     # Validation functions
     # ------------------------------------------------------------------ #
-    def _check_at_most_two_timepoints(self, data: NormData) -> None:
+    def _check_at_most_two_visits(self, data: NormData) -> None:
         # Read subject ids so visit counts can be checked.
-        ids = self._get_subject_ids(data)
+        ids = data.get_subject_ids()
         # Count how many visits each subject contributes.
         _, counts = np.unique(ids, return_counts=True)
         # Reject any subject with more than two visits.
         if np.any(counts > 2):
             # Tell the user to switch to z-gain for longer trajectories.
             raise ValueError(
-                "ZDiffScore supports at most two timepoints per subject. "
+                "ZDiffScore supports at most two visits per subject. "
                 "Some subjects have more than two visits. You can use ZGainScore "
-                "for three or more timepoints."
+                "for three or more visits."
             )
 
     @staticmethod

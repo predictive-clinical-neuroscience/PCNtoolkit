@@ -33,6 +33,17 @@ html[data-theme="dark"] .bd-header {
     width: auto;
 }
 
+/* Stop the header wrapping onto a second line.*/
+.bd-header .bd-header__inner {
+    flex-wrap: nowrap;
+}
+.bd-header .navbar-header-items,
+.bd-header .navbar-header-items__start,
+.bd-header .navbar-header-items__center,
+.bd-header .navbar-header-items__end {
+    min-width: 0;
+}
+
 /* White icon-link icons (e.g. GitHub icon) on the
    dark navbar. */
 .bd-header .pst-navbar-icon {
@@ -46,13 +57,17 @@ html[data-theme="dark"] .bd-header {
     border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* Notebook printed output (parsed-literal / cell output)
-   rendered in a light yellow box, visually distinct
-   from normal code blocks. The more-specific selector
-   ensures it overrides the theme's bare `pre` rule. */
+/* Notebook printed output (cell output) rendered in a light yellow box,
+   visually distinct from normal code blocks.
+   
+   `highlight-text` comes from the `.. code:: text` blocks that
+   doc/convert_notebooks.py writes; `highlight-default` is kept for
+   RST files generated before that change. */
 /* Light mode */
 .bd-article .highlight-default .highlight pre,
-.bd-article-container .highlight-default .highlight pre {
+.bd-article-container .highlight-default .highlight pre,
+.bd-article .highlight-text .highlight pre,
+.bd-article-container .highlight-text .highlight pre {
     background-color: #fffde7 !important;
     border: 1px solid #f0d080 !important;
     border-left: 4px solid #f9a825 !important;
@@ -62,7 +77,9 @@ html[data-theme="dark"] .bd-header {
 }
 /* Dark mode */
 html[data-theme="dark"] .bd-article .highlight-default .highlight pre,
-html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre {
+html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre,
+html[data-theme="dark"] .bd-article .highlight-text .highlight pre,
+html[data-theme="dark"] .bd-article-container .highlight-text .highlight pre {
     background-color: #2a2400 !important;
     border: 1px solid #5a4a00 !important;
     border-left: 4px solid #c8861f !important;
@@ -70,8 +87,69 @@ html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre 
 }
 /* Ensure the text color inside the notebook output box is white in dark mode. */
 html[data-theme="dark"] .bd-article .highlight-default .highlight pre *,
-html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre * {
+html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre *,
+html[data-theme="dark"] .bd-article .highlight-text .highlight pre *,
+html[data-theme="dark"] .bd-article-container .highlight-text .highlight pre * {
     color: #ffffff !important;
+}
+
+/* Wide pandas output (e.g. `get_statistics_df()`, 14 columns) is emitted by
+   nbconvert as a bare, unclassed <div> around <table class="dataframe">. That
+   div has no overflow, so the only scroll container is the theme's
+   `.bd-article-container`, meaning a wide table scrolls the WHOLE article
+   sideways, dragging headings and prose with it. Give the wrapper its own
+   scroll context so scrolling stays inside the table. The `> ` combinator is
+   required, otherwise `:has()` also matches every ancestor div. */
+.bd-article div:has(> table.dataframe) {
+    overflow-x: auto;
+    max-width: 100%;
+    /* Firefox equivalent of the ::-webkit-scrollbar rules below. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.06);
+}
+
+/* Keep numbers and column names on one line. Without this the browser
+   resolves the overflow by wrapping inside cells, splitting floats like
+   1.2e-05 across two lines. The extra width is free now that the table
+   has its own scroll container. */
+.bd-article div:has(> table.dataframe) > table.dataframe th,
+.bd-article div:has(> table.dataframe) > table.dataframe td {
+    white-space: nowrap;
+}
+
+/* Draw a light gray grid in every table. */
+.bd-article table.dataframe th,
+.bd-article table.dataframe td {
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+html[data-theme="dark"] .bd-article table.dataframe th,
+html[data-theme="dark"] .bd-article table.dataframe td {
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Show a scrollbar when there is a evaluation metrics printed */
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar {
+    -webkit-appearance: none;
+    height: 10px;
+}
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 5px;
+}
+.bd-article div:has(> table.dataframe)::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-radius: 5px;
+}
+
+/* Dark mode for scrollbar */
+html[data-theme="dark"] .bd-article div:has(> table.dataframe) {
+    scrollbar-color: rgba(255, 255, 255, 0.40) rgba(255, 255, 255, 0.08);
+}
+html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+}
+html[data-theme="dark"] .bd-article div:has(> table.dataframe)::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.40);
 }
 
 /* Hide the RST header on the homepage; the HTML header (pcn-homepage-title)
@@ -98,4 +176,27 @@ html[data-theme="dark"] .bd-article-container .highlight-default .highlight pre 
     color: #5ea8cb;
     font-weight: bold;
     margin-top: 0;
+}
+
+/* Notebook download link under each tutorial title. Written by
+   doc/convert_notebooks.py as a `.. container:: notebook-download`. */
+.notebook-download {
+    margin: 0.5rem 0 2.0rem;
+}
+.notebook-download a.reference.download {
+    text-decoration: none !important;
+}
+.notebook-download a.reference.download:hover {
+    text-decoration: underline !important;
+}
+
+/* The :download: role wraps its text in <code>, which would render the
+   link in monospace on a grey background. Undo that so it reads as an
+   ordinary link. */
+.notebook-download a.reference.download code.download {
+    background-color: transparent !important;
+    border: none !important;
+    color: inherit;
+    font-family: inherit !important;
+    font-size: inherit;
 }

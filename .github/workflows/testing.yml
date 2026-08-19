@@ -17,14 +17,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install Dependencies
       run: | # Install the project dependencies, including pytest-html for generating test reports in the next steps.
@@ -32,25 +36,30 @@ jobs:
         pip install pytest-html 
 
     - name: Run Tests with coverage and save report
-      run: |
-        coverage run -m pytest test/ --junitxml=report.xml --html=report.html
-        coverage xml -o coverage.xml
-      continue-on-error: true  # Continue to the next step even if tests fail
+      run: coverage run -m pytest test/ --junitxml=report.xml --html=report.html
+
+    - name: Save coverage report
+      if: always()
+      run: coverage xml -o coverage.xml
+
+    - name: Upload coverage to Codecov
+      if: always() && matrix.python-version == '3.12' # Only upload coverage from one Python version to avoid duplicate uploads.
+      uses: codecov/codecov-action@v7
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage.xml
+        fail_ci_if_error: false
 
     - name: Upload HTML Report
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-report-html
+        name: test-report-html-py${{ matrix.python-version }}
         path: report.html
 
     - name: Upload XML Report
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-report-xml
+        name: test-report-xml-py${{ matrix.python-version }}
         path: report.xml
-      
-    - name: Upload Coverage Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: coverage.xml

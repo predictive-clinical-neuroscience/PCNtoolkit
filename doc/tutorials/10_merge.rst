@@ -1,6 +1,10 @@
 Merge normative model
 =====================
 
+.. container:: notebook-download
+
+   :download:`Download Jupyter notebook <notebooks/10_merge.ipynb>`
+
 Suppose two remote locations independently train a normative model on
 their own patient population. These remote locations do not want to
 share their data with you. They can however share their trained models
@@ -181,7 +185,6 @@ Visualize the individual models
 
     plot_centiles_advanced(location1_model, 
                            scatter_data=location1_train, 
-                           covariate_range=(10, 80), 
                            batch_effects="all",
                            show_legend=False
                            )
@@ -193,7 +196,7 @@ Visualize the individual models
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -203,7 +206,6 @@ Visualize the individual models
 
     plot_centiles_advanced(location2_model, 
                            scatter_data=location2_train, 
-                           covariate_range=(10, 80), 
                            batch_effects="all",
                            show_legend=False
                            )
@@ -215,7 +217,7 @@ Visualize the individual models
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 
@@ -238,7 +240,7 @@ The models are now trained and saved to disk. Each remote location
 shares only the saved model JSON files with you, and not the raw patient
 data.
 
-To do the merge, you first need to load both models from disk abd then
+To do the merge, you first need to load both models from disk and then
 call ``NormativeModel.merge()``. Internally, this works by:
 
 1. Generating **synthetic data** from each model’s learned distribution
@@ -271,7 +273,6 @@ Visualize the merged model
 
     plot_centiles_advanced(merged_model, 
                            scatter_data=data, 
-                           covariate_range=(10, 80), 
                            batch_effects="all",
                            show_legend=False)
 
@@ -282,7 +283,7 @@ Visualize the merged model
 
 
 
-.. parsed-literal::
+.. code:: text
 
     [<Figure size 640x480 with 1 Axes>]
 

@@ -138,7 +138,7 @@ def test_runner_extend(fitted_norm_test_model: NormativeModel, norm_data_from_ar
         os.path.join(
             extended_model.save_dir,
             "plots",
-            f"centiles_{norm_data_from_arrays.response_vars.values[0]}_{norm_data_from_arrays.name}_harmonized.png",
+            f"centiles_{norm_data_from_arrays.response_vars.values[0]}_from_arrays_+_synthesized_harmonized.png",
         )
     )
     cleanup(extended_model, runner)

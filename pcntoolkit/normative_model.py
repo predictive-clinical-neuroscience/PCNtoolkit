@@ -323,7 +323,7 @@ class NormativeModel:
         covariate_range_per_batch_effect : bool, optional
             If True, the covariate range is different for each batch effect.
         """
-        assert self.is_fitted
+        self.check_is_fitted()
         if data:
             self.check_compatibility(data)
             data = copy.deepcopy(data)
@@ -745,7 +745,7 @@ class NormativeModel:
             Prediction results containing:
             - Zscores: z-scores of the response variables
         """
-        assert self.is_fitted, "Model is not fitted!"
+        self.check_is_fitted()
         assert self.check_compatibility(data), "Data is not compatible with the model!"
 
         self.preprocess(data)
@@ -1168,6 +1168,21 @@ class NormativeModel:
             Z = None
         return X, batch_effects, batch_effects_maps, Y, Z  # type: ignore
 
+
+    def check_is_fitted(self) -> None:
+        """
+        Check that the model has been fitted.
+
+        Raises
+        ------
+        ValueError
+            If the model has not been fitted yet.
+        """
+        if not self.is_fitted:
+            raise ValueError(
+                "The normative model must be fitted before this operation. "
+                "Call model.fit(...) or model.fit_predict(...) first."
+            )
 
     def check_compatibility(self, data: NormData) -> bool:
         """

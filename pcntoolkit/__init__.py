@@ -1,6 +1,7 @@
 from .dataio.data_factory import load_fcon1000
 from .dataio.norm_data import NormData
 from .math_functions.basis_function import BsplineBasisFunction, LinearBasisFunction, PolynomialBasisFunction, CompositeBasisFunction, FractionalPolynomialBasisFunction
+from .math_functions.correlation_matrix import CorrelationMatrix
 from .math_functions.likelihood import BetaLikelihood, NormalLikelihood, SHASHbLikelihood
 from .math_functions.prior import make_prior
 from .longitudinal_score import LongitudinalScore, ZDiffScore, ZGainScore
@@ -20,6 +21,7 @@ __all__ = [
     "PolynomialBasisFunction",
     "CompositeBasisFunction",
     "NormativeModel",
+    "CorrelationMatrix",
     "BLR",
     "HBR",
     "BetaLikelihood",
