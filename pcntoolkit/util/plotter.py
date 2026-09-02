@@ -270,25 +270,17 @@ def _plot_centiles(
 
 
 
-def _axis_limits_from_thrivelines(
-    thrive_x: list[np.ndarray],
-    thrive_y: list[np.ndarray],
-    margin: float = 0.1,
-) -> tuple[tuple[float, float], tuple[float, float]] | None:
-    """Return (xlim, ylim) spanning all thriveline segment points, with margin."""
-    if not thrive_x or not thrive_y:
-        return None
-    xs = np.concatenate([np.asarray(x, dtype=float) for x in thrive_x if len(x) > 0])
-    ys = np.concatenate([np.asarray(y, dtype=float) for y in thrive_y if len(y) > 0])
+def _covariate_range_from_thrivelines(
+    thrivelines: pd.DataFrame,
+    response_vars: list[str],
+) -> tuple[float, float] | None:
+    """Return the (min, max) covariate span covered by the thriveline table."""
+    relevant = thrivelines.loc[thrivelines["response_var"].isin(response_vars), "X"]
+    xs = relevant.to_numpy(dtype=float)
     xs = xs[np.isfinite(xs)]
-    ys = ys[np.isfinite(ys)]
-    if xs.size == 0 or ys.size == 0:
+    if xs.size == 0:
         return None
-    xmin, xmax = float(xs.min()), float(xs.max())
-    ymin, ymax = float(ys.min()), float(ys.max())
-    xmargin = margin * (xmax - xmin) if xmax > xmin else margin
-    ymargin = margin * (ymax - ymin) if ymax > ymin else margin
-    return (xmin - xmargin, xmax + xmargin), (ymin - ymargin, ymax + ymargin)
+    return float(xs.min()), float(xs.max())
 
 
 def _filter_thrivelines_to_covariate_range(
@@ -368,10 +360,10 @@ def _prepare_centile_curves_context(
         covariate = model.covariates[0]
         assert isinstance(covariate, str)
 
-    if not covariate_ranges:
-        covariate_ranges = {c: defaultdict(lambda: None) for c in model.covariates}
+    # Fill in any covariate the caller left unspecified from the model's own range.
+    covariate_ranges = dict(covariate_ranges or {})
     for c in model.covariates:
-        if not covariate_ranges[c]:
+        if not covariate_ranges.get(c):
             covariate_ranges[c] = (
                 model.covariate_ranges[c]["min"],
                 model.covariate_ranges[c]["max"],
@@ -520,12 +512,12 @@ def _plot_thrivelines(
             zorder=3,
         )
 
-    limits = _axis_limits_from_thrivelines(thrive_x, thrive_y)
-    if limits is not None:
-        ax.set_xlim(*limits[0])
-        ax.set_ylim(*limits[1])
-    else:
-        autoscale(ax=ax)
+    # The centile grid already spans the thriveline range, so x only needs the
+    # same 10% margin plot_centiles_advanced uses; y is then scaled to fit.
+    ax.autoscale(enable=True, axis="x", tight=True)
+    minx, maxx = ax.get_xlim()
+    ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    autoscale(ax=ax)
 
     title = f"Centiles and thrivelines of {response_var}"
     plotname = f"thrivelines_{response_var}"
@@ -567,7 +559,11 @@ def plot_thrivelines(
     covariate : str | None, optional
         Covariate for the x-axis. Defaults to the first model covariate.
     covariate_ranges : dict[str, tuple[float, float]] | None, optional
-        Covariate ranges used for centile curves and thriveline clipping.
+        Covariate ranges, in each covariate's own units, used for the centile
+        curves and for clipping the thrivelines. When the plotted covariate is
+        not given a range, it defaults to the span the thrivelines cover, so
+        the curves start and end where the thrivelines do. Any other covariate
+        defaults to its range in the model.
     response_vars : list[str] | None, optional
         Response variables to plot. Defaults to all model response variables.
     batch_effects : dict[str, list[str]] | None | Literal["all"], optional
@@ -590,6 +586,17 @@ def plot_thrivelines(
     list[Figure]
         One matplotlib Figure per response variable.
     """
+    validate_thrivelines(thrivelines)
+
+    # Default the plotted covariate range to the span the thrivelines cover, so
+    # the centile curves start and end where the thrivelines do.
+    plot_covariate = covariate if covariate is not None else model.covariates[0]
+    if covariate_ranges is None or plot_covariate not in covariate_ranges:
+        wanted = response_vars if response_vars is not None else model.response_vars
+        thrive_range = _covariate_range_from_thrivelines(thrivelines, list(wanted))
+        if thrive_range is not None:
+            covariate_ranges = {**(covariate_ranges or {}), plot_covariate: thrive_range}
+
     ctx = _prepare_centile_curves_context(
         model=model,
         centiles=centiles,
