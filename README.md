@@ -3,6 +3,7 @@
 [![Downloads][downloads-badge]][downloads-link]
 [![DOI][doi-badge]][doi-link]
 [![License: GPL v3][license-badge]][license-link]
+[![OpenSSF Best Practices](openssf-badge)](openssf-link)
 
 PCNtoolkit is an open-source Python package for Normative Modelling of neuroimaging data.
 
@@ -67,4 +68,7 @@ PCNtoolkit is released under the [GPL-3.0-only](https://github.com/predictive-cl
 
 [doi-badge]: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.7498917-blue.svg
 [doi-link]: https://doi.org/10.5281/zenodo.7498917
+
+[openssf-badge]: https://www.bestpractices.dev/projects/14129/badge
+[openssf-link]: https://www.bestpractices.dev/projects/14129
 
