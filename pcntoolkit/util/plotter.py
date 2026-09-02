@@ -329,10 +329,10 @@ def _prepare_thrivelines_by_region(
             f"thrivelines has no data for response variable(s) {missing}. "
             f"Available: {sorted(available)}."
         )
-        
+
     # Clip thrivelines to the plotted covariate range 
     clipped = _filter_thrivelines_to_covariate_range(thrivelines, x_min, x_max)
-    
+
     # Check which response variables are still in range after clipping.
     in_range = set(clipped["response_var"].astype(str))
     out_of_range = [rv for rv in response_vars if rv not in in_range]
@@ -580,10 +580,10 @@ def plot_thrivelines(
         Covariate for the x-axis. Defaults to the first model covariate.
     covariate_ranges : dict[str, tuple[float, float]] | None, optional
         Covariate ranges, in each covariate's own units, used for the centile
-        curves and for clipping the thrivelines. When the plotted covariate is
+        and for clipping the thrivelines. When the plotted covariate is
         not given a range, it defaults to the span the thrivelines cover, so
-        the curves start and end where the thrivelines do. Any other covariate
-        defaults to its range in the model.
+        the centiles start and end where the thrivelines do. Any other
+        covariate defaults to its range in the model.
     response_vars : list[str] | None, optional
         Response variables to plot. Defaults to all model response variables.
     batch_effects : dict[str, list[str]] | None | Literal["all"], optional
@@ -609,7 +609,7 @@ def plot_thrivelines(
     validate_thrivelines(thrivelines)
 
     # Default the plotted covariate range to the span the thrivelines cover, so
-    # the centile curves start and end where the thrivelines do.
+    # the centiles start and end where the thrivelines do.
     plot_covariate = covariate if covariate is not None else model.covariates[0]
     if covariate_ranges is None or plot_covariate not in covariate_ranges:
         wanted = response_vars if response_vars is not None else model.response_vars
