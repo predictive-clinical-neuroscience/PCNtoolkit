@@ -320,19 +320,39 @@ def _prepare_thrivelines_by_region(
 ) -> dict[str, tuple[list[np.ndarray], list[np.ndarray]]]:
     """Validate, clip, and extract thriveline segments per response variable."""
     validate_thrivelines(thrivelines)
-    thrivelines = _filter_thrivelines_to_covariate_range(thrivelines, x_min, x_max)
-    thrive_response_vars = set(thrivelines["response_var"].astype(str))
-    thrive_by_region: dict[str, tuple[list[np.ndarray], list[np.ndarray]]] = {}
-    for response_var in response_vars:
-        if response_var not in thrive_response_vars:
-            raise ValueError(
-                f"thrivelines has no data for response variable "
-                f"'{response_var}'. Available: {sorted(thrive_response_vars)}."
-            )
-        thrive_by_region[response_var] = _extract_thriveline_xy(
-            thrivelines, response_var
+
+    # Check that all requested response variables are available in the thriveline data.
+    available = set(thrivelines["response_var"].astype(str))
+    missing = [rv for rv in response_vars if rv not in available]
+    if missing:
+        raise ValueError(
+            f"thrivelines has no data for response variable(s) {missing}. "
+            f"Available: {sorted(available)}."
         )
-    return thrive_by_region
+        
+    # Clip thrivelines to the plotted covariate range 
+    clipped = _filter_thrivelines_to_covariate_range(thrivelines, x_min, x_max)
+    
+    # Check which response variables are still in range after clipping.
+    in_range = set(clipped["response_var"].astype(str))
+    out_of_range = [rv for rv in response_vars if rv not in in_range]
+    if out_of_range:
+        spans = {
+            rv: (
+                float(thrivelines.loc[thrivelines["response_var"] == rv, "X"].min()),
+                float(thrivelines.loc[thrivelines["response_var"] == rv, "X"].max()),
+            )
+            for rv in out_of_range
+        }
+        raise ValueError(
+            f"thrivelines for {out_of_range} lie outside the plotted covariate "
+            f"range ({x_min}, {x_max}). Their covariate spans are {spans}. "
+        )
+
+    return {
+        response_var: _extract_thriveline_xy(clipped, response_var)
+        for response_var in response_vars
+    }
 
 
 class _CentileCurvesContext(NamedTuple):
