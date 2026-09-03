@@ -25,6 +25,32 @@ sns.set_theme(style="darkgrid")
 # Line width of the model mean (Yhat)
 YHAT_LINEWIDTH = 1
 
+# Number of covariate points used to draw a centile curve
+N_CENTILE_POINTS = 150
+
+# Placeholder response values; must be > 0 for downstream checks
+PLACEHOLDER_Y = 1e-6
+
+# Distance from the median below which a centile is drawn solid, then dashed;
+# beyond it, dotted
+SOLID_CENTILE_DIST = 0.25
+DASHED_CENTILE_DIST = 0.475
+
+# Line width of the median centile, and of all other centiles
+MEDIAN_LINEWIDTH = 2
+CENTILE_LINEWIDTH = 1
+
+# Gap between the centile labels and the ends of the curves, in covariate units
+CENTILE_LABEL_OFFSET = 1
+
+# Fraction of the x-range added as padding on each side
+X_MARGIN = 0.1
+
+# Style of the thriveline segments
+THRIVELINE_COLOR = "#2171b5"
+THRIVELINE_ALPHA = 0.55
+THRIVELINE_LINEWIDTH = 1.4
+
 
 def plot_centiles(
     model: "NormativeModel",
@@ -103,7 +129,7 @@ def plot_centiles(
 
     # Create some synthetic data with a single batch effect
     # The plotted covariate is just a linspace
-    centile_covariates = np.linspace(covariate_range[0], covariate_range[1], 150)
+    centile_covariates = np.linspace(covariate_range[0], covariate_range[1], N_CENTILE_POINTS)
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
     # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
@@ -122,7 +148,7 @@ def plot_centiles(
     # Assign random values for response vars because they are not needed.
     # They must be > 0 to satisfy later checks that require response_vars > 0.
     for rv in response_vars:
-        centile_df[rv] = 1e-6
+        centile_df[rv] = PLACEHOLDER_Y
 
     centile_data = NormData.from_dataframe(
         "centile",
@@ -187,12 +213,12 @@ def _plot_centiles(
     for centile in centile_data.coords["centile"][::-1]:
         d_mean = abs(centile - 0.5)
         if d_mean == 0:
-            thickness = 2
+            thickness = MEDIAN_LINEWIDTH
         else:
-            thickness = 1
-        if d_mean <= 0.25:
+            thickness = CENTILE_LINEWIDTH
+        if d_mean <= SOLID_CENTILE_DIST:
             style = "-"
-        elif d_mean <= 0.475:
+        elif d_mean <= DASHED_CENTILE_DIST:
             style = "--"
         else:
             style = ":"
@@ -212,7 +238,7 @@ def _plot_centiles(
         font.set_weight("bold")
         ax.text(
             s=centile.item(),
-            x=filtered.X[0] - 1,
+            x=filtered.X[0] - CENTILE_LABEL_OFFSET,
             y=filtered.centiles.sel(centile=centile)[0],
             color="black",
             horizontalalignment="right",
@@ -221,7 +247,7 @@ def _plot_centiles(
         )
         ax.text(
             s=centile.item(),
-            x=filtered.X[-1] + 1,
+            x=filtered.X[-1] + CENTILE_LABEL_OFFSET,
             y=filtered.centiles.sel(centile=centile)[-1],
             color="black",
             horizontalalignment="left",
@@ -230,7 +256,7 @@ def _plot_centiles(
         )
 
     minx, maxx = ax.get_xlim()
-    ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    ax.set_xlim(minx - X_MARGIN * (maxx - minx), maxx + X_MARGIN * (maxx - minx))
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
@@ -400,10 +426,10 @@ def _plot_thrivelines(
 
     for centile in centile_data.coords["centile"][::-1]:
         d_mean = abs(centile - 0.5)
-        thickness = 2 if d_mean == 0 else 1
-        if d_mean <= 0.25:
+        thickness = MEDIAN_LINEWIDTH if d_mean == 0 else CENTILE_LINEWIDTH
+        if d_mean <= SOLID_CENTILE_DIST:
             style = "-"
-        elif d_mean <= 0.475:
+        elif d_mean <= DASHED_CENTILE_DIST:
             style = "--"
         else:
             style = ":"
@@ -424,7 +450,7 @@ def _plot_thrivelines(
         if show_centile_labels:
             ax.text(
                 s=centile.item(),
-                x=filtered.X[0] - 1,
+                x=filtered.X[0] - CENTILE_LABEL_OFFSET,
                 y=filtered.centiles.sel(centile=centile)[0],
                 color="black",
                 horizontalalignment="right",
@@ -433,7 +459,7 @@ def _plot_thrivelines(
             )
             ax.text(
                 s=centile.item(),
-                x=filtered.X[-1] + 1,
+                x=filtered.X[-1] + CENTILE_LABEL_OFFSET,
                 y=filtered.centiles.sel(centile=centile)[-1],
                 color="black",
                 horizontalalignment="left",
@@ -457,9 +483,9 @@ def _plot_thrivelines(
         ax.plot(
             seg_x,
             seg_y,
-            color="#2171b5",
-            alpha=0.55,
-            lw=1.4,
+            color=THRIVELINE_COLOR,
+            alpha=THRIVELINE_ALPHA,
+            lw=THRIVELINE_LINEWIDTH,
             zorder=3,
         )
 
@@ -467,7 +493,7 @@ def _plot_thrivelines(
     # same 10% margin plot_centiles_advanced uses; y is then scaled to fit.
     ax.autoscale(enable=True, axis="x", tight=True)
     minx, maxx = ax.get_xlim()
-    ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    ax.set_xlim(minx - X_MARGIN * (maxx - minx), maxx + X_MARGIN * (maxx - minx))
     autoscale(ax=ax)
 
     title = f"Centiles and thrivelines of {response_var}"
@@ -599,7 +625,7 @@ def plot_centiles_advanced(
 
     # Create some synthetic data with a single batch effect
     # The plotted covariate is just a linspace
-    centile_covariates = np.linspace(covariate_ranges[covariate][0], covariate_ranges[covariate][1], 150)
+    centile_covariates = np.linspace(covariate_ranges[covariate][0], covariate_ranges[covariate][1], N_CENTILE_POINTS)
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
     # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
@@ -617,7 +643,7 @@ def plot_centiles_advanced(
     # Assign random values for response vars because they are not needed.
     # They must be > 0 to satisfy later checks that require response_vars > 0.
     for rv in model.response_vars:
-        centile_df[rv] = 1e-6
+        centile_df[rv] = PLACEHOLDER_Y
     centile_data = NormData.from_dataframe(
         "centile",
         dataframe=centile_df,
@@ -639,7 +665,7 @@ def plot_centiles_advanced(
             conditional_d.X.loc[{"covariates": covariate}] = c
             for rv in response_vars:
                 conditional_d.Y.loc[{"response_vars": rv}] = np.linspace(
-                    *(centile.centiles.sel(observations=0, response_vars=rv).values.tolist()), 150
+                    *(centile.centiles.sel(observations=0, response_vars=rv).values.tolist()), N_CENTILE_POINTS
                 )
             if not hasattr(conditional_d, "logp"):
                 model.compute_logp(conditional_d)
@@ -721,13 +747,13 @@ def _plot_centiles_advanced(
     for centile in centile_data.coords["centile"][::-1]:
         d_mean = abs(centile - 0.5)
         if d_mean == 0:
-            thickness = 2
+            thickness = MEDIAN_LINEWIDTH
         else:
-            thickness = 1
-        if d_mean <= 0.25:
+            thickness = CENTILE_LINEWIDTH
+        if d_mean <= SOLID_CENTILE_DIST:
             style = "-"
 
-        elif d_mean <= 0.475:
+        elif d_mean <= DASHED_CENTILE_DIST:
             style = "--"
         else:
             style = ":"
@@ -748,7 +774,7 @@ def _plot_centiles_advanced(
         if show_centile_labels:
             ax.text(
                 s=centile.item(),
-                x=filtered.X[0] - 1,
+                x=filtered.X[0] - CENTILE_LABEL_OFFSET,
                 y=filtered.centiles.sel(centile=centile)[0],
                 color="black",
                 horizontalalignment="right",
@@ -757,7 +783,7 @@ def _plot_centiles_advanced(
             )
             ax.text(
                 s=centile.item(),
-                x=filtered.X[-1] + 1,
+                x=filtered.X[-1] + CENTILE_LABEL_OFFSET,
                 y=filtered.centiles.sel(centile=centile)[-1],
                 color="black",
                 horizontalalignment="left",
@@ -776,7 +802,7 @@ def _plot_centiles_advanced(
         )
 
     minx, maxx = ax.get_xlim()
-    ax.set_xlim(minx - 0.1 * (maxx - minx), maxx + 0.1 * (maxx - minx))
+    ax.set_xlim(minx - X_MARGIN * (maxx - minx), maxx + X_MARGIN * (maxx - minx))
     if scatter_data:
         scatter_filter = scatter_data.sel(filter_dict)
         df = scatter_filter.to_dataframe()
@@ -1320,7 +1346,7 @@ def _prepare_centile_curves_context(
     for be, v in batch_effects.items():
         centile_df[be] = v[0]
     for rv in model.response_vars:
-        centile_df[rv] = 1e-6
+        centile_df[rv] = PLACEHOLDER_Y
     centile_data = NormData.from_dataframe(
         "centile",
         dataframe=centile_df,
