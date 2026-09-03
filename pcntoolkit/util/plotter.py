@@ -2,7 +2,8 @@
 
 import copy
 import os
-from typing import TYPE_CHECKING, Any, Literal, NamedTuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1200,7 +1201,8 @@ def _prepare_thrivelines_by_region(
 # ---------------------------------------------------------------------------
 
 
-class _CentileCurvesContext(NamedTuple):
+@dataclass(frozen=True)
+class _CentileCurvesContext:
     """The synthetic grid a centile plot is drawn on, plus its settings.
 
     Attributes
