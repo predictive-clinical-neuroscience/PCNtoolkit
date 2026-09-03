@@ -2,7 +2,6 @@
 
 import copy
 import os
-from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 
 import matplotlib.pyplot as plt
@@ -210,50 +209,7 @@ def _plot_centiles(
 
     filtered = centile_data.sel(filter_dict)
 
-    for centile in centile_data.coords["centile"][::-1]:
-        d_mean = abs(centile - 0.5)
-        if d_mean == 0:
-            thickness = MEDIAN_LINEWIDTH
-        else:
-            thickness = CENTILE_LINEWIDTH
-        if d_mean <= SOLID_CENTILE_DIST:
-            style = "-"
-        elif d_mean <= DASHED_CENTILE_DIST:
-            style = "--"
-        else:
-            style = ":"
-
-        sns.lineplot(
-            x=filtered.X,
-            y=filtered.centiles.sel(centile=centile),
-            color="black",
-            linestyle=style,
-            linewidth=thickness,
-            zorder=2,
-            legend="brief",
-            ax=ax,
-        )
-
-        font = FontProperties()
-        font.set_weight("bold")
-        ax.text(
-            s=centile.item(),
-            x=filtered.X[0] - CENTILE_LABEL_OFFSET,
-            y=filtered.centiles.sel(centile=centile)[0],
-            color="black",
-            horizontalalignment="right",
-            verticalalignment="center",
-            fontproperties=font,
-        )
-        ax.text(
-            s=centile.item(),
-            x=filtered.X[-1] + CENTILE_LABEL_OFFSET,
-            y=filtered.centiles.sel(centile=centile)[-1],
-            color="black",
-            horizontalalignment="left",
-            verticalalignment="center",
-            fontproperties=font,
-        )
+    _draw_centile_curves(ax=ax, centile_data=centile_data, filtered=filtered)
 
     minx, maxx = ax.get_xlim()
     ax.set_xlim(minx - X_MARGIN * (maxx - minx), maxx + X_MARGIN * (maxx - minx))
@@ -367,14 +323,14 @@ def plot_thrivelines(
 
     ctx = _prepare_centile_curves_context(
         model=model,
-        centiles=centiles,
         covariate=covariate,
         covariate_ranges=covariate_ranges,
         response_vars=response_vars,
         batch_effects=batch_effects,
-        show_yhat=show_yhat,
         plt_kwargs=plt_kwargs,
-        **kwargs,
+    )
+    _compute_centile_curves(
+        model, ctx.centile_data, centiles=centiles, show_yhat=show_yhat, **kwargs
     )
 
     x_min, x_max = ctx.covariate_ranges[ctx.covariate]
@@ -424,48 +380,12 @@ def _plot_thrivelines(
     }
     filtered = centile_data.sel(filter_dict)
 
-    for centile in centile_data.coords["centile"][::-1]:
-        d_mean = abs(centile - 0.5)
-        thickness = MEDIAN_LINEWIDTH if d_mean == 0 else CENTILE_LINEWIDTH
-        if d_mean <= SOLID_CENTILE_DIST:
-            style = "-"
-        elif d_mean <= DASHED_CENTILE_DIST:
-            style = "--"
-        else:
-            style = ":"
-
-        sns.lineplot(
-            x=filtered.X,
-            y=filtered.centiles.sel(centile=centile),
-            color="black",
-            linestyle=style,
-            linewidth=thickness,
-            zorder=2,
-            legend="brief",
-            ax=ax,
-        )
-
-        font = FontProperties()
-        font.set_weight("bold")
-        if show_centile_labels:
-            ax.text(
-                s=centile.item(),
-                x=filtered.X[0] - CENTILE_LABEL_OFFSET,
-                y=filtered.centiles.sel(centile=centile)[0],
-                color="black",
-                horizontalalignment="right",
-                verticalalignment="center",
-                fontproperties=font,
-            )
-            ax.text(
-                s=centile.item(),
-                x=filtered.X[-1] + CENTILE_LABEL_OFFSET,
-                y=filtered.centiles.sel(centile=centile)[-1],
-                color="black",
-                horizontalalignment="left",
-                verticalalignment="center",
-                fontproperties=font,
-            )
+    _draw_centile_curves(
+        ax=ax,
+        centile_data=centile_data,
+        filtered=filtered,
+        show_centile_labels=show_centile_labels,
+    )
 
     if show_yhat:
         ax.plot(
@@ -580,77 +500,22 @@ def plot_centiles_advanced(
     list[Figure]
         One matplotlib Figure per response variable.
     """
-    if covariate is None:
-        covariate = model.covariates[0]
-        assert isinstance(covariate, str)
-
-    if not covariate_ranges:
-        covariate_ranges = {c:defaultdict(lambda: None) for c in model.covariates}
-    for c in model.covariates:
-        if not covariate_ranges[c]:
-            covariate_ranges[c] = (model.covariate_ranges[c]["min"],model.covariate_ranges[c]["max"])
-        # cov_min = covariate_ranges[c] or model.covariate_ranges[c]["min"]
-        # cov_max = covariate_ranges[c] or model.covariate_ranges[c]["max"]
-        # covariate_ranges[c] = (cov_min, cov_max)
-
-    if response_vars is None:
-        response_vars = model.response_vars
-    response_vars = list(set(model.response_vars).intersection(set(response_vars)))
-
-    if scatter_data:
-        # Filter scatter data
-        scatter_data = scatter_data.sel(response_vars=response_vars)
-        for c in model.covariates:
-            cov = scatter_data.X.sel(covariates=c).values
-            min, max = covariate_ranges[c]
-            idx = np.where((cov >= min) & (cov <= max))[0]
-            scatter_data = scatter_data.sel(
-                observations=scatter_data.observations[idx]
-            )
-
-    if batch_effects == "all":
-        if scatter_data:
-            batch_effects = scatter_data.unique_batch_effects
-        else:
-            batch_effects = model.unique_batch_effects
-    elif batch_effects is None:
-        if scatter_data:
-            # Select the first batch effect based on alphabetical order
-            batch_effects = {k: [v[0]] for k, v in scatter_data.unique_batch_effects.items()}
-        else:
-            batch_effects = {k: [v[0]] for k, v in model.unique_batch_effects.items()}
-
-    if plt_kwargs is None:
-        plt_kwargs = {}
-
-    # Create some synthetic data with a single batch effect
-    # The plotted covariate is just a linspace
-    centile_covariates = np.linspace(covariate_ranges[covariate][0], covariate_ranges[covariate][1], N_CENTILE_POINTS)
-    centile_df = pd.DataFrame({covariate: centile_covariates})
-
-    # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
-    for cov in model.covariates:
-        if cov != covariate:
-            minc, maxc = covariate_ranges[cov]
-            if scatter_data is not None:
-                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
-            else:
-                centile_df[cov] = (minc + maxc) / 2
-
-    # Batch effects are the first ones in the highlighted batch effects
-    for be, v in batch_effects.items():
-        centile_df[be] = v[0]
-    # Assign random values for response vars because they are not needed.
-    # They must be > 0 to satisfy later checks that require response_vars > 0.
-    for rv in model.response_vars:
-        centile_df[rv] = PLACEHOLDER_Y
-    centile_data = NormData.from_dataframe(
-        "centile",
-        dataframe=centile_df,
-        covariates=model.covariates,
+    ctx = _prepare_centile_curves_context(
+        model=model,
+        covariate=covariate,
+        covariate_ranges=covariate_ranges,
         response_vars=response_vars,
-        batch_effects=list(batch_effects.keys()),
-    )  # type: ignore
+        batch_effects=batch_effects,
+        scatter_data=scatter_data,
+        plt_kwargs=plt_kwargs,
+    )
+    covariate = ctx.covariate
+    covariate_ranges = ctx.covariate_ranges
+    response_vars = ctx.response_vars
+    centile_data = ctx.centile_data
+    batch_effects = ctx.batch_effects
+    scatter_data = ctx.scatter_data
+    plt_kwargs = ctx.plt_kwargs
 
     conditionals_data: list[NormData] = []
     if conditionals is not None:
@@ -671,10 +536,9 @@ def plot_centiles_advanced(
                 model.compute_logp(conditional_d)
             conditionals_data.append(conditional_d)
 
-    if not hasattr(centile_data, "centiles"):
-        model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
-    if show_yhat and not hasattr(centile_data, "Yhat"):
-        model.compute_yhat(centile_data)
+    _compute_centile_curves(
+        model, centile_data, centiles=centiles, show_yhat=show_yhat, **kwargs
+    )
 
     if not model.has_batch_effect:
         batch_effects = {}
@@ -744,52 +608,13 @@ def _plot_centiles_advanced(
 
     filtered = centile_data.sel(filter_dict)
 
-    for centile in centile_data.coords["centile"][::-1]:
-        d_mean = abs(centile - 0.5)
-        if d_mean == 0:
-            thickness = MEDIAN_LINEWIDTH
-        else:
-            thickness = CENTILE_LINEWIDTH
-        if d_mean <= SOLID_CENTILE_DIST:
-            style = "-"
+    _draw_centile_curves(
+        ax=ax,
+        centile_data=centile_data,
+        filtered=filtered,
+        show_centile_labels=show_centile_labels,
+    )
 
-        elif d_mean <= DASHED_CENTILE_DIST:
-            style = "--"
-        else:
-            style = ":"
-
-        sns.lineplot(
-            x=filtered.X,
-            y=filtered.centiles.sel(centile=centile),
-            color="black",
-            linestyle=style,
-            linewidth=thickness,
-            zorder=2,
-            legend="brief",
-            ax=ax,
-        )
-
-        font = FontProperties()
-        font.set_weight("bold")
-        if show_centile_labels:
-            ax.text(
-                s=centile.item(),
-                x=filtered.X[0] - CENTILE_LABEL_OFFSET,
-                y=filtered.centiles.sel(centile=centile)[0],
-                color="black",
-                horizontalalignment="right",
-                verticalalignment="center",
-                fontproperties=font,
-            )
-            ax.text(
-                s=centile.item(),
-                x=filtered.X[-1] + CENTILE_LABEL_OFFSET,
-                y=filtered.centiles.sel(centile=centile)[-1],
-                color="black",
-                horizontalalignment="left",
-                verticalalignment="center",
-                fontproperties=font,
-            )
     if show_yhat:
         ax.plot(
             filtered.X,
@@ -1281,96 +1106,8 @@ def _plot_ridge(
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Thriveline helpers
 # ---------------------------------------------------------------------------
-
-
-class _CentileCurvesContext(NamedTuple):
-    covariate: str
-    covariate_ranges: dict[str, tuple[float, float]]
-    response_vars: list[str]
-    centile_data: NormData
-    batch_effects: dict[str, list[str]]
-    plt_kwargs: dict
-
-
-def _prepare_centile_curves_context(
-    model: "NormativeModel",
-    centiles: list[float] | np.ndarray | None = None,
-    covariate: str | None = None,
-    covariate_ranges: dict[str, tuple[float, float]] | None = None,
-    response_vars: list[str] | None = None,
-    batch_effects: dict[str, list[str]] | None | Literal["all"] = None,
-    show_yhat: bool = False,
-    plt_kwargs: dict | None = None,
-    **kwargs: Any,
-) -> _CentileCurvesContext:
-    """Build centile curves for plots that overlay thrivelines (no scatter)."""
-    if covariate is None:
-        covariate = model.covariates[0]
-        assert isinstance(covariate, str)
-
-    # Fill in any covariate the caller left unspecified from the model's own range.
-    covariate_ranges = dict(covariate_ranges or {})
-    for c in model.covariates:
-        if not covariate_ranges.get(c):
-            covariate_ranges[c] = (
-                model.covariate_ranges[c]["min"],
-                model.covariate_ranges[c]["max"],
-            )
-
-    if response_vars is None:
-        response_vars = model.response_vars
-    response_vars = list(set(model.response_vars).intersection(set(response_vars)))
-
-    if batch_effects == "all":
-        batch_effects = model.unique_batch_effects
-    elif batch_effects is None:
-        batch_effects = {
-            k: [v[0]] for k, v in model.unique_batch_effects.items()
-        }
-
-    if plt_kwargs is None:
-        plt_kwargs = {}
-
-    centile_covariates = np.linspace(
-        covariate_ranges[covariate][0], covariate_ranges[covariate][1], 150
-    )
-    centile_df = pd.DataFrame({covariate: centile_covariates})
-
-    for cov in model.covariates:
-        if cov != covariate:
-            minc, maxc = covariate_ranges[cov]
-            centile_df[cov] = (minc + maxc) / 2
-
-    for be, v in batch_effects.items():
-        centile_df[be] = v[0]
-    for rv in model.response_vars:
-        centile_df[rv] = PLACEHOLDER_Y
-    centile_data = NormData.from_dataframe(
-        "centile",
-        dataframe=centile_df,
-        covariates=model.covariates,
-        response_vars=response_vars,
-        batch_effects=list(batch_effects.keys()),
-    )  # type: ignore
-
-    if not hasattr(centile_data, "centiles"):
-        model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
-    if show_yhat and not hasattr(centile_data, "Yhat"):
-        model.compute_yhat(centile_data)
-
-    if not model.has_batch_effect:
-        batch_effects = {}
-
-    return _CentileCurvesContext(
-        covariate=covariate,
-        covariate_ranges=covariate_ranges,
-        response_vars=response_vars,
-        centile_data=centile_data,
-        batch_effects=batch_effects,
-        plt_kwargs=plt_kwargs,
-    )
 
 
 def _covariate_range_from_thrivelines(
@@ -1456,3 +1193,247 @@ def _prepare_thrivelines_by_region(
         response_var: _extract_thriveline_xy(clipped, response_var)
         for response_var in response_vars
     }
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+
+class _CentileCurvesContext(NamedTuple):
+    """The synthetic grid a centile plot is drawn on, plus its settings.
+
+    Attributes
+    ----------
+    covariate : str
+        Covariate on the x-axis.
+    covariate_ranges : dict[str, tuple[float, float]]
+        Plotted range per covariate, with unspecified ones filled from the model.
+    response_vars : list[str]
+        Response variables to plot.
+    centile_data : NormData
+        Synthetic data on a covariate linspace; centiles are computed on it by
+        the caller.
+    batch_effects : dict[str, list[str]]
+        Batch effects the grid was built for; empty when the model has none.
+    plt_kwargs : dict
+        Keyword arguments for ``plt.subplots()``.
+    scatter_data : NormData | None
+        Scatter data restricted to ``response_vars`` and ``covariate_ranges``.
+    """
+
+    covariate: str
+    covariate_ranges: dict[str, tuple[float, float]]
+    response_vars: list[str]
+    centile_data: NormData
+    batch_effects: dict[str, list[str]]
+    plt_kwargs: dict
+    scatter_data: NormData | None = None
+
+
+def _prepare_centile_curves_context(
+    model: "NormativeModel",
+    covariate: str | None = None,
+    covariate_ranges: dict[str, tuple[float, float]] | None = None,
+    response_vars: list[str] | None = None,
+    batch_effects: dict[str, list[str]] | None | Literal["all"] = None,
+    scatter_data: NormData | None = None,
+    plt_kwargs: dict | None = None,
+) -> _CentileCurvesContext:
+    """Build the synthetic covariate grid that centile curves are drawn on.
+
+    Covariate ranges, response variables, and batch effects are resolved to
+    concrete values, then a ``NormData`` grid of ``N_CENTILE_POINTS`` points is
+    built along ``covariate``. Computing centiles on that grid is left to the
+    caller, so conditionals can be derived from it first.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Fitted model supplying covariates, response variables, and their ranges.
+    covariate : str | None, optional
+        Covariate for the x-axis. Defaults to the first model covariate.
+    covariate_ranges : dict[str, tuple[float, float]] | None, optional
+        Plotted range per covariate, in its own units. Missing entries default
+        to the model's range.
+    response_vars : list[str] | None, optional
+        Response variables to plot. Defaults to all of the model's.
+    batch_effects : dict[str, list[str]] | None | Literal["all"], optional
+        Batch effects to build the grid for. ``"all"`` uses every level; None
+        takes the first level alphabetically.
+    scatter_data : NormData | None, optional
+        When given, it is filtered to the plotted range and its batch effects
+        and covariate means are used in place of the model's.
+    plt_kwargs : dict | None, optional
+        Keyword arguments for ``plt.subplots()``.
+
+    Returns
+    -------
+    _CentileCurvesContext
+        The grid and the resolved settings used to build it.
+    """
+    if covariate is None:
+        covariate = model.covariates[0]
+        assert isinstance(covariate, str)
+
+    # Fill in any covariate the caller left unspecified from the model's own range.
+    covariate_ranges = dict(covariate_ranges or {})
+    for c in model.covariates:
+        if not covariate_ranges.get(c):
+            covariate_ranges[c] = (
+                model.covariate_ranges[c]["min"],
+                model.covariate_ranges[c]["max"],
+            )
+
+    if response_vars is None:
+        response_vars = model.response_vars
+    response_vars = list(set(model.response_vars).intersection(set(response_vars)))
+
+    # Drop scatter points outside the plotted covariate range.
+    if scatter_data:
+        scatter_data = scatter_data.sel(response_vars=response_vars)
+        for c in model.covariates:
+            cov = scatter_data.X.sel(covariates=c).values
+            cov_min, cov_max = covariate_ranges[c]
+            idx = np.where((cov >= cov_min) & (cov <= cov_max))[0]
+            scatter_data = scatter_data.sel(observations=scatter_data.observations[idx])
+
+    # Batch effects come from the scatter data when it is given, else the model.
+    source = scatter_data if scatter_data else model
+    if batch_effects == "all":
+        batch_effects = source.unique_batch_effects
+    elif batch_effects is None:
+        # Select the first batch effect based on alphabetical order.
+        batch_effects = {k: [v[0]] for k, v in source.unique_batch_effects.items()}
+
+    if plt_kwargs is None:
+        plt_kwargs = {}
+
+    centile_covariates = np.linspace(
+        covariate_ranges[covariate][0], covariate_ranges[covariate][1], N_CENTILE_POINTS
+    )
+    centile_df = pd.DataFrame({covariate: centile_covariates})
+
+    # Other covariates are held at the scatter mean, else the range midpoint.
+    for cov in model.covariates:
+        if cov != covariate:
+            minc, maxc = covariate_ranges[cov]
+            if scatter_data is not None:
+                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+            else:
+                centile_df[cov] = (minc + maxc) / 2
+
+    for be, v in batch_effects.items():
+        centile_df[be] = v[0]
+    # Assign placeholder values for response vars because they are not needed.
+    for rv in model.response_vars:
+        centile_df[rv] = PLACEHOLDER_Y
+    centile_data = NormData.from_dataframe(
+        "centile",
+        dataframe=centile_df,
+        covariates=model.covariates,
+        response_vars=response_vars,
+        batch_effects=list(batch_effects.keys()),
+    )  # type: ignore
+
+    return _CentileCurvesContext(
+        covariate=covariate,
+        covariate_ranges=covariate_ranges,
+        response_vars=response_vars,
+        centile_data=centile_data,
+        batch_effects=batch_effects,
+        plt_kwargs=plt_kwargs,
+        scatter_data=scatter_data,
+    )
+
+
+def _compute_centile_curves(
+    model: "NormativeModel",
+    centile_data: NormData,
+    centiles: list[float] | np.ndarray | None = None,
+    show_yhat: bool = False,
+    **kwargs: Any,
+) -> None:
+    """Compute centiles, and optionally Yhat, on a grid, in place.
+
+    Parameters
+    ----------
+    model : NormativeModel
+        Fitted model used to evaluate the curves.
+    centile_data : NormData
+        Grid from :func:`_prepare_centile_curves_context`; gains a ``centiles``
+        variable, and a ``Yhat`` variable when ``show_yhat`` is True.
+    centiles : list[float] | np.ndarray | None, optional
+        Centiles to compute, as proportions in (0, 1). None uses the model
+        defaults.
+    show_yhat : bool, optional
+        Whether to also compute the model mean.
+    **kwargs : Any
+        Passed through to ``model.compute_centiles``.
+    """
+    # Skip work when a caller handed in a grid that already carries the curves.
+    if not hasattr(centile_data, "centiles"):
+        model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
+    if show_yhat and not hasattr(centile_data, "Yhat"):
+        model.compute_yhat(centile_data)
+
+
+def _draw_centile_curves(
+    ax: Axes,
+    centile_data: NormData,
+    filtered: NormData,
+    show_centile_labels: bool = True,
+) -> None:
+    """Draw one black line per centile, thickest at the median, and label them.
+
+    Parameters
+    ----------
+    ax : Axes
+        Axes to draw on.
+    centile_data : NormData
+        Data holding the ``centile`` coordinate to iterate over.
+    filtered : NormData
+        ``centile_data`` selected down to one covariate and one response
+        variable, supplying the X and centile values to plot.
+    show_centile_labels : bool, optional
+        Whether to write the centile value at both ends of each curve.
+    """
+    for centile in centile_data.coords["centile"][::-1]:
+        # Distance from the median sets both line width and dash pattern.
+        d_mean = abs(centile - 0.5)
+        thickness = MEDIAN_LINEWIDTH if d_mean == 0 else CENTILE_LINEWIDTH
+        if d_mean <= SOLID_CENTILE_DIST:
+            style = "-"
+        elif d_mean <= DASHED_CENTILE_DIST:
+            style = "--"
+        else:
+            style = ":"
+
+        sns.lineplot(
+            x=filtered.X,
+            y=filtered.centiles.sel(centile=centile),
+            color="black",
+            linestyle=style,
+            linewidth=thickness,
+            zorder=2,
+            legend="brief",
+            ax=ax,
+        )
+
+        if show_centile_labels:
+            font = FontProperties()
+            font.set_weight("bold")
+            # Label both ends: (index into the curve, offset, text alignment).
+            for index, offset, align in (
+                (0, -CENTILE_LABEL_OFFSET, "right"),
+                (-1, CENTILE_LABEL_OFFSET, "left"),
+            ):
+                ax.text(
+                    s=centile.item(),
+                    x=filtered.X[index] + offset,
+                    y=filtered.centiles.sel(centile=centile)[index],
+                    color="black",
+                    horizontalalignment=align,
+                    verticalalignment="center",
+                    fontproperties=font,
+                )
