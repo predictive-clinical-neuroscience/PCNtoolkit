@@ -100,10 +100,11 @@ exclude = [
     ".vscode", "__pypackages__", "_build", "buck-out", "build", "dist",
     "node_modules", "site-packages", "venv",
 ]
-ignore = ["F403", "F405", "F841"]
-line-length = 130
 indent-width = 4
-target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["F403", "F405"]
 
 [tool.ruff.format]
 quote-style = "double"

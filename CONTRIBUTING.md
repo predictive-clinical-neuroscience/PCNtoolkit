@@ -128,7 +128,13 @@ how everything looks. To do that:
 ### Python code style
 
 All Python code must adhere to
-[PEP8](https://www.python.org/dev/peps/pep-0008/). We recommend using
-the `autopep8` python package to help you automatically format your code
-based on the PEP8 standard. Please see the [autopep8
-documentation](https://github.com/hhatto/autopep8) for more details.
+[PEP8](https://www.python.org/dev/peps/pep-0008/). We use
+[ruff](https://docs.astral.sh/ruff/) for linting and formatting which is
+installed in your development environment with `pip install -e ".[dev]"`.
+
+Before opening a pull request, run:
+
+```
+ruff check --fix .
+ruff format .
+```
