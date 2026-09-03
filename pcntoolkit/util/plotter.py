@@ -318,7 +318,7 @@ def plot_thrivelines(
     plot_covariate = covariate if covariate is not None else model.covariates[0]
     if covariate_ranges is None or plot_covariate not in covariate_ranges:
         wanted = response_vars if response_vars is not None else model.response_vars
-        thrive_range = _covariate_range_from_thrivelines(thrivelines, list(wanted))
+        thrive_range = _thriveline_x_range(thrivelines, list(wanted))
         if thrive_range is not None:
             covariate_ranges = {**(covariate_ranges or {}), plot_covariate: thrive_range}
 
@@ -335,7 +335,7 @@ def plot_thrivelines(
     )
 
     x_min, x_max = grid.covariate_ranges[grid.covariate]
-    thrive_by_region = _prepare_thrivelines_by_region(
+    thrive_by_response_var = _thrivelines_per_response_var(
         thrivelines, grid.response_vars, x_min, x_max
     )
 
@@ -343,7 +343,7 @@ def plot_thrivelines(
     for response_var in grid.response_vars:
         fig = _plot_thrivelines(
             centile_data=grid.centile_data,
-            thrive_xy=thrive_by_region[response_var],
+            thrive_xy=thrive_by_response_var[response_var],
             response_var=response_var,
             covariate=grid.covariate,
             save_dir=save_dir,
@@ -1111,7 +1111,7 @@ def _plot_ridge(
 # ---------------------------------------------------------------------------
 
 
-def _covariate_range_from_thrivelines(
+def _thriveline_x_range(
     thrivelines: pd.DataFrame,
     response_vars: list[str],
 ) -> tuple[float, float] | None:
@@ -1153,7 +1153,7 @@ def _extract_thriveline_xy(
     return thrive_x, thrive_y
 
 
-def _prepare_thrivelines_by_region(
+def _thrivelines_per_response_var(
     thrivelines: pd.DataFrame,
     response_vars: list[str],
     x_min: float,
