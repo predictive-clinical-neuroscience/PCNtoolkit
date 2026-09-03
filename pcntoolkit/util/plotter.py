@@ -322,7 +322,7 @@ def plot_thrivelines(
         if thrive_range is not None:
             covariate_ranges = {**(covariate_ranges or {}), plot_covariate: thrive_range}
 
-    ctx = _prepare_centile_curves_context(
+    grid = _build_centile_grid(
         model=model,
         covariate=covariate,
         covariate_ranges=covariate_ranges,
@@ -331,25 +331,25 @@ def plot_thrivelines(
         plt_kwargs=plt_kwargs,
     )
     _compute_centile_curves(
-        model, ctx.centile_data, centiles=centiles, show_yhat=show_yhat, **kwargs
+        model, grid.centile_data, centiles=centiles, show_yhat=show_yhat, **kwargs
     )
 
-    x_min, x_max = ctx.covariate_ranges[ctx.covariate]
+    x_min, x_max = grid.covariate_ranges[grid.covariate]
     thrive_by_region = _prepare_thrivelines_by_region(
-        thrivelines, ctx.response_vars, x_min, x_max
+        thrivelines, grid.response_vars, x_min, x_max
     )
 
     figs: list[Figure] = []
-    for response_var in ctx.response_vars:
+    for response_var in grid.response_vars:
         fig = _plot_thrivelines(
-            centile_data=ctx.centile_data,
+            centile_data=grid.centile_data,
             thrive_xy=thrive_by_region[response_var],
             response_var=response_var,
-            covariate=ctx.covariate,
+            covariate=grid.covariate,
             save_dir=save_dir,
             show_centile_labels=show_centile_labels,
             show_yhat=show_yhat,
-            plt_kwargs=ctx.plt_kwargs,
+            plt_kwargs=grid.plt_kwargs,
         )
         figs.append(fig)
     if show_figure:
@@ -470,7 +470,7 @@ def plot_centiles_advanced(
     response_vars: List[str] | None
         The response vars for which to make the plots. All are plotted if this is None, which is default.
     batch_effects: Dict[str, List[str]] | None | Literal["all"], optional
-        The batch effects to plot the centiles for. If None, the batch effect that appears first in alphabetical order will be used.
+        The batch effects to plot the centiles for. If None, the first level of each batch effect is used, in the order the levels appear in the data.
     scatter_data: NormData | None, optional
         Data to scatter on top of the centiles.
     harmonize_data: bool, optional
@@ -501,7 +501,7 @@ def plot_centiles_advanced(
     list[Figure]
         One matplotlib Figure per response variable.
     """
-    ctx = _prepare_centile_curves_context(
+    grid = _build_centile_grid(
         model=model,
         covariate=covariate,
         covariate_ranges=covariate_ranges,
@@ -510,13 +510,13 @@ def plot_centiles_advanced(
         scatter_data=scatter_data,
         plt_kwargs=plt_kwargs,
     )
-    covariate = ctx.covariate
-    covariate_ranges = ctx.covariate_ranges
-    response_vars = ctx.response_vars
-    centile_data = ctx.centile_data
-    batch_effects = ctx.batch_effects
-    scatter_data = ctx.scatter_data
-    plt_kwargs = ctx.plt_kwargs
+    covariate = grid.covariate
+    covariate_ranges = grid.covariate_ranges
+    response_vars = grid.response_vars
+    centile_data = grid.centile_data
+    batch_effects = grid.batch_effects
+    scatter_data = grid.scatter_data
+    plt_kwargs = grid.plt_kwargs
 
     conditionals_data: list[NormData] = []
     if conditionals is not None:
@@ -1202,7 +1202,7 @@ def _prepare_thrivelines_by_region(
 
 
 @dataclass(frozen=True)
-class _CentileCurvesContext:
+class _CentileGrid:
     """The synthetic grid a centile plot is drawn on, plus its settings.
 
     Attributes
@@ -1233,7 +1233,7 @@ class _CentileCurvesContext:
     scatter_data: NormData | None = None
 
 
-def _prepare_centile_curves_context(
+def _build_centile_grid(
     model: "NormativeModel",
     covariate: str | None = None,
     covariate_ranges: dict[str, tuple[float, float]] | None = None,
@@ -1241,7 +1241,7 @@ def _prepare_centile_curves_context(
     batch_effects: dict[str, list[str]] | None | Literal["all"] = None,
     scatter_data: NormData | None = None,
     plt_kwargs: dict | None = None,
-) -> _CentileCurvesContext:
+) -> _CentileGrid:
     """Build the synthetic covariate grid that centile curves are drawn on.
 
     Covariate ranges, response variables, and batch effects are resolved to
@@ -1262,7 +1262,7 @@ def _prepare_centile_curves_context(
         Response variables to plot. Defaults to all of the model's.
     batch_effects : dict[str, list[str]] | None | Literal["all"], optional
         Batch effects to build the grid for. ``"all"`` uses every level; None
-        takes the first level alphabetically.
+        takes the first level of each, in the order they appear in the data.
     scatter_data : NormData | None, optional
         When given, it is filtered to the plotted range and its batch effects
         and covariate means are used in place of the model's.
@@ -1271,7 +1271,7 @@ def _prepare_centile_curves_context(
 
     Returns
     -------
-    _CentileCurvesContext
+    _CentileGrid
         The grid and the resolved settings used to build it.
     """
     if covariate is None:
@@ -1305,7 +1305,7 @@ def _prepare_centile_curves_context(
     if batch_effects == "all":
         batch_effects = source.unique_batch_effects
     elif batch_effects is None:
-        # Select the first batch effect based on alphabetical order.
+        # Take the first level of each, in the order they appear in the data.
         batch_effects = {k: [v[0]] for k, v in source.unique_batch_effects.items()}
 
     if plt_kwargs is None:
@@ -1338,7 +1338,7 @@ def _prepare_centile_curves_context(
         batch_effects=list(batch_effects.keys()),
     )  # type: ignore
 
-    return _CentileCurvesContext(
+    return _CentileGrid(
         covariate=covariate,
         covariate_ranges=covariate_ranges,
         response_vars=response_vars,
@@ -1363,7 +1363,7 @@ def _compute_centile_curves(
     model : NormativeModel
         Fitted model used to evaluate the curves.
     centile_data : NormData
-        Grid from :func:`_prepare_centile_curves_context`; gains a ``centiles``
+        Grid from :func:`_build_centile_grid`; gains a ``centiles``
         variable, and a ``Yhat`` variable when ``show_yhat`` is True.
     centiles : list[float] | np.ndarray | None, optional
         Centiles to compute, as proportions in (0, 1). None uses the model
