@@ -22,6 +22,9 @@ if TYPE_CHECKING:
 
 sns.set_theme(style="darkgrid")
 
+# Line width of the model mean (Yhat)
+YHAT_LINEWIDTH = 1
+
 
 def plot_centiles(
     model: "NormativeModel",
@@ -516,7 +519,7 @@ def _plot_thrivelines(
             filtered.Yhat,
             color="red",
             linestyle="--",
-            linewidth=thickness,
+            linewidth=YHAT_LINEWIDTH,
             zorder=2,
             label="$\\hat{Y}$",
         )
@@ -941,7 +944,7 @@ def _plot_centiles_advanced(
             filtered.Yhat,
             color="red",
             linestyle="--",
-            linewidth=thickness,
+            linewidth=YHAT_LINEWIDTH,
             zorder=2,
             label="$\\hat{Y}$",
         )
