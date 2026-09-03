@@ -90,4 +90,4 @@ Git Commit Messages
 Python code style
 """""""""""""""""""
 
-All Python code must adhere to `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_. We recommend using the ``autopep8`` python package to help you automatically format your code based on the PEP8 standard. Please see the `autopep8 documentation <https://github.com/hhatto/autopep8>`_ for more details.
+All Python code must adhere to `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_. We use `ruff <https://docs.astral.sh/ruff/>`_ for linting and formatting which is installed in your development environment with ``pip install -e ".[dev]"``.
