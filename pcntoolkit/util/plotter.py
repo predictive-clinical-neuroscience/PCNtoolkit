@@ -272,178 +272,106 @@ def _plot_centiles(
     return fig
 
 
-
-def _covariate_range_from_thrivelines(
-    thrivelines: pd.DataFrame,
-    response_vars: list[str],
-) -> tuple[float, float] | None:
-    """Return the (min, max) covariate span covered by the thriveline table."""
-    relevant = thrivelines.loc[thrivelines["response_var"].isin(response_vars), "X"]
-    xs = relevant.to_numpy(dtype=float)
-    xs = xs[np.isfinite(xs)]
-    if xs.size == 0:
-        return None
-    return float(xs.min()), float(xs.max())
-
-
-def _filter_thrivelines_to_covariate_range(
-    thrivelines: pd.DataFrame,
-    x_min: float,
-    x_max: float,
-) -> pd.DataFrame:
-    """Keep thriveline points whose covariate X lies inside the plotted range."""
-    in_range = (thrivelines["X"] >= x_min) & (thrivelines["X"] <= x_max)
-    return thrivelines.loc[in_range].copy()
-
-
-def _extract_thriveline_xy(
-    thrivelines: pd.DataFrame,
-    response_var: str,
-) -> tuple[list[np.ndarray], list[np.ndarray]]:
-    """Return per-segment X and Y arrays for one response variable."""
-    region_df = thrivelines.loc[thrivelines["response_var"] == response_var]
-    thrive_x: list[np.ndarray] = []
-    thrive_y: list[np.ndarray] = []
-    # Each segment is a short 2-point line (anchor + one forward step).
-    for _, grp in region_df.groupby("segment", sort=True):
-        ordered = grp.sort_values("offset")
-        # Skip segments clipped at the plot boundary (need anchor + forward point).
-        if len(ordered) < 2:
-            continue
-        thrive_x.append(ordered["X"].to_numpy())
-        thrive_y.append(ordered["Y"].to_numpy())
-    return thrive_x, thrive_y
-
-
-def _prepare_thrivelines_by_region(
-    thrivelines: pd.DataFrame,
-    response_vars: list[str],
-    x_min: float,
-    x_max: float,
-) -> dict[str, tuple[list[np.ndarray], list[np.ndarray]]]:
-    """Validate, clip, and extract thriveline segments per response variable."""
-    validate_thrivelines(thrivelines)
-
-    # Check that all requested response variables are available in the thriveline data.
-    available = set(thrivelines["response_var"].astype(str))
-    missing = [rv for rv in response_vars if rv not in available]
-    if missing:
-        raise ValueError(
-            f"thrivelines has no data for response variable(s) {missing}. "
-            f"Available: {sorted(available)}."
-        )
-
-    # Clip thrivelines to the plotted covariate range 
-    clipped = _filter_thrivelines_to_covariate_range(thrivelines, x_min, x_max)
-
-    # Check which response variables are still in range after clipping.
-    in_range = set(clipped["response_var"].astype(str))
-    out_of_range = [rv for rv in response_vars if rv not in in_range]
-    if out_of_range:
-        spans = {
-            rv: (
-                float(thrivelines.loc[thrivelines["response_var"] == rv, "X"].min()),
-                float(thrivelines.loc[thrivelines["response_var"] == rv, "X"].max()),
-            )
-            for rv in out_of_range
-        }
-        raise ValueError(
-            f"thrivelines for {out_of_range} lie outside the plotted covariate "
-            f"range ({x_min}, {x_max}). Their covariate spans are {spans}. "
-        )
-
-    return {
-        response_var: _extract_thriveline_xy(clipped, response_var)
-        for response_var in response_vars
-    }
-
-
-class _CentileCurvesContext(NamedTuple):
-    covariate: str
-    covariate_ranges: dict[str, tuple[float, float]]
-    response_vars: list[str]
-    centile_data: NormData
-    batch_effects: dict[str, list[str]]
-    plt_kwargs: dict
-
-
-def _prepare_centile_curves_context(
+def plot_thrivelines(
     model: "NormativeModel",
+    thrivelines: pd.DataFrame,
     centiles: list[float] | np.ndarray | None = None,
     covariate: str | None = None,
     covariate_ranges: dict[str, tuple[float, float]] | None = None,
     response_vars: list[str] | None = None,
     batch_effects: dict[str, list[str]] | None | Literal["all"] = None,
+    show_figure: bool = True,
+    save_dir: str | None = None,
+    show_centile_labels: bool = True,
     show_yhat: bool = False,
     plt_kwargs: dict | None = None,
     **kwargs: Any,
-) -> _CentileCurvesContext:
-    """Build centile curves for plots that overlay thrivelines (no scatter)."""
-    if covariate is None:
-        covariate = model.covariates[0]
-        assert isinstance(covariate, str)
+) -> list[Figure]:
+    """Plot normative centiles with pre-computed thrivelines overlaid.
 
-    # Fill in any covariate the caller left unspecified from the model's own range.
-    covariate_ranges = dict(covariate_ranges or {})
-    for c in model.covariates:
-        if not covariate_ranges.get(c):
-            covariate_ranges[c] = (
-                model.covariate_ranges[c]["min"],
-                model.covariate_ranges[c]["max"],
-            )
+    Parameters
+    ----------
+    model : NormativeModel
+        The model used to compute centile curves.
+    thrivelines : pd.DataFrame
+        Pre-computed thriveline table from
+        :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_thrivelines`.
+    centiles : list[float] | np.ndarray | None, optional
+        Centiles to plot. If None, the model defaults are used.
+    covariate : str | None, optional
+        Covariate for the x-axis. Defaults to the first model covariate.
+    covariate_ranges : dict[str, tuple[float, float]] | None, optional
+        Covariate ranges, in each covariate's own units, used for the centile
+        and for clipping the thrivelines. When the plotted covariate is
+        not given a range, it defaults to the span the thrivelines cover, so
+        the centiles start and end where the thrivelines do. Any other
+        covariate defaults to its range in the model.
+    response_vars : list[str] | None, optional
+        Response variables to plot. Defaults to all model response variables.
+    batch_effects : dict[str, list[str]] | None | Literal["all"], optional
+        Batch effects used for centile computation.
+    show_figure : bool, optional
+        If True, call ``plt.show()`` after all figures are created.
+    save_dir : str | None, optional
+        Directory to save plots. If None, plots are not saved.
+    show_centile_labels : bool, optional
+        Whether to label centile curves.
+    show_yhat : bool, optional
+        Whether to plot the model mean ``Yhat``.
+    plt_kwargs : dict | None, optional
+        Additional keyword arguments passed to ``plt.subplots()``.
+    **kwargs : Any, optional
+        Additional keyword arguments for ``model.compute_centiles``.
 
-    if response_vars is None:
-        response_vars = model.response_vars
-    response_vars = list(set(model.response_vars).intersection(set(response_vars)))
+    Returns
+    -------
+    list[Figure]
+        One matplotlib Figure per response variable.
+    """
+    validate_thrivelines(thrivelines)
 
-    if batch_effects == "all":
-        batch_effects = model.unique_batch_effects
-    elif batch_effects is None:
-        batch_effects = {
-            k: [v[0]] for k, v in model.unique_batch_effects.items()
-        }
+    # Default the plotted covariate range to the span the thrivelines cover, so
+    # the centiles start and end where the thrivelines do.
+    plot_covariate = covariate if covariate is not None else model.covariates[0]
+    if covariate_ranges is None or plot_covariate not in covariate_ranges:
+        wanted = response_vars if response_vars is not None else model.response_vars
+        thrive_range = _covariate_range_from_thrivelines(thrivelines, list(wanted))
+        if thrive_range is not None:
+            covariate_ranges = {**(covariate_ranges or {}), plot_covariate: thrive_range}
 
-    if plt_kwargs is None:
-        plt_kwargs = {}
-
-    centile_covariates = np.linspace(
-        covariate_ranges[covariate][0], covariate_ranges[covariate][1], 150
-    )
-    centile_df = pd.DataFrame({covariate: centile_covariates})
-
-    for cov in model.covariates:
-        if cov != covariate:
-            minc, maxc = covariate_ranges[cov]
-            centile_df[cov] = (minc + maxc) / 2
-
-    for be, v in batch_effects.items():
-        centile_df[be] = v[0]
-    for rv in model.response_vars:
-        centile_df[rv] = 1e-6
-    centile_data = NormData.from_dataframe(
-        "centile",
-        dataframe=centile_df,
-        covariates=model.covariates,
-        response_vars=response_vars,
-        batch_effects=list(batch_effects.keys()),
-    )  # type: ignore
-
-    if not hasattr(centile_data, "centiles"):
-        model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
-    if show_yhat and not hasattr(centile_data, "Yhat"):
-        model.compute_yhat(centile_data)
-
-    if not model.has_batch_effect:
-        batch_effects = {}
-
-    return _CentileCurvesContext(
+    ctx = _prepare_centile_curves_context(
+        model=model,
+        centiles=centiles,
         covariate=covariate,
         covariate_ranges=covariate_ranges,
         response_vars=response_vars,
-        centile_data=centile_data,
         batch_effects=batch_effects,
+        show_yhat=show_yhat,
         plt_kwargs=plt_kwargs,
+        **kwargs,
     )
+
+    x_min, x_max = ctx.covariate_ranges[ctx.covariate]
+    thrive_by_region = _prepare_thrivelines_by_region(
+        thrivelines, ctx.response_vars, x_min, x_max
+    )
+
+    figs: list[Figure] = []
+    for response_var in ctx.response_vars:
+        fig = _plot_thrivelines(
+            centile_data=ctx.centile_data,
+            thrive_xy=thrive_by_region[response_var],
+            response_var=response_var,
+            covariate=ctx.covariate,
+            save_dir=save_dir,
+            show_centile_labels=show_centile_labels,
+            show_yhat=show_yhat,
+            plt_kwargs=ctx.plt_kwargs,
+        )
+        figs.append(fig)
+    if show_figure:
+        plt.show()
+    return figs
 
 
 def _plot_thrivelines(
@@ -551,108 +479,6 @@ def _plot_thrivelines(
     if save_dir:
         fig.savefig(os.path.join(save_dir, f"{plotname}.png"), dpi=300)
     return fig
-
-
-def plot_thrivelines(
-    model: "NormativeModel",
-    thrivelines: pd.DataFrame,
-    centiles: list[float] | np.ndarray | None = None,
-    covariate: str | None = None,
-    covariate_ranges: dict[str, tuple[float, float]] | None = None,
-    response_vars: list[str] | None = None,
-    batch_effects: dict[str, list[str]] | None | Literal["all"] = None,
-    show_figure: bool = True,
-    save_dir: str | None = None,
-    show_centile_labels: bool = True,
-    show_yhat: bool = False,
-    plt_kwargs: dict | None = None,
-    **kwargs: Any,
-) -> list[Figure]:
-    """Plot normative centiles with pre-computed thrivelines overlaid.
-
-    Parameters
-    ----------
-    model : NormativeModel
-        The model used to compute centile curves.
-    thrivelines : pd.DataFrame
-        Pre-computed thriveline table from
-        :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_thrivelines`.
-    centiles : list[float] | np.ndarray | None, optional
-        Centiles to plot. If None, the model defaults are used.
-    covariate : str | None, optional
-        Covariate for the x-axis. Defaults to the first model covariate.
-    covariate_ranges : dict[str, tuple[float, float]] | None, optional
-        Covariate ranges, in each covariate's own units, used for the centile
-        and for clipping the thrivelines. When the plotted covariate is
-        not given a range, it defaults to the span the thrivelines cover, so
-        the centiles start and end where the thrivelines do. Any other
-        covariate defaults to its range in the model.
-    response_vars : list[str] | None, optional
-        Response variables to plot. Defaults to all model response variables.
-    batch_effects : dict[str, list[str]] | None | Literal["all"], optional
-        Batch effects used for centile computation.
-    show_figure : bool, optional
-        If True, call ``plt.show()`` after all figures are created.
-    save_dir : str | None, optional
-        Directory to save plots. If None, plots are not saved.
-    show_centile_labels : bool, optional
-        Whether to label centile curves.
-    show_yhat : bool, optional
-        Whether to plot the model mean ``Yhat``.
-    plt_kwargs : dict | None, optional
-        Additional keyword arguments passed to ``plt.subplots()``.
-    **kwargs : Any, optional
-        Additional keyword arguments for ``model.compute_centiles``.
-
-    Returns
-    -------
-    list[Figure]
-        One matplotlib Figure per response variable.
-    """
-    validate_thrivelines(thrivelines)
-
-    # Default the plotted covariate range to the span the thrivelines cover, so
-    # the centiles start and end where the thrivelines do.
-    plot_covariate = covariate if covariate is not None else model.covariates[0]
-    if covariate_ranges is None or plot_covariate not in covariate_ranges:
-        wanted = response_vars if response_vars is not None else model.response_vars
-        thrive_range = _covariate_range_from_thrivelines(thrivelines, list(wanted))
-        if thrive_range is not None:
-            covariate_ranges = {**(covariate_ranges or {}), plot_covariate: thrive_range}
-
-    ctx = _prepare_centile_curves_context(
-        model=model,
-        centiles=centiles,
-        covariate=covariate,
-        covariate_ranges=covariate_ranges,
-        response_vars=response_vars,
-        batch_effects=batch_effects,
-        show_yhat=show_yhat,
-        plt_kwargs=plt_kwargs,
-        **kwargs,
-    )
-
-    x_min, x_max = ctx.covariate_ranges[ctx.covariate]
-    thrive_by_region = _prepare_thrivelines_by_region(
-        thrivelines, ctx.response_vars, x_min, x_max
-    )
-
-    figs: list[Figure] = []
-    for response_var in ctx.response_vars:
-        fig = _plot_thrivelines(
-            centile_data=ctx.centile_data,
-            thrive_xy=thrive_by_region[response_var],
-            response_var=response_var,
-            covariate=ctx.covariate,
-            save_dir=save_dir,
-            show_centile_labels=show_centile_labels,
-            show_yhat=show_yhat,
-            plt_kwargs=ctx.plt_kwargs,
-        )
-        figs.append(fig)
-    if show_figure:
-        plt.show()
-    return figs
 
 
 def plot_centiles_advanced(
@@ -1426,3 +1252,181 @@ def _plot_ridge(
             dpi=300,
         )
     return g.figure
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+class _CentileCurvesContext(NamedTuple):
+    covariate: str
+    covariate_ranges: dict[str, tuple[float, float]]
+    response_vars: list[str]
+    centile_data: NormData
+    batch_effects: dict[str, list[str]]
+    plt_kwargs: dict
+
+
+def _prepare_centile_curves_context(
+    model: "NormativeModel",
+    centiles: list[float] | np.ndarray | None = None,
+    covariate: str | None = None,
+    covariate_ranges: dict[str, tuple[float, float]] | None = None,
+    response_vars: list[str] | None = None,
+    batch_effects: dict[str, list[str]] | None | Literal["all"] = None,
+    show_yhat: bool = False,
+    plt_kwargs: dict | None = None,
+    **kwargs: Any,
+) -> _CentileCurvesContext:
+    """Build centile curves for plots that overlay thrivelines (no scatter)."""
+    if covariate is None:
+        covariate = model.covariates[0]
+        assert isinstance(covariate, str)
+
+    # Fill in any covariate the caller left unspecified from the model's own range.
+    covariate_ranges = dict(covariate_ranges or {})
+    for c in model.covariates:
+        if not covariate_ranges.get(c):
+            covariate_ranges[c] = (
+                model.covariate_ranges[c]["min"],
+                model.covariate_ranges[c]["max"],
+            )
+
+    if response_vars is None:
+        response_vars = model.response_vars
+    response_vars = list(set(model.response_vars).intersection(set(response_vars)))
+
+    if batch_effects == "all":
+        batch_effects = model.unique_batch_effects
+    elif batch_effects is None:
+        batch_effects = {
+            k: [v[0]] for k, v in model.unique_batch_effects.items()
+        }
+
+    if plt_kwargs is None:
+        plt_kwargs = {}
+
+    centile_covariates = np.linspace(
+        covariate_ranges[covariate][0], covariate_ranges[covariate][1], 150
+    )
+    centile_df = pd.DataFrame({covariate: centile_covariates})
+
+    for cov in model.covariates:
+        if cov != covariate:
+            minc, maxc = covariate_ranges[cov]
+            centile_df[cov] = (minc + maxc) / 2
+
+    for be, v in batch_effects.items():
+        centile_df[be] = v[0]
+    for rv in model.response_vars:
+        centile_df[rv] = 1e-6
+    centile_data = NormData.from_dataframe(
+        "centile",
+        dataframe=centile_df,
+        covariates=model.covariates,
+        response_vars=response_vars,
+        batch_effects=list(batch_effects.keys()),
+    )  # type: ignore
+
+    if not hasattr(centile_data, "centiles"):
+        model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
+    if show_yhat and not hasattr(centile_data, "Yhat"):
+        model.compute_yhat(centile_data)
+
+    if not model.has_batch_effect:
+        batch_effects = {}
+
+    return _CentileCurvesContext(
+        covariate=covariate,
+        covariate_ranges=covariate_ranges,
+        response_vars=response_vars,
+        centile_data=centile_data,
+        batch_effects=batch_effects,
+        plt_kwargs=plt_kwargs,
+    )
+
+
+def _covariate_range_from_thrivelines(
+    thrivelines: pd.DataFrame,
+    response_vars: list[str],
+) -> tuple[float, float] | None:
+    """Return the (min, max) covariate span covered by the thriveline table."""
+    relevant = thrivelines.loc[thrivelines["response_var"].isin(response_vars), "X"]
+    xs = relevant.to_numpy(dtype=float)
+    xs = xs[np.isfinite(xs)]
+    if xs.size == 0:
+        return None
+    return float(xs.min()), float(xs.max())
+
+
+def _filter_thrivelines_to_covariate_range(
+    thrivelines: pd.DataFrame,
+    x_min: float,
+    x_max: float,
+) -> pd.DataFrame:
+    """Keep thriveline points whose covariate X lies inside the plotted range."""
+    in_range = (thrivelines["X"] >= x_min) & (thrivelines["X"] <= x_max)
+    return thrivelines.loc[in_range].copy()
+
+
+def _extract_thriveline_xy(
+    thrivelines: pd.DataFrame,
+    response_var: str,
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    """Return per-segment X and Y arrays for one response variable."""
+    region_df = thrivelines.loc[thrivelines["response_var"] == response_var]
+    thrive_x: list[np.ndarray] = []
+    thrive_y: list[np.ndarray] = []
+    # Each segment is a short 2-point line (anchor + one forward step).
+    for _, grp in region_df.groupby("segment", sort=True):
+        ordered = grp.sort_values("offset")
+        # Skip segments clipped at the plot boundary (need anchor + forward point).
+        if len(ordered) < 2:
+            continue
+        thrive_x.append(ordered["X"].to_numpy())
+        thrive_y.append(ordered["Y"].to_numpy())
+    return thrive_x, thrive_y
+
+
+def _prepare_thrivelines_by_region(
+    thrivelines: pd.DataFrame,
+    response_vars: list[str],
+    x_min: float,
+    x_max: float,
+) -> dict[str, tuple[list[np.ndarray], list[np.ndarray]]]:
+    """Validate, clip, and extract thriveline segments per response variable."""
+    validate_thrivelines(thrivelines)
+
+    # Check that all requested response variables are available in the thriveline data.
+    available = set(thrivelines["response_var"].astype(str))
+    missing = [rv for rv in response_vars if rv not in available]
+    if missing:
+        raise ValueError(
+            f"thrivelines has no data for response variable(s) {missing}. "
+            f"Available: {sorted(available)}."
+        )
+
+    # Clip thrivelines to the plotted covariate range 
+    clipped = _filter_thrivelines_to_covariate_range(thrivelines, x_min, x_max)
+
+    # Check which response variables are still in range after clipping.
+    in_range = set(clipped["response_var"].astype(str))
+    out_of_range = [rv for rv in response_vars if rv not in in_range]
+    if out_of_range:
+        spans = {
+            rv: (
+                float(thrivelines.loc[thrivelines["response_var"] == rv, "X"].min()),
+                float(thrivelines.loc[thrivelines["response_var"] == rv, "X"].max()),
+            )
+            for rv in out_of_range
+        }
+        raise ValueError(
+            f"thrivelines for {out_of_range} lie outside the plotted covariate "
+            f"range ({x_min}, {x_max}). Their covariate spans are {spans}. "
+        )
+
+    return {
+        response_var: _extract_thriveline_xy(clipped, response_var)
+        for response_var in response_vars
+    }
