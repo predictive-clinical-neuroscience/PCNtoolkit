@@ -131,10 +131,3 @@ All Python code must adhere to
 [PEP8](https://www.python.org/dev/peps/pep-0008/). We use
 [ruff](https://docs.astral.sh/ruff/) for linting and formatting which is
 installed in your development environment with `pip install -e ".[dev]"`.
-
-Before opening a pull request, run:
-
-```
-ruff check --fix .
-ruff format .
-```

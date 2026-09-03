@@ -91,10 +91,3 @@ Python code style
 """""""""""""""""""
 
 All Python code must adhere to `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_. We use `ruff <https://docs.astral.sh/ruff/>`_ for linting and formatting which is installed in your development environment with ``pip install -e ".[dev]"``.
-
-Before opening a pull request, run:
-
-.. code-block:: bash
-
-    ruff check --fix .
-    ruff format .
