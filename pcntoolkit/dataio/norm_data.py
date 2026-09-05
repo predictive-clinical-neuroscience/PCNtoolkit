@@ -1317,7 +1317,9 @@ class NormData(xr.Dataset):
     def load_zscores(self, save_dir) -> None:
         Z_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         if os.path.isfile(Z_path):
-            df = pd.read_csv(Z_path)
+            # Take the same lock as the writer, so we never read a half-written file
+            with FileLock(Z_path + ".lock"):
+                df = pd.read_csv(Z_path)
             non_index_columns = [i for i in list(df.columns) if not i == "observations"]
             self["Z"] = xr.DataArray(
                 df[non_index_columns],
@@ -1371,7 +1373,9 @@ class NormData(xr.Dataset):
     def load_centiles(self, save_dir) -> None:
         C_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
         if os.path.isfile(C_path):
-            df = pd.read_csv(C_path)
+            # Take the same lock as the writer, so we never read a half-written file
+            with FileLock(C_path + ".lock"):
+                df = pd.read_csv(C_path)
             response_vars = [i for i in list(df.columns) if not (i == "observations" or i == "centile" or i == "subject_ids")]
             centiles = np.unique(df["centile"])
             obs = np.unique(df["observations"])
@@ -1428,7 +1432,9 @@ class NormData(xr.Dataset):
     def load_logp(self, save_dir) -> None:
         logp_path = os.path.join(save_dir, f"logp_{self.name}.csv")
         if os.path.isfile(logp_path):
-            df = pd.read_csv(logp_path)
+            # Take the same lock as the writer, so we never read a half-written file
+            with FileLock(logp_path + ".lock"):
+                df = pd.read_csv(logp_path)
             non_index_columns = [i for i in list(df.columns) if not i == "observations"]
             self["logp"] = xr.DataArray(
                 df[non_index_columns],
@@ -1459,7 +1465,9 @@ class NormData(xr.Dataset):
     def load_statistics(self, save_dir) -> None:
         logp_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
         if os.path.isfile(logp_path):
-            df = pd.read_csv(logp_path)
+            # Take the same lock as the writer, so we never read a half-written file
+            with FileLock(logp_path + ".lock"):
+                df = pd.read_csv(logp_path)
             df = df.set_index("statistic")
             statistics = list(df.index)
             self["statistics"] = xr.DataArray(
