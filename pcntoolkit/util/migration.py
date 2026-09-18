@@ -297,3 +297,21 @@ def _migrate_variational_inference_1_4_0(d: dict) -> dict:
     d.setdefault("vi_kwargs", {})
 
     return d
+
+
+@registry.register("BasisFunction", introduced_in="1.4.0")
+def _migrate_bspline_basis_function_1_4_0(d: dict) -> dict:
+    """Preserve legacy B-spline behavior for models saved before v1.4.0.
+
+    Before v1.4.0, BsplineBasisFunction implicitly included the original
+    linear feature alongside the B-spline basis. New B-spline basis
+    functions no longer include this redundant linear term.
+
+    When loading an older saved B-spline model, retain the old behavior
+    so that its design matrix remains compatible with the fitted model
+    parameters.
+    """
+    if d.get("basis_function") == "BsplineBasisFunction":
+        d.setdefault("include_linear", True)
+
+    return d
