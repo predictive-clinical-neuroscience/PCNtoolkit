@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import copy
 import glob
-import importlib.metadata
 import json
 import os
+import uuid
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
@@ -25,7 +25,7 @@ from pcntoolkit.regression_model.hbr import HBR  # noqa: F401 # type: ignore
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.regression_model.test_model import TestModel  # noqa: F401 # type: ignore
 from pcntoolkit.util.evaluator import Evaluator
-from pcntoolkit.util.migration import check_forward_compatibility
+from pcntoolkit.util.migration import check_forward_compatibility, ptk_version
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 from pcntoolkit.util.paths import ensure_dir_exists, get_default_save_dir, get_save_subdirs
 from pcntoolkit.util.plotter import plot_centiles, plot_qq
@@ -466,8 +466,12 @@ class NormativeModel:
         my_dict = self.to_dict()
         self.set_ensure_save_dirs()
         Output.print(Messages.SAVING_MODEL, save_dir=savepath)
-        with open(os.path.join(modelpath, "normative_model.json"), "w", encoding="utf-8") as f:
+        # Parallel runner jobs all write this file; os.replace makes each write atomic.
+        model_json = os.path.join(modelpath, "normative_model.json")
+        tmp_json = f"{model_json}.{uuid.uuid4().hex}.tmp"
+        with open(tmp_json, "w", encoding="utf-8") as f:
             json.dump(my_dict, f, indent=4)
+        os.replace(tmp_json, model_json)
 
         for responsevar, model in self.regression_models.items():
             regmodel_path = os.path.join(modelpath, responsevar)
@@ -475,8 +479,9 @@ class NormativeModel:
             reg_model_dict = {}
             reg_model_dict["model"] = model.to_dict(regmodel_path)
             reg_model_dict["outscaler"] = self.outscalers[responsevar].to_dict()
+            # Only json.dumps without indent uses the fast C encoder.
             with open(os.path.join(regmodel_path, "regression_model.json"), "w", encoding="utf-8") as f:
-                json.dump(reg_model_dict, f, indent=4)
+                f.write(json.dumps(reg_model_dict))
 
     @classmethod
     def load(cls, path: str, into: NormativeModel | None = None) -> NormativeModel:
@@ -486,7 +491,9 @@ class NormativeModel:
         Parameters
         ----------
         path : str
-            The path to the normative model.
+            The path to the normative model. A new model uses this path as its
+            ``save_dir``, so ``predict`` writes results inside it, even if the
+            folder was moved after it was saved.
         into : NormBase, optional
             The normative model to load the data into. If None, a new normative model is created.
             This is useful if you want to load a normative model into an existing normative model, for example in the runner.
@@ -499,12 +506,13 @@ class NormativeModel:
 
         # Warn if model was saved with a newer pcntoolkit version.
         norm_version: str = metadata.get("ptk_version", "0.0.0")
-        current_version: str = importlib.metadata.version("pcntoolkit")
+        current_version: str = ptk_version()
         check_forward_compatibility(norm_version, current_version)
 
         savemodel = metadata["savemodel"]
         saveresults = metadata["saveresults"]
-        save_dir = metadata["save_dir"]
+        # Use the load folder, not the stored path, so a moved model still works.
+        save_dir = path
         inscaler = metadata["inscaler"]
         outscaler = metadata["outscaler"]
         saveplots = metadata["saveplots"]
@@ -1065,7 +1073,7 @@ class NormativeModel:
             "inscaler": self.inscaler,
             "outscaler": self.outscaler,
             "y_transform": self.y_transform,
-            "ptk_version": importlib.metadata.version("pcntoolkit"),
+            "ptk_version": ptk_version(),
         }
 
         if hasattr(self, "covariates"):
