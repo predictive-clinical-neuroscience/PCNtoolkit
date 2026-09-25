@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 
@@ -39,6 +41,24 @@ def test_blr_to_and_from_dict_and_args(n_iter, tol, ard):
     assert blr2.l_bfgs_b_l == 0.1
     assert blr2.l_bfgs_b_epsilon == 0.1
     assert blr2.l_bfgs_b_norm == "l2"
+
+
+def test_loglik_after_to_and_from_dict(
+    fitted_blr_model: BLR,
+    norm_data_from_arrays: NormData,
+    fitted_norm_blr_model: NormativeModel,
+) -> None:
+    # Round-trip through JSON text, as save() and load() do.
+    my_dict = json.loads(json.dumps(fitted_blr_model.to_dict()))
+    assert "Sigma_a" not in my_dict
+    assert "Lambda_a" not in my_dict
+    blr = BLR.from_dict(my_dict)
+    response_var = norm_data_from_arrays.response_vars[0]
+    resp_data = norm_data_from_arrays.sel(response_vars=response_var)
+    X, be, _, Y, _ = fitted_norm_blr_model.extract_data(resp_data)
+    Phi, Phi_var = blr.Phi_Phi_var(X.values, be.values)
+    # At the stored hyp, loglik must rebuild Sigma_a and Lambda_a (not in the file).
+    assert np.isfinite(blr.loglik(blr.hyp, Phi, Y.values, Phi_var))
 
 
 def test_fit(blr_model_factory, norm_data_from_arrays: NormData, fitted_norm_blr_model: NormativeModel):

@@ -21,6 +21,7 @@ version_model > version_pcntoolkit  →  WARN USER
 
 from __future__ import annotations
 
+import functools
 import importlib.metadata
 from typing import Callable, Literal
 
@@ -28,6 +29,24 @@ from typing import Callable, Literal
 from packaging.version import Version
 
 from pcntoolkit.util.output import Output, Warnings
+
+
+@functools.cache
+def ptk_version() -> str:
+    """
+    Return the installed PCNtoolkit version.
+
+    The result is cached because ``importlib.metadata.version`` parses the
+    package metadata on every call. Loading a model with 50,000 response
+    variables called it 100,000 times, which was half of the load time.
+
+    Returns
+    -------
+    str
+        The installed PCNtoolkit version, e.g. ``"1.3.0"``.
+    """
+    return importlib.metadata.version("pcntoolkit")
+
 
 # All components that are saved in the model file and may require migrations.
 ComponentName = Literal[
@@ -150,7 +169,7 @@ class MigrationRegistry:
 
         # The version the user is actually running, not the version a
         # migration was introduced in.
-        current_version: str = importlib.metadata.version("pcntoolkit")
+        current_version: str = ptk_version()
 
         # Apply migrations in ascending version order.
         for introduced_in, fn in self._migrations[component]:
