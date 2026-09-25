@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import pickle
 import re
 import warnings
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from pcntoolkit.math_functions.velocity import compute_correlation_matrix
@@ -36,10 +38,10 @@ class CorrelationMatrix:
     >>> corr.n_subjects
     67
 
-    Or load one that somebody else estimated (the region name is read from the
-    ``batch_<n>_<region>`` directory):
+    Save it, and load it back later:
 
-    >>> corr = CorrelationMatrix.load(".../batch_1_lh_G_and_S_frontomargin/Velocity/R.pkl")
+    >>> corr.save("my_matrix")
+    >>> corr = CorrelationMatrix.load("my_matrix")
 
     Either way, pass it to a score:
 
@@ -74,6 +76,8 @@ class CorrelationMatrix:
     ValueError
         If ``max_correlation`` is not strictly between 0 and 1.
     """
+
+    _METADATA_FILE = "correlation_matrix.json"
 
     def __init__(
         self,
@@ -158,12 +162,102 @@ class CorrelationMatrix:
 
     @classmethod
     def load(cls, path: str) -> CorrelationMatrix:
+        """Load a correlation matrix from a directory written by :meth:`save`.
+
+        The directory holds one CSV per response variable plus a
+        ``correlation_matrix.json`` with the metadata::
+
+            <path>/correlation_matrix.json
+            <path>/<response_var>.csv
+
+        Parameters
+        ----------
+        path : str
+            Directory written by :meth:`save`.
+
+        Returns
+        -------
+        CorrelationMatrix
+            The loaded matrix, with the metadata recorded at save time.
+
+        Raises
+        ------
+        FileNotFoundError
+            If ``path`` holds no ``correlation_matrix.json``.
+        """
+        directory = Path(path)
+        metadata_path = directory / cls._METADATA_FILE
+
+        if not metadata_path.is_file():
+            raise FileNotFoundError(
+                f"'{path}' is not a saved correlation matrix: it has no "
+                f"{cls._METADATA_FILE}. Write one with CorrelationMatrix.save()."
+            )
+
+        with open(metadata_path, encoding="utf-8") as f:
+            metadata = json.load(f)
+
+        covariate = metadata.get("covariate", "age")
+        response_vars = list(metadata["response_vars"])
+
+        # One CSV per response variable, stacked back into the 3-D layout
+        # produced by compute_correlation_matrix.
+        frames = []
+        for response_var in response_vars:
+            csv_path = directory / f"{response_var}.csv"
+            if not csv_path.is_file():
+                raise FileNotFoundError(
+                    f"'{metadata_path}' lists response variable "
+                    f"'{response_var}', but '{csv_path}' is missing."
+                )
+            # round_trip parsing: the default parser is a hair imprecise, which
+            # would make a loaded matrix score differently from the saved one.
+            frames.append(
+                pd.read_csv(csv_path, index_col=0, float_precision="round_trip")
+            )
+
+        # Coordinates come from the CSV header, so they survive a round-trip
+        # even if the matrix does not start at 0.
+        first = frames[0]
+        coords = np.asarray(first.columns, dtype=int)
+        for response_var, frame in zip(response_vars, frames, strict=True):
+            if frame.shape != first.shape:
+                raise ValueError(
+                    f"'{response_var}.csv' has shape {frame.shape}, but "
+                    f"'{response_vars[0]}.csv' has {first.shape}. Every "
+                    "response variable must cover the same covariate values."
+                )
+
+        values = np.stack([frame.to_numpy(dtype=float) for frame in frames])
+        matrix = xr.DataArray(
+            values,
+            dims=("response_vars", f"{covariate}_1", f"{covariate}_2"),
+            coords={
+                "response_vars": response_vars,
+                f"{covariate}_1": coords,
+                f"{covariate}_2": coords,
+            },
+        )
+
+        estimated_range = metadata.get("estimated_range")
+        return cls(
+            matrix,
+            covariate=covariate,
+            bandwidth=metadata.get("bandwidth"),
+            max_correlation=metadata.get("max_correlation", 0.99),
+            n_subjects=metadata.get("n_subjects"),
+            estimated_range=tuple(estimated_range) if estimated_range else None,
+        )
+
+    @classmethod
+    def load_velocity_pickle(cls, path: str) -> CorrelationMatrix:
         """Load a correlation matrix from a pickled velocity model.
 
         .. note::
            This reads one specific layout: the velocity models produced by
-           Johanna Bayer's pipeline. It is not a general-purpose loader, and it
-           will be replaced once :meth:`save` defines a storage format.
+           Johanna Bayer's pipeline. It is not a general-purpose loader. Use it
+           once to convert such a file, then save it with :meth:`save` and load
+           the result with :meth:`load`.
 
         Those files hold a dict whose ``A_sparse_predict`` entry is the
         correlations, stored lower-triangular with a zero diagonal. They are
@@ -265,15 +359,58 @@ class CorrelationMatrix:
         )
 
     def save(self, path: str) -> None:
-        """Not implemented yet.
+        """Save the matrix as CSV files plus a JSON metadata file.
 
-        Raises
-        ------
-        NotImplementedError
-            Always. The storage format has not been decided; matrices are
-            currently read with :meth:`load` from files written elsewhere.
+        Writes one CSV per response variable, with the covariate values as both
+        the header row and the index column, and a ``correlation_matrix.json``
+        holding everything the CSVs cannot carry::
+
+            <path>/correlation_matrix.json
+            <path>/<response_var>.csv
+
+        The format is plain text so the correlations can be read without
+        pcntoolkit, and so that loading one does not execute code the way
+        unpickling does.
+
+        Parameters
+        ----------
+        path : str
+            Directory to write to. Created if it does not exist.
+
+        Returns
+        -------
+        None
         """
-        raise NotImplementedError("Saving correlation matrices is not supported yet. The storage format has not been decided.")
+        directory = Path(path)
+        directory.mkdir(parents=True, exist_ok=True)
+
+        response_vars = [str(r) for r in self.matrix.coords["response_vars"].values]
+        coords = np.asarray(self.matrix.coords[f"{self.covariate}_1"].values, dtype=int)
+
+        for response_var in response_vars:
+            frame = pd.DataFrame(
+                self.matrix.sel(response_vars=response_var).values,
+                index=coords,
+                columns=coords,
+            )
+            frame.index.name = self.covariate
+            # No float_format: pandas then writes the shortest string that reads
+            # back as the same float64, so a saved matrix gives bit-identical
+            # scores to the one in memory.
+            frame.to_csv(directory / f"{response_var}.csv")
+
+        metadata = {
+            "covariate": self.covariate,
+            "response_vars": response_vars,
+            "bandwidth": self.bandwidth,
+            "max_correlation": self.max_correlation,
+            "n_subjects": self.n_subjects,
+            "estimated_range": (
+                list(self.estimated_range) if self.estimated_range else None
+            ),
+        }
+        with open(directory / self._METADATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=4)
 
     def get(self, response_var: str, cov_1: int, cov_2: int) -> float:
         """Read one correlation, clamped to the matrix and clipped for safety.
