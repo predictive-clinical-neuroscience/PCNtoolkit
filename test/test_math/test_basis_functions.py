@@ -1,4 +1,5 @@
 import importlib.metadata
+import json
 from unittest.mock import patch
 
 import numpy as np
@@ -105,3 +106,61 @@ def test_composite_from_dict_passes_version_to_parts() -> None:
         BasisFunction.from_dict(composite.to_dict(), version=current_version)
 
     assert mock_warning.call_count == 0
+
+def test_composite_bspline_quantile_preserves_fit_on_save_load() -> None:
+    """Regression test for issue #554.
+
+    A fitted CompositeBasisFunction must preserve its own `is_fitted` state,
+    and that of a quantile-knot B-spline part, across the documented
+    `to_dict()` -> JSON -> `from_dict()` round trip. Otherwise code that
+    conditionally refits a basis it believes is unfitted (e.g.
+    `BLR.Phi_Phi_var`'s `if not basis_function.is_fitted: basis_function.fit(X)`)
+    will refit the loaded composite -- and therefore recompute quantile
+    knots -- on prediction data, producing different results than the
+    original fitted model.
+    """
+    rng = np.random.default_rng(554)
+    # Skewed training distribution so quantile knots would clearly differ
+    # if recomputed on a very differently distributed prediction set.
+    X_train = np.column_stack(
+        [rng.exponential(scale=2.0, size=200), rng.uniform(0, 1, size=200)]
+    )
+
+    composite = CompositeBasisFunction(
+        [
+            BsplineBasisFunction(
+                basis_column=0, degree=3, nknots=5, knot_method="quantile"
+            ),
+            LinearBasisFunction(basis_column=1),
+        ]
+    )
+    composite.fit(X_train)
+    assert composite.is_fitted
+    original_knots = list(composite.parts[0].knots)
+
+    # Round-trip through the documented serialization flow.
+    current_version = importlib.metadata.version("pcntoolkit")
+    serialized = json.dumps(composite.to_dict())
+    loaded = BasisFunction.from_dict(json.loads(serialized), version=current_version)
+
+    assert loaded.is_fitted
+    assert loaded.parts[0].is_fitted
+    assert loaded.parts[1].is_fitted
+    np.testing.assert_array_equal(loaded.parts[0].knots, original_knots)
+
+    # Prediction data drawn from a very different distribution than the
+    # training data. If the loaded basis were refitted here, quantile knots
+    # (and therefore the design matrix) would differ from the original.
+    X_predict = np.column_stack(
+        [rng.normal(loc=50.0, scale=10.0, size=30), rng.uniform(0, 1, size=30)]
+    )
+
+    # Mirror the "refit only if not already fitted" pattern regression
+    # models use when consuming a basis function (see BLR.Phi_Phi_var).
+    for basis in (composite, loaded):
+        if not basis.is_fitted:
+            basis.fit(X_predict)
+
+    Phi_original = composite.transform(X_predict)
+    Phi_loaded = loaded.transform(X_predict)
+    np.testing.assert_array_equal(Phi_original, Phi_loaded)
