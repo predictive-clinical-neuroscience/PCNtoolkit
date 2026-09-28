@@ -13,6 +13,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import uuid
 from collections import defaultdict
 from functools import reduce
 
@@ -45,6 +46,50 @@ from filelock import FileLock
 
 from pcntoolkit.dataio.fileio import load
 from pcntoolkit.util.output import Messages, Output, Warnings
+
+
+def _read_csv_if_nonempty(path: str, **kwargs: Any) -> pd.DataFrame | None:
+    """
+    Read a results CSV, or return None if it does not exist or is empty.
+
+    Parameters
+    ----------
+    path : str
+        Path to the CSV file.
+    **kwargs : Any
+        Passed on to ``pd.read_csv``.
+
+    Returns
+    -------
+    pd.DataFrame | None
+        The CSV contents, or None if there is nothing to read.
+    """
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        return pd.read_csv(path, **kwargs)
+    return None
+
+
+def _replace_csv(df: pd.DataFrame, path: str) -> None:
+    """
+    Write a results CSV so that it is never left half-written.
+
+    Parallel runner jobs merge their results into the same CSV. If a job is
+    killed while writing in place, the next job cannot parse the file (issue
+    #534). Writing to a temporary file and renaming it over ``path`` swaps in
+    the complete file in one step, so readers see either the old or the new
+    file.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The results to write.
+    path : str
+        Path to the CSV file.
+    """
+    # Unique name so two jobs never share a temporary file.
+    tmp_path = f"{path}.{uuid.uuid4().hex}.tmp"
+    df.to_csv(tmp_path)
+    os.replace(tmp_path, path)
 
 
 class NormData(xr.Dataset):
@@ -1287,32 +1332,28 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-                f.seek(0)
-                old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
-                if old_results is not None:
-                    old_results["observations"] = old_results["observations"].astype(str)
-                    old_results.set_index(["observations"], inplace=True)
-                    # Merge on observations, keeping right (new) values for overlapping columns
-                    new_results = old_results.merge(zdf, on="observations", how="outer", suffixes=("_old", ""))
-                    # Drop columns ending with '_old' as they're the duplicates from old_results
-                    new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
-                else:
-                    new_results = zdf
-                f.seek(0)
-                f.truncate()
-                if "observations" in new_results.columns:
-                    new_results = new_results.sort_values(
-                        by="observations",
-                        key=lambda col: pd.to_numeric(col, errors="coerce"),
-                    )
-                    new_results["observations"] = new_results["observations"].astype(str)
-                else:
-                    new_results = new_results.sort_index(
-                        key=lambda idx: pd.to_numeric(idx, errors="coerce")
-                    )
-                    new_results.index = new_results.index.astype(str)
-                new_results.to_csv(f)
+            old_results = _read_csv_if_nonempty(res_path)
+            if old_results is not None:
+                old_results["observations"] = old_results["observations"].astype(str)
+                old_results.set_index(["observations"], inplace=True)
+                # Merge on observations, keeping right (new) values for overlapping columns
+                new_results = old_results.merge(zdf, on="observations", how="outer", suffixes=("_old", ""))
+                # Drop columns ending with '_old' as they're the duplicates from old_results
+                new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
+            else:
+                new_results = zdf
+            if "observations" in new_results.columns:
+                new_results = new_results.sort_values(
+                    by="observations",
+                    key=lambda col: pd.to_numeric(col, errors="coerce"),
+                )
+                new_results["observations"] = new_results["observations"].astype(str)
+            else:
+                new_results = new_results.sort_index(
+                    key=lambda idx: pd.to_numeric(idx, errors="coerce")
+                )
+                new_results.index = new_results.index.astype(str)
+            _replace_csv(new_results, res_path)
 
     def load_zscores(self, save_dir) -> None:
         Z_path = os.path.join(save_dir, f"Z_{self.name}.csv")
@@ -1343,32 +1384,28 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-                f.seek(0)
-                old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
-                if old_results is not None:
-                    old_results["observations"] = old_results["observations"].astype(str)
-                    old_results.set_index(["observations", "centile"], inplace=True)
-                    # Merge on observations, keeping right (new) values for overlapping columns
-                    new_results = old_results.merge(centiles, on=["observations", "centile"], how="outer", suffixes=("_old", ""))
-                    # Drop columns ending with '_old' as they're the duplicates from old_results
-                    new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
-                else:
-                    new_results = centiles
-                f.seek(0)
-                f.truncate()
-                if "observations" in new_results.columns:
-                    new_results = new_results.sort_values(
-                        by="observations",
-                        key=lambda col: pd.to_numeric(col, errors="coerce"),
-                    )
-                    new_results["observations"] = new_results["observations"].astype(str)
-                else:
-                    new_results = new_results.sort_index(
-                        key=lambda idx: pd.to_numeric(idx, errors="coerce")
-                    )
-                    # new_results.index = new_results.index.astype(str)
-                new_results.to_csv(f)
+            old_results = _read_csv_if_nonempty(res_path)
+            if old_results is not None:
+                old_results["observations"] = old_results["observations"].astype(str)
+                old_results.set_index(["observations", "centile"], inplace=True)
+                # Merge on observations, keeping right (new) values for overlapping columns
+                new_results = old_results.merge(centiles, on=["observations", "centile"], how="outer", suffixes=("_old", ""))
+                # Drop columns ending with '_old' as they're the duplicates from old_results
+                new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
+            else:
+                new_results = centiles
+            if "observations" in new_results.columns:
+                new_results = new_results.sort_values(
+                    by="observations",
+                    key=lambda col: pd.to_numeric(col, errors="coerce"),
+                )
+                new_results["observations"] = new_results["observations"].astype(str)
+            else:
+                new_results = new_results.sort_index(
+                    key=lambda idx: pd.to_numeric(idx, errors="coerce")
+                )
+                # new_results.index = new_results.index.astype(str)
+            _replace_csv(new_results, res_path)
 
     def load_centiles(self, save_dir) -> None:
         C_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
@@ -1402,32 +1439,28 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"logp_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-                f.seek(0)
-                old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
-                if old_results is not None:
-                    old_results["observations"] = old_results["observations"].astype(str)
-                    old_results.set_index(["observations"], inplace=True)
-                    # Merge on observations, keeping right (new) values for overlapping columns
-                    new_results = old_results.merge(logp, on="observations", how="outer", suffixes=("_old", ""))
-                    # Drop columns ending with '_old' as they're the duplicates from old_results
-                    new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
-                else:
-                    new_results = logp
-                f.seek(0)
-                f.truncate()
-                if "observations" in new_results.columns:
-                    new_results = new_results.sort_values(
-                        by="observations",
-                        key=lambda col: pd.to_numeric(col, errors="coerce"),
-                    )
-                    new_results["observations"] = new_results["observations"].astype(str)
-                else:
-                    new_results = new_results.sort_index(
-                        key=lambda idx: pd.to_numeric(idx, errors="coerce")
-                    )
-                    new_results.index = new_results.index.astype(str)
-                new_results.to_csv(f)
+            old_results = _read_csv_if_nonempty(res_path)
+            if old_results is not None:
+                old_results["observations"] = old_results["observations"].astype(str)
+                old_results.set_index(["observations"], inplace=True)
+                # Merge on observations, keeping right (new) values for overlapping columns
+                new_results = old_results.merge(logp, on="observations", how="outer", suffixes=("_old", ""))
+                # Drop columns ending with '_old' as they're the duplicates from old_results
+                new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
+            else:
+                new_results = logp
+            if "observations" in new_results.columns:
+                new_results = new_results.sort_values(
+                    by="observations",
+                    key=lambda col: pd.to_numeric(col, errors="coerce"),
+                )
+                new_results["observations"] = new_results["observations"].astype(str)
+            else:
+                new_results = new_results.sort_index(
+                    key=lambda idx: pd.to_numeric(idx, errors="coerce")
+                )
+                new_results.index = new_results.index.astype(str)
+            _replace_csv(new_results, res_path)
 
     def load_logp(self, save_dir) -> None:
         logp_path = os.path.join(save_dir, f"logp_{self.name}.csv")
@@ -1448,19 +1481,15 @@ class NormData(xr.Dataset):
         res_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
-            with open(res_path, mode="r+" if os.path.exists(res_path) else "w", encoding="utf-8") as f:
-                f.seek(0)
-                old_results = pd.read_csv(f, index_col=0) if os.path.getsize(res_path) > 0 else None
-                if old_results is not None:
-                    # Merge on observations, keeping right (new) values for overlapping columns
-                    new_results = old_results.merge(mdf, on="statistic", how="outer", suffixes=("_old", ""))
-                    # Drop columns ending with '_old' as they're the duplicates from old_results
-                    new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
-                else:
-                    new_results = mdf
-                f.seek(0)
-                f.truncate()
-                new_results.to_csv(f)
+            old_results = _read_csv_if_nonempty(res_path, index_col=0)
+            if old_results is not None:
+                # Merge on observations, keeping right (new) values for overlapping columns
+                new_results = old_results.merge(mdf, on="statistic", how="outer", suffixes=("_old", ""))
+                # Drop columns ending with '_old' as they're the duplicates from old_results
+                new_results = new_results.loc[:, ~new_results.columns.str.endswith("_old")]
+            else:
+                new_results = mdf
+            _replace_csv(new_results, res_path)
 
     def load_statistics(self, save_dir) -> None:
         logp_path = os.path.join(save_dir, f"statistics_{self.name}.csv")

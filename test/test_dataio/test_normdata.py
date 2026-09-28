@@ -3,6 +3,7 @@ import os
 from tempfile import gettempdir
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from test.fixtures.norm_data_fixtures import *
@@ -259,3 +260,52 @@ def test_netcdf(norm_data_from_arrays: NormData):
     # Check if the two norm data objects are identical
     # Additionally checks for object's name and attributes.
     assert norm_data_from_arrays.identical(norm_data_from_netcdf)
+
+
+def _with_zscores(data: NormData) -> NormData:
+    """Return a copy of ``data`` with fake Z-scores, one per Y value."""
+    data = copy.deepcopy(data)
+    data["Z"] = (("observations", "response_vars"), data.Y.to_numpy() * 2.0)
+    return data
+
+
+def test_save_zscores_merges_chunks(
+    norm_data_from_arrays: NormData, tmp_path
+) -> None:
+    # Two runner jobs, each with one response variable, write to the same file.
+    for chunk in norm_data_from_arrays.chunk(n_chunks=2):
+        _with_zscores(chunk).save_zscores(str(tmp_path))
+
+    loaded = copy.deepcopy(norm_data_from_arrays)
+    loaded.load_zscores(str(tmp_path))
+    expected = norm_data_from_arrays.Y.to_numpy() * 2.0
+    expected_vars = list(norm_data_from_arrays.response_vars.values)
+    assert list(loaded.Z.response_vars.values) == expected_vars
+    assert np.allclose(loaded.Z.to_numpy(), expected)
+    # The temporary file is renamed away, not left behind.
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_save_zscores_crash_keeps_old_file(
+    norm_data_from_arrays: NormData, tmp_path, monkeypatch
+) -> None:
+    chunk0, chunk1 = norm_data_from_arrays.chunk(n_chunks=2)
+    _with_zscores(chunk0).save_zscores(str(tmp_path))
+    z_path = tmp_path / f"Z_{chunk0.name}.csv"
+    before = z_path.read_text()
+
+    def write_half_then_crash(self, path_or_buf, *args, **kwargs):
+        # Simulate a job killed halfway through writing (issue #534).
+        if hasattr(path_or_buf, "write"):
+            path_or_buf.write("observations,subject_ids,resp")
+        else:
+            with open(path_or_buf, "w") as f:
+                f.write("observations,subject_ids,resp")
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(pd.DataFrame, "to_csv", write_half_then_crash)
+    with pytest.raises(KeyboardInterrupt):
+        _with_zscores(chunk1).save_zscores(str(tmp_path))
+    monkeypatch.undo()
+
+    assert z_path.read_text() == before
