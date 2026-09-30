@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 
@@ -7,6 +8,7 @@ import pytest
 
 from pcntoolkit.math_functions.likelihood import NormalLikelihood
 from pcntoolkit.math_functions.prior import (
+    CenteredRandomPrior,
     LinearPrior,
     Prior,
     RandomPrior,
@@ -106,8 +108,13 @@ def test_hbr_to_and_from_dict_and_args(sample_args, args):
     assert args.get("linear_mu", False) == (hbr_dict["likelihood"]["mu"]["type"] == "LinearPrior")
     if args.get("linear_mu", False):
         assert hbr_dict["likelihood"]["mu"]["type"] == "LinearPrior"
-        assert (hbr_dict["likelihood"]["mu"]["slope"]["type"] == "RandomPrior") == args.get("random_slope_mu", False)
-        assert (hbr_dict["likelihood"]["mu"]["intercept"]["type"] == "RandomPrior") == args.get("random_intercept_mu", False)
+        # A centered random effect serializes under its own type name.
+        expected_slope_type = "CenteredRandomPrior" if args.get("centered_slope_mu", False) else "RandomPrior"
+        expected_intercept_type = "CenteredRandomPrior" if args.get("centered_intercept_mu", False) else "RandomPrior"
+        assert (hbr_dict["likelihood"]["mu"]["slope"]["type"] == expected_slope_type) == args.get("random_slope_mu", False)
+        assert (hbr_dict["likelihood"]["mu"]["intercept"]["type"] == expected_intercept_type) == args.get(
+            "random_intercept_mu", False
+        )
     assert hbr.is_from_dict
     assert hbr_dict["likelihood"]["sigma"]["type"] == "LinearPrior"
 
@@ -185,6 +192,49 @@ def test_random_prior_with_covariate_dim(extract_data):
     assert len(samples.shape.eval()) == 2
     assert samples.shape.eval()[0] == len(extract_data[0].coords["observations"])
     assert samples.shape.eval()[1] == len(extract_data[0].coords["mu_covariates"])
+
+
+def test_centered_random_prior_compiles_centered(extract_data):
+    """Test that offests are not a Deterministic (eg that offsets are not equal to 
+    normalised_offets*site_scale) and that there is no normalized_offsets exists"""
+    model = extract_data[0]
+    prior: CenteredRandomPrior = make_prior(name="mu13", random=True, centered=True)  # type: ignore
+    samples = prior.compile(*extract_data)
+
+    free_rvs = {v.name for v in model.free_RVs}
+    deterministics = {v.name for v in model.deterministics}
+    for be_i in model.coords["batch_effect_dims"]:
+        assert f"{be_i}_offset_mu13" in free_rvs
+        assert f"{be_i}_offset_mu13" not in deterministics
+        # The unit-scale draw (normalized_{be}_offset_mu13) belongs to the non-centered 
+        # form only.
+        assert f"normalized_{be_i}_offset_mu13" not in free_rvs
+
+    assert samples.shape.eval()[0] == len(model.coords["observations"])
+
+
+def test_random_prior_compiles_non_centered(extract_data):
+    """Test that offests are Deterministic (eg that offsets are equal to 
+    normalised_offets*site_scale) and that there is a normalized_offsets parameter"""
+    model = extract_data[0]
+    prior: RandomPrior = make_prior(name="mu14", random=True)  # type: ignore
+    prior.compile(*extract_data)
+
+    free_rvs = {v.name for v in model.free_RVs}
+    deterministics = {v.name for v in model.deterministics}
+    for be_i in model.coords["batch_effect_dims"]:
+        assert f"normalized_{be_i}_offset_mu14" in free_rvs
+        assert f"{be_i}_offset_mu14" in deterministics
+
+
+def test_centered_random_prior_transfer_stays_centered():
+    """
+    RandomPrior.transfer hardcodes RandomPrior(...), so inheriting it would
+    silently downgrade a centered prior to the non-centered parameterisation.
+    """
+    assert CenteredRandomPrior.transfer is not RandomPrior.transfer
+    assert CenteredRandomPrior._compile is not RandomPrior._compile
+    assert "CenteredRandomPrior(" in inspect.getsource(CenteredRandomPrior.transfer)
 
 
 def test_linear_prior(extract_data):

@@ -91,6 +91,15 @@ test/resources/*
 !test/resources/.gitkeep
 !test/resources/hbr/save_load_test/.gitkeep
 
+# Small pre-trained model fixtures (test/test_core/test_pretrained_model.py).
+# Both the directory and its contents need un-excluding: git does not descend
+# into a directory excluded by the rule above.
+!test/resources/README.md
+!test/resources/pretrained_blr/
+!test/resources/pretrained_blr/**
+!test/resources/pretrained_hbr/
+!test/resources/pretrained_hbr/**
+
 test/output/*
 !test/output/.gitkeep
 

@@ -19,11 +19,11 @@ privacy-preserving, since each site adapts the model locally and shares
 only the model parameters, never the raw data. The two, however, play
 different roles:
 
-- Extend allows the model to be extended sequentially: the first site
-  extends it and passes it to the second, which extends it again, and so
-  on across the consortium.
-- On the other hand, a model should not be transferred sequentially but
-  only once.
+-  Extend allows the model to be extended sequentially: the first site
+   extends it and passes it to the second, which extends it again, and
+   so on across the consortium.
+-  On the other hand, a model should not be transferred sequentially but
+   only once.
 
 Imports
 -------
@@ -265,34 +265,8 @@ merges it with the real local data, and refits a full model.
     )
 
 
-.. code:: text
 
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.4374536951328396e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:295: UserWarning: Process: 8024 - 2026-08-03 23:12:59 - Posterior estimation failed: 
-    Matrix is not positive definite. 
-    The optimizer could not find a stable solution. Retrying optimization.
-      warnings.warn(message, category)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.214057563446112e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.2079019777145647e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.2551514238264925e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.416109766795953e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.4369354212062313e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.015174144158092e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.904144774168133e-32.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    c:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\scipy\optimize\_numdiff.py:687: RuntimeWarning: overflow encountered in divide
-      df_dx = [delf / delx for delf, delx in zip(df, dx)]
-    
-
-
-.. image:: 06_transfer_extend_files/06_transfer_extend_22_1.png
+.. image:: 06_transfer_extend_files/06_transfer_extend_22_0.png
 
 
 
@@ -388,30 +362,6 @@ reference point that both methods are trying to approximate.
     );
 
 
-.. code:: text
 
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6928204946457924e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:295: UserWarning: Process: 8024 - 2026-08-03 23:14:49 - Posterior estimation failed: 
-    Matrix is not positive definite. 
-    The optimizer could not find a stable solution. Retrying optimization.
-      warnings.warn(message, category)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.9626010741685792e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6079551777131047e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.621390513519887e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6838127920727597e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6925807577914705e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.5317273255736646e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:632: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.8708559802049616e-18.
-      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    
-
-
-.. image:: 06_transfer_extend_files/06_transfer_extend_29_1.png
+.. image:: 06_transfer_extend_files/06_transfer_extend_29_0.png
 

@@ -69,13 +69,18 @@ For Windows you have to manually install the g++ compiler (to compile C/C++ exte
 
 Windows does not come with Make pre-installed. You can use Make via Git Bash. To find instructions about that fetch and read https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/PCNtoolkit-from-Windows#2-installing-make-on-windows.
 
+## Writing style (explanations, docstrings, commits, plans)
+
+Audience: a neuroscientist who codes but is not a statistician or ML
+engineer, and will skim before reading. Be concise; no filler or marketing
+tone. Explain all Bayesian terms rather than assuming them (`shrinkage`,
+`posterior`, `hyperprior`, `centered/non-centered`, `random effect`,
+`MCMC convergence`). Prefer one worked example with real numbers over
+abstraction; if you use an analogy, say where it breaks.
+Plans: one page max — goal in one line, then numbered steps naming files.
+
+
 ## Code Style and Standards
-
-When writing explanations, plans, docstrings, comments, commit messages and summaries you MUST:
-
-- Be concise. More text is not better. No filler, flattery, or marketing tone.
-- Audience: a neuroscientist who codes, but is not a statistician, software
-  engineer, or ML expert.
 
 ### Commits/PRs
 

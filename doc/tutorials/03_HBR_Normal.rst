@@ -164,6 +164,36 @@ parameters yourself, using the ``make_prior`` function.
 
    mu = make_prior('mu', linear=True, basis_function=BSplineBasisFunction(degree=3, nknots=5), intercept = make_prior('intercept_mu', random=True))
 
+B-spline
+~~~~~~~~
+
+A ``BsplineBasisFunction`` has three parameters:
+
+-  ``basis_column``: which column of the covariate matrix ``X`` to
+   expand, counted from 0. In this tutorial ``X`` holds a single
+   covariate, age, so ``basis_column=0`` picks age; the remaining
+   columns of ``X`` are copied through unchanged. Point it at the
+   covariate whose effect you expect to curve.
+-  ``nknots``: how many knots to place. A knot is an x-value where two
+   polynomial pieces of the spline are stitched together; by default
+   they are spread evenly over the observed range of the covariate. More
+   knots give the curve more freedom to wiggle and follow the data,
+   fewer knots give a smoother curve that is cheaper to estimate.
+   Increase ``nknots`` only when the effect really bends and your sample
+   size can support the extra parameters.
+-  ``degree``: the polynomial order used between the knots. ``degree=1``
+   stitches straight segments, so the fitted curve has visible corners.
+   ``degree=3`` (the usual default) stitches cubic pieces, so both the
+   curve and its slope change smoothly.
+
+The expanded covariate takes up ``nknots + degree - 1`` columns, so
+``BsplineBasisFunction(degree=3, nknots=5)`` turns age into 7 columns.
+This is what a basis expansion means: one covariate is replaced by 7
+columns. Each column is a small bump that is high in one part of the age
+range and zero elsewhere. The prior puts a slope on each column, which
+scales its bump up or down, and the scaled bumps add up to one smooth
+nonlinear age effect.
+
 2. If your parameter is not a function of the covariates, you have to
    decide whether the parameter itself has a random effect or not.
    Here’s an example of a prior with a random effect.
@@ -235,6 +265,8 @@ NormalLikelihood, which we will use to model our response variable.
             sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0))
         ),
         # We use a B-spline basis function to allow for non-linearity in the mean.
+        # basis_column=0 picks the covariate to expand (age here), and nknots=5 with
+        # degree=3 expands that single column into nknots + degree - 1 = 7 basis columns.
         basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
     )
     sigma = make_prior(
@@ -245,6 +277,7 @@ NormalLikelihood, which we will use to model our response variable.
         # The intercept is not random, because we assume the intercept of the variance to be the same for all sites and sexes.
         intercept=make_prior(dist_name="Normal", dist_params=(1.0, 1.0)),
         # We use a B-spline basis function to allow for non-linearity in the standard deviation.
+        # Again age (basis_column=0) is expanded into 7 basis columns.
         basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
         # We use a softplus mapping to ensure that sigma is strictly positive.
         mapping="softplus",
@@ -360,7 +393,7 @@ Let’s start with the centiles.
 
 .. code:: text
 
-    [<Figure size 800x550 with 1 Axes>]
+    [<Figure size 640x480 with 1 Axes>]
 
 
 
@@ -379,7 +412,7 @@ Now let’s see the qq plots
 
 .. code:: text
 
-    [<Figure size 800x550 with 1 Axes>]
+    [<Figure size 640x480 with 1 Axes>]
 
 
 
@@ -460,19 +493,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.354625</td>
-          <td>5.910348</td>
-          <td>0.087678</td>
-          <td>0.308367</td>
-          <td>0.871006</td>
-          <td>-0.547932</td>
-          <td>0.354623</td>
-          <td>656.104842</td>
-          <td>0.50446</td>
-          <td>7.723401e-57</td>
-          <td>0.645377</td>
-          <td>0.87945</td>
-          <td>1.803624</td>
+          <td>0.359243</td>
+          <td>5.844206</td>
+          <td>0.086936</td>
+          <td>0.308771</td>
+          <td>0.872169</td>
+          <td>-0.54677</td>
+          <td>0.359242</td>
+          <td>653.752969</td>
+          <td>0.50329</td>
+          <td>1.526992e-56</td>
+          <td>0.640758</td>
+          <td>0.880239</td>
+          <td>1.794573</td>
         </tr>
       </tbody>
     </table>
@@ -534,19 +567,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.368105</td>
-          <td>1.293957</td>
-          <td>0.161827</td>
-          <td>0.341647</td>
-          <td>0.796115</td>
-          <td>-0.323154</td>
-          <td>0.365075</td>
-          <td>482.262081</td>
-          <td>0.493969</td>
-          <td>1.091451e-14</td>
-          <td>0.634925</td>
-          <td>0.962756</td>
-          <td>0.817352</td>
+          <td>0.373257</td>
+          <td>1.208262</td>
+          <td>0.16151</td>
+          <td>0.341457</td>
+          <td>0.789316</td>
+          <td>-0.329953</td>
+          <td>0.370419</td>
+          <td>480.228052</td>
+          <td>0.496079</td>
+          <td>8.084528e-15</td>
+          <td>0.629581</td>
+          <td>0.964724</td>
+          <td>0.788497</td>
         </tr>
       </tbody>
     </table>
@@ -559,12 +592,12 @@ What’s next?
 Now we have a normative hierarchical Bayesian regression model, we can
 use it to:
 
-- Make predictions on new data
-- Harmonize data, this means that we ‘remove’ the batch effects from the
-  data, by simulating what the data would have looked like if all data
-  was from the same batch.
-- Synthesize new data
-- Extend the model using data from new batches
+-  Make predictions on new data
+-  Harmonize data, this means that we ‘remove’ the batch effects from
+   the data, by simulating what the data would have looked like if all
+   data was from the same batch.
+-  Synthesize new data
+-  Extend the model using data from new batches
 
 Predicting
 ~~~~~~~~~~

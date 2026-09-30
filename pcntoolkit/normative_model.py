@@ -16,6 +16,7 @@ import scipy.stats as stats
 import xarray as xr
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.math_functions.likelihood import ZeroInflatedNegativeBinomialLikelihood
 from pcntoolkit.math_functions.scaler import Scaler
 
 # pylint: disable=unused-import
@@ -103,6 +104,39 @@ class NormativeModel:
         self.batch_effect_counts = None
         self.batch_effect_covariate_ranges = None
         self.covariate_ranges = None
+
+        # Check that y stays as integer for ZINB likelihood
+        self._check_y_stays_integer()
+
+    def _check_y_stays_integer(self) -> None:
+        """
+        The ZINB likelihood models integers, so Y must remain non-negative integers.
+        Scaling or transforming Y breaks that. 
+        
+        Raises
+        ------
+        ValueError
+            If ZINB likelihood is combined with a scaler or transform on Y.
+        """
+        likelihood = getattr(self.template_regression_model, "likelihood", None)
+        
+        # If the likelihood is not ZINB, no need to check further.
+        if not isinstance(likelihood, ZeroInflatedNegativeBinomialLikelihood):
+            return
+
+        # Scaler check
+        if self.outscaler not in ("none", "id"): # "id" and "none" both mean no scaling.
+            raise ValueError(
+                Output.error(Errors.ERROR_ZINB_SCALED_Y, outscaler=self.outscaler)
+            )
+
+        # Transform check
+        if self.y_transform is not None:
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_ZINB_TRANSFORMED_Y, y_transform=self.y_transform
+                )
+            )
 
     """
         ########################################################################################################################

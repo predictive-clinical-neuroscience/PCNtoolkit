@@ -1,0 +1,267 @@
+{
+    "model": {
+        "name": "response_var_0",
+        "type": "HBR",
+        "is_fitted": true,
+        "is_from_dict": false,
+        "transfered": false,
+        "ptk_version": "1.1.2",
+        "likelihood": {
+            "name": "Normal",
+            "mu": {
+                "name": "mu",
+                "_dims": null,
+                "mapping": "identity",
+                "mapping_params": [
+                    0,
+                    1
+                ],
+                "slope": {
+                    "name": "slope_mu",
+                    "_dims": [
+                        "mu_covariates"
+                    ],
+                    "mapping": "identity",
+                    "mapping_params": [
+                        0,
+                        1
+                    ],
+                    "dist_name": "Normal",
+                    "dist_params": [
+                        0.0,
+                        3.0
+                    ],
+                    "dims": [
+                        "mu_covariates"
+                    ],
+                    "type": "Prior"
+                },
+                "intercept": {
+                    "name": "intercept_mu",
+                    "_dims": null,
+                    "mapping": "identity",
+                    "mapping_params": [
+                        0,
+                        1
+                    ],
+                    "mu": {
+                        "name": "mu_intercept_mu",
+                        "_dims": null,
+                        "mapping": "identity",
+                        "mapping_params": [
+                            0,
+                            1
+                        ],
+                        "dist_name": "Normal",
+                        "dist_params": [
+                            0,
+                            1
+                        ],
+                        "dims": null,
+                        "type": "Prior"
+                    },
+                    "sigma": {
+                        "name": "sigma_intercept_mu",
+                        "_dims": null,
+                        "mapping": "identity",
+                        "mapping_params": [
+                            0,
+                            1
+                        ],
+                        "dist_name": "Gamma",
+                        "dist_params": [
+                            1,
+                            0.5
+                        ],
+                        "dims": null,
+                        "type": "Prior"
+                    },
+                    "dims": null,
+                    "type": "RandomPrior",
+                    "site_sigma": {
+                        "name": "site_sigma_intercept_mu",
+                        "_dims": null,
+                        "mapping": "identity",
+                        "mapping_params": [
+                            0,
+                            1
+                        ],
+                        "dist_name": "Gamma",
+                        "dist_params": [
+                            1,
+                            0.5
+                        ],
+                        "dims": null,
+                        "type": "Prior"
+                    }
+                },
+                "basis_function": {
+                    "is_fitted": true,
+                    "basis_name": "bspline",
+                    "min": {
+                        "0": -1.736853609922731
+                    },
+                    "max": {
+                        "0": 1.7525595449195506
+                    },
+                    "compute_min": true,
+                    "compute_max": true,
+                    "basis_column": [
+                        0
+                    ],
+                    "degree": 3,
+                    "nknots": 5,
+                    "left_expand": 0.05,
+                    "right_expand": 0.05,
+                    "knot_method": "uniform",
+                    "knots": {
+                        "0": [
+                            -1.911324267664845,
+                            -1.911324267664845,
+                            -1.911324267664845,
+                            -1.911324267664845,
+                            -0.9517356500832176,
+                            0.007852967498409802,
+                            0.9674415850800373,
+                            1.9270302026616646,
+                            1.9270302026616646,
+                            1.9270302026616646,
+                            1.9270302026616646
+                        ]
+                    },
+                    "basis_function": "BsplineBasisFunction"
+                },
+                "covariate_dims": [
+                    "mu_covariates_0",
+                    "mu_covariates_1",
+                    "mu_covariates_2",
+                    "mu_covariates_3",
+                    "mu_covariates_4",
+                    "mu_covariates_5",
+                    "mu_covariates_6",
+                    "mu_covariates_7"
+                ],
+                "one_dimensional": false,
+                "dims": null,
+                "type": "LinearPrior"
+            },
+            "sigma": {
+                "name": "sigma",
+                "_dims": null,
+                "mapping": "softplus",
+                "mapping_params": [
+                    0,
+                    2
+                ],
+                "slope": {
+                    "name": "slope_sigma",
+                    "_dims": [
+                        "sigma_covariates"
+                    ],
+                    "mapping": "identity",
+                    "mapping_params": [
+                        0,
+                        1
+                    ],
+                    "dist_name": "Normal",
+                    "dist_params": [
+                        0.0,
+                        2.0
+                    ],
+                    "dims": [
+                        "sigma_covariates"
+                    ],
+                    "type": "Prior"
+                },
+                "intercept": {
+                    "name": "intercept_sigma",
+                    "_dims": null,
+                    "mapping": "identity",
+                    "mapping_params": [
+                        0,
+                        1
+                    ],
+                    "dist_name": "Normal",
+                    "dist_params": [
+                        0.0,
+                        1.0
+                    ],
+                    "dims": null,
+                    "type": "Prior"
+                },
+                "basis_function": {
+                    "is_fitted": true,
+                    "basis_name": "bspline",
+                    "min": {
+                        "0": -1.736853609922731
+                    },
+                    "max": {
+                        "0": 1.7525595449195506
+                    },
+                    "compute_min": true,
+                    "compute_max": true,
+                    "basis_column": [
+                        0
+                    ],
+                    "degree": 3,
+                    "nknots": 5,
+                    "left_expand": 0.05,
+                    "right_expand": 0.05,
+                    "knot_method": "uniform",
+                    "knots": {
+                        "0": [
+                            -1.911324267664845,
+                            -1.911324267664845,
+                            -1.911324267664845,
+                            -1.911324267664845,
+                            -0.9517356500832176,
+                            0.007852967498409802,
+                            0.9674415850800373,
+                            1.9270302026616646,
+                            1.9270302026616646,
+                            1.9270302026616646,
+                            1.9270302026616646
+                        ]
+                    },
+                    "basis_function": "BsplineBasisFunction"
+                },
+                "covariate_dims": [
+                    "sigma_covariates_0",
+                    "sigma_covariates_1",
+                    "sigma_covariates_2",
+                    "sigma_covariates_3",
+                    "sigma_covariates_4",
+                    "sigma_covariates_5",
+                    "sigma_covariates_6",
+                    "sigma_covariates_7"
+                ],
+                "one_dimensional": false,
+                "dims": null,
+                "type": "LinearPrior"
+            }
+        },
+        "_name": "response_var_0",
+        "draws": 15,
+        "tune": 5,
+        "cores": 1,
+        "chains": 2,
+        "nuts_sampler": "pymc",
+        "init": "jitter+adapt_diag",
+        "progressbar": false,
+        "be_maps": {
+            "site": {
+                "0": 0,
+                "1": 1
+            }
+        },
+        "idata_path": "/tmp/claude-13758/-home-preclineu-kontsi/9042b772-2fc3-4079-8699-e907ca9a5db5/scratchpad/ptk112/out/pretrained_hbr/model/response_var_0/idata.nc"
+    },
+    "outscaler": {
+        "scaler_type": "standardize",
+        "adjust_outliers": false,
+        "m": 4.80533276229387,
+        "s": 1.4664351182602384,
+        "min": 0.7253735568185578,
+        "max": 8.387481899856557
+    }
+}

@@ -58,11 +58,38 @@ DEFAULT_PRIOR_ARGS = {
 
 
 def make_prior(name: str = "theta", **kwargs) -> BasePrior:
+    """Build a prior from keyword arguments.
+
+    Parameters
+    ----------
+    name : str
+        Name of the prior.
+    linear : bool
+        Build a `LinearPrior` (a slope/intercept pair through a basis function).
+    random : bool
+        Build a random-effect prior, i.e. a per-batch-effect offset around a
+        shared mean.
+    centered : bool
+        Only meaningful together with `random`. Selects how the random effect is
+        parameterised - the two forms describe the same model but give the
+        samplers different geometry:
+
+        - `False` (default) - **non-centered**: the offsets are drawn at unit
+          scale and multiplied by the group scale,
+          `offset = sigma * ZeroSumNormal(1)`. This is the standard choice for
+          NUTS, which mixes better when the scale and the offsets are a priori
+          independent.
+        - `True` - **centered**: the offsets are drawn directly at the group
+          scale, `offset ~ ZeroSumNormal(sigma)`. Prefer this for
+          mode-based approximations (`inference_method="laplace"`).
+    """
     kwargs["name"] = name
+    # Extract the 'centered' flag from the keyword arguments, defaulting to False.
+    centered = kwargs.pop("centered", False)
     if kwargs.pop("linear", False):
         return LinearPrior(**kwargs)
     elif kwargs.pop("random", False):
-        return RandomPrior(**kwargs)
+        return CenteredRandomPrior(**kwargs) if centered else RandomPrior(**kwargs)
     else:
         return Prior(**kwargs)
 
@@ -98,7 +125,10 @@ def prior_from_args(name: str, args: Dict[str, Any], dims: Optional[Union[Tuple[
     elif my_args.get(f"random_{name}", False):
         mu = prior_from_args(f"mu_{name}", my_args, dims=dims)
         sigma = prior_from_args(f"sigma_{name}", my_args, dims=dims)
-        return RandomPrior(mu=mu, sigma=sigma, name=name, dims=dims, mapping=mapping, mapping_params=mapping_params)
+        # When running a model in the CLI specify`centered_<name>` to run CenteredRandomPrior, 
+        # e.g., "centered_intercept_mu": True 
+        cls = CenteredRandomPrior if my_args.get(f"centered_{name}", False) else RandomPrior
+        return cls(mu=mu, sigma=sigma, name=name, dims=dims, mapping=mapping, mapping_params=mapping_params)
     else:
         return Prior(
             name=name, dims=dims, mapping=mapping, mapping_params=mapping_params, dist_name=dist_name, dist_params=dist_params
@@ -142,8 +172,13 @@ class BasePrior(ABC):
             toreturn = math.exp((x - a) / b) * b
         elif self.mapping == "softplus":
             toreturn = math.log(1 + math.exp((x - a) / b)) * b  # type: ignore
+        elif self.mapping == "sigmoid":
+            # Maps to (0, 1), for parameters that are probabilities (e.g. the psi
+            # of a ZINB likelihood)
+            return math.sigmoid((x - a) / b)
         else:
             raise ValueError(Output.error(Errors.ERROR_UNKNOWN_MAPPING, mapping=self.mapping))
+        # This adds a third parameter to the mapping that does a verical shift
         if len(self.mapping_params) > 2:
             toreturn = toreturn + self.mapping_params[2]
         return toreturn
@@ -410,39 +445,14 @@ class RandomPrior(BasePrior):
         return instance
 
 
-class CenteredRandomPrior(BasePrior):
-    def __init__(
-        self,
-        mu: Optional[BasePrior] = None,
-        sigma: Optional[BasePrior] = None,
-        name: str = "theta",
-        dims: Optional[Union[Tuple[str, ...], str]] = None,
-        mapping: str = "identity",
-        mapping_params: tuple[float, ...] = None,  # type: ignore
-        **kwargs,
-    ):
-        super().__init__(name, dims, mapping, mapping_params, **kwargs)
-        self.mu = mu or make_prior(dist_name="Normal", dist_params=(0, 2.0))
-        self.sigma = sigma or make_prior(
-            dist_name="Normal", dist_params=(1.0, 1.0), mapping="softplus", mapping_params=(0.0, 1.0)
-        )
-        self.sigmas = {}
-        self.offsets = {}
-        self.scaled_offsets = {}
-        self.sample_dims = ("observations",)
-        self.set_name(self.name)
+class CenteredRandomPrior(RandomPrior):
+    """
+    A random effect drawn directly at the group scale.
 
-    @property
-    def dims(self):
-        return self._dims
-
-    @dims.setter
-    def dims(self, value):
-        if hasattr(self, "mu"):
-            self.mu.dims = value
-        if hasattr(self, "sigma"):
-            self.sigma.dims = value
-        self._dims = value
+    Differs from :class:`RandomPrior` only in how the offsets are sampled: here
+    they are drawn at the group's own scale, rather than at unit scale and then
+    multiplied by it. The two describe the same model but sample differently.
+    """
 
     def _compile(
         self,
@@ -464,6 +474,12 @@ class CenteredRandomPrior(BasePrior):
                 if be_i not in self.sigmas:
                     self.sigmas[be_i] = copy.deepcopy(self.sigma)
                     self.sigmas[be_i].set_name(f"{be_i}_sigma_{self.name}")
+                # TODO: CenteredRandomPrioronly works for a random intercept (`intercept_mu`), where
+                # self.dims is None. For a random slope (`slope_mu`) self.dims is
+                # ("covariates",), so sigma has one value per covariate, which
+                # ZeroSumNormal rejects: "sigma must have length one across the
+                # zero-sum axes". Fix: pass sigma[..., None] to ZeroSumNormal to give sigma a per-covariate
+                # axis and transpose the result, so shapes match RandomPrior (observations first).
                 self.scaled_offsets[be_i] = pm.ZeroSumNormal(
                     f"{be_i}_offset_{self.name}", sigma=self.sigmas[be_i].compile(model, X, be, be_maps, Y), dims=be_dims
                 )
@@ -471,61 +487,17 @@ class CenteredRandomPrior(BasePrior):
             self.dist = acc
         return self.dist
 
-    def transfer(self, idata: xr.DataTree, **kwargs) -> "RandomPrior":
+    def transfer(self, idata: xr.DataTree, **kwargs) -> "CenteredRandomPrior":
         new_mu = self.mu.transfer(idata, **kwargs)
         new_sigma = copy.deepcopy(self.sigma)
-        new_prior = RandomPrior(
+        # Must stay centered: transferring into a RandomPrior would silently
+        # switch the model to the non-centered parameterisation.
+        new_prior = CenteredRandomPrior(
             name=self.name, dims=self.dims, mapping=self.mapping, mapping_params=self.mapping_params, mu=new_mu, sigma=new_sigma
         )
         for be_i in self.sigmas.keys():
             new_prior.sigmas[be_i] = self.sigmas[be_i].transfer(idata, **kwargs)
         return new_prior
-
-    def update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
-    ):
-        pass
-
-    def set_name(self, name: str):
-        self.name = name
-        self.mu.set_name(f"mu_{self.name}")
-        self.sigma.set_name(f"sigma_{self.name}")
-
-    @property
-    def has_random_effect(self):
-        return True
-
-    def to_dict(self):
-        dct = super().to_dict()
-        dct["mu"] = self.mu.to_dict()
-        dct["sigma"] = self.sigma.to_dict()
-        if hasattr(self, "sigmas"):
-            for k, v in self.sigmas.items():
-                dct[f"{k}_sigma"] = v.to_dict()
-
-        for thing in ["sigmas", "offsets", "scaled_offsets", "dist"]:
-            if hasattr(self, thing):
-                del dct[thing]
-        return dct
-
-    @classmethod
-    def from_dict(
-        cls, dict: dict, version: str | None = None
-    ) -> "CenteredRandomPrior":
-        mu = BasePrior.from_dict(dict["mu"], version=version)
-        sigma = BasePrior.from_dict(dict["sigma"], version=version)
-        instance = cls(
-            mu=mu,
-            sigma=sigma,
-            **{k: v for k, v in dict.items() if k in ["name", "dims", "mapping", "mapping_params"]},
-        )
-        instance.sigmas = {
-            k.split("_")[0]: BasePrior.from_dict(v, version=version)
-            for k, v in dict.items()
-            if k.endswith("_sigma")
-        }
-        # instance.scaled_offsets = {k: Param.from_dict(v) for k, v in dict.items() if k.endswith("_offset")}
-        return instance
 
 
 class LinearPrior(BasePrior):

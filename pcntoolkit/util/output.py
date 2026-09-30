@@ -96,6 +96,10 @@ Total failed jobs: {total_failed_jobs}
 
 
 class Warnings:
+    ZINB_SATURATED_QUANTILE = (
+        "Some Z-scores are so extreme (beyond about |Z| = 8.3) that no finite count exists for them; "
+        "returning inf. You may want to exclude these Z-scores."
+    )
     BATCH_SIZE_AND_N_BATCHES_SPECIFIED = "Batch size and number of batches specified. Batch size will be ignored."
     MISSING_COVARIATES = "The dataset {dataset_name} is missing the following covariates: {covariates}"
     EXTRA_COVARIATES = "The dataset {dataset_name} has too many covariates: {covariates}"
@@ -213,6 +217,16 @@ class Errors:
     ERROR_BLR_WARPS_NOT_PROVIDED = "A list of warp functions is required"
     ERROR_HBRDATA_X_NOT_PROVIDED = "X must be provided"
     ERROR_UNKNOWN_LIKELIHOOD = "Unsupported likelihood ({likelihood})"
+    ERROR_ZINB_Y_NOT_COUNTS = "The ZINB likelihood requires Y to contain non-negative integer counts."
+    ERROR_ZINB_Y_NOT_FINITE = "The ZINB likelihood requires all values of Y to be finite, but Y contains NaN or infinite values."
+    ERROR_ZINB_SCALED_Y = (
+        "The ZINB likelihood requires Y to contain non-negative integer counts, but "
+        "outscaler='{outscaler}' would scale Y and Y won't be integer anymore. Use outscaler='none' instead."
+    )
+    ERROR_ZINB_TRANSFORMED_Y = (
+        "The ZINB likelihood requires Y to contain non-negative integer counts, but "
+        "y_transform='{y_transform}' would transform Y and Y won't be integer anymore. Use y_transform=None instead."
+    )
     ERROR_HBR_Y_NOT_PROVIDED = "y must be provided for z-score computation"
     ERROR_HBR_FITTED_BUT_NO_IDATA = "HBR model is fitted but does not have idata. This should not happen."
     ERROR_HBR_COULD_NOT_LOAD_IDATA = "Could not load idata from {path}"

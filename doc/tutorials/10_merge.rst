@@ -156,10 +156,10 @@ Part 1: Train a model at each remote location
 Each remote location trains its own normative model independently,
 without sharing any data. Crucially, the two model types are different:
 
-- **Location 1** uses an ``HBR`` (PCNtoolkit defaults: Normal
-  likelihood, B-spline basis for μ and σ, random intercept for μ).
-- **Location 2** uses a ``BLR`` with a non-linear warp applied to the
-  response variable, allowing it to capture non-Gaussian distributions.
+-  **Location 1** uses an ``HBR`` (PCNtoolkit defaults: Normal
+   likelihood, B-spline basis for μ and σ, random intercept for μ).
+-  **Location 2** uses a ``BLR`` with a non-linear warp applied to the
+   response variable, allowing it to capture non-Gaussian distributions.
 
 Train the Location 1 model (HBR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,7 +168,7 @@ Train the Location 1 model (HBR)
 
     location1_model = NormativeModel(HBR(progressbar=False), save_dir="../out/models/location1_model")
     location1_model.fit_predict(location1_train, location1_test);
-    
+
 
 Train the Location 2 model (BLR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -31,7 +31,7 @@
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
-    
+
 
 .. code:: ipython3
 
@@ -62,14 +62,14 @@
     CompositeBasisFunction(
             (BsplineBasisFunction(basis_column=0, degree=3, nknots=5), BsplineBasisFunction(basis_column=1, degree=3, nknots=5))
         ),
-    
+
 
 
 
 
 .. code:: text
 
-    (<pcntoolkit.math_functions.basis_function.CompositeBasisFunction at 0x7f120864c1a0>,)
+    (<pcntoolkit.math_functions.basis_function.CompositeBasisFunction at 0x7f70289f3cb0>,)
 
 
 
@@ -161,202 +161,6 @@
 .. code:: ipython3
 
     model.fit_predict(train, test)
-
-
-.. code:: text
-
-    /opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/pytensor/link/c/cmodule.py:2986: UserWarning: PyTensor could not link to a BLAS installation. Operations that might benefit from BLAS will be severely degraded.
-    This usually happens when PyTensor is installed via pip. We recommend it be installed via conda/mamba/pixi instead.
-    Alternatively, you can use an experimental backend such as Numba or JAX that perform their own BLAS optimizations, by setting `pytensor.config.mode == 'NUMBA'` or passing `mode='NUMBA'` when compiling a PyTensor function.
-    For more options and details see https://pytensor.readthedocs.io/en/latest/troubleshooting.html#how-do-i-configure-test-my-blas-library
-      warnings.warn(
-    
-
-
-.. raw:: html
-
-    
-    <style>
-        :root {
-            --column-width-1: 40%; /* Progress column width */
-            --column-width-2: 15%; /* Chain column width */
-            --column-width-3: 15%; /* Divergences column width */
-            --column-width-4: 15%; /* Step Size column width */
-            --column-width-5: 15%; /* Gradients/Draw column width */
-        }
-    
-        .nutpie {
-            max-width: 800px;
-            margin: 10px auto;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            //color: #333;
-            //background-color: #fff;
-            padding: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            font-size: 14px; /* Smaller font size for a more compact look */
-        }
-        .nutpie table {
-            width: 100%;
-            border-collapse: collapse; /* Remove any extra space between borders */
-        }
-        .nutpie th, .nutpie td {
-            padding: 8px 10px; /* Reduce padding to make table more compact */
-            text-align: left;
-            border-bottom: 1px solid #888;
-        }
-        .nutpie th {
-            //background-color: #f0f0f0;
-        }
-    
-        .nutpie th:nth-child(1) { width: var(--column-width-1); }
-        .nutpie th:nth-child(2) { width: var(--column-width-2); }
-        .nutpie th:nth-child(3) { width: var(--column-width-3); }
-        .nutpie th:nth-child(4) { width: var(--column-width-4); }
-        .nutpie th:nth-child(5) { width: var(--column-width-5); }
-    
-        .nutpie progress {
-            width: 100%;
-            height: 15px; /* Smaller progress bars */
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-bar {
-            background-color: #eee;
-            border-radius: 5px;
-        }
-        progress::-webkit-progress-value {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        progress::-moz-progress-bar {
-            background-color: #5cb85c;
-            border-radius: 5px;
-        }
-        .nutpie .progress-cell {
-            width: 100%;
-        }
-    
-        .nutpie p strong { font-size: 16px; font-weight: bold; }
-    
-        @media (prefers-color-scheme: dark) {
-            .nutpie {
-                //color: #ddd;
-                //background-color: #1e1e1e;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            }
-            .nutpie table, .nutpie th, .nutpie td {
-                border-color: #555;
-                color: #ccc;
-            }
-            .nutpie th {
-                background-color: #2a2a2a;
-            }
-            .nutpie progress::-webkit-progress-bar {
-                background-color: #444;
-            }
-            .nutpie progress::-webkit-progress-value {
-                background-color: #3178c6;
-            }
-            .nutpie progress::-moz-progress-bar {
-                background-color: #3178c6;
-            }
-        }
-    </style>
-    
-
-
-
-.. raw:: html
-
-    
-    <div class="nutpie">
-        <p><strong>Sampler Progress</strong></p>
-        <p>Total Chains: <span id="total-chains">4</span></p>
-        <p>Active Chains: <span id="active-chains">0</span></p>
-        <p>
-            Finished Chains:
-            <span id="active-chains">4</span>
-        </p>
-        <p>Sampling for a minute</p>
-        <p>
-            Estimated Time to Completion:
-            <span id="eta">now</span>
-        </p>
-    
-        <progress
-            id="total-progress-bar"
-            max="8000"
-            value="8000">
-        </progress>
-        <table>
-            <thead>
-                <tr>
-                    <th>Progress</th>
-                    <th>Draws</th>
-                    <th>Divergences</th>
-                    <th>Step Size</th>
-                    <th>Gradients/Draw</th>
-                </tr>
-            </thead>
-            <tbody id="chain-details">
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>12</td>
-                        <td>0.08</td>
-                        <td>127</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>4</td>
-                        <td>0.09</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>9</td>
-                        <td>0.08</td>
-                        <td>63</td>
-                    </tr>
-    
-                    <tr>
-                        <td class="progress-cell">
-                            <progress
-                                max="2000"
-                                value="2000">
-                            </progress>
-                        </td>
-                        <td>2000</td>
-                        <td>11</td>
-                        <td>0.09</td>
-                        <td>511</td>
-                    </tr>
-    
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
 
 
 
@@ -920,12 +724,12 @@
         Y                  (observations, response_vars) float64 2kB 4.579e+05 .....
         X                  (observations, covariates) float64 3kB 63.0 ... 1.603e+06
         batch_effects      (observations, batch_effect_dims) &lt;U17 29kB &#x27;F&#x27; ... &#x27;Q...
-        Z                  (observations, response_vars) float64 2kB -0.1506 ... ...
+        Z                  (observations, response_vars) float64 2kB -0.1487 ... ...
         centiles           (centile, observations, response_vars) float64 9kB 4.2...
         baseline_logp      (observations, response_vars) float64 2kB -1.036 ... -...
-        logp               (observations, response_vars) float64 2kB -0.05484 ......
+        logp               (observations, response_vars) float64 2kB -0.06553 ......
         Yhat               (observations, response_vars) float64 2kB 4.609e+05 .....
-        statistics         (response_vars, statistic) float64 104B 0.6692 ... 0.3328
+        statistics         (response_vars, statistic) float64 104B 0.6691 ... 0.3139
     Attributes:
         real_ids:                       False
         is_scaled:                      False
@@ -933,8 +737,8 @@
         unique_batch_effects:           {np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;sit...
         batch_effect_counts:            defaultdict(&lt;function NormData.register_b...
         covariate_ranges:               {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85....
-        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-52a0ec79-cafd-4fb0-b25a-e3db3adc3c6d' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-52a0ec79-cafd-4fb0-b25a-e3db3adc3c6d' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 1</li><li><span class='xr-has-index'>covariates</span>: 2</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>centile</span>: 5</li><li><span class='xr-has-index'>statistic</span>: 13</li></ul></div></li><li class='xr-section-item'><input id='section-6447cc4e-4da7-4de9-a184-43f48ecee4bd' class='xr-section-summary-in' type='checkbox' checked /><label for='section-6447cc4e-4da7-4de9-a184-43f48ecee4bd' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-b44d5f5b-d970-47bc-a8c8-4bc40554efdd' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b44d5f5b-d970-47bc-a8c8-4bc40554efdd' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-834690b0-3905-4c3f-8886-ff9af3015c1e' class='xr-var-data-in' type='checkbox'><label for='data-834690b0-3905-4c3f-8886-ff9af3015c1e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U9</div><div class='xr-var-preview xr-preview'>&#x27;CortexVol&#x27;</div><input id='attrs-edae4de6-525f-405c-90c9-cd3fa42da4b3' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-edae4de6-525f-405c-90c9-cd3fa42da4b3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3b35a9e9-dc34-4015-af9e-6baf76502caa' class='xr-var-data-in' type='checkbox'><label for='data-3b35a9e9-dc34-4015-af9e-6baf76502caa' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;CortexVol&#x27;], dtype=&#x27;&lt;U9&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U29</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27; &#x27;EstimatedTotalIntraCrania...</div><input id='attrs-b79d055b-e251-49cf-9aad-114db6ccf2bc' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b79d055b-e251-49cf-9aad-114db6ccf2bc' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-969c6830-f63e-440d-aae2-c105224cb9e2' class='xr-var-data-in' type='checkbox'><label for='data-969c6830-f63e-440d-aae2-c105224cb9e2' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;, &#x27;EstimatedTotalIntraCranialVol&#x27;], dtype=&#x27;&lt;U29&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-921d26ff-b75b-4a49-b460-385b7dc13756' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-921d26ff-b75b-4a49-b460-385b7dc13756' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-47d5221d-ed1b-486c-912f-498b7349726f' class='xr-var-data-in' type='checkbox'><label for='data-47d5221d-ed1b-486c-912f-498b7349726f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-f7961786-c6ef-4946-a244-719b36cd39a4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f7961786-c6ef-4946-a244-719b36cd39a4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f681135a-67fd-45e4-a6b5-3cf39e7f6fa8' class='xr-var-data-in' type='checkbox'><label for='data-f681135a-67fd-45e4-a6b5-3cf39e7f6fa8' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;Kurtosis&#x27; ... &#x27;Skewness&#x27;</div><input id='attrs-93a2035b-5306-4211-bd93-3182d4b1e144' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-93a2035b-5306-4211-bd93-3182d4b1e144' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e1ae7c5a-1c3c-4f02-9ff3-42d22a0c7e8e' class='xr-var-data-in' type='checkbox'><label for='data-e1ae7c5a-1c3c-4f02-9ff3-42d22a0c7e8e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;Kurtosis&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MLL&#x27;, &#x27;MSLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;,
-           &#x27;Rho_p&#x27;, &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;, &#x27;Skewness&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-65440bbb-a683-4a9c-9377-bbd0e4d3e644' class='xr-section-summary-in' type='checkbox' checked /><label for='section-65440bbb-a683-4a9c-9377-bbd0e4d3e644' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-2f55a2f0-0229-411a-a0c7-3f60b4974789' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-2f55a2f0-0229-411a-a0c7-3f60b4974789' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-bac4c1d2-975f-4636-add1-1a7bdbb12b58' class='xr-var-data-in' type='checkbox'><label for='data-bac4c1d2-975f-4636-add1-1a7bdbb12b58' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692,  616,   35,  164,  680,  331,  299,  727,  136,
+        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-5899f912-93f4-44a1-bd86-34747183c00a' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-5899f912-93f4-44a1-bd86-34747183c00a' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 1</li><li><span class='xr-has-index'>covariates</span>: 2</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>centile</span>: 5</li><li><span class='xr-has-index'>statistic</span>: 13</li></ul></div></li><li class='xr-section-item'><input id='section-4ea1543f-5c80-4e0a-864b-3370e731b78f' class='xr-section-summary-in' type='checkbox' checked /><label for='section-4ea1543f-5c80-4e0a-864b-3370e731b78f' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-181a5437-b6d4-42d0-bb0b-ad7d03062b52' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-181a5437-b6d4-42d0-bb0b-ad7d03062b52' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ef5029a9-3d78-4d2d-98ea-e3d4f780155a' class='xr-var-data-in' type='checkbox'><label for='data-ef5029a9-3d78-4d2d-98ea-e3d4f780155a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U9</div><div class='xr-var-preview xr-preview'>&#x27;CortexVol&#x27;</div><input id='attrs-f7ef2148-dd5f-45fc-b8bd-63b75deb119f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f7ef2148-dd5f-45fc-b8bd-63b75deb119f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d3ef2e05-aea4-4206-a9ac-96c6d9a7fe1f' class='xr-var-data-in' type='checkbox'><label for='data-d3ef2e05-aea4-4206-a9ac-96c6d9a7fe1f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;CortexVol&#x27;], dtype=&#x27;&lt;U9&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U29</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27; &#x27;EstimatedTotalIntraCrania...</div><input id='attrs-cb9aafdd-a5ca-4a2f-a42e-a5cd074aba60' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-cb9aafdd-a5ca-4a2f-a42e-a5cd074aba60' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-72f35c99-bf79-47a9-85d9-32985e5d5210' class='xr-var-data-in' type='checkbox'><label for='data-72f35c99-bf79-47a9-85d9-32985e5d5210' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;, &#x27;EstimatedTotalIntraCranialVol&#x27;], dtype=&#x27;&lt;U29&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-733de08a-8169-43e8-a234-f1af0e94f0c6' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-733de08a-8169-43e8-a234-f1af0e94f0c6' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-a3ce6a0a-fb1d-4daf-8018-bf8cef8a5585' class='xr-var-data-in' type='checkbox'><label for='data-a3ce6a0a-fb1d-4daf-8018-bf8cef8a5585' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-439e283b-d6c6-418a-860a-251910c2b921' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-439e283b-d6c6-418a-860a-251910c2b921' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-9dcb3d79-04b3-4317-8342-6585630b97fa' class='xr-var-data-in' type='checkbox'><label for='data-9dcb3d79-04b3-4317-8342-6585630b97fa' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;Kurtosis&#x27; ... &#x27;Skewness&#x27;</div><input id='attrs-69852b8d-d6f1-4f96-8715-c52c71d1059f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-69852b8d-d6f1-4f96-8715-c52c71d1059f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-da65062e-1bd6-4846-802e-0cd3835f778e' class='xr-var-data-in' type='checkbox'><label for='data-da65062e-1bd6-4846-802e-0cd3835f778e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;Kurtosis&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MLL&#x27;, &#x27;MSLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;,
+           &#x27;Rho_p&#x27;, &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;, &#x27;Skewness&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-a4ceb3ab-6d00-4c6b-82ed-b8198173046f' class='xr-section-summary-in' type='checkbox' checked /><label for='section-a4ceb3ab-6d00-4c6b-82ed-b8198173046f' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-3adb6030-48de-42a1-a2f5-aaaf6e716aeb' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-3adb6030-48de-42a1-a2f5-aaaf6e716aeb' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b79ecce5-a331-46e8-bf45-bd73855f18c1' class='xr-var-data-in' type='checkbox'><label for='data-b79ecce5-a331-46e8-bf45-bd73855f18c1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692,  616,   35,  164,  680,  331,  299,  727,  136,
              80,  209,  394,  653,  626,  935,  302,   61,  449,  984, 1036,
             518,  574,  593,  870,  828,  354,  947,  275,  874,  604,  948,
             670,  228,  294,  708,   90, 1020,  884,  856, 1023,  428,  635,
@@ -953,7 +757,7 @@
              95,  185,  985,  141,  295,  437,  138,   96,  155,   51, 1064,
            1046,  562,  527,   79,  861,  469,  710,  564,  907, 1054,  421,
             968,  875,  669,  618,  504,  343,  777,  133,   27,  959,   29,
-            346,  304,  264,  798,  751,  470, 1043])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.579e+05 5.268e+05 ... 5.035e+05</div><input id='attrs-fb1d5d62-39fa-4dbb-a083-02a974bf57d3' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-fb1d5d62-39fa-4dbb-a083-02a974bf57d3' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-da27ffc5-6e55-425b-8d03-3722373e2706' class='xr-var-data-in' type='checkbox'><label for='data-da27ffc5-6e55-425b-8d03-3722373e2706' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[457858.327875],
+            346,  304,  264,  798,  751,  470, 1043])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.579e+05 5.268e+05 ... 5.035e+05</div><input id='attrs-3913c1d2-5557-4340-97f5-36b708eeca6a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-3913c1d2-5557-4340-97f5-36b708eeca6a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-9a553ed3-408f-439e-857c-312a6bf96162' class='xr-var-data-in' type='checkbox'><label for='data-9a553ed3-408f-439e-857c-312a6bf96162' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[457858.327875],
            [526780.362454],
            [495744.470654],
            [585303.839185],
@@ -993,7 +797,7 @@
            [520499.662889],
            [486680.791077],
            [610402.005701],
-           [503535.771203]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 1.533e+06 ... 23.0 1.603e+06</div><input id='attrs-573cf403-23e9-47b0-b961-acb6830c532e' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-573cf403-23e9-47b0-b961-acb6830c532e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-094f4bb3-d3e0-480c-9d24-25b0cbbbfbda' class='xr-var-data-in' type='checkbox'><label for='data-094f4bb3-d3e0-480c-9d24-25b0cbbbfbda' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[6.30000000e+01, 1.53274143e+06],
+           [503535.771203]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 1.533e+06 ... 23.0 1.603e+06</div><input id='attrs-b268dfea-4bb5-4b86-8ef0-8a97eb34d633' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b268dfea-4bb5-4b86-8ef0-8a97eb34d633' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b8495758-0ceb-4d65-a9bc-2d11cc474844' class='xr-var-data-in' type='checkbox'><label for='data-b8495758-0ceb-4d65-a9bc-2d11cc474844' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[6.30000000e+01, 1.53274143e+06],
            [2.32700000e+01, 1.40047223e+06],
            [2.20000000e+01, 1.48954279e+06],
            [4.20000000e+01, 1.86413298e+06],
@@ -1033,7 +837,7 @@
            [2.27900000e+01, 1.45689873e+06],
            [7.20000000e+01, 1.57223354e+06],
            [2.30000000e+01, 1.98747750e+06],
-           [2.30000000e+01, 1.60306371e+06]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-0e047136-6aa0-494a-8788-dbb11a66c927' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-0e047136-6aa0-494a-8788-dbb11a66c927' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-9a3d483d-a261-4524-ae15-9019f8fa327f' class='xr-var-data-in' type='checkbox'><label for='data-9a3d483d-a261-4524-ae15-9019f8fa327f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
+           [2.30000000e+01, 1.60306371e+06]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-02e5f463-4d83-40b2-8d5f-11bf50f7bf28' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-02e5f463-4d83-40b2-8d5f-11bf50f7bf28' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-56b4c80e-6df6-4af2-939f-e38f3f5fb598' class='xr-var-data-in' type='checkbox'><label for='data-56b4c80e-6df6-4af2-939f-e38f3f5fb598' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;F&#x27;, &#x27;Leiden_2200&#x27;],
            [&#x27;M&#x27;, &#x27;ICBM&#x27;],
@@ -1073,85 +877,85 @@
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;M&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;Cambridge_Buckner&#x27;],
-           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-0.1506 1.034 ... 2.325 -0.8341</div><input id='attrs-b459f671-93bb-4030-9870-aab2b59a8e44' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b459f671-93bb-4030-9870-aab2b59a8e44' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-889bcebc-365c-4420-8429-5195f7840cf0' class='xr-var-data-in' type='checkbox'><label for='data-889bcebc-365c-4420-8429-5195f7840cf0' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-0.15064833],
-           [ 1.03395782],
-           [ 0.62289739],
-           [ 1.51450907],
-           [-1.49350811],
-           [-1.3226671 ],
-           [-1.2644941 ],
-           [-0.98292101],
-           [ 0.04274012],
-           [-0.11462206],
-           [ 0.24998127],
-           [-0.69534204],
-           [ 0.28720534],
-           [ 1.377649  ],
-           [-1.32378917],
-           [-1.13757547],
-           [-0.05490656],
-           [-0.52932695],
-           [-0.81033714],
-           [ 0.33805337],
+           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-0.1487 1.023 ... 2.339 -0.8409</div><input id='attrs-24bf11d7-e9b2-47cf-ae03-fe4f6b68c7a0' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-24bf11d7-e9b2-47cf-ae03-fe4f6b68c7a0' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-64a36497-9a1c-4d19-8d65-b97a3e09a420' class='xr-var-data-in' type='checkbox'><label for='data-64a36497-9a1c-4d19-8d65-b97a3e09a420' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-0.14867635],
+           [ 1.023274  ],
+           [ 0.62164009],
+           [ 1.51528127],
+           [-1.45667519],
+           [-1.32141735],
+           [-1.26619252],
+           [-0.98511349],
+           [ 0.04135482],
+           [-0.1117808 ],
+           [ 0.24904539],
+           [-0.69138425],
+           [ 0.28853412],
+           [ 1.38770365],
+           [-1.32404784],
+           [-1.14605094],
+           [-0.05620472],
+           [-0.52862691],
+           [-0.80476931],
+           [ 0.33974481],
     ...
-           [-1.14449412],
-           [ 0.0551027 ],
-           [-0.61555997],
-           [-0.5065645 ],
-           [-1.55544126],
-           [ 2.10892592],
-           [-0.31276101],
-           [-0.36938859],
-           [-3.6444885 ],
-           [-0.97696923],
-           [-0.38394173],
-           [-0.59659848],
-           [-0.1090212 ],
-           [-0.21583882],
-           [-1.14244867],
-           [ 1.31783594],
-           [ 0.33404236],
-           [ 0.97915049],
-           [ 2.32461282],
-           [-0.83408466]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.269e+05 4.601e+05 ... 5.61e+05</div><input id='attrs-db77c0e0-f6f5-4843-955a-6a81566a267c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-db77c0e0-f6f5-4843-955a-6a81566a267c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-cd8f15b6-a997-4b0d-9f2f-6511d46e4cdc' class='xr-var-data-in' type='checkbox'><label for='data-cd8f15b6-a997-4b0d-9f2f-6511d46e4cdc' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[426877.27270244],
-            [460136.62432424],
-            [439951.87822939],
+           [-1.15100771],
+           [ 0.05671457],
+           [-0.61514699],
+           [-0.53439523],
+           [-1.54755275],
+           [ 1.99449496],
+           [-0.31296617],
+           [-0.36907106],
+           [-3.65559823],
+           [-0.97707339],
+           [-0.37315806],
+           [-0.59621332],
+           [-0.09787561],
+           [-0.22074703],
+           [-1.14311678],
+           [ 1.32350803],
+           [ 0.32390318],
+           [ 0.94406736],
+           [ 2.33851236],
+           [-0.84093293]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.265e+05 4.604e+05 ... 5.611e+05</div><input id='attrs-330041ff-aa8d-40dd-ad22-430c1028f7f1' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-330041ff-aa8d-40dd-ad22-430c1028f7f1' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e99ec74a-62c5-498f-94b6-e804ce7b1b28' class='xr-var-data-in' type='checkbox'><label for='data-e99ec74a-62c5-498f-94b6-e804ce7b1b28' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[426485.67302553],
+            [460355.41087117],
+            [439935.76151754],
             ...,
-            [429522.61305018],
-            [530899.50408766],
-            [484728.66313667]],
+            [427442.7504143 ],
+            [530732.32872137],
+            [484879.7184995 ]],
     
-           [[446972.7076769 ],
-            [484285.05966774],
-            [463832.15513723],
+           [[446806.39561769],
+            [484521.77316212],
+            [463836.57151181],
             ...,
-            [450753.72646671],
-            [550383.49361592],
-            [507218.2960705 ]],
+            [449746.77276689],
+            [550189.44780712],
+            [507371.72730103]],
     
-           [[460940.83369714],
-            [501070.3837226 ],
-            [480431.08507682],
+           [[460931.11669739],
+            [501319.55805007],
+            [480449.77378436],
             ...,
-            [465511.2506571 ],
-            [563926.61032145],
-            [522850.60397366]],
+            [465250.06470235],
+            [563713.88714998],
+            [523005.6866449 ]],
     
-           [[474908.95971737],
-            [517855.70777745],
-            [497030.01501642],
+           [[475055.8377771 ],
+            [518117.34293801],
+            [497062.97605691],
             ...,
-            [480268.77484749],
-            [577469.72702699],
-            [538482.91187682]],
+            [480753.3566378 ],
+            [577238.32649285],
+            [538639.64598877]],
     
-           [[495004.39469183],
-            [542004.14312095],
-            [520910.29192425],
+           [[495376.56036925],
+            [542283.70522896],
+            [520963.78605117],
             ...,
-            [501499.88826401],
-            [596953.71655524],
-            [560972.54481065]]], shape=(5, 216, 1))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.036 -1.182 ... -4.021 -0.9114</div><input id='attrs-9b2dbcd3-5e85-4c47-80da-e51bddfb5a81' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9b2dbcd3-5e85-4c47-80da-e51bddfb5a81' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e2ab3dd2-8d22-40e4-9d1b-a6da8c5ed67b' class='xr-var-data-in' type='checkbox'><label for='data-e2ab3dd2-8d22-40e4-9d1b-a6da8c5ed67b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-1.03593217],
+            [503057.37899039],
+            [596695.4455786 ],
+            [561131.65479029]]], shape=(5, 216, 1))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.036 -1.182 ... -4.021 -0.9114</div><input id='attrs-07d52835-3ce8-4f9b-b00d-b3bccfa3eba5' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-07d52835-3ce8-4f9b-b00d-b3bccfa3eba5' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-013b22a4-84e8-4500-abf7-f520688ce314' class='xr-var-data-in' type='checkbox'><label for='data-013b22a4-84e8-4500-abf7-f520688ce314' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-1.03593217],
            [-1.18228146],
            [-0.8710495 ],
            [-2.86273506],
@@ -1191,91 +995,91 @@
            [-1.08685779],
            [-0.85598943],
            [-4.02130046],
-           [-0.91139503]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-0.05484 -0.7267 ... -2.738 -0.4871</div><input id='attrs-c60f52f5-9c1c-4aa4-b6b9-732678e807e7' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c60f52f5-9c1c-4aa4-b6b9-732678e807e7' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-cbb79a25-18a4-4807-8293-53d499bfad82' class='xr-var-data-in' type='checkbox'><label for='data-cbb79a25-18a4-4807-8293-53d499bfad82' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-0.05483998],
-           [-0.72670494],
-           [-0.39101237],
-           [-1.14801602],
-           [-1.33160833],
-           [-0.95869098],
-           [-0.88786102],
-           [-0.63636453],
-           [-0.26529955],
-           [-0.17725493],
-           [-0.16783507],
-           [-0.5361784 ],
-           [-0.22538082],
-           [-1.00180648],
-           [-0.84915496],
-           [-0.83403243],
-           [-0.18057522],
-           [-0.33980331],
-           [-0.47021914],
-           [-0.29402339],
+           [-0.91139503]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-0.06553 -0.7166 ... -2.769 -0.49</div><input id='attrs-38728d07-23f5-40ac-b208-5f6d76d80713' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-38728d07-23f5-40ac-b208-5f6d76d80713' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3b0f2a0e-242e-4010-b563-5dbd6582a06e' class='xr-var-data-in' type='checkbox'><label for='data-3b0f2a0e-242e-4010-b563-5dbd6582a06e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[-0.06553282],
+           [-0.71660812],
+           [-0.39045903],
+           [-1.14941213],
+           [-1.28836782],
+           [-0.95702386],
+           [-0.88953065],
+           [-0.63692615],
+           [-0.2668927 ],
+           [-0.17858626],
+           [-0.16706902],
+           [-0.53624788],
+           [-0.22567272],
+           [-1.0137231 ],
+           [-0.84641976],
+           [-0.84370366],
+           [-0.18170935],
+           [-0.3378446 ],
+           [-0.4659374 ],
+           [-0.29084969],
     ...
-           [-0.89154741],
-           [-0.06953964],
-           [-0.43169164],
-           [-0.67009233],
-           [-1.28793038],
-           [-2.34429685],
-           [-0.2222581 ],
-           [-0.08480808],
-           [-6.6456723 ],
-           [-0.687309  ],
-           [-0.3168465 ],
-           [-0.42017731],
-           [-0.319749  ],
-           [-0.24466973],
-           [-0.78932926],
-           [-0.98958609],
-           [-0.23398197],
-           [-0.5739711 ],
-           [-2.73750611],
-           [-0.48711718]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.609e+05 5.011e+05 ... 5.229e+05</div><input id='attrs-490cde47-a65e-4073-82f5-a23eca94c615' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-490cde47-a65e-4073-82f5-a23eca94c615' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5f45aabc-387c-4f4b-9679-e03034599723' class='xr-var-data-in' type='checkbox'><label for='data-5f45aabc-387c-4f4b-9679-e03034599723' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[460940.83369714],
-           [501070.3837226 ],
-           [480431.08507682],
-           [554714.98051114],
-           [369184.10634861],
-           [540492.18873667],
-           [578062.95398935],
-           [490917.81607029],
-           [458968.63458596],
-           [447271.69547616],
-           [553503.56497149],
-           [440507.50329522],
-           [512702.12988183],
-           [476862.81720342],
-           [561634.57515764],
-           [495727.14390142],
-           [532259.68830468],
-           [522729.71335778],
-           [478870.16908612],
-           [478417.01898068],
+           [-0.89971073],
+           [-0.06831174],
+           [-0.43298445],
+           [-0.68901406],
+           [-1.27208342],
+           [-2.16251065],
+           [-0.22308145],
+           [-0.08138532],
+           [-6.68443393],
+           [-0.68597196],
+           [-0.31365192],
+           [-0.42149422],
+           [-0.31844611],
+           [-0.24617062],
+           [-0.79053157],
+           [-0.99677868],
+           [-0.23135574],
+           [-0.58896419],
+           [-2.76899769],
+           [-0.49000614]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>4.609e+05 5.013e+05 ... 5.23e+05</div><input id='attrs-7ae99c41-92b5-48d9-875f-760378213ab1' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-7ae99c41-92b5-48d9-875f-760378213ab1' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-465218d4-dec2-46aa-a4ef-35e491394158' class='xr-var-data-in' type='checkbox'><label for='data-465218d4-dec2-46aa-a4ef-35e491394158' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[460931.11669739],
+           [501319.55805007],
+           [480449.77378436],
+           [554718.116008  ],
+           [368749.72992901],
+           [540456.21079007],
+           [578076.34389619],
+           [490946.38100449],
+           [459005.94648021],
+           [447220.06851306],
+           [553531.64121282],
+           [440430.66118474],
+           [512672.02038097],
+           [476703.95524423],
+           [561569.00469501],
+           [495954.905476  ],
+           [532291.06075169],
+           [522691.97704773],
+           [478703.71426288],
+           [478405.88997317],
     ...
-           [483549.07255987],
-           [557248.48586368],
-           [489760.74195543],
-           [397547.77502841],
-           [535913.46603311],
-           [467833.26766404],
-           [445003.92280646],
-           [574864.37193633],
-           [584781.9275737 ],
-           [516881.84420005],
-           [488862.66168555],
-           [489763.95021224],
-           [457216.21837732],
-           [473536.17963753],
-           [536284.94599624],
-           [495943.40655485],
-           [512301.32545353],
-           [465511.2506571 ],
-           [563926.61032145],
-           [522850.60397366]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.6692 1.015 ... 0.9799 0.3328</div><input id='attrs-b9b51950-c789-4498-9910-75cfad7aa81e' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b9b51950-c789-4498-9910-75cfad7aa81e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3cb828d7-059b-4865-8a25-c34a4db58707' class='xr-var-data-in' type='checkbox'><label for='data-3cb828d7-059b-4865-8a25-c34a4db58707' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 6.69170819e-01,  1.01464893e+00,  1.73853276e-01,
-             4.44452200e-02,  8.60579286e-01, -4.95347034e-01,
-             6.64663971e-01,  2.83479644e+04,  8.06152729e-01,
-             1.14722184e-50,  3.35336029e-01,  9.79874219e-01,
-             3.32816179e-01]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-7e664592-c80e-4bfa-a2c0-6b02856db22d' class='xr-section-summary-in' type='checkbox' checked /><label for='section-7e664592-c80e-4bfa-a2c0-6b02856db22d' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>False</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x7f11a09f79c0&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 803895.003258, &#x27;max&#x27;: 2213930.77819}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 803895.003258, &#x27;max&#x27;: 2213930.77819}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 854269.795819, &#x27;max&#x27;: 1839480.7792}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1239237.74772, &#x27;max&#x27;: 1797270.09178}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1095961.96155, &#x27;max&#x27;: 1785422.9362}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 991144.994738, &#x27;max&#x27;: 1961041.2011400005}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1277794.4776, &#x27;max&#x27;: 1858687.83646}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1209177.6117399998, &#x27;max&#x27;: 1839143.13269}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1002619.98087, &#x27;max&#x27;: 1869137.32932}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1283953.04581, &#x27;max&#x27;: 2034930.18739}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1226746.2365, &#x27;max&#x27;: 1987477.49695}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1195065.98729, &#x27;max&#x27;: 1727397.1725}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1315469.72766, &#x27;max&#x27;: 2156696.50099}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1508119.55881, &#x27;max&#x27;: 1968074.24155}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1309818.45623, &#x27;max&#x27;: 1868150.79879}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 961761.166078, &#x27;max&#x27;: 1749317.40938}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1205099.3215, &#x27;max&#x27;: 1807706.83688}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 945590.839808, &#x27;max&#x27;: 1980091.79537}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1182852.33915, &#x27;max&#x27;: 1836931.72887}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 803895.003258, &#x27;max&#x27;: 1483045.87846}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1038404.46752, &#x27;max&#x27;: 1807616.45732}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 989444.241903, &#x27;max&#x27;: 1689557.92241}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 854269.795819, &#x27;max&#x27;: 1673520.84453}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 823904.532171, &#x27;max&#x27;: 1026186.09328}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1335132.49541, &#x27;max&#x27;: 1845048.33956}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1374160.52253, &#x27;max&#x27;: 2213930.77819}}}}</dd></dl></div></li></ul></div></div>
+           [483746.99166407],
+           [557213.14037429],
+           [489774.45599436],
+           [398426.44328455],
+           [535693.18160329],
+           [467817.68256859],
+           [445013.55396599],
+           [574835.84560612],
+           [584749.67470817],
+           [516847.59089058],
+           [488583.6160485 ],
+           [489777.66501093],
+           [456908.16566504],
+           [473665.82871421],
+           [536304.8201361 ],
+           [495819.48533103],
+           [512544.06146668],
+           [465250.06470235],
+           [563713.88714998],
+           [523005.6866449 ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.6691 1.068 ... 0.9797 0.3139</div><input id='attrs-a790ea8d-f64b-4f35-a0fd-3c035ad389af' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-a790ea8d-f64b-4f35-a0fd-3c035ad389af' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-8ebebf7a-0767-4f27-8f6f-045f0283ed4f' class='xr-var-data-in' type='checkbox'><label for='data-8ebebf7a-0767-4f27-8f6f-045f0283ed4f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 6.69068369e-01,  1.06771625e+00,  1.73853276e-01,
+             4.45305610e-02,  8.63740752e-01, -4.92185568e-01,
+             6.64465448e-01,  2.83563544e+04,  8.06045559e-01,
+             1.20956941e-50,  3.35534552e-01,  9.79698644e-01,
+             3.13865249e-01]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-8808dd00-fa72-474e-8096-a4997a4042fa' class='xr-section-summary-in' type='checkbox' checked /><label for='section-8808dd00-fa72-474e-8096-a4997a4042fa' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>False</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x7f6fcacca020&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 803895.003258, &#x27;max&#x27;: 2213930.77819}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 803895.003258, &#x27;max&#x27;: 2213930.77819}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 854269.795819, &#x27;max&#x27;: 1839480.7792}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1239237.74772, &#x27;max&#x27;: 1797270.09178}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1095961.96155, &#x27;max&#x27;: 1785422.9362}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 991144.994738, &#x27;max&#x27;: 1961041.2011400005}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1277794.4776, &#x27;max&#x27;: 1858687.83646}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1209177.6117399998, &#x27;max&#x27;: 1839143.13269}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1002619.98087, &#x27;max&#x27;: 1869137.32932}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1283953.04581, &#x27;max&#x27;: 2034930.18739}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1226746.2365, &#x27;max&#x27;: 1987477.49695}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1195065.98729, &#x27;max&#x27;: 1727397.1725}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1315469.72766, &#x27;max&#x27;: 2156696.50099}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1508119.55881, &#x27;max&#x27;: 1968074.24155}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1309818.45623, &#x27;max&#x27;: 1868150.79879}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 961761.166078, &#x27;max&#x27;: 1749317.40938}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1205099.3215, &#x27;max&#x27;: 1807706.83688}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 945590.839808, &#x27;max&#x27;: 1980091.79537}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1182852.33915, &#x27;max&#x27;: 1836931.72887}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 803895.003258, &#x27;max&#x27;: 1483045.87846}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1038404.46752, &#x27;max&#x27;: 1807616.45732}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 989444.241903, &#x27;max&#x27;: 1689557.92241}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 854269.795819, &#x27;max&#x27;: 1673520.84453}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 823904.532171, &#x27;max&#x27;: 1026186.09328}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1335132.49541, &#x27;max&#x27;: 1845048.33956}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}, np.str_(&#x27;EstimatedTotalIntraCranialVol&#x27;): {&#x27;min&#x27;: 1374160.52253, &#x27;max&#x27;: 2213930.77819}}}}</dd></dl></div></li></ul></div></div>
 
 
 
@@ -1334,7 +1138,7 @@
         show_legend=False,
         plt_kwargs={"figsize": (4, 3)},
     )
-    
+
 
 
 

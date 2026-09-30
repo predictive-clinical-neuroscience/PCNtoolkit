@@ -1,0 +1,123 @@
+{
+    "name": null,
+    "save_dir": "/tmp/claude-13758/-home-preclineu-kontsi/9042b772-2fc3-4079-8699-e907ca9a5db5/scratchpad/ptk112/out/pretrained_blr",
+    "savemodel": true,
+    "saveresults": false,
+    "saveplots": false,
+    "evaluate_model": false,
+    "template_regression_model": {
+        "name": "template",
+        "type": "BLR",
+        "is_fitted": false,
+        "is_from_dict": false,
+        "transfered": false,
+        "ptk_version": "1.1.2",
+        "_name": "template",
+        "n_iter": 50,
+        "tol": 0.001,
+        "ard": false,
+        "optimizer": "l-bfgs-b",
+        "l_bfgs_b_l": 0.1,
+        "l_bfgs_b_epsilon": 0.1,
+        "l_bfgs_b_norm": "l2",
+        "fixed_effect": false,
+        "fixed_effect_slope": false,
+        "fixed_effect_slope_indices": null,
+        "heteroskedastic": false,
+        "fixed_effect_var": false,
+        "fixed_effect_var_slope": false,
+        "fixed_effect_var_slope_indices": null,
+        "warp_name": null,
+        "n_gamma": 0,
+        "warp_params": null,
+        "warp_reparam": false,
+        "gamma": null,
+        "basis_function_mean": {
+            "is_fitted": false,
+            "basis_name": "linear",
+            "min": {},
+            "max": {},
+            "compute_min": true,
+            "compute_max": true,
+            "basis_column": [
+                -1
+            ],
+            "basis_function": "LinearBasisFunction"
+        },
+        "basis_function_var": {
+            "is_fitted": false,
+            "basis_name": "linear",
+            "min": {},
+            "max": {},
+            "compute_min": true,
+            "compute_max": true,
+            "basis_column": [
+                -1
+            ],
+            "basis_function": "LinearBasisFunction"
+        },
+        "models_variance": false,
+        "hyp0": null,
+        "hyp": null
+    },
+    "inscalers": {
+        "covariate_0": {
+            "scaler_type": "standardize",
+            "adjust_outliers": false,
+            "m": 44.065744178850416,
+            "s": 20.287538390738003,
+            "min": 10.515358882570386,
+            "max": 79.4662894839086
+        }
+    },
+    "is_fitted": true,
+    "inscaler": "standardize",
+    "outscaler": "standardize",
+    "ptk_version": "1.1.2",
+    "covariates": [
+        "covariate_0"
+    ],
+    "unique_batch_effects": {
+        "site": [
+            "0",
+            "1"
+        ]
+    },
+    "inverse_batch_effect_counts": {
+        "site": {
+            "0_135": "0",
+            "1_165": "1"
+        }
+    },
+    "batch_effects_maps": {
+        "site": {
+            "0_0": "0",
+            "1_1": "1"
+        }
+    },
+    "batch_effect_covariate_ranges": {
+        "site": {
+            "0": {
+                "covariate_0": {
+                    "mean": 43.85994371575374,
+                    "min": 11.248574878389142,
+                    "max": 79.4662894839086
+                }
+            },
+            "1": {
+                "covariate_0": {
+                    "mean": 44.23412637592951,
+                    "min": 10.515358882570386,
+                    "max": 78.56994764106149
+                }
+            }
+        }
+    },
+    "covariate_ranges": {
+        "covariate_0": {
+            "mean": 44.065744178850416,
+            "min": 10.515358882570386,
+            "max": 79.4662894839086
+        }
+    }
+}

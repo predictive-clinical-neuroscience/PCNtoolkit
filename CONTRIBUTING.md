@@ -15,7 +15,7 @@ follow the steps below to set your local development environment:
 > **Note**
 > To use PCNtoolkit you need to have installed
 > [Git](https://git-scm.com/downloads) and a Python version (we officially
-> support Python version 3.11 and 3.12). Also, we recommend using
+> support Python version 3.12 and 3.13). Also, we recommend using
 > [Anaconda](https://www.anaconda.com/download) to manage Python.
 
 1.  **Fork the repository** - Forking creates your own copy (your

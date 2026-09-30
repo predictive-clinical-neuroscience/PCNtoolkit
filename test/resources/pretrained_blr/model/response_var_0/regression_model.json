@@ -1,0 +1,117 @@
+{
+    "model": {
+        "name": "response_var_0",
+        "type": "BLR",
+        "is_fitted": true,
+        "is_from_dict": false,
+        "transfered": false,
+        "ptk_version": "1.1.2",
+        "_name": "response_var_0",
+        "n_iter": 50,
+        "tol": 0.001,
+        "ard": false,
+        "optimizer": "l-bfgs-b",
+        "l_bfgs_b_l": 0.1,
+        "l_bfgs_b_epsilon": 0.1,
+        "l_bfgs_b_norm": "l2",
+        "fixed_effect": false,
+        "fixed_effect_slope": false,
+        "fixed_effect_slope_indices": null,
+        "heteroskedastic": false,
+        "fixed_effect_var": false,
+        "fixed_effect_var_slope": false,
+        "fixed_effect_var_slope_indices": null,
+        "warp_name": null,
+        "n_gamma": 0,
+        "warp_params": null,
+        "warp_reparam": false,
+        "gamma": null,
+        "basis_function_mean": {
+            "is_fitted": true,
+            "basis_name": "linear",
+            "min": {
+                "0": -1.6537435271889365
+            },
+            "max": {
+                "0": 1.7449403975604951
+            },
+            "compute_min": true,
+            "compute_max": true,
+            "basis_column": [
+                0
+            ],
+            "basis_function": "LinearBasisFunction"
+        },
+        "basis_function_var": {
+            "is_fitted": false,
+            "basis_name": "linear",
+            "min": {},
+            "max": {},
+            "compute_min": true,
+            "compute_max": true,
+            "basis_column": [
+                -1
+            ],
+            "basis_function": "LinearBasisFunction"
+        },
+        "models_variance": false,
+        "hyp0": null,
+        "hyp": [
+            0.6446762946698259,
+            1.0014044574890981
+        ],
+        "be_maps": {
+            "site": {
+                "0": 0,
+                "1": 1
+            }
+        },
+        "D": 2,
+        "var_D": 1,
+        "n_hyp": 2,
+        "N": 300,
+        "Sigma_a": [
+            [
+                0.3324039085522835,
+                0.0
+            ],
+            [
+                0.0,
+                0.3324039085522835
+            ]
+        ],
+        "Lambda_a": [
+            [
+                3.008388211664818,
+                0.0
+            ],
+            [
+                0.0,
+                3.008388211664818
+            ]
+        ],
+        "A": [
+            [
+                574.6194334996868,
+                -5.040412531798211e-14
+            ],
+            [
+                -3.2540215177655785e-14,
+                574.6194334996882
+            ]
+        ],
+        "m": [
+            0.6895293454894472,
+            2.949029909160572e-16
+        ],
+        "nlZ": 333.5868383793757
+    },
+    "outscaler": {
+        "scaler_type": "standardize",
+        "adjust_outliers": false,
+        "m": 4.759454841605593,
+        "s": 1.5165676007225177,
+        "min": 0.7800565730091737,
+        "max": 8.116690883388182
+    }
+}

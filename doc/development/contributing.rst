@@ -11,7 +11,7 @@ Setting up your local development environment
 You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Mac, or Windows with WSL. To contribute to PCNtoolkit you can follow the steps below to set your local development environment:
 
 .. note::
-    To use PCNtoolkit you need to have installed `Git <https://git-scm.com/downloads>`_ and a Python version (we officially support Python version 3.11 and 3.12). Also, we recommend using `Anaconda <https://www.anaconda.com/download>`_ to manage Python.
+    To use PCNtoolkit you need to have installed `Git <https://git-scm.com/downloads>`_ and a Python version (we officially support Python version 3.12 and 3.13). Also, we recommend using `Anaconda <https://www.anaconda.com/download>`_ to manage Python.
 
 1. **Fork the repository** - Forking creates your own copy (your "fork") of PCNtoolkit on your GitHub. This gives you full write access to your fork so you can make changes and then submit Pull Requests to the original PCNtoolkit repository (that you don't have direct write access to). See `GitHub’s guide to forking <https://docs.github.com/en/get-started/quickstart/fork-a-repo>`_.
 
