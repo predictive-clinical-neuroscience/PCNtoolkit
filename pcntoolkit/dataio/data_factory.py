@@ -273,6 +273,55 @@ def load_fcon1000(save_path: str | None = None):
     return norm_data
 
 
+_LNM_DATA_URL = "https://raw.githubusercontent.com/predictive-clinical-neuroscience/pu25_code/main/data/LNM_data.csv"
+_LNM_METADATA_COLUMNS = frozenset({"sub_id", "age", "sex", "site", "visit", "group"})
+
+
+def load_lnm(save_path: str | None = None) -> NormData:
+    """Download and save the LNM longitudinal dataset, or load it from disk.
+
+    The dataset has two visits per subject (controls and patients).
+
+    Parameters
+    ----------
+    save_path : str | None
+        Folder to save or load ``LNM_data.csv`` from. Defaults to
+        ``pcntoolkit_resources/data``.
+
+    Returns
+    -------
+    NormData
+        Longitudinal dataset with ``visits="visit"``.
+    """
+    if not save_path:
+        save_path = os.path.join("pcntoolkit_resources", "data")
+    os.makedirs(save_path, exist_ok=True)
+    data_path = os.path.join(save_path, "LNM_data.csv")
+
+    if not os.path.exists(data_path):
+        data = pd.read_csv(_LNM_DATA_URL)
+        data.to_csv(data_path, index=False)
+    else:
+        data = pd.read_csv(data_path)
+
+    subject_ids = "sub_id"
+    covariates = ["age"]
+    batch_effects = ["sex", "site"]
+    response_vars = [column for column in data.columns if column not in _LNM_METADATA_COLUMNS]
+
+    norm_data = NormData.from_dataframe(
+        name="lnm",
+        dataframe=data,
+        covariates=covariates,
+        batch_effects=batch_effects,
+        response_vars=response_vars,
+        subject_ids=subject_ids,
+        visits="visit",
+        remove_Nan=True,
+    )
+    return norm_data
+
+
 # NOTE: This dataset is not public
 def load_lifespan_big(
         n_response_vars: int | None = None,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from os import PathLike
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -48,7 +49,7 @@ class ZDiffScore(LongitudinalScore):
         self,
         normative_model: NormativeModel,
         reference_data: NormData,
-        subject_id_col: str, # TODO: Are these subject_id_col necessary as a keyword argument? Does the user need to specify that?
+        subject_id_col: str,  # TODO: Are these subject_id_col necessary as a keyword argument? Does the user need to specify that?
     ):
         # Reuse the shared setup from the base class.
         super().__init__(normative_model, reference_data, subject_id_col)
@@ -56,8 +57,7 @@ class ZDiffScore(LongitudinalScore):
         # time to estimate the spread of expected change.
         if reference_data is None:
             raise ValueError(
-                "ZDiffScore needs a longitudinal reference cohort to estimate "
-                "the typical size of change. Pass reference_data."
+                "ZDiffScore needs a longitudinal reference cohort to estimate the typical size of change. Pass reference_data."
             )
         # z-diff is defined only for BLR models.
         self._check_model_is_blr(normative_model)
@@ -69,6 +69,7 @@ class ZDiffScore(LongitudinalScore):
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
+        save_path: str | PathLike[str] | None = None,
     ) -> xr.DataArray:
         """Compute the z-diff score for every subject in ``score_data``.
 
@@ -81,6 +82,9 @@ class ZDiffScore(LongitudinalScore):
         subject_id_col : str, optional
             Subject id column name override. Defaults to the value supplied
             at construction.
+        save_path : str | PathLike[str] | None, optional
+            If set, write scores to this CSV path in wide format: one row per
+            subject and one column per response variable.
 
         Returns
         -------
@@ -117,9 +121,7 @@ class ZDiffScore(LongitudinalScore):
         for j, rv in enumerate(response_vars):
             # Learn the typical size of expected change from the reference
             # cohort (reference_data).
-            delta_reference = self._compute_residual_change(
-                self.reference_data, rv
-            )
+            delta_reference = self._compute_residual_change(self.reference_data, rv)
             # Convert the subject-level changes into a numeric vector.
             delta_reference_values = np.fromiter(
                 delta_reference.values(),
@@ -130,10 +132,7 @@ class ZDiffScore(LongitudinalScore):
             denominator = np.sqrt(float(np.mean(delta_reference_values**2)))
             # Reject the degenerate case of no expected change at all.
             if np.isclose(denominator, 0.0):
-                raise ValueError(
-                    f"Cannot estimate denominator for '{rv}': "
-                    "reference_data has zero residual-change variability."
-                )
+                raise ValueError(f"Cannot estimate denominator for '{rv}': reference_data has zero residual-change variability.")
 
             # Compute the change for each target subject (score_data).
             # Mathematically this Δr_target.
@@ -153,6 +152,8 @@ class ZDiffScore(LongitudinalScore):
             coords={"subjects": subjects, "response_vars": response_vars},
             name="zdiff",
         )
+        if save_path is not None:
+            self._save_scores_csv(self.zdiff, save_path)
         return self.zdiff
 
     # ------------------------------------------------------------------ #
@@ -248,6 +249,5 @@ class ZDiffScore(LongitudinalScore):
         if not isinstance(template, BLR):
             # Explain that z-diff is only defined for BLR models here.
             raise ValueError(
-                "ZDiffScore requires a BLR (or warped BLR) normative model. "
-                "Use ZGainScore for other regression models."
+                "ZDiffScore requires a BLR (or warped BLR) normative model. Use ZGainScore for other regression models."
             )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from os import PathLike
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -85,14 +86,13 @@ class ZGainScore(LongitudinalScore):
         *,
         timepoint_diff: int = 1,
         z_thrive: float = -1.96,
-        propagate: Callable[
-            [xr.DataArray, xr.DataArray | float, float], xr.DataArray
-        ] = propagate_thriveline_z,
+        propagate: Callable[[xr.DataArray, xr.DataArray | float, float], xr.DataArray] = propagate_thriveline_z,
         anchor_step: int = 1,
         z_anchor_start: int = -3,
         z_anchor_end: int = 4,
         z_anchors: list[float] | np.ndarray | None = None,
         covariate_range: tuple[int, int] | None = None,
+        save_path: str | PathLike[str] | None = None,
     ) -> pd.DataFrame:
         """Estimate and cache thrivelines from this score's correlation matrix.
 
@@ -128,6 +128,8 @@ class ZGainScore(LongitudinalScore):
             ``(min, max)`` covariate bounds used to slice the correlation
             matrix and place grid anchors. When omitted, anchors span the
             covariate coordinates in the stored correlation matrix.
+        save_path : str | PathLike[str] | None, optional
+            If set, write the thriveline table to this CSV path.
 
         Returns
         -------
@@ -159,12 +161,15 @@ class ZGainScore(LongitudinalScore):
         )
         # Step 3: flatten to a long-form DataFrame for inspection and plotting.
         self.thrivelines = thrivelines_to_dataframe(thrive_Z, thrive_X, thrive_Y)
+        if save_path is not None:
+            self._save_dataframe_csv(self.thrivelines, save_path)
         return self.thrivelines
 
     def score(
         self,
         score_data: NormData,
         subject_id_col: str | None = None,
+        save_path: str | PathLike[str] | None = None,
     ) -> xr.DataArray:
         """Compute the z-gain score for every subject in ``score_data``.
 
@@ -177,6 +182,9 @@ class ZGainScore(LongitudinalScore):
         subject_id_col : str, optional
             Subject id column name. Kept for backwards compatibility; the
             subject ids are read from ``score_data`` itself.
+        save_path : str | PathLike[str] | None, optional
+            If set, write scores to this CSV path in wide format: one row per
+            subject and one column per response variable.
 
         Returns
         -------
@@ -237,9 +245,7 @@ class ZGainScore(LongitudinalScore):
                 r = self.correlation_matrix.get(rv, age_prev, age_last)
                 denominator = np.sqrt(1.0 - r**2)
                 # Compute zgain
-                scores[subject_index[subject], j] = (
-                    z_rv[obs_last] - r * z_rv[obs_prev]
-                ) / denominator
+                scores[subject_index[subject], j] = (z_rv[obs_last] - r * z_rv[obs_prev]) / denominator
 
         # Store the result so it can be retrieved later via self.zgain, even
         # if the caller does not keep the returned value.
@@ -249,4 +255,6 @@ class ZGainScore(LongitudinalScore):
             coords={"subjects": subjects, "response_vars": response_vars},
             name="zgain",
         )
+        if save_path is not None:
+            self._save_scores_csv(self.zgain, save_path)
         return self.zgain
