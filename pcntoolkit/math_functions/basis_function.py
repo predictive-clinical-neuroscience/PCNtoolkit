@@ -26,12 +26,11 @@ def create_basis_function(
         return BsplineBasisFunction(basis_column, **kwargs, knots=new_knots)
     elif basis_type in ["Composite", "CompositeBasis"]:
         parts = [BasisFunction.from_dict(p) for p in kwargs["parts"]]
-        return CompositeBasisFunction(parts)
+        return CompositeBasisFunction(parts, is_fitted=kwargs.get("is_fitted", False))
     elif basis_type in ["fractional_polynomial", "FractionalPolynomialBasisFunction"]:
         return FractionalPolynomialBasisFunction(basis_column, **kwargs)
     else:
-        return LinearBasisFunction(basis_column)
-
+        return LinearBasisFunction(basis_column, **kwargs)
 
 class BasisFunction(ABC):
     def __init__(
@@ -56,7 +55,7 @@ class BasisFunction(ABC):
         # version down; otherwise they are migrated as if saved with v0.0.0.
         if basis_function_type in ["Composite", "CompositeBasis"]:
             parts = [cls.from_dict(p, version=version) for p in my_dict["parts"]]
-            return CompositeBasisFunction(parts)
+            return CompositeBasisFunction(parts, is_fitted=my_dict.get("is_fitted", False))
         basis_function = create_basis_function(basis_function_type, **my_dict)
         return basis_function
 
@@ -298,8 +297,8 @@ class LinearBasisFunction(BasisFunction):
 
 
 class CompositeBasisFunction(BasisFunction):
-    def __init__(self, parts):
-        super().__init__(basis_column=0)
+    def __init__(self, parts,**kwargs):
+        super().__init__(basis_column=0,**kwargs)
         self.parts = parts
 
     def _fit(self, data, i):
@@ -337,6 +336,7 @@ class CompositeBasisFunction(BasisFunction):
     def to_dict(self):
         return {
             "basis_function": "CompositeBasis",
+            "is_fitted": self.is_fitted,
             "parts": [bf.to_dict() for bf in self.parts],
         }
 
