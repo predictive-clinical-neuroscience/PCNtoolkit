@@ -12,12 +12,12 @@ implement the abstract methods.
 
 from __future__ import annotations
 
-import importlib.metadata
 from abc import ABC, abstractmethod
 
 import numpy as np
 import xarray as xr
 
+from pcntoolkit.util.migration import ptk_version
 from pcntoolkit.util.output import Messages, Output
 from scipy.stats.distributions import norm
 
@@ -164,7 +164,7 @@ class RegressionModel(ABC):
         my_dict["is_fitted"] = self.is_fitted
         my_dict["is_from_dict"] = self.is_from_dict
         my_dict["transfered"] = self.transfered
-        my_dict["ptk_version"] = importlib.metadata.version("pcntoolkit")
+        my_dict["ptk_version"] = ptk_version()
         return my_dict
 
     def compute_yhat(self, data, responsevar, X, be):

@@ -1,10 +1,11 @@
+import json
 from pathlib import Path
 
 import numpy as np
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
-from pcntoolkit.normative_model import NormativeModel
+from pcntoolkit.normative_model import NormativeModel, _dumps_arrays_inline
 from pcntoolkit.regression_model.blr import BLR
 
 
@@ -104,6 +105,27 @@ class TestNormativeModel:
         loaded_preds = loaded_model.predict(data)
         np.testing.assert_array_almost_equal(original_preds.Z, loaded_preds.Z)
 
+    def test_model_load_after_move(self):
+        """A moved model writes its results in the new folder, not the old one."""
+        data = NormData.from_ndarrays(
+            name="test_data",
+            X=self.data["covariates"],
+            Y=self.data["responses"],
+            batch_effects=self.data["batch_effects"],
+            subject_ids=self.data["subject_ids"],
+        )
+        self.model.fit(data)
+        assert not list((self.save_dir / "model").glob("*.tmp"))
+
+        moved_dir = self.output_dir / "moved"
+        self.save_dir.rename(moved_dir)
+        loaded_model = NormativeModel.load(str(moved_dir))
+        assert loaded_model.save_dir == str(moved_dir)
+
+        loaded_model.predict(data)
+        assert (moved_dir / "results").exists()
+        assert not self.save_dir.exists()
+
     def test_model_with_batch_effects(self):
         """Test model with batch effect correction."""
         # Create data with batch effects
@@ -122,3 +144,26 @@ class TestNormativeModel:
         assert "Z" in predictions
         assert predictions.Z.shape == self.data["responses"].shape
         assert not np.isnan(predictions.Z).any()
+
+
+def test_dumps_arrays_inline() -> None:
+    """Dicts are indented, each list is on one line, and the values are kept."""
+    obj = {
+        "name": "roi",
+        "settings": {"degree": 3, "tol": 1e-8, "warp": None},
+        "m": [0.1, -2.5, 3.0],
+        "A": [[1.0, 0.5], [0.5, 2.0]],
+        "empty": {},
+    }
+    text = _dumps_arrays_inline(obj)
+    assert json.loads(text) == obj
+    lines = text.splitlines()
+    assert '        "degree": 3,' in lines
+    assert '    "m": [0.1, -2.5, 3.0],' in lines
+    assert '    "A": [[1.0, 0.5], [0.5, 2.0]],' in lines
+
+
+def test_dumps_arrays_inline_null_character() -> None:
+    """A string that looks like a placeholder does not corrupt the output."""
+    obj = {"name": "\x000\x00", "m": [1.0, 2.0]}
+    assert json.loads(_dumps_arrays_inline(obj)) == obj
