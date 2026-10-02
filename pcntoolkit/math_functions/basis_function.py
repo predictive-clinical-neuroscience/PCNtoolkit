@@ -26,7 +26,8 @@ def create_basis_function(
         return BsplineBasisFunction(basis_column, **kwargs, knots=new_knots)
     elif basis_type in ["Composite", "CompositeBasis"]:
         parts = [BasisFunction.from_dict(p) for p in kwargs["parts"]]
-        return CompositeBasisFunction(parts)
+        interactions = kwargs.get("interactions", None)
+        return CompositeBasisFunction(parts, interactions=interactions)
     elif basis_type in ["fractional_polynomial", "FractionalPolynomialBasisFunction"]:
         return FractionalPolynomialBasisFunction(basis_column, **kwargs)
     else:
@@ -55,10 +56,15 @@ class BasisFunction(ABC):
         # The parts have no ptk_version of their own, so pass the model's
         # version down; otherwise they are migrated as if saved with v0.0.0.
         if basis_function_type in ["Composite", "CompositeBasis"]:
-            parts = [cls.from_dict(p, version=version) for p in my_dict["parts"]]
-            return CompositeBasisFunction(parts)
-        basis_function = create_basis_function(basis_function_type, **my_dict)
-        return basis_function
+            parts = [
+                cls.from_dict(p, version=version)
+                for p in my_dict["parts"]
+            ]
+            return CompositeBasisFunction(
+                parts,
+                interactions=my_dict.get("interactions"),
+            )
+        return create_basis_function(basis_function_type, **my_dict)
 
     @classmethod
     def from_args(cls, name: str, args: dict) -> BasisFunction:
@@ -298,9 +304,29 @@ class LinearBasisFunction(BasisFunction):
 
 
 class CompositeBasisFunction(BasisFunction):
-    def __init__(self, parts):
+
+    """Combine basis functions and optionally construct pairwise interactions.
+
+    Parameters
+    ----------
+    parts : list of BasisFunction
+        Component basis functions.
+    interactions : list of tuple[int, int], optional
+        Pairs of indices into ``parts``. For each pair ``(i, j)``, all
+        pairwise products between the transformed columns of ``parts[i]``
+        and ``parts[j]`` are appended to the output.
+
+    Notes
+    -----
+    Interaction terms are mathematical products of component basis outputs.
+    Linear dependencies in the resulting design matrix are not detected or
+    removed automatically.
+    """
+
+    def __init__(self, parts, interactions=None):
         super().__init__(basis_column=0)
         self.parts = parts
+        self.interactions = [] if interactions is None else interactions
 
     def _fit(self, data, i):
         pass
@@ -321,28 +347,53 @@ class CompositeBasisFunction(BasisFunction):
     def transform(self, X):
         if len(X.shape) == 1:
             X = X[:, None]
+
         mats = []
+        part_mats = [None] * len(self.parts)
+
         for c in range(X.shape[1]):
             transformed = False
-            for bf in self.parts:
+
+            for part_idx, bf in enumerate(self.parts):
                 if bf.basis_column == c:
                     bf.basis_column = 0
-                    mats.append(bf.transform(X[:, c]))
+                    mat = bf.transform(X[:, c])
                     bf.basis_column = c
+
+                    mats.append(mat)
+                    part_mats[part_idx] = mat
                     transformed = True
+
             if not transformed:
-                mats.append(X[:, c])
+                mats.append(X[:, c][:, None])
+
+        for i, j in self.interactions:
+            left = part_mats[i]
+            right = part_mats[j]
+
+            interaction = (
+                left[:, :, None] * right[:, None, :]
+            ).reshape(X.shape[0], -1)
+
+            mats.append(interaction)
+
         return np.concatenate(mats, axis=1)
 
     def to_dict(self):
         return {
             "basis_function": "CompositeBasis",
             "parts": [bf.to_dict() for bf in self.parts],
+            "interactions": self.interactions,
         }
 
     @property
     def dimension(self):
-        return sum([p.dimension for p in self.parts])
+        interaction_dimension = sum(
+            self.parts[i].dimension * self.parts[j].dimension
+            for i, j in self.interactions
+        )
+
+        return sum(p.dimension for p in self.parts) + interaction_dimension
 
 
 class FractionalPolynomialBasisFunction(BasisFunction):
