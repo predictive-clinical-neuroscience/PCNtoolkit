@@ -1,3 +1,7 @@
+import os
+import shutil
+from typing import Callable
+
 import numpy as np
 import pytest
 
@@ -202,3 +206,72 @@ def test_migration_loads_model_when_slopes_are_off() -> None:
     # Pretend the model was saved with v1.3.0 so that the migration logic for pre-1.4.0 
     # models is triggered.
     registry.migrate("BLR", d, version="1.3.0")
+
+
+def test_init_hyp_accepts_array_hyp0(blr_model_factory: Callable) -> None:
+    """init_hyp() must accept hyp0 as np.ndarray, the type the docstring
+    declares. Regression test for #557."""
+    blr_model = blr_model_factory(hyp0=np.array([0.0, 0.0]))
+    hyp0 = blr_model.init_hyp()
+    assert isinstance(hyp0, np.ndarray)
+    assert hyp0.shape == (2,)
+
+
+def test_init_hyp_accepts_list_hyp0(blr_model_factory: Callable) -> None:
+    """init_hyp() must accept hyp0 as a list and return it as an array.
+    Regression test for #557."""
+    blr_model = blr_model_factory(hyp0=[0.0, 0.0])
+    hyp0 = blr_model.init_hyp()
+    assert isinstance(hyp0, np.ndarray)
+    assert hyp0.shape == (2,)
+
+
+def test_init_hyp_after_to_from_dict(blr_model_factory: Callable) -> None:
+    """from_dict converts saved list values to arrays; init_hyp() must still
+    work on the result (the save -> load -> refit path). Regression test for #557."""
+    blr_model = blr_model_factory(hyp0=[0.0, 0.0])
+    restored = BLR.from_dict(blr_model.to_dict())
+    assert isinstance(restored.hyp0, np.ndarray)
+    hyp0 = restored.init_hyp()
+    assert isinstance(hyp0, np.ndarray)
+    assert hyp0.shape == (2,)
+
+
+def test_fit_with_array_hyp0(
+    norm_data_from_arrays: NormData,
+    fitted_norm_blr_model: NormativeModel,
+) -> None:
+    """fit() must start the optimizer from an array hyp0, the type the
+    docstring declares. Regression test for #557."""
+    blr_model = BLR("test_blr_array_hyp0", hyp0=np.array([0.0, 0.0]))
+    response_var = norm_data_from_arrays.response_vars[0]
+    X, be, be_maps, Y, _ = fitted_norm_blr_model.extract_data(
+        norm_data_from_arrays.sel(response_vars=response_var)
+    )
+    blr_model.fit(X, be, be_maps, Y)
+    assert blr_model.is_fitted
+
+
+def test_refit_after_save_and_load(
+    norm_data_from_arrays: NormData,
+    save_dir_blr: str,
+) -> None:
+    """A model created with hyp0 as a list must be refittable after save and
+    load, since from_dict brings hyp0 back as an array. Regression test for #557."""
+    if os.path.exists(save_dir_blr):
+        shutil.rmtree(save_dir_blr)
+    os.makedirs(save_dir_blr, exist_ok=True)
+    blr_model = BLR("test_blr_hyp0_reload", hyp0=[0.0, 0.0])
+    model = NormativeModel(
+        blr_model,
+        save_dir=save_dir_blr,
+        saveresults=False,
+        saveplots=False,
+        evaluate_model=False,
+    )
+    model.fit(norm_data_from_arrays)
+    response_var = norm_data_from_arrays.response_vars.values[0]
+    loaded = NormativeModel.load(save_dir_blr)
+    assert isinstance(loaded[response_var].hyp0, np.ndarray)
+    loaded.fit(norm_data_from_arrays)
+    assert loaded[response_var].is_fitted
