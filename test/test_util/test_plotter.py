@@ -1,7 +1,8 @@
 import matplotlib
 import matplotlib.pyplot as plt
 
-from pcntoolkit.util.plotter import _plot_qq
+from pcntoolkit.util.plotter import _plot_qq, plot_centiles_advanced
+from test.fixtures.blr_model_fixtures import *
 from test.fixtures.plotter_fixtures import create_test_data_with_z
 
 # Use non-interactive backend so no display is needed.
@@ -84,3 +85,43 @@ def test_004_plot_qq_should_reflectNewTitle_when_setAfterReturn():
     assert ax_right.get_title() == "right panel"
 
     plt.close(fig)
+
+
+def test_005_plot_centiles_advanced_fills_missing_covariate_ranges(
+    fitted_norm_blr_model,
+):
+    """Partial covariate_ranges must be filled from the model (issue #526).
+
+    Ranges given for only one covariate used to raise KeyError on the
+    omitted one; they now default to the model's train range.
+    """
+    # Arrange: two-covariate fitted model, range given for covariate_0 only.
+    # Act: plot without supplying a range for covariate_1.
+    figures = plot_centiles_advanced(
+        fitted_norm_blr_model,
+        covariate="covariate_0",
+        covariate_ranges={"covariate_0": (0.0, 2.0)},
+        show_figure=False,
+    )
+
+    # Assert: one figure per response variable, no KeyError raised.
+    assert len(figures) == len(fitted_norm_blr_model.response_vars)
+    for fig in figures:
+        plt.close(fig)
+
+
+def test_006_plot_centiles_advanced_uses_model_ranges_by_default(
+    fitted_norm_blr_model,
+):
+    """With covariate_ranges=None, all ranges default to the model's."""
+    # Act: plot without any ranges at all.
+    figures = plot_centiles_advanced(
+        fitted_norm_blr_model,
+        covariate="covariate_0",
+        show_figure=False,
+    )
+
+    # Assert: one figure per response variable.
+    assert len(figures) == len(fitted_norm_blr_model.response_vars)
+    for fig in figures:
+        plt.close(fig)
