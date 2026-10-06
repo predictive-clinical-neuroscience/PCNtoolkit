@@ -1,4 +1,4 @@
-from .dataio.data_factory import load_fcon1000
+from .dataio.data_factory import load_fcon1000, load_lnm
 from .dataio.norm_data import NormData
 from .math_functions.basis_function import (
     BsplineBasisFunction,
