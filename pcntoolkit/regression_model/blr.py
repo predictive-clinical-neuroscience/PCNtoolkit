@@ -20,6 +20,7 @@ import numpy as np
 import xarray as xr
 from scipy import linalg, optimize  # type: ignore
 from scipy.linalg import LinAlgError  # type: ignore
+from threadpoolctl import threadpool_limits
 
 from pcntoolkit.math_functions.basis_function import (
     BasisFunction,
@@ -180,6 +181,11 @@ class BLR(RegressionModel):
         """
         Fit the Bayesian Linear Regression model to the data.
 
+        The fit runs with 1 BLAS/OpenMP thread. The matrices are small, so
+        extra BLAS threads make the fit slower (4-9x measured), and the
+        result can depend on the thread count. The limit applies only
+        during this call.
+
         Parameters
         ----------
         X : xr.DataArray
@@ -195,6 +201,17 @@ class BLR(RegressionModel):
         -------
         None
         """
+        with threadpool_limits(limits=1):
+            self._fit(X, be, be_maps, Y)
+
+    def _fit(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> None:
+        """Fit the model; see ``fit``. Uses the caller's thread settings."""
         np_X = X.values
         np_be = be.values
         np_Y = Y.values
