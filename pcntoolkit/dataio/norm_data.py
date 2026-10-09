@@ -10,9 +10,12 @@ is used by all the models in the toolkit.
 
 from __future__ import annotations
 
+import contextlib
 import copy
+import glob
 import json
 import os
+import re
 import warnings
 from collections import defaultdict
 from functools import reduce
@@ -23,6 +26,7 @@ from typing import (
     Dict,
     Generator,
     Hashable,
+    Iterator,
     List,
     LiteralString,
     Mapping,
@@ -45,6 +49,131 @@ from xarray.core.types import DataVars
 
 from pcntoolkit.dataio.fileio import load
 from pcntoolkit.util.output import Messages, Output, Warnings
+
+# Result kinds, their CSV file prefix and the columns that identify a row.
+RESULT_KEYS: dict[str, list[str]] = {
+    "Z": ["observations"],
+    "centiles": ["observations", "centile"],
+    "logp": ["observations"],
+    "statistics": ["statistic"],
+}
+# Folder (inside the results folder) for the part files of Runner jobs.
+RESULT_PARTS_DIR = "parts"
+# Tag of the Runner job that runs in this process; see result_parts().
+_RESULT_PART_TAG: Optional[str] = None
+
+
+@contextlib.contextmanager
+def result_parts(tag: str) -> Iterator[None]:
+    """Write results as part files of this job, not into the shared CSV files.
+
+    The Runner uses this in each scheduler job. Each job then writes
+    ``<results>/parts/<kind>_<name>__part__<tag>.csv`` without reading the
+    results of the other jobs. ``NormData.load_results`` (also called by the
+    Runner when it observes the jobs) merges the parts into the usual
+    ``<kind>_<name>.csv`` files; ``merge_result_parts`` does the same.
+
+    Parameters
+    ----------
+    tag : str
+        Unique name of the job, for example the Runner job name.
+    """
+    global _RESULT_PART_TAG
+    old = _RESULT_PART_TAG
+    _RESULT_PART_TAG = re.sub(r"[^A-Za-z0-9_.-]", "_", tag)
+    try:
+        yield
+    finally:
+        _RESULT_PART_TAG = old
+
+
+def _result_path(save_dir: str, kind: str, name: str) -> str:
+    """Return the CSV to write: a part file in a Runner job, else the shared file."""
+    if _RESULT_PART_TAG is None:
+        return os.path.join(save_dir, f"{kind}_{name}.csv")
+    parts_dir = os.path.join(save_dir, RESULT_PARTS_DIR)
+    os.makedirs(parts_dir, exist_ok=True)
+    return os.path.join(parts_dir, f"{kind}_{name}__part__{_RESULT_PART_TAG}.csv")
+
+
+def _read_result(path: str, kind: str) -> pd.DataFrame:
+    """Read a result CSV, indexed by its key columns, with exact floats."""
+    if kind == "statistics":
+        return pd.read_csv(path, index_col=0, float_precision="round_trip")
+    df = pd.read_csv(path, dtype={"observations": str}, float_precision="round_trip")
+    return df.set_index(RESULT_KEYS[kind])
+
+
+def merge_result_parts(save_dir: str, name: Optional[str] = None) -> None:
+    """Merge the part files of Runner jobs into the result CSV files.
+
+    For each result kind (Z, centiles, logp, statistics) and data name, the
+    parts and the existing ``<kind>_<name>.csv`` (if any) are joined on the
+    key columns; a column in a part replaces the column with the same name
+    in the existing file. Columns are written as ``subject_ids`` first, then
+    the response variables sorted. The merged file replaces the old one in
+    one step, and the merged parts are deleted. Running it again, or with no
+    parts, changes nothing.
+
+    Parameters
+    ----------
+    save_dir : str
+        The results folder (the one that holds ``parts/``).
+    name : str, optional
+        Only merge the results of this data name. By default all names.
+    """
+    parts_dir = os.path.join(save_dir, RESULT_PARTS_DIR)
+    if not os.path.isdir(parts_dir):
+        return
+    for kind in RESULT_KEYS:
+        data_glob = glob.escape(name) if name is not None else "*"
+        pattern = f"{kind}_{data_glob}__part__*.csv"
+        names = {
+            os.path.basename(p)[len(kind) + 1 :].rsplit("__part__", 1)[0]
+            for p in glob.glob(os.path.join(parts_dir, pattern))
+        }
+        for data_name in sorted(names):
+            _merge_parts(save_dir, kind, data_name)
+    with contextlib.suppress(OSError):
+        os.rmdir(parts_dir)  # only when empty
+
+
+def _merge_parts(save_dir: str, kind: str, name: str) -> None:
+    res_path = os.path.join(save_dir, f"{kind}_{name}.csv")
+    part_name = f"{glob.escape(kind)}_{glob.escape(name)}__part__*.csv"
+    pattern = os.path.join(save_dir, RESULT_PARTS_DIR, part_name)
+    with FileLock(res_path + ".lock"), contextlib.ExitStack() as part_locks:
+        part_paths = sorted(glob.glob(pattern))
+        if not part_paths:
+            return
+        # Hold the lock of each part, so that a job that still writes it (for
+        # example a retry) can not change it between the read and the delete.
+        for p in part_paths:
+            part_locks.enter_context(FileLock(p + ".lock"))
+        merged = pd.concat([_read_result(p, kind) for p in part_paths], axis=1)
+        merged = merged.loc[:, ~merged.columns.duplicated(keep="last")]
+        if os.path.isfile(res_path) and os.path.getsize(res_path) > 0:
+            old = _read_result(res_path, kind)
+            old = old.drop(columns=[c for c in merged.columns if c in old.columns])
+            merged = old.join(merged, how="outer")
+        first = ["subject_ids"] if "subject_ids" in merged.columns else []
+        merged = merged[first + sorted(c for c in merged.columns if c not in first)]
+        if kind != "statistics":
+            # Rows by observation (as a number, like save_zscores), then centile.
+            obs = merged.index.get_level_values("observations")
+            sort_keys = [pd.to_numeric(obs, errors="coerce")]
+            if kind == "centiles":
+                sort_keys.append(merged.index.get_level_values("centile"))
+            merged = merged.iloc[np.lexsort(sort_keys[::-1])]
+        tmp_path = res_path + ".tmp"
+        merged.to_csv(tmp_path)
+        os.replace(tmp_path, res_path)
+        for p in part_paths:
+            os.remove(p)
+    for p in part_paths:
+        with contextlib.suppress(OSError):
+            os.remove(p + ".lock")
+
 
 # Quartiles defining the interquartile range used by Tukey's fences.
 Q1_QUANTILE = 0.25
@@ -1668,7 +1797,7 @@ class NormData(xr.Dataset):
             ]
         ]
         zdf.index = zdf.index.astype(str)
-        res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
+        res_path = _result_path(save_dir, "Z", self.name)
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
             with open(
@@ -1752,7 +1881,7 @@ class NormData(xr.Dataset):
                 ],
             ]
         ]
-        res_path = os.path.join(save_dir, f"centiles_{self.name}.csv")
+        res_path = _result_path(save_dir, "centiles", self.name)
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
             with open(
@@ -1839,7 +1968,7 @@ class NormData(xr.Dataset):
             ]
         ]
         logp.index = logp.index.astype(str)
-        res_path = os.path.join(save_dir, f"logp_{self.name}.csv")
+        res_path = _result_path(save_dir, "logp", self.name)
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
             with open(
@@ -1898,7 +2027,7 @@ class NormData(xr.Dataset):
     def save_statistics(self, save_dir: str) -> None:
         mdf = self.statistics.to_dataframe().unstack(level="response_vars")
         mdf.columns = mdf.columns.droplevel(0)
-        res_path = os.path.join(save_dir, f"statistics_{self.name}.csv")
+        res_path = _result_path(save_dir, "statistics", self.name)
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
             with open(
@@ -1953,9 +2082,13 @@ class NormData(xr.Dataset):
     def load_results(self, save_dir: str) -> None:
         """Loads the results (zscores, centiles, logp, statistics) back into the data
 
+        Part files that Runner jobs wrote for this data are merged into the
+        result CSV files first (see ``merge_result_parts``).
+
         Args:
             save_dir (str): Where the results are saved. I.e.: {save_dir}/Z_fit_test.csv
         """
+        merge_result_parts(save_dir, self.name)
         self.load_zscores(save_dir)
         self.load_centiles(save_dir)
         self.load_logp(save_dir)
