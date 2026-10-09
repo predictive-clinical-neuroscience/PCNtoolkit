@@ -265,67 +265,84 @@ class HBR(RegressionModel):
     #     else:
     #         raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
 
-    def transfer(
-        self,
+
+    def transfer(self,
         X: xr.DataArray,
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
-        Y: xr.DataArray,
-        **kwargs,
-    ) -> HBR:
-        """
-        Perform transfer learning using existing model as prior.
-
-        Parameters
-        ----------
-        hbrconf : HBRConf
-            Configuration for new model
-        transferdata : HBRData
-            Data for transfer learning
-        freedom : float
-            Parameter controlling influence of prior model (0-1)
-
-        Returns
-        -------
-        HBR
-            New model instance with transferred knowledge
-        """
+        Y: xr.DataArray,**kwargs):
 
         new_likelihood = self.inference_method.transfer_likelihood(self.likelihood)
-
         new_hbr_model = HBR(
-            self.name,
-            new_likelihood,
-            self.is_fitted,
-            self.is_from_dict,
-            self.inference_method,
+            name=self.name,
+            likelihood=new_likelihood,
+            inference_method=self.inference_method.clone(),
         )
-        new_hbr_model_model = new_hbr_model.likelihood.compile(X, be, be_maps, Y)
-        # Route through _run_inference so transfer honours inference_method
-        # instead of silently falling back to MCMC.
-        inference_overrides = {
-            k: kwargs[k]
-            for k in (
-                "draws",
-                "tune",
-                "cores",
-                "chains",
-                "nuts_sampler",
-                "init",
-                "progressbar",
-                "inference_method",
-                "vi_iterations",
-                "vi_draws",
-                "vi_kwargs",
-            )
-            if k in kwargs
-        }
-        with new_hbr_model_model:
-            new_hbr_model.idata = new_hbr_model._run_inference(**inference_overrides)
-            new_hbr_model.is_fitted = True
-        new_hbr_model.pymc_model = new_hbr_model_model
-        new_hbr_model.be_maps = be_maps
+        new_hbr_model.fit(X, be, be_maps, Y)
         return new_hbr_model
+
+
+    # def transfer(
+    #     self,
+    #     X: xr.DataArray,
+    #     be: xr.DataArray,
+    #     be_maps: dict[str, dict[str, int]],
+    #     Y: xr.DataArray,
+    #     **kwargs,
+    # ) -> HBR:
+    #     """
+    #     Perform transfer learning using existing model as prior.
+
+    #     Parameters
+    #     ----------
+    #     hbrconf : HBRConf
+    #         Configuration for new model
+    #     transferdata : HBRData
+    #         Data for transfer learning
+    #     freedom : float
+    #         Parameter controlling influence of prior model (0-1)
+
+    #     Returns
+    #     -------
+    #     HBR
+    #         New model instance with transferred knowledge
+    #     """
+
+    #     new_likelihood = self.inference_method.transfer_likelihood(self.likelihood)
+
+    #     new_hbr_model = HBR(
+    #         self.name,
+    #         new_likelihood,
+    #         self.is_fitted,
+    #         self.is_from_dict,
+    #         self.inference_method,
+    #     )
+    #     new_hbr_model_model = new_hbr_model.likelihood.compile(X, be, be_maps, Y)
+    #     # Route through _run_inference so transfer honours inference_method
+    #     # instead of silently falling back to MCMC.
+    #     inference_overrides = {
+    #         k: kwargs[k]
+    #         for k in (
+    #             "draws",
+    #             "tune",
+    #             "cores",
+    #             "chains",
+    #             "nuts_sampler",
+    #             "init",
+    #             "progressbar",
+    #             "inference_method",
+    #             "vi_iterations",
+    #             "vi_draws",
+    #             "vi_kwargs",
+    #         )
+    #         if k in kwargs
+    #     }
+    #     with new_hbr_model_model:
+    #         new_hbr_model.idata = new_hbr_model._run_inference(**inference_overrides)
+    #         new_hbr_model.is_fitted = True
+    #     new_hbr_model.pymc_model = new_hbr_model_model
+    #     new_hbr_model.be_maps = be_maps
+    #     return new_hbr_model
 
     def has_batch_effect(self) -> bool:
         return False
@@ -502,7 +519,12 @@ class InferenceMethod(ABC):
         pass
 
     @abstractmethod
-    def transfer_likelihood(self, model: pm.Model):
+    def transfer_likelihood(self, likelihood:Likelihood):
+        pass
+
+    @abstractmethod
+    def clone(self) -> InferenceMethod:
+        # Clone the object without the fitted attributes
         pass
 
 
@@ -673,7 +695,7 @@ class MCMC(InferenceMethod):
             )
         return az.extract(logp, "log_likelihood", var_names=["Yhat"]).mean("sample")
 
-    def transfer_likelihood(self, likelihood):
+    def transfer_likelihood(self, likelihood:Likelihood):
         return likelihood.transfer(self.data_tree)
 
     def extract_and_reshape(
@@ -683,6 +705,13 @@ class MCMC(InferenceMethod):
         if len(preds.shape) == 1:
             preds = np.repeat(preds[None, :], observations, axis=0)
         return xr.DataArray(np.squeeze(preds), dims=["observations", "sample"])
+
+    def clone(self) -> MCMC:
+        fitted_attrs = ["data_tree", "is_fitted", "is_from_dict"]
+        mcmc = MCMC(**{k:v for k,v in self.__dict__.items() if k not in fitted_attrs })
+        mcmc.is_fitted = False
+        mcmc.is_from_dict = False
+        return mcmc
 
 
 class LaPlace(InferenceMethod):
