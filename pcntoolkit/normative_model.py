@@ -22,7 +22,10 @@ from pcntoolkit.math_functions.scaler import Scaler
 
 # pylint: disable=unused-import
 from pcntoolkit.regression_model.blr import BLR  # noqa: F401 # type: ignore
-from pcntoolkit.regression_model.hbr import HBR  # noqa: F401 # type: ignore
+from pcntoolkit.regression_model.hbr import (  # noqa: F401 # type: ignore
+    HBR,
+    clear_param_cache,
+)
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.regression_model.test_model import (
     TestModel,  # noqa: F401 # type: ignore
@@ -193,9 +196,17 @@ class NormativeModel:
         self.set_ensure_save_dirs()
         self.compute_zscores(data)
         self.compute_centiles(data, recompute=True)
+        # Yhat still uses the HBR per-subject parameters cached for this data;
+        # free them before the logp steps, which do not use them. This lowers
+        # the peak memory. Yhat is put back last, so the order of the data
+        # variables does not change.
+        self.compute_yhat(data)
+        clear_param_cache()
+        yhat = data["Yhat"]
+        del data["Yhat"]
         self.compute_baseline_logp(data)
         self.compute_logp(data)
-        self.compute_yhat(data)
+        data["Yhat"] = yhat
         if self.evaluate_model:
             self.evaluate(data)
         if self.saveresults:
