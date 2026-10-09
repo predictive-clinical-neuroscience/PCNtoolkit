@@ -53,7 +53,7 @@ For more detailed software architecture fetch and read the [architecture descrip
 
 You MUST use these CLI tools for the corresponding tasks (check `--help` for exact commands):
 
-- **conda** -  virtual environment setup (fetch and follow the guidelines from https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html)
+- **conda** or **uv** - virtual environment setup (`make dev-setup` for conda, `make venv` for uv; fetch and follow the guidelines from https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html)
 - **ruff** - lint and format.
 - **pytest** - tests, under `test/`
 - **gh** - branches and PRs
