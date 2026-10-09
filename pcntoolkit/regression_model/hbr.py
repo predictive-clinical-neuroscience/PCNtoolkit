@@ -9,6 +9,8 @@ import arviz as az  # type: ignore
 import matplotlib.pyplot as plt
 import numpy as np
 import pymc as pm  # type: ignore
+
+# import pymc_extras as pmx
 import xarray as xr
 
 from pcntoolkit.math_functions.factorize import *
@@ -265,14 +267,17 @@ class HBR(RegressionModel):
     #     else:
     #         raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
 
-
-    def transfer(self,
+    def transfer(
+        self,
         X: xr.DataArray,
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
-        Y: xr.DataArray,**kwargs):
-
-        new_likelihood = self.inference_method.transfer_likelihood(self.likelihood)
+        Y: xr.DataArray,
+        **kwargs,
+    ):
+        new_likelihood = self.inference_method.use_posterior_as_new_prior(
+            self.likelihood
+        )
         new_hbr_model = HBR(
             name=self.name,
             likelihood=new_likelihood,
@@ -280,7 +285,6 @@ class HBR(RegressionModel):
         )
         new_hbr_model.fit(X, be, be_maps, Y)
         return new_hbr_model
-
 
     # def transfer(
     #     self,
@@ -442,19 +446,9 @@ class HBR(RegressionModel):
             New model instance
         """
         likelihood = Likelihood.from_args(args)
-        draws = args.get("draws", 1000)
-        tune = args.get("tune", 1000)
-        cores = args.get("cores", 1)
-        chains = args.get("chains", 1)
-        nuts_sampler = args.get("nuts_sampler", "pymc")
-        init = args.get("init", "auto")
-        progressbar = args.get("progressbar", True)
         is_fitted = args.get("is_fitted", False)
         is_from_dict = True
         inference_method = args.get("inference_method", "mcmc")
-        vi_iterations = args.get("vi_iterations", 30000)
-        vi_draws = args.get("vi_draws", 1000)
-        vi_kwargs = args.get("vi_kwargs", {})
         self = cls(
             name,
             likelihood,
@@ -506,65 +500,8 @@ class InferenceMethod(ABC):
     def from_dict(cls, my_dict: dict, path: Optional[str]) -> InferenceMethod:
         pass
 
-    @abstractmethod
-    def to_dict(cls, my_dict: dict, path: Optional[str]) -> dict[str, Any]:
-        pass
-
-    @abstractmethod
-    def apply(self, fn: Callable, model: pm.Model, params: dict[str, any], kwargs):
-        pass
-
-    @abstractmethod
-    def elemwise_logp(self, model: pm.Model):
-        pass
-
-    @abstractmethod
-    def transfer_likelihood(self, likelihood:Likelihood):
-        pass
-
-    @abstractmethod
-    def clone(self) -> InferenceMethod:
-        # Clone the object without the fitted attributes
-        pass
-
-
-class MCMC(InferenceMethod):
-    def __init__(
-        self,
-        draws: int = 1500,
-        tune: int = 500,
-        cores: int = 4,
-        chains: int = 4,
-        init: str = "auto",
-        nuts_sampler: str = "nutpie",
-        progressbar: bool = True,
-    ):
-        self.data_tree: xr.DataTree = None  # type: ignore
-        self.draws = draws
-        self.tune = tune
-        self.cores = cores
-        self.chains = chains
-        self.init = init
-        self.nuts_sampler = nuts_sampler
-        self.progressbar = progressbar
-        self.is_fitted = False
-        self.is_from_dict = False
-
-    def fit(self, model: pm.Model):
-        with model:
-            self.data_tree = pm.sample(
-                draws=self.draws,
-                tune=self.tune,
-                cores=self.cores,
-                chains=self.chains,
-                nuts_sampler=self.nuts_sampler,
-                init=self.init,
-                progressbar=self.progressbar,
-            )
-        self.is_fitted = True
-
     def to_dict(self, path):
-        my_dict = {"type": "MCMC"}
+        my_dict = {"type": self.__class__.__name__}
         if self.is_fitted and (path is not None):
             data_tree_path = os.path.join(path, "data_tree.nc")
             self.save_data_tree(data_tree_path)
@@ -574,63 +511,11 @@ class MCMC(InferenceMethod):
                 my_dict[key] = value
         return my_dict
 
-    @classmethod
-    def from_dict(cls, my_dict: Dict[str, Any], path: Optional[str] = None) -> MCMC:
-        draws: int = my_dict["draws"]
-        tune: int = my_dict["tune"]
-        cores: int = my_dict["cores"]
-        chains: int = my_dict["chains"]
-        nuts_sampler: str = my_dict["nuts_sampler"]
-        init: str = my_dict["init"]
-        progressbar: bool = my_dict["progressbar"]
-        is_fitted: bool = my_dict["is_fitted"]
-        if is_fitted:
-            try:
-                data_tree_path: str = my_dict["data_tree_path"]
-            except Exception as e:
-                AttributeError("This model is fitted but does not contain a DataTree")
+    @abstractmethod
+    def use_posterior_as_new_prior(self, likelihood: Likelihood) -> Likelihood:
+        pass
 
-        mcmc = cls(
-            draws=draws,
-            tune=tune,
-            cores=cores,
-            chains=chains,
-            nuts_sampler=nuts_sampler,
-            init=init,
-            progressbar=progressbar,
-        )
-        if is_fitted:
-            if path is not None:
-                data_tree_path = os.path.join(path, "data_tree.nc")
-                print(data_tree_path)
-                mcmc.is_fitted = True
-                mcmc.load_data_tree(data_tree_path)
-            else:
-                AttributeError(
-                    "The model that you are trying to load is marked as fitted but does not contain a DataTree"
-                )
-        mcmc.is_from_dict = True
-        return mcmc
-
-    def save_data_tree(self, path: str) -> None:
-        if self.is_fitted:
-            if hasattr(self, "data_tree"):
-                xr.DataTree.from_dict(
-                    {"posterior": self.data_tree["posterior"].dataset}
-                ).to_netcdf(path)
-            else:
-                raise ValueError(Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_IDATA))
-
-    def load_data_tree(self, path: str) -> None:
-        if self.is_fitted:
-            try:
-                self.data_tree = az.from_netcdf(path)
-            except Exception as exc:
-                raise ValueError(
-                    Output.error(Errors.ERROR_HBR_COULD_NOT_LOAD_IDATA, path=path)
-                ) from exc
-
-    def apply(self, fn, model, params, kwargs):
+    def apply(self, fn: Callable, model: pm.Model, params: dict[str, any], kwargs):
         """
         Apply a generic function to likelihood parameters
         """
@@ -664,26 +549,6 @@ class MCMC(InferenceMethod):
         return result
 
     def elemwise_logp(self, model) -> xr.DataArray:  # type: ignore
-        """
-        Compute log-probabilities for each observation in the data.
-
-        Parameters
-        ----------
-        X : xr.DataArray
-            Covariate data
-        be : xr.DataArray
-            Batch effect data
-        be_maps : dict[str, dict[str, int]]
-            Batch effect maps
-        Y : xr.DataArray
-            Response variable data
-
-        Returns
-        -------
-        xr.DataArray
-            Log-probabilities of the data
-        """
-
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
         with model:
@@ -695,9 +560,6 @@ class MCMC(InferenceMethod):
             )
         return az.extract(logp, "log_likelihood", var_names=["Yhat"]).mean("sample")
 
-    def transfer_likelihood(self, likelihood:Likelihood):
-        return likelihood.transfer(self.data_tree)
-
     def extract_and_reshape(
         self, post_pred, observations, var_name: str
     ) -> xr.DataArray:
@@ -706,16 +568,123 @@ class MCMC(InferenceMethod):
             preds = np.repeat(preds[None, :], observations, axis=0)
         return xr.DataArray(np.squeeze(preds), dims=["observations", "sample"])
 
+    def save_data_tree(self, path: str) -> None:
+        if self.is_fitted:
+            if hasattr(self, "data_tree"):
+                groups = {"posterior": self.data_tree["posterior"].dataset}
+                if "fit" in self.data_tree.children:
+                    groups["fit"] = self.data_tree["fit"].dataset
+                xr.DataTree.from_dict(groups).to_netcdf(path)
+            else:
+                raise ValueError(Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_IDATA))
+
+    def load_data_tree(self, path: str) -> None:
+        if self.is_fitted:
+            try:
+                self.data_tree = az.from_netcdf(path)
+            except Exception as exc:
+                raise ValueError(
+                    Output.error(Errors.ERROR_HBR_COULD_NOT_LOAD_IDATA, path=path)
+                ) from exc
+
+
+class MCMC(InferenceMethod):
+    def __init__(
+        self,
+        draws: int = 1500,
+        tune: int = 500,
+        cores: int = 4,
+        chains: int = 4,
+        init: str = "auto",
+        nuts_sampler: str = "nutpie",
+        progressbar: bool = True,
+    ):
+        self.data_tree: xr.DataTree = None  # type: ignore
+        self.draws = draws
+        self.tune = tune
+        self.cores = cores
+        self.chains = chains
+        self.init = init
+        self.nuts_sampler = nuts_sampler
+        self.progressbar = progressbar
+        self.is_fitted = False
+        self.is_from_dict = False
+
     def clone(self) -> MCMC:
         fitted_attrs = ["data_tree", "is_fitted", "is_from_dict"]
-        mcmc = MCMC(**{k:v for k,v in self.__dict__.items() if k not in fitted_attrs })
+        mcmc = MCMC(**{k: v for k, v in self.__dict__.items() if k not in fitted_attrs})
         mcmc.is_fitted = False
         mcmc.is_from_dict = False
         return mcmc
 
+    def fit(self, model: pm.Model):
+        with model:
+            self.data_tree = pm.sample(
+                draws=self.draws,
+                tune=self.tune,
+                cores=self.cores,
+                chains=self.chains,
+                nuts_sampler=self.nuts_sampler,
+                init=self.init,
+                progressbar=self.progressbar,
+            )
+        self.is_fitted = True
+
+    @classmethod
+    def from_dict(cls, my_dict: Dict[str, Any], path: Optional[str] = None) -> MCMC:
+        draws: int = my_dict["draws"]
+        tune: int = my_dict["tune"]
+        cores: int = my_dict["cores"]
+        chains: int = my_dict["chains"]
+        nuts_sampler: str = my_dict["nuts_sampler"]
+        init: str = my_dict["init"]
+        progressbar: bool = my_dict["progressbar"]
+        is_fitted: bool = my_dict["is_fitted"]
+        mcmc = cls(
+            draws=draws,
+            tune=tune,
+            cores=cores,
+            chains=chains,
+            nuts_sampler=nuts_sampler,
+            init=init,
+            progressbar=progressbar,
+        )
+        if is_fitted:
+            if path is not None:
+                data_tree_path = os.path.join(path, "data_tree.nc")
+                print(data_tree_path)
+                mcmc.is_fitted = True
+                mcmc.load_data_tree(data_tree_path)
+            else:
+                AttributeError(
+                    "The model that you are trying to load is marked as fitted but does not contain a DataTree"
+                )
+        mcmc.is_from_dict = True
+        return mcmc
+
+    def use_posterior_as_new_prior(self, likelihood: Likelihood) -> Likelihood:
+        return likelihood.transfer(self.data_tree)
+
 
 class LaPlace(InferenceMethod):
-    def __init__(self, draws=100, progressbar=True, kwargs=None):
+    def __init__(self, draws=4000, progressbar=True, kwargs=None):
+        self.draws = draws
+        self.progressbar = progressbar
+        self.kwargs = kwargs or {}
+        self.data_tree = None
+        self.is_fitted = False
+        self.is_from_dict = False
+
+    def clone(self) -> LaPlace:
+        fitted_attrs = ["data_tree", "is_fitted", "is_from_dict"]
+        mcmc = LaPlace(
+            **{k: v for k, v in self.__dict__.items() if k not in fitted_attrs}
+        )
+        mcmc.is_fitted = False
+        mcmc.is_from_dict = False
+        return mcmc
+
+    def fit(self, model: pm.Model):
         try:
             import pymc_extras as pmx  # type: ignore
         except ImportError as exc:
@@ -723,18 +692,37 @@ class LaPlace(InferenceMethod):
                 "inference_method='laplace' requires pymc-extras. It ships as a "
                 "dependency; reinstall it with: pip install 'pymc-extras>=0.11.0'"
             ) from exc
-        self.draws = draws
-        self.progressbar = progressbar
-        self.kwargs = kwargs or {}
-        self.approximation = None
+        with model:
+            self.data_tree = pmx.fit_laplace(
+                draws=self.draws,
+                progressbar=self.progressbar,
+                **self.kwargs,
+            )
+        self.is_fitted = True
 
-    def fit(self, model: pm.Model):
-        self.approximation = pmx.fit(
-            method="laplace",
-            draws=self.draws,
-            progressbar=self.progressbar,
-            **self.kwargs,
-        )
+    @classmethod
+    def from_dict(cls, my_dict: dict, path: Optional[str]) -> InferenceMethod:
+        draws = my_dict["draws"]
+        progressbar = my_dict["progressbar"]
+        kwargs = my_dict["kwargs"] or {}
+        is_fitted = my_dict["is_fitted"]
+        laplace = cls(draws=draws, progressbar=progressbar, kwargs=kwargs)
+        if is_fitted:
+            if path is not None:
+                data_tree_path = os.path.join(path, "data_tree.nc")
+                print(data_tree_path)
+                laplace.is_fitted = True
+                laplace.load_data_tree(data_tree_path)
+            else:
+                AttributeError(
+                    "The model that you are trying to load is marked as fitted but does not contain a DataTree"
+                )
+        laplace.is_from_dict = True
+        return laplace
+
+    def use_posterior_as_new_prior(self, likelihood: Likelihood) -> Likelihood:
+        data_tree = self.data_tree
+        return None
 
 
 class ADVI(InferenceMethod):
