@@ -152,6 +152,14 @@ class Warnings:
     SYNTHESIZE_N_SAMPLES_IGNORED = (
         "{n_samples} sample(s) ignored because data is provided."
     )
+    N_JOBS_ABOVE_ALLOCATION = (
+        "n_jobs={n_jobs} is more than the {allocated} allocated CPU(s) (CPU affinity, SLURM_CPUS_PER_TASK, "
+        "OMP_NUM_THREADS). Using n_jobs={allocated}."
+    )
+    N_JOBS_IGNORED_FOR_HBR = (
+        "n_jobs={n_jobs} is ignored for HBR models: response variables are processed one at a time. "
+        "Use the HBR 'cores' argument to sample chains in parallel."
+    )
     CENTILES_ALREADY_COMPUTED_FOR_CENTILES = "Centiles are already computed for {dataset_name} for centiles {centiles}, skipping computation. Force recompute by passing recompute=True to compute_centiles"
     REMOVE_NAN_SET_TO_FALSE = "Warning: remove_NAN is set to False. Missing (NaN) values may cause errors during model creation or training."
     REMOVE_NAN_SET_TO_FALSE = "Dataframe contains NaNs, but remove_Nan is set to False. Pass remove_Nan=True to NormData.from_dataframe to remove them."

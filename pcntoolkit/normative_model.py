@@ -30,6 +30,7 @@ from pcntoolkit.regression_model.test_model import (
 from pcntoolkit.util.evaluator import Evaluator
 from pcntoolkit.util.migration import check_forward_compatibility, ptk_version
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
+from pcntoolkit.util.parallel import check_n_jobs, map_tasks, resolve_n_jobs
 from pcntoolkit.util.paths import (
     ensure_dir_exists,
     get_default_save_dir,
@@ -71,6 +72,14 @@ class NormativeModel:
         Default is ``None`` (no transform).
     name: str
         Name of the model
+    n_jobs : int
+        Number of worker processes for the loops over response variables
+        in fit and predict. Default 1: one variable at a time in this
+        process, as before. ``-1`` uses all allocated CPUs (CPU affinity,
+        ``SLURM_CPUS_PER_TASK`` and ``OMP_NUM_THREADS``); a larger value is
+        reduced to the allocated CPUs. Each worker uses 1 BLAS thread.
+        Ignored for HBR models, which use ``cores`` for their chains. Not
+        saved with the model.
     """
 
     def __init__(
@@ -85,6 +94,7 @@ class NormativeModel:
         outscaler: str = "standardize",
         y_transform: Optional[str] = None,
         name: Optional[str] = None,
+        n_jobs: int = 1,
     ):
         self.savemodel: bool = savemodel
         self.evaluate_model: bool = evaluate_model
@@ -95,6 +105,7 @@ class NormativeModel:
         self.outscaler: str = outscaler
         self.y_transform: Optional[str] = y_transform
         self.name: Optional[str] = name
+        self.n_jobs: int = check_n_jobs(n_jobs)
         self.response_vars: list[str] = None  # type: ignore
         self.template_regression_model: RegressionModel = template_regression_model
         self.regression_models: dict[str, RegressionModel] = {}
@@ -177,11 +188,17 @@ class NormativeModel:
         self.register_data_info(data)
         self.preprocess(data)
         Output.print(Messages.FITTING_MODELS, n_models=len(self.response_vars))
-        for responsevar in self.response_vars:
-            Output.print(Messages.FITTING_MODEL, model_name=responsevar)
-            resp_fit_data = data.sel({"response_vars": responsevar})
-            X, be, be_maps, Y, _ = self.extract_data(resp_fit_data)
-            self[responsevar].fit(X, be, be_maps, Y)
+
+        def tasks():
+            for responsevar in self.response_vars:
+                resp_fit_data = data.sel({"response_vars": responsevar})
+                X, be, be_maps, Y, _ = self.extract_data(resp_fit_data)
+                yield (self[responsevar], responsevar, X, be, be_maps, Y)
+
+        n = len(self.response_vars)
+        fitted = map_tasks(_fit_one, tasks(), n, self._n_workers())
+        for responsevar, model in zip(self.response_vars, fitted, strict=True):
+            self[responsevar] = model
         self.is_fitted = True
         self.postprocess(data)
         if self.savemodel:  # Make sure model is saved
@@ -246,6 +263,7 @@ class NormativeModel:
             outscaler=self.outscaler,
             y_transform=self.y_transform,
             save_dir=self.save_dir,
+            n_jobs=self.n_jobs,
         )
         if save_dir is not None:
             new_model.save_dir = save_dir
@@ -325,6 +343,7 @@ class NormativeModel:
             outscaler=self.outscaler,
             y_transform=self.y_transform,
             save_dir=save_dir,
+            n_jobs=self.n_jobs,
         )
 
         new_model.fit(merged_data)
@@ -865,13 +884,17 @@ class NormativeModel:
             },
         )
         Output.print(Messages.COMPUTING_ZSCORES, n_models=len(respvar_intersection))
-        for responsevar in respvar_intersection:
-            Output.print(Messages.COMPUTING_ZSCORES_MODEL, model_name=responsevar)
-            resp_predict_data = data.sel({"response_vars": responsevar})
-            X, be, _, Y, _ = self.extract_data(resp_predict_data)
-            data["Z"].loc[{"response_vars": responsevar}] = self[responsevar].forward(
-                X, be, Y
-            )
+        rvs = list(respvar_intersection)
+
+        def tasks():
+            for responsevar in rvs:
+                resp_predict_data = data.sel({"response_vars": responsevar})
+                X, be, _, Y, _ = self.extract_data(resp_predict_data)
+                yield (self[responsevar], responsevar, X, be, Y)
+
+        results = map_tasks(_forward_one, tasks(), len(rvs), self._n_workers())
+        for responsevar, Z in zip(rvs, results, strict=True):
+            data["Z"].loc[{"response_vars": responsevar}] = Z
 
         self.postprocess(data)
         return data
@@ -932,16 +955,19 @@ class NormativeModel:
         )
 
         Output.print(Messages.COMPUTING_CENTILES, n_models=len(respvar_intersection))
-        for responsevar in respvar_intersection:
-            resp_predict_data = data.sel({"response_vars": responsevar})
-            Output.print(Messages.COMPUTING_CENTILES_MODEL, model_name=responsevar)
-            X, be, _, _, _ = self.extract_data(resp_predict_data)
-            for p, c in zip(ppf, centiles):
-                Z = xr.DataArray(
-                    np.full(resp_predict_data.X.shape[0], p), dims=("observations",)
-                )
+        rvs = list(respvar_intersection)
+
+        def tasks():
+            for responsevar in rvs:
+                resp_predict_data = data.sel({"response_vars": responsevar})
+                X, be, _, _, _ = self.extract_data(resp_predict_data)
+                yield (self[responsevar], responsevar, X, be, ppf)
+
+        results = map_tasks(_centiles_one, tasks(), len(rvs), self._n_workers())
+        for responsevar, resp_centiles in zip(rvs, results, strict=True):
+            for c, centile_values in zip(centiles, resp_centiles, strict=True):
                 data["centiles"].loc[{"response_vars": responsevar, "centile": c}] = (
-                    self[responsevar].backward(X, be, Z)
+                    centile_values
                 )
 
         self.postprocess(data)
@@ -1041,13 +1067,17 @@ class NormativeModel:
 
         # Compute the fitted model's logp on scaled Y data
         Output.print(Messages.COMPUTING_LOGP, n_models=len(respvar_intersection))
-        for responsevar in respvar_intersection:
-            resp_predict_data = data.sel({"response_vars": responsevar})
-            X, be, _, Y, _ = self.extract_data(resp_predict_data)
-            Output.print(Messages.COMPUTING_LOGP_MODEL, model_name=responsevar)
-            data["logp"].loc[{"response_vars": responsevar}] = self[
-                responsevar
-            ].elemwise_logp(X, be, Y)
+        rvs = list(respvar_intersection)
+
+        def tasks():
+            for responsevar in rvs:
+                resp_predict_data = data.sel({"response_vars": responsevar})
+                X, be, _, Y, _ = self.extract_data(resp_predict_data)
+                yield (self[responsevar], responsevar, X, be, Y)
+
+        results = map_tasks(_logp_one, tasks(), len(rvs), self._n_workers())
+        for responsevar, logp in zip(rvs, results, strict=True):
+            data["logp"].loc[{"response_vars": responsevar}] = logp
 
         self.postprocess(data)
         return data
@@ -1069,14 +1099,35 @@ class NormativeModel:
             },
         )
         Output.print(Messages.COMPUTING_YHAT, n_models=len(respvar_intersection))
-        for responsevar in respvar_intersection:
-            resp_predict_data = data.sel({"response_vars": responsevar})
-            X, be, _, _, _ = self.extract_data(resp_predict_data)
-            data["Yhat"].loc[{"response_vars": responsevar}] = self[
-                responsevar
-            ].compute_yhat(resp_predict_data, responsevar, X, be)
+        rvs = list(respvar_intersection)
+
+        def tasks():
+            for responsevar in rvs:
+                resp_predict_data = data.sel({"response_vars": responsevar})
+                X, be, _, _, _ = self.extract_data(resp_predict_data)
+                yield (self[responsevar], resp_predict_data, responsevar, X, be)
+
+        results = map_tasks(_yhat_one, tasks(), len(rvs), self._n_workers())
+        for responsevar, yhat in zip(rvs, results, strict=True):
+            data["Yhat"].loc[{"response_vars": responsevar}] = yhat
         self.postprocess(data)
         return data
+
+    def _n_workers(self) -> int:
+        """Return the number of worker processes for the loops over response variables.
+
+        Returns
+        -------
+        int
+            1 if ``n_jobs`` is 1 or the template is an HBR model, else
+            ``n_jobs`` resolved against the allocated CPUs.
+        """
+        if self.n_jobs == 1:
+            return 1
+        if isinstance(self.template_regression_model, HBR):
+            Output.warning(Warnings.N_JOBS_IGNORED_FOR_HBR, n_jobs=self.n_jobs)
+            return 1
+        return resolve_n_jobs(self.n_jobs)
 
     def register_data_info(self, data: NormData) -> None:
         self.covariates = data.covariates.to_numpy().copy().tolist()
@@ -1480,3 +1531,72 @@ class NormativeModel:
             int: The number of batch effects.
         """
         return sum(self.batch_effect_counts[self.batch_effect_dims[0]].values())
+
+
+# Per-response-variable tasks for map_tasks. They are module-level functions
+# so that worker processes can unpickle them.
+
+
+def _fit_one(
+    model: RegressionModel,
+    responsevar: str,
+    X: xr.DataArray,
+    be: xr.DataArray,
+    be_maps: dict[str, dict[str, int]],
+    Y: xr.DataArray,
+) -> RegressionModel:
+    """Fit one regression model and return it (a copy, if run in a worker)."""
+    Output.print(Messages.FITTING_MODEL, model_name=responsevar)
+    model.fit(X, be, be_maps, Y)
+    return model
+
+
+def _forward_one(
+    model: RegressionModel,
+    responsevar: str,
+    X: xr.DataArray,
+    be: xr.DataArray,
+    Y: xr.DataArray,
+) -> xr.DataArray:
+    """Return the Z-scores of one response variable."""
+    Output.print(Messages.COMPUTING_ZSCORES_MODEL, model_name=responsevar)
+    return model.forward(X, be, Y)
+
+
+def _centiles_one(
+    model: RegressionModel,
+    responsevar: str,
+    X: xr.DataArray,
+    be: xr.DataArray,
+    ppf: np.ndarray,
+) -> list[xr.DataArray]:
+    """Return one array of Y values per standard-normal quantile in ``ppf``."""
+    Output.print(Messages.COMPUTING_CENTILES_MODEL, model_name=responsevar)
+    results = []
+    for p in ppf:
+        Z = xr.DataArray(np.full(X.shape[0], p), dims=("observations",))
+        results.append(model.backward(X, be, Z))
+    return results
+
+
+def _logp_one(
+    model: RegressionModel,
+    responsevar: str,
+    X: xr.DataArray,
+    be: xr.DataArray,
+    Y: xr.DataArray,
+) -> xr.DataArray:
+    """Return the log-probability of each observation of one response variable."""
+    Output.print(Messages.COMPUTING_LOGP_MODEL, model_name=responsevar)
+    return model.elemwise_logp(X, be, Y)
+
+
+def _yhat_one(
+    model: RegressionModel,
+    data: NormData,
+    responsevar: str,
+    X: xr.DataArray,
+    be: xr.DataArray,
+) -> np.ndarray:
+    """Return the predicted mean of one response variable."""
+    return model.compute_yhat(data, responsevar, X, be)
