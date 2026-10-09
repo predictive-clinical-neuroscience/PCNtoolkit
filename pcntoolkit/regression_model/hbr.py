@@ -9,8 +9,6 @@ import arviz as az  # type: ignore
 import matplotlib.pyplot as plt
 import numpy as np
 import pymc as pm  # type: ignore
-
-# import pymc_extras as pmx
 import xarray as xr
 
 from pcntoolkit.math_functions.factorize import *
@@ -285,7 +283,6 @@ class HBR(RegressionModel):
         )
         new_hbr_model.fit(X, be, be_maps, Y)
         return new_hbr_model
-
 
     def has_batch_effect(self) -> bool:
         return False
