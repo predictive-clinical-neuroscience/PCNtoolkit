@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import copy
+import json
 import os
-from typing import Any, Dict, Optional
+import threading
+from typing import Any, Dict, Iterator, Optional
 
 import arviz as az  # type: ignore
 import matplotlib.pyplot as plt
@@ -18,6 +21,105 @@ from pcntoolkit.math_functions.likelihood import (
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Output
+
+# One compiled nutpie model, reused while a NormativeModel fits its response
+# variables (see _reuse_nutpie_compile). Keys: "key", "compiled".
+_COMPILE_CACHE: dict = {}
+_COMPILE_LOCK = threading.Lock()
+# The model (and its cache key) that the current thread samples, if any.
+_COMPILE_TARGET = threading.local()
+# State of the temporary replacement of nutpie.compile_pymc_model. "real" is
+# never reset to None, because another thread can still call the replacement
+# after it was removed.
+_PATCH_STATE: dict = {"depth": 0, "real": None}
+# compile_pymc_model arguments that pm.sample uses for HBR; others are not cached.
+_CACHEABLE_COMPILE_KWARGS = {"var_names": None, "backend": "numba"}
+
+
+def clear_compile_cache() -> None:
+    """Free the compiled nutpie model that HBR keeps for reuse."""
+    with _COMPILE_LOCK:
+        _COMPILE_CACHE.clear()
+
+
+def _compile_key(model: pm.Model, likelihood: Likelihood) -> str:
+    """Return a key that is equal only for models with the same compiled graph.
+
+    The graph follows from the likelihood configuration (priors, basis
+    function knots, transferred parameters), the coordinates and the shapes and
+    dtypes of the ``pm.Data`` arrays. The values of the data arrays are not in
+    the key, because they are replaced with ``with_data``.
+    """
+    data = sorted(
+        (v.name, v.get_value().shape, v.get_value().dtype.str) for v in model.data_vars
+    )
+    coords = {str(k): [str(c) for c in v] for k, v in model.coords.items()}
+    return json.dumps(
+        [likelihood.to_dict(), coords, data], sort_keys=True, default=repr
+    )
+
+
+def _caching_compile(model: pm.Model, **kwargs: Any) -> Any:
+    """Replacement for ``nutpie.compile_pymc_model`` during HBR sampling.
+
+    For the model that this thread samples, it returns the cached compiled
+    model with this model's data, if the key matches. For all other calls it
+    calls the real function.
+    """
+    real = _PATCH_STATE["real"]
+    target = getattr(_COMPILE_TARGET, "value", None)
+    if target is None or model is not target[0] or kwargs != _CACHEABLE_COMPILE_KWARGS:
+        return real(model, **kwargs)
+    key = target[1]
+    with _COMPILE_LOCK:
+        hit = _COMPILE_CACHE.get("key") == key
+        cached = _COMPILE_CACHE.get("compiled") if hit else None
+    if cached is not None:
+        names = {var.name for var in cached.shared_var_keys}
+        values = {v.name: v.get_value() for v in model.data_vars if v.name in names}
+        if set(values) == names:
+            return cached.with_data(**values)
+    compiled = real(model, **kwargs)
+    with _COMPILE_LOCK:
+        _COMPILE_CACHE.clear()
+        _COMPILE_CACHE.update(key=key, compiled=compiled)
+    return compiled
+
+
+@contextlib.contextmanager
+def _reuse_nutpie_compile(model: pm.Model, likelihood: Likelihood) -> Iterator[None]:
+    """Let ``pm.sample`` reuse the compiled nutpie model of an earlier fit.
+
+    ``pm.sample(nuts_sampler="nutpie")`` compiles the model with numba on
+    every call (about 2 s). Response variables of one fit have the same graph
+    and differ only in their data. Inside this context,
+    ``nutpie.compile_pymc_model`` is replaced (for ``model`` only) by
+    ``_caching_compile``; everything else in ``pm.sample`` stays the same.
+    With the same seed, the samples are bit-identical to a new compile.
+    """
+    try:
+        import nutpie  # type: ignore
+    except ImportError:
+        yield
+        return
+    key = _compile_key(model, likelihood)
+    with _COMPILE_LOCK:
+        patched = nutpie.compile_pymc_model is _caching_compile
+        if _PATCH_STATE["depth"] == 0 and not patched:
+            _PATCH_STATE["real"] = nutpie.compile_pymc_model
+            nutpie.compile_pymc_model = _caching_compile
+        _PATCH_STATE["depth"] += 1
+    _COMPILE_TARGET.value = (model, key)
+    try:
+        yield
+    finally:
+        _COMPILE_TARGET.value = None
+        with _COMPILE_LOCK:
+            _PATCH_STATE["depth"] -= 1
+            # Restore only our own replacement (user code may have patched it since).
+            patched = nutpie.compile_pymc_model is _caching_compile
+            if _PATCH_STATE["depth"] == 0 and patched:
+                nutpie.compile_pymc_model = _PATCH_STATE["real"]
 
 
 class HBR(RegressionModel):
@@ -182,15 +284,23 @@ class HBR(RegressionModel):
         method = opt("inference_method")
 
         if method == "mcmc":
-            return pm.sample(
-                opt("draws"),
-                tune=opt("tune"),
-                cores=opt("cores"),
-                chains=opt("chains"),
-                nuts_sampler=opt("nuts_sampler"),  # type: ignore
-                init=opt("init"),
-                progressbar=opt("progressbar"),
+            reuse = (
+                _reuse_nutpie_compile(pm.modelcontext(None), self.likelihood)
+                if opt("nuts_sampler") == "nutpie"
+                else contextlib.nullcontext()
             )
+            with reuse:
+                return pm.sample(
+                    opt("draws"),
+                    tune=opt("tune"),
+                    cores=opt("cores"),
+                    chains=opt("chains"),
+                    nuts_sampler=opt("nuts_sampler"),  # type: ignore
+                    init=opt("init"),
+                    progressbar=opt("progressbar"),
+                    # Only tests pass a seed; the default stays None.
+                    random_seed=overrides.get("random_seed"),
+                )
 
         # Extra keyword arguments forwarded verbatim to the underlying
         # variational fitter, so every tuning knob stays reachable.
