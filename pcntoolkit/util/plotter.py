@@ -471,8 +471,10 @@ def plot_centiles_advanced(
         A list of x-coordinates for which to plot the conditionals
     covariate: str | None, optional
         The covariate to plot on the x-axis. If None, the first covariate in the model will be used.
-    covariate_ranges: tuple[float, float], optional
-        The range of the covariate to plot on the x-axis. If None, the range of the covariate that was in the train data will be used.
+    covariate_ranges: dict[str, tuple[float, float]] | None, optional
+        The range of each covariate, keyed by covariate name. Covariates omitted
+        from the dict (or the whole argument, if None) default to the range seen
+        in the train data.
     response_vars: List[str] | None
         The response vars for which to make the plots. All are plotted if this is None, which is default.
     batch_effects: Dict[str, List[str]] | None | Literal["all"], optional
