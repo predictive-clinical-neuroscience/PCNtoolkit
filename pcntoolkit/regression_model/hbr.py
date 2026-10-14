@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import os
+import weakref
 from typing import Any, Dict, Optional
 
 import arviz as az  # type: ignore
@@ -18,6 +20,58 @@ from pcntoolkit.math_functions.likelihood import (
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Output
+
+# One cached set of per-subject parameter arrays for the whole process; see
+# HBR.per_subject_params. A single slot keeps the memory bounded: it holds
+# at most one (n_observations, n_samples) array per likelihood parameter.
+_PARAM_CACHE: dict[str, Any] = {}
+
+# Number of (observation, sample) values per chunk in generic_MCMC_apply
+# (2**22 float64 values = 32 MiB per array).
+PREDICT_CHUNK_ELEMENTS = 2**22
+
+
+def clear_param_cache() -> None:
+    """Free the cached per-subject parameter arrays of HBR models."""
+    _PARAM_CACHE.clear()
+
+
+def _per_subject_array(values: xr.DataArray) -> xr.DataArray:
+    """Return a parameter as an (observations, sample) array.
+
+    A parameter without an observations dimension stays (1, sample), and is
+    not repeated for each observation. The memory layout of the posterior
+    predictive array is kept, so that later means are bit-identical.
+    """
+    if "observations" not in values.dims:
+        return xr.DataArray(values.values[None, :], dims=("observations", "sample"))
+    dims = ("observations", "sample")
+    return xr.DataArray(values.transpose(*dims).values, dims=dims)
+
+
+def _chunk_bounds(n_obs: int, n_samples: int) -> list[tuple[int, int]]:
+    """Split ``n_obs`` observations into chunks of about PREDICT_CHUNK_ELEMENTS values.
+
+    No chunk has exactly one row when ``n_obs > 1``: numpy sums a 1-row slice
+    in another order, so its mean could differ in the last bit.
+    """
+    rows = max(2, PREDICT_CHUNK_ELEMENTS // max(n_samples, 1))
+    bounds = [[lo, min(lo + rows, n_obs)] for lo in range(0, n_obs, rows)]
+    if len(bounds) > 1 and bounds[-1][1] - bounds[-1][0] == 1:
+        last = bounds.pop()
+        bounds[-1][1] = last[1]
+    return [(lo, hi) for lo, hi in bounds]
+
+
+def _per_observation(value: Any, n_obs: int) -> bool:
+    """True if ``value`` is an array with one row per observation."""
+    return isinstance(value, np.ndarray) and value.ndim > 0 and len(value) == n_obs
+
+
+def _fingerprint(a: np.ndarray) -> tuple:
+    """Return a key that changes when the shape, type or values of ``a`` change."""
+    a = np.ascontiguousarray(a)
+    return (a.shape, a.dtype.str, hashlib.blake2b(a.tobytes(), digest_size=16).digest())
 
 
 class HBR(RegressionModel):
@@ -300,6 +354,69 @@ class HBR(RegressionModel):
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
 
+        params = [a.values for a in self.per_subject_params(X, be, Y)]
+        n_obs = X.shape[0]
+        n_samples = max(a.shape[1] for a in params)
+        means = []
+        # fn and the mean run on chunks of observations, so the temporary
+        # (observations, sample) arrays of fn are at most one chunk large.
+        # fn is elementwise per observation, so the result is bit-identical.
+        for lo, hi in _chunk_bounds(n_obs, n_samples):
+            args = [a if a.shape[0] == 1 else a[lo:hi] for a in params]
+            chunk_kwargs = {
+                k: v[lo:hi] if _per_observation(v, n_obs) else v
+                for k, v in kwargs.items()
+            }
+            out = fn(*args, **chunk_kwargs)
+            if out.shape != (hi - lo, n_samples):
+                # For example yhat when all parameters are scalar per sample.
+                out = np.broadcast_to(out, (hi - lo, n_samples))
+            mean = xr.DataArray(out, dims=("observations", "sample")).mean(dim="sample")
+            means.append(np.asarray(mean.values))
+        return xr.DataArray(np.concatenate(means), dims=("observations",))
+
+    def per_subject_params(
+        self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
+    ) -> list[xr.DataArray]:
+        """Return the likelihood parameters per subject and posterior sample.
+
+        Building the PyMC model and evaluating the parameters for every
+        posterior sample is the slow part of forward, backward and
+        compute_yhat. The parameters depend on X, the batch effects and the
+        posterior, not on Y or Z, so the last result is cached and used again
+        when this model is called with the same X and batch effects. The
+        cache holds one result for the whole process; ``clear_param_cache``
+        frees it. The cached arrays are read-only.
+
+        Parameters
+        ----------
+        X : xr.DataArray
+            Covariate data
+        be : xr.DataArray
+            Batch effect data
+        Y : xr.DataArray
+            Response variable data; only used to build the PyMC model.
+
+        Returns
+        -------
+        list[xr.DataArray]
+            One (observations, sample) array per likelihood parameter. A
+            parameter that does not vary over observations (for example a
+            fixed epsilon) has shape (1, sample).
+        """
+        key = (_fingerprint(X.values), _fingerprint(be.values))
+        cache = _PARAM_CACHE
+        # The cache keeps a reference to idata, so a new posterior (refit,
+        # transfer) cannot reuse the id of the old one.
+        if (
+            cache
+            and cache["owner"]() is self
+            and cache["idata"] is self.idata
+            and cache["key"] == key
+        ):
+            return cache["arrays"]
+        clear_param_cache()
+
         model = self.likelihood.create_model_with_data(X, be, self.be_maps, Y)
         params = self.likelihood.compile_params(model, X, be, self.be_maps, Y)
         var_names = [f"{k}_per_subject" for k, _ in params.items()]
@@ -319,15 +436,13 @@ class HBR(RegressionModel):
             var_names=var_names,
         )
 
-        n_observations = model.dim_lengths["observations"].eval().item()
-        array_of_vars = list(
-            map(
-                lambda x: self.extract_and_reshape(post_pred, n_observations, x),
-                var_names,
-            )
+        array_of_vars = [_per_subject_array(post_pred[name]) for name in var_names]
+        for arr in array_of_vars:
+            arr.values.flags.writeable = False
+        cache.update(
+            owner=weakref.ref(self), idata=self.idata, key=key, arrays=array_of_vars
         )
-        result = xr.apply_ufunc(fn, *array_of_vars, kwargs=kwargs).mean(dim="sample")
-        return result
+        return array_of_vars
 
     def elemwise_logp(self, X, be, Y) -> xr.DataArray:  # type: ignore
         """

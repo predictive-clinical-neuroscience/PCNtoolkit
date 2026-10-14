@@ -894,7 +894,8 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         mu, alpha, psi = args
         Z = kwargs.get("Z")
 
-        Z = np.asarray(Z)
+        # Parameters can be (1, S) when they do not vary over observations.
+        Z, mu, alpha, psi = np.broadcast_arrays(np.asarray(Z), mu, alpha, psi)
         U = stats.norm.cdf(Z)
         # broadcast U to the shape of mu to avoid shape mismatch issues
         U = np.broadcast_to(U, mu.shape)
