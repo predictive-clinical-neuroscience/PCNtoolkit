@@ -206,3 +206,13 @@ Fix packaging issues (no missing files or folders)
 
 
 
+# Version 1.4.0 (unreleased)
+
+**Bug fixes**
+- Composite bases now include only covariates listed in their parts by default,
+  allowing different covariates for Gaussian mu and sigma. Set
+  include_untransformed=True to retain implicit inclusion in existing scripts.
+- Models saved before 1.4.0 retain their original composite design through
+  migration. Explicit saved settings are preserved.
+- Composite dimensions include passthrough columns when enabled. Fitted
+  composite state and linear basis state survive serialization.

@@ -391,3 +391,23 @@ def _migrate_blr_slope_indices_1_4_0(d: dict) -> dict:
             d[key] = [0]
 
     return d
+
+
+@registry.register("BasisFunction", introduced_in="1.4.0")
+def _migrate_composite_basis_function_1_4_0(d: dict) -> dict:
+    """Preserve uncovered covariates in composites saved before v1.4.0.
+
+    Parameters
+    ----------
+    d : dict
+        Basis function dictionary from a saved model.
+
+    Returns
+    -------
+    dict
+        Composite dictionary with legacy passthrough enabled, unless an
+        explicit setting was already saved. Other basis types are unchanged.
+    """
+    if d.get("basis_function") in ("Composite", "CompositeBasis"):
+        d.setdefault("include_untransformed", True)
+    return d

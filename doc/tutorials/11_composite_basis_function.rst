@@ -1,3 +1,44 @@
+Choose different covariates for the mean and spread
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+From PCNtoolkit 1.4.0, a composite basis includes only the covariates named
+in ``parts``. For input columns ``[age, sex, motion]``, the example below gives
+mu an age spline, a linear sex term, and their interaction; sigma uses
+only an age spline. Motion is excluded from both. Both priors still receive
+the full input matrix, with the same column order during fitting and prediction.
+
+.. code-block:: python
+
+    from pcntoolkit import (
+        BsplineBasisFunction, CompositeBasisFunction, LinearBasisFunction,
+        NormalLikelihood, make_prior,
+    )
+
+    mu_basis = CompositeBasisFunction(
+        [BsplineBasisFunction(0), LinearBasisFunction(1)],
+        interactions=[(0, 1)],
+    )
+    sigma_basis = CompositeBasisFunction([BsplineBasisFunction(0)])
+    likelihood = NormalLikelihood(
+        mu=make_prior("mu", linear=True, basis_function=mu_basis),
+        sigma=make_prior(
+            "sigma", linear=True, basis_function=sigma_basis, mapping="softplus",
+        ),
+    )
+
+
+To include motion unchanged, add ``LinearBasisFunction(2)`` to that parameter's
+parts. Set ``include_untransformed=True`` to include **all** uncovered columns.
+Older saved models (before 1.4.0) enable this option through migration, retaining
+their original design matrix. Existing scripts that relied on implicit inclusion
+must set this option or list each desired covariate explicitly when refitting.
+
+Main-effect columns remain in input-covariate order, followed by interactions.
+Interaction indices refer to positions in ``parts``, not input columns.
+``dimension`` reports the output width; in passthrough mode it requires ``fit``
+first. Linear dependencies between columns are not removed automatically.
+
+
 .. code:: ipython3
 
     import logging

@@ -105,6 +105,8 @@ def test_composite_from_dict_passes_version_to_parts() -> None:
         BasisFunction.from_dict(composite.to_dict(), version=current_version)
 
     assert mock_warning.call_count == 0
+
+
 def test_composite_basis_interaction_linear():
     X = np.array(
         [
@@ -192,7 +194,7 @@ def test_composite_basis_bspline_by_linear_interaction():
     expected_interaction = age_Phi[:, :, None] * sex_Phi[:, None, :]
     expected_interaction = expected_interaction.reshape(len(X), -1)
 
-    interaction_Phi = Phi[:, -expected_interaction.shape[1]:]
+    interaction_Phi = Phi[:, -expected_interaction.shape[1] :]
 
     np.testing.assert_allclose(
         interaction_Phi,
@@ -229,7 +231,7 @@ def test_composite_basis_interaction_uses_parts_order():
 
     basis_function = CompositeBasisFunction(
         parts=[
-            linear_basis,   # parts[0], despite basis_column=1
+            linear_basis,  # parts[0], despite basis_column=1
             bspline_basis,  # parts[1], despite basis_column=0
         ],
         interactions=[(0, 1)],
@@ -244,12 +246,12 @@ def test_composite_basis_interaction_uses_parts_order():
     bspline_basis.basis_column = 0
     bspline_Phi = bspline_basis.transform(X[:, 0])
 
-    expected_interaction = (
-        linear_Phi[:, :, None] * bspline_Phi[:, None, :]
-    ).reshape(len(X), -1)
+    expected_interaction = (linear_Phi[:, :, None] * bspline_Phi[:, None, :]).reshape(
+        len(X), -1
+    )
 
     np.testing.assert_allclose(
-        Phi[:, -expected_interaction.shape[1]:],
+        Phi[:, -expected_interaction.shape[1] :],
         expected_interaction,
     )
 
@@ -331,11 +333,9 @@ def test_composite_basis_multidimensional_interaction():
     right = basis_2.transform(X[:, 1])
 
     # Expected Cartesian product of the two basis expansions.
-    expected = (
-        left[:, :, None] * right[:, None, :]
-    ).reshape(len(X), -1)
+    expected = (left[:, :, None] * right[:, None, :]).reshape(len(X), -1)
 
-    interaction_Phi = Phi[:, -expected.shape[1]:]
+    interaction_Phi = Phi[:, -expected.shape[1] :]
 
     np.testing.assert_allclose(
         interaction_Phi,
@@ -344,13 +344,11 @@ def test_composite_basis_multidimensional_interaction():
 
     assert expected.shape[1] == left.shape[1] * right.shape[1]
     assert basis_function.dimension == (
-        basis_1.dimension
-        + basis_2.dimension
-        + basis_1.dimension * basis_2.dimension
+        basis_1.dimension + basis_2.dimension + basis_1.dimension * basis_2.dimension
     )
 
 
-def test_composite_basis_preserves_untransformed_columns():
+def test_composite_basis_preserves_untransformed_columns() -> None:
     X = np.array(
         [
             [1.0, 10.0],
@@ -360,14 +358,13 @@ def test_composite_basis_preserves_untransformed_columns():
     )
 
     basis_function = CompositeBasisFunction(
-        parts=[LinearBasisFunction(basis_column=0)]
+        parts=[LinearBasisFunction(basis_column=0)], include_untransformed=True
     )
 
     basis_function.fit(X)
     Phi = basis_function.transform(X)
 
     np.testing.assert_allclose(Phi, X)
-    
 
 
 @pytest.mark.parametrize(
@@ -381,9 +378,7 @@ def test_composite_basis_preserves_untransformed_columns():
         ([(0, True)], r"interaction \(0, True\) must be an integer"),
     ],
 )
-def test_composite_basis_invalid_interactions(
-    interactions: list, match: str
-) -> None:
+def test_composite_basis_invalid_interactions(interactions: list, match: str) -> None:
     """Verify that we raise a clear error to the user for edge cases"""
     with pytest.raises(ValueError, match=match):
         CompositeBasisFunction(

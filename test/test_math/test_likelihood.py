@@ -259,3 +259,70 @@ def test_non_count_likelihood_may_scale_y():
     model = NormativeModel(HBR("test_normal"), outscaler="standardize")
 
     assert model.outscaler == "standardize"
+
+
+def test_normal_separate_composite_covariates() -> None:
+    """Mu and sigma keep different designs at fit, reload, and prediction."""
+    import xarray as xr
+
+    from pcntoolkit.math_functions.basis_function import (
+        CompositeBasisFunction,
+        LinearBasisFunction,
+    )
+    from pcntoolkit.math_functions.likelihood import NormalLikelihood
+
+    values = np.arange(1.0, 19.0).reshape(6, 3)
+    X = xr.DataArray(
+        values,
+        dims=("observations", "covariates"),
+        coords={"observations": np.arange(6)},
+    )
+    Y = xr.DataArray(
+        np.arange(6.0), dims="observations", coords={"observations": np.arange(6)}
+    )
+    be = xr.DataArray(
+        np.zeros((6, 0), dtype=int),
+        dims=("observations", "batch_effect_dims"),
+        coords={"batch_effect_dims": []},
+    )
+    likelihood = NormalLikelihood(
+        make_prior(
+            "mu",
+            linear=True,
+            basis_function=CompositeBasisFunction(
+                [LinearBasisFunction(0), LinearBasisFunction(1)], interactions=[(0, 1)]
+            ),
+        ),
+        make_prior(
+            "sigma",
+            linear=True,
+            mapping="exp",
+            basis_function=CompositeBasisFunction([LinearBasisFunction(1)]),
+        ),
+    )
+    model = likelihood.compile(X, be, {}, Y)
+    expected_mu = np.column_stack([values[:, :2], values[:, 0] * values[:, 1]])
+    np.testing.assert_allclose(model["mu_X"].get_value(), expected_mu)
+    np.testing.assert_allclose(model["sigma_X"].get_value(), values[:, [1]])
+    assert len(model.coords["mu_covariates"]) == 3
+    assert len(model.coords["sigma_covariates"]) == 1
+
+    restored = Likelihood.from_dict(
+        json.loads(json.dumps(likelihood.to_dict())), version="1.4.0"
+    )
+    restored_model = restored.compile(X, be, {}, Y)
+    np.testing.assert_allclose(restored_model["mu_X"].get_value(), expected_mu)
+    np.testing.assert_allclose(restored_model["sigma_X"].get_value(), values[:, [1]])
+
+    new_X = X.isel(observations=slice(0, 3)).copy(data=values[:3] + 10)
+    restored.update_data(
+        restored_model, new_X, be.isel(observations=slice(0, 3)), {}, Y[:3]
+    )
+    new_values = new_X.values
+    np.testing.assert_allclose(
+        restored_model["mu_X"].get_value(),
+        np.column_stack([new_values[:, :2], new_values[:, 0] * new_values[:, 1]]),
+    )
+    np.testing.assert_allclose(
+        restored_model["sigma_X"].get_value(), new_values[:, [1]]
+    )

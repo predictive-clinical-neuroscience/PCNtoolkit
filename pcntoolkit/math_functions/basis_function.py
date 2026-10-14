@@ -27,11 +27,18 @@ def create_basis_function(
     elif basis_type in ["Composite", "CompositeBasis"]:
         parts = [BasisFunction.from_dict(p) for p in kwargs["parts"]]
         interactions = kwargs.get("interactions", None)
-        return CompositeBasisFunction(parts, interactions=interactions)
+        composite = CompositeBasisFunction(
+            parts,
+            interactions=interactions,
+            include_untransformed=kwargs.get("include_untransformed", False),
+        )
+        composite.n_features_in = kwargs.get("n_features_in")
+        composite.is_fitted = kwargs.get("is_fitted", all(p.is_fitted for p in parts))
+        return composite
     elif basis_type in ["fractional_polynomial", "FractionalPolynomialBasisFunction"]:
         return FractionalPolynomialBasisFunction(basis_column, **kwargs)
     else:
-        return LinearBasisFunction(basis_column)
+        return LinearBasisFunction(basis_column, **kwargs)
 
 
 class BasisFunction(ABC):
@@ -56,14 +63,17 @@ class BasisFunction(ABC):
         # The parts have no ptk_version of their own, so pass the model's
         # version down; otherwise they are migrated as if saved with v0.0.0.
         if basis_function_type in ["Composite", "CompositeBasis"]:
-            parts = [
-                cls.from_dict(p, version=version)
-                for p in my_dict["parts"]
-            ]
-            return CompositeBasisFunction(
+            parts = [cls.from_dict(p, version=version) for p in my_dict["parts"]]
+            composite = CompositeBasisFunction(
                 parts,
                 interactions=my_dict.get("interactions"),
+                include_untransformed=my_dict.get("include_untransformed", False),
             )
+            composite.n_features_in = my_dict.get("n_features_in")
+            composite.is_fitted = my_dict.get(
+                "is_fitted", all(p.is_fitted for p in parts)
+            )
+            return composite
         return create_basis_function(basis_function_type, **my_dict)
 
     @classmethod
@@ -311,8 +321,8 @@ class CompositeBasisFunction(BasisFunction):
     ``parts[0] x parts[1]``.
 
     Output columns: first each covariate's basis (in covariate order),
-    then the interaction columns. A covariate with no part is copied
-    unchanged. Example with covariates ``[age, sex, x3]``::
+    then the interaction columns. Covariates with no part are excluded by
+    default. Example with covariates ``[age, sex, x3]``::
 
         parts=[BsplineBasisFunction(basis_column=0),   # age, 7 columns
                LinearBasisFunction(basis_column=1)]    # sex, 1 column
@@ -320,8 +330,12 @@ class CompositeBasisFunction(BasisFunction):
 
         columns 0-6   age B-spline
         column  7     sex
-        column  8     x3, copied unchanged (no part covers it)
-        columns 9-15  age B-spline x sex
+        columns 8-14  age B-spline x sex
+
+    Here ``x3`` is excluded. To include it, add
+    ``LinearBasisFunction(basis_column=2)`` to ``parts``. Alternatively,
+    ``include_untransformed=True`` copies every uncovered covariate in its
+    original position, before the interaction columns.
 
     Parameters
     ----------
@@ -332,12 +346,28 @@ class CompositeBasisFunction(BasisFunction):
         pair ``(i, j)``, the products of all columns of ``parts[i]`` and
         ``parts[j]`` are appended to the output. Default: no interactions.
 
+    include_untransformed : bool, default=False
+        Copy covariates without a part into the output. Models saved before
+        v1.4.0 are migrated to True to preserve their fitted design matrix.
+
+    Attributes
+    ----------
+    n_features_in : int or None
+        Number of input covariates, recorded by ``fit``. For a fitted legacy
+        model without this field, the first ``transform`` records the width.
+    is_fitted : bool
+        Whether the composite has been fitted.
+    dimension : int
+        Number of output columns. With ``include_untransformed=True``, fit
+        first so the number of uncovered covariates is known.
+
     Raises
     ------
     ValueError
         If an interaction is not a pair of integers, or refers to a part
         index outside ``0`` to ``len(parts) - 1``. Also raised by
-        ``transform`` if called before ``fit``.
+        ``transform`` if called before ``fit``. Also raised for an empty
+        selection, an invalid covariate index, or a changed input width.
 
     Notes
     -----
@@ -350,9 +380,17 @@ class CompositeBasisFunction(BasisFunction):
         self,
         parts: list[BasisFunction],
         interactions: list[tuple[int, int]] | None = None,
+        *,
+        include_untransformed: bool = False,
     ) -> None:
         super().__init__(basis_column=0)
+        if not isinstance(include_untransformed, bool):
+            raise ValueError("include_untransformed must be a bool.")
+        if not parts and not include_untransformed:
+            raise ValueError("Select at least one basis part.")
         self.parts = parts
+        self.include_untransformed = include_untransformed
+        self.n_features_in: int | None = None
         self.interactions = [] if interactions is None else interactions
         for pair in self.interactions:
             # Saved models store pairs as JSON lists, so accept lists too.
@@ -390,25 +428,52 @@ class CompositeBasisFunction(BasisFunction):
                         f"valid part indices are 0 to {len(parts) - 1}."
                     )
 
-    def _fit(self, data, i):
+    def _fit(self, data: np.ndarray) -> None:
         pass
 
-    def _transform(self, data, i):
-        pass
+    def _transform(self, data: np.ndarray) -> np.ndarray:
+        raise NotImplementedError("Use CompositeBasisFunction.transform instead.")
 
-    def fit(self, X):
-        if len(X.shape) == 1:
+    def _validate_input(self, X: np.ndarray) -> np.ndarray:
+        if X.ndim == 1:
             X = X[:, None]
+        if X.ndim != 2 or X.shape[1] == 0:
+            raise ValueError("X must contain one or more covariate columns.")
+        for bf in self.parts:
+            column = bf.basis_column
+            if (
+                isinstance(column, (bool, np.bool_))
+                or not isinstance(column, (int, np.integer))
+                or not 0 <= column < X.shape[1]
+            ):
+                raise ValueError(
+                    f"basis_column must be an integer between 0 and "
+                    f"{X.shape[1] - 1}; got {column!r}."
+                )
+        return X
+
+    def fit(self, X: np.ndarray) -> None:
+        X = self._validate_input(X)
+        self.is_fitted = False
         for bf in self.parts:
             basis_column = bf.basis_column
             bf.basis_column = 0
-            bf.fit(X[:, basis_column])
-            bf.basis_column = basis_column
+            try:
+                bf.fit(X[:, basis_column])
+            finally:
+                bf.basis_column = basis_column
+        self.n_features_in = X.shape[1]
         self.is_fitted = True
 
-    def transform(self, X):
-        if len(X.shape) == 1:
-            X = X[:, None]
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        if not self.is_fitted:
+            raise ValueError(Output.error(Errors.ERROR_BASIS_FUNCTION_NOT_FITTED))
+        X = self._validate_input(X)
+        if self.n_features_in is not None and X.shape[1] != self.n_features_in:
+            raise ValueError(
+                f"X has {X.shape[1]} columns; expected {self.n_features_in} "
+                "columns in the same order as during fit."
+            )
 
         mats = []
         part_mats = [None] * len(self.parts)
@@ -419,43 +484,55 @@ class CompositeBasisFunction(BasisFunction):
             for part_idx, bf in enumerate(self.parts):
                 if bf.basis_column == c:
                     bf.basis_column = 0
-                    mat = bf.transform(X[:, c])
-                    bf.basis_column = c
+                    try:
+                        mat = bf.transform(X[:, c])
+                    finally:
+                        bf.basis_column = c
 
                     mats.append(mat)
                     part_mats[part_idx] = mat
                     transformed = True
 
-            if not transformed:
+            if not transformed and self.include_untransformed:
                 mats.append(X[:, c][:, None])
 
         for i, j in self.interactions:
             left = part_mats[i]
             right = part_mats[j]
 
-            interaction = (
-                left[:, :, None] * right[:, None, :]
-            ).reshape(X.shape[0], -1)
+            interaction = (left[:, :, None] * right[:, None, :]).reshape(X.shape[0], -1)
 
             mats.append(interaction)
 
-        return np.concatenate(mats, axis=1)
+        result = np.concatenate(mats, axis=1)
+        # Legacy composites saved fitted parts but no input width. The first
+        # transform records that width without refitting their spline knots.
+        self.n_features_in = X.shape[1]
+        return result
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "basis_function": "CompositeBasis",
             "parts": [bf.to_dict() for bf in self.parts],
             "interactions": self.interactions,
+            "include_untransformed": self.include_untransformed,
+            "n_features_in": self.n_features_in,
+            "is_fitted": self.is_fitted,
         }
 
     @property
-    def dimension(self):
+    def dimension(self) -> int:
         interaction_dimension = sum(
             self.parts[i].dimension * self.parts[j].dimension
             for i, j in self.interactions
         )
 
-        return sum(p.dimension for p in self.parts) + interaction_dimension
+        uncovered = 0
+        if self.include_untransformed:
+            if self.n_features_in is None:
+                raise ValueError("Call fit before requesting the full dimension.")
+            uncovered = self.n_features_in - len({p.basis_column for p in self.parts})
+        return sum(p.dimension for p in self.parts) + interaction_dimension + uncovered
 
 
 class FractionalPolynomialBasisFunction(BasisFunction):
