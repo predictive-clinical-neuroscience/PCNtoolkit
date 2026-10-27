@@ -183,6 +183,11 @@ class Warnings:
         "Falling back to the default 'l-bfgs-b' optimizer. "
         "Please set optimizer='l-bfgs-b' to avoid this warning."
     )
+    MODEL_COMPARISON_APPROXIMATE_POSTERIOR = (
+        "Model '{model_name}' was fitted with inference_method='{inference_method}'. "
+        "Its posterior samples come from an approximation, and PSIS-LOO does not "
+        "correct for it, so its ELPD may be biased."
+    )
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
         "Transfer data contain fewer batch effect levels than training data. "
         "This may lead to biased results."
