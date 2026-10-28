@@ -655,8 +655,7 @@ class LaPlace(InferenceMethod):
         return laplace
 
     def use_posterior_as_new_prior(self, likelihood: Likelihood) -> Likelihood:
-        data_tree = self.data_tree
-        return None
+        return likelihood.transfer(self.data_tree)
 
 
 class ADVI(InferenceMethod):

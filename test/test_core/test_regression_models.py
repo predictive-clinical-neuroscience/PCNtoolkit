@@ -303,3 +303,12 @@ class TestHBR:
         # Posterior parameters must all be finite.
         for name, var in posterior.data_vars.items():
             assert np.isfinite(var.values).all(), f"non-finite draws for {name}"
+
+        # Transfer must build the new priors from the Laplace posterior draws.
+        transferred = model.transfer(data.X, mapped_batch_effects, be_maps, data.Y)
+        assert transferred.is_fitted
+        assert isinstance(transferred.inference_method, LaPlace)
+        assert (
+            transferred.likelihood.mu.slope.dist_params
+            != model.likelihood.mu.slope.dist_params
+        )
