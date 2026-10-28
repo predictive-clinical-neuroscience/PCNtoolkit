@@ -1040,7 +1040,7 @@ def get_default_normal_likelihood() -> NormalLikelihood:
                     dist_params=(1, 0.5),
                 ),
             ),
-            basis_function=BsplineBasisFunction(),
+            basis_function=BsplineBasisFunction(drop_first=True),
         ),
         sigma=make_prior(
             # Sigma is also linear, because we want to allow the standard deviation to vary as a function of the covariates: heteroskedasticity.
@@ -1060,7 +1060,7 @@ def get_default_normal_likelihood() -> NormalLikelihood:
             # You can leave c out, and it will default to 0.
             mapping_params=(0, 2),
             # We use a B-spline basis function to allow for non-linearity in the standard deviation.
-            basis_function=BsplineBasisFunction(),
+            basis_function=BsplineBasisFunction(drop_first=True),
         ),
     )
 
