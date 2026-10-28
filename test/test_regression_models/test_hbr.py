@@ -82,9 +82,9 @@ The tests cover:
 def test_hbr_to_and_from_dict_and_args(sample_args, args):
     # Testing from args first
     hbr = HBR.from_args("test_name", sample_args | args)
-    assert hbr.draws == sample_args.get("draws")
-    assert hbr.tune == sample_args.get("tune")
-    assert hbr.cores == sample_args.get("cores")
+    assert hbr.inference_method.draws == sample_args.get("draws")
+    assert hbr.inference_method.tune == sample_args.get("tune")
+    assert hbr.inference_method.cores == sample_args.get("cores")
     assert isinstance(hbr.likelihood, NormalLikelihood)
     if args.get("linear_mu", False):
         assert isinstance(hbr.likelihood.mu, LinearPrior)
@@ -101,9 +101,9 @@ def test_hbr_to_and_from_dict_and_args(sample_args, args):
 
     # Testing to_dict
     hbr_dict = hbr.to_dict()
-    assert hbr_dict["draws"] == sample_args.get("draws")
-    assert hbr_dict["tune"] == sample_args.get("tune")
-    assert hbr_dict["cores"] == sample_args.get("cores")
+    assert hbr_dict["inference_method"]["draws"] == sample_args.get("draws")
+    assert hbr_dict["inference_method"]["tune"] == sample_args.get("tune")
+    assert hbr_dict["inference_method"]["cores"] == sample_args.get("cores")
     assert hbr_dict["likelihood"]["name"] == "Normal"
     assert args.get("linear_mu", False) == (
         hbr_dict["likelihood"]["mu"]["type"] == "LinearPrior"
@@ -133,9 +133,9 @@ def test_hbr_to_and_from_dict_and_args(sample_args, args):
     # Testing from_dict
     del hbr
     hbr = HBR.from_dict(hbr_dict)
-    assert hbr.draws == sample_args.get("draws")
-    assert hbr.tune == sample_args.get("tune")
-    assert hbr.cores == sample_args.get("cores")
+    assert hbr.inference_method.draws == sample_args.get("draws")
+    assert hbr.inference_method.tune == sample_args.get("tune")
+    assert hbr.inference_method.cores == sample_args.get("cores")
     assert isinstance(hbr.likelihood, NormalLikelihood)
     if args.get("linear_mu", False):
         assert isinstance(hbr.likelihood.mu, LinearPrior)

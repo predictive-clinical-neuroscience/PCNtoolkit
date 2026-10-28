@@ -1,11 +1,13 @@
 from pcntoolkit import (
     BLR,
-    HBR,
     BsplineBasisFunction,
     LinearBasisFunction,
     SHASHbLikelihood,
 )
-from pcntoolkit.math_functions.likelihood import get_default_normal_likelihood
+from pcntoolkit.math_functions.likelihood import (
+    NormalLikelihood,
+    get_default_normal_likelihood,
+)
 from pcntoolkit.math_functions.prior import LinearPrior, Prior, RandomPrior
 
 
@@ -47,23 +49,12 @@ def warped_BLR():
     return BLR_model
 
 
-def Normal_HBR():
+def Normal_likelihood() -> NormalLikelihood:
     # Normal likelihood with a random intercept of the mean, and heteroskedasticity
-    HBR_model = HBR(
-        name="NormalHBR",
-        likelihood=get_default_normal_likelihood(),
-        draws=1500,
-        tune=500,
-        cores=4,
-        chains=4,
-        nuts_sampler="nutpie",
-        init="auto",
-        progressbar=True,
-    )
-    return HBR_model
+    return get_default_normal_likelihood()
 
 
-def SHASHb1_HBR():
+def SHASHb1_likelihood() -> SHASHbLikelihood:
     # BSpline regression in mu with random intercept
     mu = LinearPrior(
         slope=Prior(dist_name="Normal", dist_params=(0, 10), dims=("covariates",)),
@@ -106,21 +97,10 @@ def SHASHb1_HBR():
         mapping="softplus",
         mapping_params=(0, 3, 0.6),
     )
-    likelihood = SHASHbLikelihood(mu, sigma, epsilon, delta)
-    return HBR(
-        name="SHASHb1",
-        likelihood=likelihood,
-        draws=1500,
-        tune=500,
-        cores=4,
-        chains=4,
-        nuts_sampler="nutpie",
-        init="auto",
-        progressbar=True,
-    )
+    return SHASHbLikelihood(mu, sigma, epsilon, delta)
 
 
-def SHASHb2_HBR():
+def SHASHb2_likelihood() -> SHASHbLikelihood:
     # BSpline regression in mu with random intercept
     mu = LinearPrior(
         slope=Prior(dist_name="Normal", dist_params=(0, 10), dims=("covariates",)),
@@ -179,16 +159,4 @@ def SHASHb2_HBR():
         basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
     )
 
-    likelihood = SHASHbLikelihood(mu, sigma, epsilon, delta)
-
-    return HBR(
-        name="SHASHb2",
-        likelihood=likelihood,
-        draws=1500,
-        tune=500,
-        cores=4,
-        chains=4,
-        nuts_sampler="nutpie",
-        init="auto",
-        progressbar=True,
-    )
+    return SHASHbLikelihood(mu, sigma, epsilon, delta)

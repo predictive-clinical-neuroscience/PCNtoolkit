@@ -12,7 +12,7 @@ from pcntoolkit.math_functions.prior import (
     make_prior,
 )
 from pcntoolkit.regression_model.blr import BLR
-from pcntoolkit.regression_model.hbr import HBR  # noqa: F401, F403
+from pcntoolkit.regression_model.hbr import HBR, LaPlace  # noqa: F401, F403
 from test.fixtures.data_fixtures import *  # noqa: F401, F403
 from test.fixtures.hbr_model_fixtures import *  # noqa: F401, F403
 from test.fixtures.norm_data_fixtures import *  # noqa: F401, F403
@@ -244,9 +244,8 @@ class TestHBR:
         assert isinstance(prior.intercept, RandomPrior)
         assert isinstance(prior.slope, RandomPrior)
 
-    @pytest.mark.parametrize("inference_method", ["pathfinder", "laplace"])
-    def test_model_fit_variational_inference(self, inference_method):
-        """Test fitting with the pymc-extras approximate inference methods."""
+    def test_model_fit_laplace(self):
+        """Test fitting with the pymc-extras Laplace approximation."""
         pytest.importorskip("pymc_extras")
 
         # The shared synthetic_data fixture is unseeded. Here we choose a seed to make
@@ -288,10 +287,8 @@ class TestHBR:
         # fit HBR
         n_draws = 50
         model = HBR(
-            f"test_hbr_{inference_method}",
-            inference_method=inference_method,
-            vi_draws=n_draws,
-            progressbar=False,
+            "test_hbr_laplace",
+            inference_method=LaPlace(draws=n_draws, progressbar=False),
         )
         model.fit(data.X, mapped_batch_effects, be_maps, data.Y)
 
@@ -306,3 +303,20 @@ class TestHBR:
         # Posterior parameters must all be finite.
         for name, var in posterior.data_vars.items():
             assert np.isfinite(var.values).all(), f"non-finite draws for {name}"
+
+        # Transfer must build the new priors from the Laplace posterior draws.
+        transferred = model.transfer(
+            data.X, mapped_batch_effects, be_maps, data.Y, freedom=2
+        )
+        assert transferred.is_fitted
+        assert isinstance(transferred.inference_method, LaPlace)
+        assert (
+            transferred.likelihood.mu.slope.dist_params
+            != model.likelihood.mu.slope.dist_params
+        )
+        # freedom=2 must double the width of the Normal slope prior.
+        narrow = model.inference_method.use_posterior_as_new_prior(model.likelihood)
+        wide_mu, wide_sigma = transferred.likelihood.mu.slope.dist_params
+        narrow_mu, narrow_sigma = narrow.mu.slope.dist_params
+        assert np.allclose(wide_mu, narrow_mu)
+        assert np.allclose(wide_sigma, 2 * np.asarray(narrow_sigma))

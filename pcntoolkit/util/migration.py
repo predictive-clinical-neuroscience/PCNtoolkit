@@ -300,9 +300,11 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
 
 @registry.register("HBR", introduced_in="1.4.0")
 def _migrate_variational_inference_1_4_0(d: dict) -> dict:
-    """Add the variational inference fields to an HBR dict saved before VI.
-    These fields specify what methods is used for fitting
-    (e.g., "mcmc", "pathfinder" etc).
+    """Move the MCMC settings of an HBR dict into a nested MCMC inference method.
+
+    Before v1.4.0, HBR stored draws, tune, etc. at the top level and its
+    posterior samples in idata.nc. From v1.4.0 these live under
+    ``inference_method`` with ``type: "MCMC"``.
 
     Parameters
     ----------
@@ -312,12 +314,17 @@ def _migrate_variational_inference_1_4_0(d: dict) -> dict:
     Returns
     -------
     dict
-        Dict with the variational inference fields populated.
+        Dict with an ``inference_method`` entry of type MCMC.
     """
-    d.setdefault("inference_method", "mcmc")
-    d.setdefault("vi_iterations", 30000)
-    d.setdefault("vi_draws", 1000)
-    d.setdefault("vi_kwargs", {})
+    from pcntoolkit.regression_model.hbr import MCMC_INIT_KEYS
+
+    inference_method = {"type": "MCMC", "is_fitted": d.get("is_fitted", False)}
+    for key in MCMC_INIT_KEYS:
+        if key in d:
+            inference_method[key] = d.pop(key)
+    if "idata_path" in d:
+        inference_method["data_tree_path"] = d.pop("idata_path")
+    d["inference_method"] = inference_method
 
     return d
 

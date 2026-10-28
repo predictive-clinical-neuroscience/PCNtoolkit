@@ -140,6 +140,11 @@ class Warnings:
         "batch_effects is not provided, setting self.batch_effects to zeros"
     )
     HBR_BATCH_EFFECTS_NOT_PROVIDED = BLR_BATCH_EFFECTS_NOT_PROVIDED
+    HBR_MCMC_KWARGS_DEPRECATED = (
+        "The MCMC kwargs {kwargs} have been provided directly to HBR instead of through the MCMC InferenceMethod. "
+        "This behavior will be deprecated in the future. "
+        "We will create a default MCMC InferenceMethod and replace its attributes with the ones you provided."
+    )
     ERROR_SUBMITTING_JOB = "Error submitting job {job_id}: {stderr}"
     NO_RESPONSE_VARS = "No response variables provided for dataset {dataset_name}. Please provide a list of response variables for which you want to fit or predict."
     RESPONSE_VAR_NOT_FOUND = "Response variable {response_var} not found in dataset {dataset_name}. Setting to NaN."
@@ -260,6 +265,19 @@ class Errors:
         "HBR model is fitted but does not have idata. This should not happen."
     )
     ERROR_HBR_COULD_NOT_LOAD_IDATA = "Could not load idata from {path}"
+    ERROR_HBR_MCMC_KWARGS_AND_INFERENCE_METHOD = (
+        "The MCMC kwargs {kwargs} have been provided directly to HBR instead of through the MCMC InferenceMethod, "
+        "while an InferenceMethod has also been provided. Only one of those can be provided. "
+        "Please consolidate into an MCMC InferenceMethod object."
+    )
+    ERROR_HBR_FROM_ARGS_ONLY_MCMC = (
+        "Only inference_method='mcmc' is supported from command line arguments."
+    )
+    ERROR_HBR_FITTED_BUT_NO_DATA_TREE_PATH = "The model that you are trying to load is marked as fitted but does not contain a DataTree"
+    ERROR_HBR_LAPLACE_REQUIRES_PYMC_EXTRAS = (
+        "The Laplace inference method requires pymc-extras. It ships as a "
+        "dependency; reinstall it with: pip install 'pymc-extras>=0.11.0'"
+    )
     ERROR_UNKNOWN_MAPPING = "Unknown mapping ({mapping})"
     ERROR_UNKNOWN_DISTRIBUTION = "Unknown distribution ({dist_name})"
     ERROR_SOURCE_ARRAY_NOT_FOUND = (

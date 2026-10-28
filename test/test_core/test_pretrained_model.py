@@ -10,7 +10,7 @@ import pytest
 
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
-from pcntoolkit.regression_model.hbr import HBR
+from pcntoolkit.regression_model.hbr import HBR, MCMC
 
 RESOURCES: Path = Path(__file__).parents[1] / "resources"
 PRETRAINED_BLR: Path = RESOURCES / "pretrained_blr"
@@ -173,10 +173,11 @@ def test_007_load_should_applyVariationalInferenceMigration_when_givenPretrained
     Arrange: an HBR model saved with PCNtoolkit 1.1.2, before variational
         inference existed.
     Act: load it with the installed version.
-    Assert: the variational inference fields hold the MCMC defaults.
+    Assert: the saved MCMC settings moved into an MCMC inference method.
 
-    Tests specifically that _migrate_hbr_1_3_1 correctly sets the inference_method to
-    "mcmc" for a model saved with pcntoolkit v1.1.2.
+    Tests specifically that _migrate_variational_inference_1_4_0 builds an MCMC
+    inference method for a model saved with pcntoolkit v1.1.2.
     """
     regression_model = hbr_model.regression_models[RESPONSE_VAR]
-    assert regression_model.inference_method == "mcmc"
+    assert isinstance(regression_model.inference_method, MCMC)
+    assert regression_model.inference_method.draws == 15
