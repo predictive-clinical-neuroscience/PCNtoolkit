@@ -305,10 +305,18 @@ class TestHBR:
             assert np.isfinite(var.values).all(), f"non-finite draws for {name}"
 
         # Transfer must build the new priors from the Laplace posterior draws.
-        transferred = model.transfer(data.X, mapped_batch_effects, be_maps, data.Y)
+        transferred = model.transfer(
+            data.X, mapped_batch_effects, be_maps, data.Y, freedom=2
+        )
         assert transferred.is_fitted
         assert isinstance(transferred.inference_method, LaPlace)
         assert (
             transferred.likelihood.mu.slope.dist_params
             != model.likelihood.mu.slope.dist_params
         )
+        # freedom=2 must double the width of the Normal slope prior.
+        narrow = model.inference_method.use_posterior_as_new_prior(model.likelihood)
+        wide_mu, wide_sigma = transferred.likelihood.mu.slope.dist_params
+        narrow_mu, narrow_sigma = narrow.mu.slope.dist_params
+        assert np.allclose(wide_mu, narrow_mu)
+        assert np.allclose(wide_sigma, 2 * np.asarray(narrow_sigma))

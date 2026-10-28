@@ -282,7 +282,7 @@ class HBR(RegressionModel):
         **kwargs,
     ):
         new_likelihood = self.inference_method.use_posterior_as_new_prior(
-            self.likelihood
+            self.likelihood, **kwargs
         )
         new_hbr_model = HBR(
             name=self.name,
@@ -450,7 +450,9 @@ class InferenceMethod(ABC):
         return my_dict
 
     @abstractmethod
-    def use_posterior_as_new_prior(self, likelihood: Likelihood) -> Likelihood:
+    def use_posterior_as_new_prior(
+        self, likelihood: Likelihood, **kwargs: Any
+    ) -> Likelihood:
         pass
 
     def apply(self, fn: Callable, model: pm.Model, params: dict[str, any], kwargs):
@@ -598,8 +600,10 @@ class MCMC(InferenceMethod):
         mcmc.is_from_dict = True
         return mcmc
 
-    def use_posterior_as_new_prior(self, likelihood: Likelihood) -> Likelihood:
-        return likelihood.transfer(self.data_tree)
+    def use_posterior_as_new_prior(
+        self, likelihood: Likelihood, **kwargs: Any
+    ) -> Likelihood:
+        return likelihood.transfer(self.data_tree, **kwargs)
 
 
 class LaPlace(InferenceMethod):
@@ -654,8 +658,10 @@ class LaPlace(InferenceMethod):
         laplace.is_from_dict = True
         return laplace
 
-    def use_posterior_as_new_prior(self, likelihood: Likelihood) -> Likelihood:
-        return likelihood.transfer(self.data_tree)
+    def use_posterior_as_new_prior(
+        self, likelihood: Likelihood, **kwargs: Any
+    ) -> Likelihood:
+        return likelihood.transfer(self.data_tree, **kwargs)
 
 
 class ADVI(InferenceMethod):
