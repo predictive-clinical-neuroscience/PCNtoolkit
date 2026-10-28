@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import xarray as xr
@@ -28,11 +28,84 @@ class Evaluator:
         List of response variables to evaluate
     """
 
+    # Every statistic that `evaluate` can compute.
+    ALL_STATISTICS: List[str] = [
+        "Rho",
+        "Rho_p",
+        "R2",
+        "RMSE",
+        "SMSE",
+        "MSLL",
+        "MLL",
+        "ShapiroW",
+        "MACE",
+        "MAPE",
+        "EXPV",
+        "Skewness",
+        "Kurtosis",
+    ]
+
+    # Old statistic names that are still accepted, mapped to their new name.
+    RENAMED_STATISTICS: Dict[str, str] = {"NLL": "MLL"}
+
     def __init__(self) -> None:
         """Initialize the Evaluator."""
         self.response_vars: List[str] = []
 
-    def evaluate(self, data: NormData, statistics: List[str] = []) -> NormData:
+    def resolve_statistics(self, statistics: Optional[List[str]] = None) -> List[str]:
+        """
+        Turn the statistics requested by the user into a list of valid names.
+
+        Renamed statistics (e.g. ``NLL``) are mapped to their new name with a
+        deprecation warning, and unknown names are dropped with a warning
+        that lists the valid choices. ``Rho`` and ``Rho_p`` are always
+        computed together, because they come from the same test.
+
+        Parameters
+        ----------
+        statistics : Optional[List[str]]
+            Requested statistics. If None or empty, all statistics are used.
+
+        Returns
+        -------
+        List[str]
+            Valid statistic names, in the order of ``ALL_STATISTICS``.
+        """
+        if not statistics:
+            return list(self.ALL_STATISTICS)
+
+        requested: set[str] = set()
+        unknown: List[str] = []
+        for name in statistics:
+            if name in self.RENAMED_STATISTICS:
+                new_name = self.RENAMED_STATISTICS[name]
+                Output.warning(
+                    Warnings.RENAMED,
+                    old_name=name,
+                    new_name=new_name,
+                    category=DeprecationWarning,
+                )
+                requested.add(new_name)
+            elif name in self.ALL_STATISTICS:
+                requested.add(name)
+            else:
+                unknown.append(name)
+
+        if unknown:
+            Output.warning(
+                Warnings.UNKNOWN_STATISTICS,
+                unknown=", ".join(map(str, unknown)),
+                valid=", ".join(self.ALL_STATISTICS),
+            )
+
+        # evaluate_rho fills both rows, so one implies the other
+        if requested & {"Rho", "Rho_p"}:
+            requested |= {"Rho", "Rho_p"}
+        return [m for m in self.ALL_STATISTICS if m in requested]
+
+    def evaluate(
+        self, data: NormData, statistics: Optional[List[str]] = None
+    ) -> NormData:
         """
         Evaluate model predictions using multiple statistics.
 
@@ -40,36 +113,17 @@ class Evaluator:
         ----------
         data : NormData
             Data container with predictions and actual values, and yhat
+        statistics : Optional[List[str]]
+            Names of the statistics to compute (see ``ALL_STATISTICS``).
+            If None or empty, all statistics are computed.
 
         Returns
         -------
         NormData
             Data container updated with evaluation statistics
         """
-        # data["Yhat"] = data.centiles.sel(centile=0.5, method="nearest")
         assert "Yhat" in data.data_vars, "Yhat must be computed before evaluation"
-        all_statistics = [
-            "Rho",
-            "Rho_p",
-            "R2",
-            "RMSE",
-            "SMSE",
-            "MSLL",
-            "MLL",
-            "ShapiroW",
-            "MACE",
-            "MAPE",
-            "EXPV",
-            "Skewness",
-            "Kurtosis",
-        ]
-        if statistics:
-            self.statistics = [m for m in all_statistics if m in statistics]
-
-        else:
-            self.statistics = all_statistics
-        if "Rho" in self.statistics and "Rho_p" not in self.statistics:
-            self.statistics.append("Rho_p")
+        self.statistics = self.resolve_statistics(statistics)
         self.create_statistics_group(data)
         if "ShapiroW" in self.statistics:
             self.evaluate_shapiro_w(data)
@@ -506,14 +560,6 @@ class Evaluator:
         float
             Mean Log Loss of predictions
         """
-        # Emit a deprecation warning using the shared renamed template
-        Output.warning(
-            Warnings.RENAMED,
-            old_name="NLL",
-            new_name="MLL",
-            category=DeprecationWarning,
-        )
-
         logp = data["logp"].values
         mll = -np.mean(logp)
         return float(mll)
