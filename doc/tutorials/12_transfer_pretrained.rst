@@ -18,23 +18,6 @@ pretrained models through a web browser.
 Imports
 -------
 
-Install requests manually as it is not install with
-``pip install pcntoolkit``
-
-.. code:: ipython3
-
-    !pip install requests
-
-
-.. code:: text
-
-    Requirement already satisfied: requests in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (2.34.2)
-    Requirement already satisfied: charset_normalizer<4,>=2 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from requests) (3.5.2)
-    Requirement already satisfied: idna<4,>=2.5 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from requests) (3.20)
-    Requirement already satisfied: urllib3<3,>=1.26 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from requests) (2.8.0)
-    Requirement already satisfied: certifi>=2023.5.7 in /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages (from requests) (2026.10.23)
-
-
 .. code:: ipython3
 
     import os
@@ -44,6 +27,9 @@ Install requests manually as it is not install with
     from urllib.parse import unquote
     
     import pandas as pd
+    
+    # You should `pip install requests` manually,
+    # as it is not install with `pip install pcntoolkit`
     import requests
     import seaborn as sns
     
@@ -439,5 +425,5 @@ model.
 
 
 
-.. image:: 12_transfer_pretrained_files/12_transfer_pretrained_23_0.png
+.. image:: 12_transfer_pretrained_files/12_transfer_pretrained_21_0.png
 
