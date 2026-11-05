@@ -125,6 +125,10 @@ The file names tell you what each model contains:
 |                                   | et al.,                           |
 |                                   | 2024 <https://                    |
 |                                   | doi.org/10.1162/imag_a_00110>`__) |
+|                                   | 2024 <https://direct.mit.edu/i    |
+|                                   | mag/article/doi/10.1162/imag_a_00 |
+|                                   | 132/120371/Non-Gaussian-normative |
+|                                   | -modelling-with-hierarchical>`__) |
 +-----------------------------------+-----------------------------------+
 | ``ct`` / ``sa`` / ``sc``          | cortical thickness / surface area |
 |                                   | / subcortical volumes (sMRI)      |
