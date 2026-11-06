@@ -43,7 +43,7 @@ Feel free to ask your questions and engage in discussions with the community on 
 
 ### Contributors
 
-Contributions are always welcome! To start see our [website contributing guidelines](https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html).
+Contributions are always welcome! To start see our [website contributing guidelines](https://pcntoolkit.readthedocs.io/en/stable/development/contributing.html).
 
 You can find more in depth guidelines in our [GitHub Wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki).
 
