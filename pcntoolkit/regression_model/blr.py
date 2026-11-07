@@ -567,8 +567,8 @@ class BLR(RegressionModel):
             Initialized hyperparameter vector
         """
 
-        if self.hyp0:
-            return self.hyp0
+        if self.hyp0 is not None:
+            return np.asarray(self.hyp0, dtype=float)
 
         if self.models_variance:
             n_beta = self.var_D
