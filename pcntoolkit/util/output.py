@@ -168,6 +168,9 @@ class Warnings:
         "Automatic data loading by the Runner is not supported for cross-validation."
     )
     RENAMED = "'{old_name}' has been renamed to '{new_name}'."
+    UNKNOWN_STATISTICS = (
+        "Ignoring unknown statistic(s): {unknown}. Valid statistics are: {valid}."
+    )
     TOO_FEW_OBSERVATIONS = (
         "Cannot compute {statistic}: {n_valid} valid observation(s) "
         "found after removing NaN/Inf values, but at least "
