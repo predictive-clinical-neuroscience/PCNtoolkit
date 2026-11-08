@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import os
+import weakref
 from typing import Any, Dict, Optional
 
 import arviz as az  # type: ignore
@@ -18,6 +20,22 @@ from pcntoolkit.math_functions.likelihood import (
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Output
+
+# One cached set of per-subject parameter arrays for the whole process; see
+# HBR.per_subject_params. A single slot keeps the memory bounded: it holds
+# at most one (n_observations, n_samples) array per likelihood parameter.
+_PARAM_CACHE: dict[str, Any] = {}
+
+
+def clear_param_cache() -> None:
+    """Free the cached per-subject parameter arrays of HBR models."""
+    _PARAM_CACHE.clear()
+
+
+def _fingerprint(a: np.ndarray) -> tuple:
+    """Return a key that changes when the shape, type or values of ``a`` change."""
+    a = np.ascontiguousarray(a)
+    return (a.shape, a.dtype.str, hashlib.blake2b(a.tobytes(), digest_size=16).digest())
 
 
 class HBR(RegressionModel):
@@ -300,6 +318,50 @@ class HBR(RegressionModel):
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
 
+        array_of_vars = self.per_subject_params(X, be, Y)
+        result = xr.apply_ufunc(fn, *array_of_vars, kwargs=kwargs).mean(dim="sample")
+        return result
+
+    def per_subject_params(
+        self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
+    ) -> list[xr.DataArray]:
+        """Return the likelihood parameters per subject and posterior sample.
+
+        Building the PyMC model and evaluating the parameters for every
+        posterior sample is the slow part of forward, backward and
+        compute_yhat. The parameters depend on X, the batch effects and the
+        posterior, not on Y or Z, so the last result is cached and used again
+        when this model is called with the same X and batch effects. The
+        cache holds one result for the whole process; ``clear_param_cache``
+        frees it. The cached arrays are read-only.
+
+        Parameters
+        ----------
+        X : xr.DataArray
+            Covariate data
+        be : xr.DataArray
+            Batch effect data
+        Y : xr.DataArray
+            Response variable data; only used to build the PyMC model.
+
+        Returns
+        -------
+        list[xr.DataArray]
+            One (observations, sample) array per likelihood parameter.
+        """
+        key = (_fingerprint(X.values), _fingerprint(be.values))
+        cache = _PARAM_CACHE
+        # The cache keeps a reference to idata, so a new posterior (refit,
+        # transfer) cannot reuse the id of the old one.
+        if (
+            cache
+            and cache["owner"]() is self
+            and cache["idata"] is self.idata
+            and cache["key"] == key
+        ):
+            return cache["arrays"]
+        clear_param_cache()
+
         model = self.likelihood.create_model_with_data(X, be, self.be_maps, Y)
         params = self.likelihood.compile_params(model, X, be, self.be_maps, Y)
         var_names = [f"{k}_per_subject" for k, _ in params.items()]
@@ -326,8 +388,12 @@ class HBR(RegressionModel):
                 var_names,
             )
         )
-        result = xr.apply_ufunc(fn, *array_of_vars, kwargs=kwargs).mean(dim="sample")
-        return result
+        for arr in array_of_vars:
+            arr.values.flags.writeable = False
+        cache.update(
+            owner=weakref.ref(self), idata=self.idata, key=key, arrays=array_of_vars
+        )
+        return array_of_vars
 
     def elemwise_logp(self, X, be, Y) -> xr.DataArray:  # type: ignore
         """

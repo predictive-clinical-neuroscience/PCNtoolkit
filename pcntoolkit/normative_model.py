@@ -22,7 +22,10 @@ from pcntoolkit.math_functions.scaler import Scaler
 
 # pylint: disable=unused-import
 from pcntoolkit.regression_model.blr import BLR  # noqa: F401 # type: ignore
-from pcntoolkit.regression_model.hbr import HBR  # noqa: F401 # type: ignore
+from pcntoolkit.regression_model.hbr import (  # noqa: F401 # type: ignore
+    HBR,
+    clear_param_cache,
+)
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.regression_model.test_model import (
     TestModel,  # noqa: F401 # type: ignore
@@ -196,6 +199,8 @@ class NormativeModel:
         self.compute_baseline_logp(data)
         self.compute_logp(data)
         self.compute_yhat(data)
+        # Free the HBR per-subject parameters cached for this data.
+        clear_param_cache()
         if self.evaluate_model:
             self.evaluate(data)
         if self.saveresults:
