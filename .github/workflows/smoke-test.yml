@@ -1,7 +1,7 @@
 # This configuration does the following:
 
-#   It runs a short smoke test on Linux, macOS and Windows when code is
-#   pushed to dev and when a pull request to dev is created.
+#   It runs a short smoke test on Linux, macOS and Windows when a pull
+#   request to dev changes the package, and on demand.
 #   It installs the package (not in editable mode), checks the import and
 #   the command line tool, then fits small BLR and HBR models.
 #   The full test suite runs on Linux only, in testing.yml.
@@ -9,12 +9,13 @@
 name: smoke-test
 
 on:
-  push:
-    branches:
-      - dev
   pull_request:
-    branches:
-      - dev
+    branches: [dev]
+    paths:
+      - "pcntoolkit/**"
+      - "pyproject.toml"
+      - ".github/workflows/smoke-test.yml"
+      - ".github/scripts/**"
   workflow_dispatch:
 
 jobs:
