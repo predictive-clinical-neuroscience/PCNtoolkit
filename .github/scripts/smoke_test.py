@@ -107,7 +107,6 @@ def check_load(save_dir: Path, z_fitted: xr.DataArray, label: str) -> None:
     loaded = NormativeModel.load(str(save_dir))
     # Clean copy of the test data, so nothing from the fitted model is left in it.
     _, test = make_data()
-    # Match columns by name: predict does not keep a fixed column order.
     z_loaded = loaded.predict(test)["Z"].sel(response_vars=z_fitted.response_vars)
     np.testing.assert_allclose(
         z_loaded, z_fitted, err_msg=f"{label}: loaded model gives other Z-scores"
@@ -138,8 +137,7 @@ def run_hbr(save_dir: Path) -> None:
         Folder for the model and its results.
     """
     train, test = make_data()
-    # Few draws: this only checks that sampling works. Two chains on two
-    # cores test parallel sampling, which users get by default.
+    # Few draws and 2 cores: this only checks that sampling works.
     hbr = HBR(draws=20, tune=20, chains=2, cores=2, progressbar=False)
     model = NormativeModel(hbr, save_dir=str(save_dir), saveplots=False)
     z = check_z(model.fit_predict(train, test), "HBR fit_predict")
@@ -157,7 +155,6 @@ def main() -> int:
     print(f"[smoke] pcntoolkit {pcntoolkit.__version__} from {pcntoolkit.__file__}")
     print(f"[smoke] python {sys.version}")
     save_dir = Path(tempfile.mkdtemp(prefix="pcntoolkit_smoke_"))
-    print(f"[smoke] saving models in {save_dir}")
     run_blr(save_dir / "blr")
     run_hbr(save_dir / "hbr")
     print("[smoke] all checks passed")
