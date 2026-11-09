@@ -210,57 +210,53 @@ class HBR(RegressionModel):
             self.likelihood.update_data(self.pymc_model, X, be, self.be_maps, Y)
         return self.inference_method.elemwise_logp(self.pymc_model)
 
-    # def model_specific_evaluation(self, path: str) -> None:
-    #     """
-    #     Save model-specific evaluation metrics.
-    #     """
-    #     plotdir = os.path.join(path, "plots")
-    #     os.makedirs(plotdir, exist_ok=True)
-    #     resultsdir = os.path.join(path, "results")
-    #     os.makedirs(resultsdir, exist_ok=True)
-    #     if self.is_fitted:
-    #         if self.idata is not None:
-    #             az.summary(
-    #                 self.idata,
-    #                 fmt="wide",
-    #                 var_names=["~_per_subject"],
-    #                 filter_vars="like",
-    #             ).to_csv(os.path.join(resultsdir, self.name + "_summary.csv"))
-    #             # Trace and autocorrelation plots only mean something for MCMC:
-    #             # variational draws are independent by construction.
-    #             if self.inference_method == "mcmc":
-    #                 self._save_plot(
-    #                     az.plot_trace_dist(
-    #                         self.idata, var_names="~_per_subject", filter_vars="like"
-    #                     ),
-    #                     os.path.join(plotdir, self.name + "_trace.png"),
-    #                 )
-    #                 self._save_plot(
-    #                     az.plot_autocorr(
-    #                         self.idata, var_names="~_per_subject", filter_vars="like"
-    #                     ),
-    #                     os.path.join(plotdir, self.name + "_autocorr.png"),
-    #                 )
-    #             elif self.vi_loss is not None:
-    #                 # For ADVI the ELBO trace is the convergence diagnostic.
-    #                 plt.plot(self.vi_loss)
-    #                 plt.xlabel("iteration")
-    #                 plt.ylabel("ELBO loss")
-    #                 plt.yscale("log")
-    #                 plt.tight_layout()
-    #                 plt.savefig(os.path.join(plotdir, self.name + "_elbo.png"))
-    #                 plt.close()
-    #             if "posterior_predictive" in self.idata.children:
-    #                 self._save_plot(
-    #                     az.plot_ppc_dist(self.idata),
-    #                     os.path.join(plotdir, self.name + "_ppc.png"),
-    #                 )
-    #         if self.pymc_model is not None:
-    #             self.pymc_model.to_graphviz(
-    #                 save=os.path.join(plotdir, self.name + "_model.png")
-    #             )
-    #     else:
-    #         raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
+    def model_specific_evaluation(self, path: str) -> None:
+        """
+        Save convergence diagnostics of the fitted model to disk.
+
+        Writes a summary table of each posterior parameter (mean, sd and, for MCMC,
+        R-hat: values near 1.0 mean the chains agree) to ``results/``. For
+        MCMC it also saves trace and autocorrelation plots to ``plots/``.
+        
+        Parameters
+        ----------
+        path : str
+            Folder in which ``plots/`` and ``results/`` are created.
+
+        Raises
+        ------
+        ValueError
+            If the model has not been fitted.
+        """
+        if not self.is_fitted:
+            raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
+        
+        # Setup the paths
+        plotdir = os.path.join(path, "plots")
+        os.makedirs(plotdir, exist_ok=True)
+        resultsdir = os.path.join(path, "results")
+        os.makedirs(resultsdir, exist_ok=True)
+
+        if self.idata is not None:
+            # Summary table of each posterior parameter
+            az.summary(self.idata, fmt="wide").to_csv(
+                os.path.join(resultsdir, self.name + "_summary.csv")
+            )
+            # Trace and autocorrelation are only for MCMC.
+            # Laplace draws are independent by construction.
+            if isinstance(self.inference_method, MCMC):
+                # Remove ArviZ's 40-panel limit; HBR models often have more parameters.
+                with az.rc_context({"plot.max_subplots": None}):
+                    # Trace plot
+                    self._save_plot(
+                        az.plot_trace_dist(self.idata),
+                        os.path.join(plotdir, self.name + "_trace.png"),
+                    )
+                    # Autocorrelation plot
+                    self._save_plot(
+                        az.plot_autocorr(self.idata),
+                        os.path.join(plotdir, self.name + "_autocorr.png"),
+                    )
 
     def transfer(
         self,
