@@ -1,12 +1,19 @@
-HBR with Laplace as inference method
-====================================
+Run HBR faster with approximate inference
+=========================================
 
 .. container:: notebook-download
 
    :download:`Download Jupyter notebook <notebooks/17_HBR_Laplace.ipynb>`
 
+The ``HBR()`` class has an ``inference_method`` argument, which sets how
+the model is fitted: ``MCMC()`` by default, or ``Laplace()``.
+
 ``Laplace`` approximates the posterior instead of sampling it like
-``MCMC``. This notebook shows three things:
+``MCMC``. This can **speed up** the HBR, but it can misestimate group
+effects such as site or sex, especially when there are few groups or few
+subjects per group.
+
+This notebook shows three things:
 
 1. With the default (non-centered) priors, Laplace shifts the z-scores
    of women and men in opposite directions.
@@ -14,7 +21,7 @@ HBR with Laplace as inference method
 3. With centered priors, Laplace stays close to MCMC after transfer and
    extend to new sites.
 
-.. code:: python
+.. code:: ipython3
 
     import logging
     import time
@@ -35,7 +42,7 @@ HBR with Laplace as inference method
     Output.set_show_messages(False)
     Output.set_show_warnings(False)
 
-.. code:: python
+.. code:: ipython3
 
     RV = "EstimatedTotalIntraCranialVol"
     ADAPT_SITES = ["AnnArbor_a", "Beijing_Zang"]
@@ -45,10 +52,11 @@ HBR with Laplace as inference method
     train, test = base.train_test_split((0.8, 0.2), split_names=("train", "test"))
     adapt_train, adapt_test = adapt_sites.train_test_split((0.8, 0.2), split_names=("train", "test"))
 
-.. code:: python
+.. code:: ipython3
 
     CENTILES = [0.05, 0.25, 0.5, 0.75, 0.95]
     STYLE = {"MCMC": dict(color="tab:blue", ls="-"), "Laplace": dict(color="tab:orange", ls="--")}
+    plt.rcParams["font.size"] = 13  # stays readable when the website shrinks the figures
     
     
     def likelihood(centered: bool):
@@ -106,7 +114,7 @@ HBR with Laplace as inference method
     
     
     def compare(models, seconds, data, site, title):
-        """Z-scores of MCMC vs Laplace on `data`, and their centiles at `site`."""
+        """Plot z-scores of MCMC vs Laplace on `data`, then their centiles at `site`."""
         z = {}
         for name, model in models.items():
             d = data.copy(deep=True)
@@ -117,23 +125,30 @@ HBR with Laplace as inference method
         y = data.Y.values.ravel()
         ages = np.linspace(*np.percentile(age, [2.5, 97.5]), 100)
     
-        fig, axes = plt.subplots(1, 3, figsize=(15, 4.2))
+        # Figure 1: z-scores
+        fig, ax = plt.subplots(figsize=(6, 6))
         for s, color in [("F", "tab:red"), ("M", "tab:green")]:
-            axes[0].scatter(z["MCMC"][sex == s], z["Laplace"][sex == s], s=10, alpha=0.6, color=color, label=s)
-        axes[0].plot([-4, 4], [-4, 4], "k--", lw=1)
+            ax.scatter(z["MCMC"][sex == s], z["Laplace"][sex == s], s=12, alpha=0.6, color=color, label=s)
+        ax.plot([-4, 4], [-4, 4], "k--", lw=1)
         r = np.corrcoef(z["MCMC"], z["Laplace"])[0, 1]
-        axes[0].set(xlabel="Z (MCMC)", ylabel="Z (Laplace)", title=f"Test z-scores, r = {r:.3f}")
-        axes[0].legend(title="sex")
+        ax.set(xlabel="Z (MCMC)", ylabel="Z (Laplace)",
+               title=f"{title}: test z-scores, r = {r:.3f}\n"
+                     f"fit time: MCMC {seconds['MCMC']:.0f} s, Laplace {seconds['Laplace']:.0f} s")
+        ax.legend(title="sex")
+        fig.tight_layout()
+        plt.show()
     
-        for ax, s in zip(axes[1:], ["F", "M"]):
-            ax.scatter(age[sex == s], y[sex == s], s=6, color="grey", alpha=0.4)
+        # Figure 2: centiles
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+        for ax, s in zip(axes, ["F", "M"]):
+            ax.scatter(age[sex == s], y[sex == s], s=8, color="grey", alpha=0.4)
             for name in models:
                 c = centiles(models[name], ages, site, s)
                 for j in range(len(CENTILES)):
                     ax.plot(ages, c[j], lw=1.5, **STYLE[name], label=name if j == 0 else None)
-            ax.set(xlabel="age", ylabel=RV, title=f"Centiles, sex {s}, site {site}")
+            ax.set(xlabel="age", ylabel=RV, title=f"Centiles, sex {s}")
             ax.legend()
-        fig.suptitle(f"{title}  (fit time: MCMC {seconds['MCMC']:.0f} s, Laplace {seconds['Laplace']:.0f} s)")
+        fig.suptitle(f"{title}: centiles at site {site}")
         fig.tight_layout()
         plt.show()
     
@@ -146,9 +161,9 @@ HBR with Laplace as inference method
 Laplace’s z-scores split into two bands, one per sex, and its centiles
 shift away from MCMC.
 
-Also we see that Laplace is signifacantly faster than MCMC.
+Also we see that Laplace is significantly faster than MCMC.
 
-.. code:: python
+.. code:: ipython3
 
     noncentered, seconds = fit(centered=False)
     compare(noncentered, seconds, test, BASE_SITE, "Non-centered")
@@ -158,13 +173,17 @@ Also we see that Laplace is signifacantly faster than MCMC.
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_5_0.png
 
 
+
+.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_5_1.png
+
+
 2. Centered priors
 ------------------
 
 The only change is ``centered=True`` on the random intercept. Laplace
 results are closer to MCMC now.
 
-.. code:: python
+.. code:: ipython3
 
     centered, seconds = fit(centered=True)
     compare(centered, seconds, test, BASE_SITE, "Centered")
@@ -174,13 +193,17 @@ results are closer to MCMC now.
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_7_0.png
 
 
+
+.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_7_1.png
+
+
 3. Transfer to new sites
 ------------------------
 
 Starting from the centered models, evaluated on the new sites’ test
 subjects.
 
-.. code:: python
+.. code:: ipython3
 
     transferred, seconds = adapt(centered, "transfer")
     compare(transferred, seconds, adapt_test, "Beijing_Zang", "Transfer")
@@ -190,6 +213,10 @@ subjects.
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_9_0.png
 
 
+
+.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_9_1.png
+
+
 4. Extend to new sites
 ----------------------
 
@@ -197,7 +224,7 @@ Extend has slightly less agreement than transfer. Most likely because
 each method extends with its own random synthetic data, so the two
 models are not fitted on the same data.
 
-.. code:: python
+.. code:: ipython3
 
     extended, seconds = adapt(centered, "extend")
     compare(extended, seconds, adapt_test, "Beijing_Zang", "Extend")
@@ -205,4 +232,8 @@ models are not fitted on the same data.
 
 
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_11_0.png
+
+
+
+.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_11_1.png
 
