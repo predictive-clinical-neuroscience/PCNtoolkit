@@ -1,7 +1,7 @@
 # This configuration does the following:
 
 #   It runs a short smoke test on Linux, macOS and Windows when a pull
-#   request to dev changes the package, and on demand.
+#   request to dev changes the package, every Monday morning, and on demand.
 #   It installs the package (not in editable mode), checks the import and
 #   the command line tool, then fits small BLR and HBR models.
 #   The full test suite runs on Linux only, in testing.yml.
@@ -16,6 +16,10 @@ on:
       - "pyproject.toml"
       - ".github/workflows/smoke-test.yml"
       - ".github/scripts/**"
+  # Weekly, to catch new releases of our dependencies that break a platform.
+  # 08:00 UTC = 09:00 in the Netherlands in winter, 10:00 in summer.
+  schedule:
+    - cron: "0 8 * * 1"
   workflow_dispatch:
 
 # A new push to the same pull request cancels the run that is still going.
