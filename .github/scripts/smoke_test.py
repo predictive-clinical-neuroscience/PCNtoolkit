@@ -2,9 +2,10 @@
 
 Run this script from a directory outside the source tree, so that Python
 imports the installed package and not the local checkout. It fits a BLR and
-an HBR model on a small synthetic dataset, then saves, loads and predicts
-again with the BLR model. The goal is to find install and platform problems
-(for example a missing compiler on Windows), not to check model accuracy.
+an HBR model on a small synthetic dataset. Then it loads each saved model,
+predicts again and checks that the Z-scores are the same. The goal is to find
+install and platform problems (for example a missing compiler on Windows),
+not to check model accuracy.
 """
 
 import sys
@@ -13,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 import pcntoolkit
 from pcntoolkit import BLR, HBR, NormativeModel, NormData
@@ -56,7 +58,7 @@ def make_data(n_obs: int = 200, seed: int = 42) -> tuple[NormData, NormData]:
     return train, test
 
 
-def check_z(data: NormData, label: str) -> None:
+def check_z(data: NormData, label: str) -> xr.DataArray:
     """Check that predictions have finite Z-scores of the correct shape.
 
     Parameters
@@ -66,16 +68,51 @@ def check_z(data: NormData, label: str) -> None:
     label : str
         Name of the check, used in the output.
 
+    Returns
+    -------
+    xr.DataArray
+        The Z-scores, dims (observations, response_vars).
+
     Raises
     ------
     AssertionError
         If the Z-scores are missing, have the wrong shape or are not finite.
     """
     assert "Z" in data, f"{label}: no Z-scores in the predictions"
-    z = data["Z"].values
+    z = data["Z"]
     assert z.shape == data["Y"].shape, f"{label}: Z shape {z.shape} != Y shape"
-    assert np.isfinite(z).all(), f"{label}: Z-scores are not all finite"
+    assert np.isfinite(z.values).all(), f"{label}: Z-scores are not all finite"
     print(f"[smoke] {label}: OK, Z shape {z.shape}")
+    return z
+
+
+def check_load(save_dir: Path, z_fitted: xr.DataArray, label: str) -> None:
+    """Check that a saved model, once loaded, gives the same Z-scores.
+
+    Parameters
+    ----------
+    save_dir : Path
+        Folder the fitted model was saved to.
+    z_fitted : xr.DataArray
+        Z-scores of the test data from the fitted model, dims
+        (observations, response_vars).
+    label : str
+        Name of the model, used in the output.
+
+    Raises
+    ------
+    AssertionError
+        If the Z-scores of the loaded model differ from ``z_fitted``.
+    """
+    loaded = NormativeModel.load(str(save_dir))
+    # Clean copy of the test data, so nothing from the fitted model is left in it.
+    _, test = make_data()
+    # Match columns by name: predict does not keep a fixed column order.
+    z_loaded = loaded.predict(test)["Z"].sel(response_vars=z_fitted.response_vars)
+    np.testing.assert_allclose(
+        z_loaded, z_fitted, err_msg=f"{label}: loaded model gives other Z-scores"
+    )
+    print(f"[smoke] {label} load: OK, same Z-scores as the fitted model")
 
 
 def run_blr(save_dir: Path) -> None:
@@ -88,15 +125,12 @@ def run_blr(save_dir: Path) -> None:
     """
     train, test = make_data()
     model = NormativeModel(BLR(), save_dir=str(save_dir), saveplots=False)
-    check_z(model.fit_predict(train, test), "BLR fit_predict")
-
-    loaded = NormativeModel.load(str(save_dir))
-    _, test_again = make_data()
-    check_z(loaded.predict(test_again), "BLR load and predict")
+    z = check_z(model.fit_predict(train, test), "BLR fit_predict")
+    check_load(save_dir, z, "BLR")
 
 
 def run_hbr(save_dir: Path) -> None:
-    """Fit and predict with a very short HBR sampling run.
+    """Fit, save, load and predict with a very short HBR sampling run.
 
     Parameters
     ----------
@@ -108,7 +142,8 @@ def run_hbr(save_dir: Path) -> None:
     # cores test parallel sampling, which users get by default.
     hbr = HBR(draws=20, tune=20, chains=2, cores=2, progressbar=False)
     model = NormativeModel(hbr, save_dir=str(save_dir), saveplots=False)
-    check_z(model.fit_predict(train, test), "HBR fit_predict")
+    z = check_z(model.fit_predict(train, test), "HBR fit_predict")
+    check_load(save_dir, z, "HBR")
 
 
 def main() -> int:
