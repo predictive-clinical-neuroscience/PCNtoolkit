@@ -6,7 +6,10 @@ import logging
 
 import pytest
 
-from pcntoolkit.math_functions.likelihood import NormalLikelihood
+from pcntoolkit.math_functions.likelihood import (
+    NormalLikelihood,
+    get_default_normal_likelihood,
+)
 from pcntoolkit.math_functions.prior import (
     CenteredRandomPrior,
     LinearPrior,
@@ -17,6 +20,7 @@ from pcntoolkit.math_functions.prior import (
 )
 from pcntoolkit.regression_model.hbr import (  # noqa: F401, F403
     HBR,
+    MCMC,
 )
 from test.fixtures.data_fixtures import *  # noqa: F401, F403
 from test.fixtures.hbr_model_fixtures import *  # noqa: F401, F403
@@ -583,3 +587,31 @@ def test_to_dict(extract_data):
 
     # Check if json.dumps does not throw an error
     json.dumps(my_dict)
+
+
+def test_init_should_useLikelihood_when_givenAsSecondPositionalArg() -> None:
+    """
+    Arrange: a likelihood object.
+    Act: create HBR("name", likelihood), the v1.4.0 call style.
+    Assert: HBR uses that likelihood and is not marked as fitted.
+
+    Regression test: the likelihood used to land in is_fitted, and HBR
+    silently fell back to the default Normal likelihood.
+    """
+    likelihood = get_default_normal_likelihood()
+
+    model = HBR("test_hbr", likelihood)
+
+    assert model.likelihood is likelihood
+    assert model.is_fitted is False
+
+
+def test_init_should_useMCMC_when_noInferenceMethodGiven() -> None:
+    """
+    Arrange: nothing.
+    Act: create HBR without an inference_method.
+    Assert: HBR falls back to MCMC.
+    """
+    model = HBR("test_hbr")
+
+    assert isinstance(model.inference_method, MCMC)
