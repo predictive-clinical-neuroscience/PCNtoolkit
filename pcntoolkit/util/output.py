@@ -273,10 +273,11 @@ class Errors:
     ERROR_HBR_FROM_ARGS_ONLY_MCMC = (
         "Only inference_method='mcmc' is supported from command line arguments."
     )
-    ERROR_HBR_UNSUPPORTED_SAVED_INFERENCE = (
-        "This model was fitted with the experimental inference_method="
-        "'{method}' of PCNtoolkit v1.4.0, which can no longer be loaded. "
-        "Please refit it with HBR(inference_method=MCMC()) or Laplace()."
+    ERROR_HBR_INFERENCE_METHOD_STRING = (
+        "inference_method='{method}' as a string is not supported anymore. "
+        "Use one of the available classes instead like MCMC() or Laplace(), "
+        "e.g. HBR(inference_method=MCMC()). "
+        "Models fitted this way must be refitted."
     )
     ERROR_HBR_FITTED_BUT_NO_DATA_TREE_PATH ="The model that you are trying to load is marked as fitted but does not contain a DataTree"
     ERROR_HBR_LAPLACE_REQUIRES_PYMC_EXTRAS = (

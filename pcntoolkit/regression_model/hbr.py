@@ -73,7 +73,8 @@ class HBR(RegressionModel):
         ------
         ValueError
             If a deprecated argument is given together with
-            ``inference_method``.
+            ``inference_method``, or if ``inference_method`` is a string
+            (e.g. "mcmc"), the experimental v1.4.0 style.
 
         Examples
         --------
@@ -81,6 +82,13 @@ class HBR(RegressionModel):
         >>> model = HBR(likelihood=likelihood, inference_method=mcmc)
         """
         super().__init__(name, is_fitted, is_from_dict)
+
+        if isinstance(inference_method, str):
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_HBR_INFERENCE_METHOD_STRING, method=inference_method
+                )
+            )
 
         legacy = {
             "draws": draws,

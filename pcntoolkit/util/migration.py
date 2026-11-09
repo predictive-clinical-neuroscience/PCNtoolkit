@@ -410,7 +410,7 @@ def _migrate_inference_method_as_class_1_5_0(d: dict) -> dict:
         return d
     if method != "mcmc":
         raise ValueError(
-            Output.error(Errors.ERROR_HBR_UNSUPPORTED_SAVED_INFERENCE, method=method)
+            Output.error(Errors.ERROR_HBR_INFERENCE_METHOD_STRING, method=method)
         )
 
     inference_method = {"type": "MCMC", "is_fitted": d.get("is_fitted", False)}
