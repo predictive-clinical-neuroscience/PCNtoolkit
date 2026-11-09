@@ -188,6 +188,10 @@ class Warnings:
         "Its posterior samples come from an approximation, and PSIS-LOO does not "
         "correct for it, so its ELPD may be biased."
     )
+    MODEL_COMPARISON_SKIPPED_RESPONSE_VARS = (
+        "Only response variables that are in the data and in every model are "
+        "compared. Skipped: {response_vars}."
+    )
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
         "Transfer data contain fewer batch effect levels than training data. "
         "This may lead to biased results."

@@ -52,17 +52,19 @@ def compare_hbr_models(
     Returns
     -------
     dict[str, pd.DataFrame]
-        For each response variable, the table returned by
-        ``arviz.compare``.
+        For each response variable that is in ``data`` and in every model,
+        the table returned by ``arviz.compare``. The other response
+        variables are skipped with a warning.
 
     Raises
     ------
     ValueError
-        If no model could be loaded, if ``data`` is not compatible with a
-        model, or if the models do not transform and scale the response
-        variable identically. The log-likelihoods are computed on the scale
-        the models were fitted on (after ``y_transform`` and the outscaler),
-        so they are only comparable when that scale is the same.
+        If no model could be loaded, if no response variable is in ``data``
+        and in every model, if ``data`` is not compatible with a model, or
+        if the models do not transform and scale the response variable
+        identically. The log-likelihoods are computed on the scale the
+        models were fitted on (after ``y_transform`` and the outscaler), so
+        they are only comparable when that scale is the same.
     """
     loaded_models: dict[str, NormativeModel] = {}
     for k, v in models.items():
@@ -73,6 +75,11 @@ def compare_hbr_models(
     if not loaded_models:
         raise ValueError("None of the models could be loaded.")
 
+    response_vars = _shared_response_vars(loaded_models, data)
+    # Without this selection, check_compatibility would reject data that has
+    # response variables some model does not have.
+    data = data.sel({"response_vars": response_vars})
+
     for name, model in loaded_models.items():
         if not model.check_compatibility(data):
             raise ValueError(
@@ -81,7 +88,7 @@ def compare_hbr_models(
             )
 
     comparisons = {}
-    for respvar in next(iter(loaded_models.values())).response_vars:
+    for respvar in response_vars:
         _check_same_response_scale(loaded_models, data, respvar)
         for name, model in loaded_models.items():
             _warn_if_approximate_posterior(name, model, respvar)
@@ -163,6 +170,61 @@ def _warn_if_approximate_posterior(
             model_name=name,
             inference_method=method_name,
         )
+
+
+def _shared_response_vars(
+    models: dict[str, NormativeModel], data: NormData
+) -> list[str]:
+    """Response variables that are in ``data`` and in every model.
+
+    Warns about the response variables that are skipped.
+
+    Parameters
+    ----------
+    models : dict[str, NormativeModel]
+        The loaded models, by name.
+    data : NormData
+        The data the models were fitted on.
+
+    Returns
+    -------
+    list[str]
+        The shared response variables, in the order of ``data``.
+
+    Raises
+    ------
+    ValueError
+        If no response variable is in ``data`` and in every model.
+    """
+    in_data = [str(respvar) for respvar in data.response_vars.values]
+    shared = [
+        respvar
+        for respvar in in_data
+        if all(respvar in model.response_vars for model in models.values())
+    ]
+    all_response_vars = set(in_data).union(
+        *(model.response_vars for model in models.values())
+    )
+    skipped = []
+    for respvar in sorted(all_response_vars - set(shared)):
+        missing_from = [] if respvar in in_data else ["the data"]
+        missing_from += [
+            f"model '{name}'"
+            for name, model in models.items()
+            if respvar not in model.response_vars
+        ]
+        skipped.append(f"'{respvar}' (missing from {', '.join(missing_from)})")
+    if skipped:
+        Output.warning(
+            Warnings.MODEL_COMPARISON_SKIPPED_RESPONSE_VARS,
+            response_vars="; ".join(skipped),
+        )
+    if not shared:
+        raise ValueError(
+            "No response variable is in the data and in every model, so there "
+            "is nothing to compare."
+        )
+    return shared
 
 
 def _check_same_response_scale(

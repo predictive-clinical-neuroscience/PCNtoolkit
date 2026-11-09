@@ -36,8 +36,12 @@ CHAINS = 2
 RESPVAR = "y"
 
 
-def make_data() -> NormData:
-    """Linear effect of age, a site offset and unit residual noise."""
+def make_data(extra_response_var: str | None = None) -> NormData:
+    """Linear effect of age, a site offset and unit residual noise.
+
+    If ``extra_response_var`` is given, the data also has a response
+    variable of that name, which the fitted models do not have.
+    """
     rng = np.random.default_rng(7)
     age = rng.uniform(20, 80, N_OBS)
     site = rng.choice(["A", "B"], N_OBS)
@@ -45,12 +49,16 @@ def make_data() -> NormData:
     df = pd.DataFrame(
         {"age": age, "site": site, "y": y, "sub": [f"s{i}" for i in range(N_OBS)]}
     )
+    response_vars = ["y"]
+    if extra_response_var is not None:
+        df[extra_response_var] = 2 * y
+        response_vars.append(extra_response_var)
     return NormData.from_dataframe(
         "toy",
         df,
         covariates=["age"],
         batch_effects=["site"],
-        response_vars=["y"],
+        response_vars=response_vars,
         subject_ids="sub",
     )
 
@@ -212,6 +220,39 @@ def test_models_on_different_scales_are_rejected(fitted, monkeypatch, change):
 
     monkeypatch.setattr(NormativeModel, "load", load_with_other_outscaler)
     with pytest.raises(ValueError, match="identically"):
+        compare_hbr_models(paths, data)
+
+
+def test_response_vars_missing_somewhere_are_skipped(fitted, monkeypatch):
+    """Only the response variables in the data and in every model are compared.
+
+    The data has an extra response variable "y_extra", and model "free" is
+    given an extra response variable "only_in_free" that the data and the
+    other model do not have.
+    """
+    _, paths, _ = fitted
+    data = make_data(extra_response_var="y_extra")
+    original_load = NormativeModel.load
+
+    def load_with_extra_response_var(path: str) -> NormativeModel:
+        model = original_load(path)
+        if path == paths["free"]:
+            model.response_vars = model.response_vars + ["only_in_free"]
+        return model
+
+    monkeypatch.setattr(NormativeModel, "load", load_with_extra_response_var)
+    with pytest.warns(UserWarning, match="Skipped") as record:
+        comparison = compare_hbr_models(paths, data)
+    assert list(comparison) == [RESPVAR]
+    message = next(str(w.message) for w in record if "Skipped" in str(w.message))
+    assert "'only_in_free' (missing from the data, model 'too_narrow')" in message
+    assert "'y_extra' (missing from model 'free', model 'too_narrow')" in message
+
+
+def test_no_shared_response_var_is_rejected(fitted):
+    _, paths, _ = fitted
+    data = make_data(extra_response_var="y_extra").sel({"response_vars": ["y_extra"]})
+    with pytest.raises(ValueError, match="nothing to compare"):
         compare_hbr_models(paths, data)
 
 
