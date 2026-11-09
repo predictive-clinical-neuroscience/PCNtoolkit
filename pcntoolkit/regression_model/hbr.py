@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import os
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional
@@ -448,6 +449,12 @@ class InferenceMethod(ABC):
     # Results of fitting; clone() does not copy these.
     _FITTED_ATTRS: tuple[str, ...] = ("data_tree", "is_fitted", "is_from_dict")
 
+    def __init__(self) -> None:
+        """Start unfitted: no posterior samples yet."""
+        self.data_tree: xr.DataTree = None  # type: ignore
+        self.is_fitted: bool = False
+        self.is_from_dict: bool = False
+
     @abstractmethod
     def fit(self, model: pm.Model):
         pass
@@ -473,9 +480,26 @@ class InferenceMethod(ABC):
         return type(self)(**settings)
 
     @classmethod
-    @abstractmethod
-    def from_dict(cls, my_dict: dict, path: Optional[str]) -> InferenceMethod:
-        pass
+    def from_dict(
+        cls, my_dict: Dict[str, Any], path: Optional[str] = None
+    ) -> InferenceMethod:
+        """
+        Load an inference method from a dictionary created by ``to_dict``.
+        """
+        init_args = inspect.signature(cls.__init__).parameters
+        settings = {k: v for k, v in my_dict.items() if k in init_args and k != "self"}
+        method = cls(**settings)
+        if my_dict.get("is_fitted", False):
+            if path is None:
+                raise ValueError(
+                    Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_DATA_TREE_PATH)
+                )
+            # Models saved before v1.4.0 store their samples in idata.nc.
+            saved_path = my_dict.get("data_tree_path", "data_tree.nc")
+            method.is_fitted = True
+            method.load_data_tree(os.path.join(path, os.path.basename(saved_path)))
+        method.is_from_dict = True
+        return method
 
     def to_dict(self, path):
         my_dict = {"type": self.__class__.__name__}
@@ -488,11 +512,25 @@ class InferenceMethod(ABC):
                 my_dict[key] = value
         return my_dict
 
-    @abstractmethod
     def use_posterior_as_new_prior(
         self, likelihood: Likelihood, **kwargs: Any
     ) -> Likelihood:
-        pass
+        """
+        Build the likelihood for transfer, using the posterior as the new prior.
+
+        Parameters
+        ----------
+        likelihood : Likelihood
+            Likelihood of the fitted model.
+        **kwargs : Any
+            Passed to ``Likelihood.transfer``, e.g. ``freedom``.
+
+        Returns
+        -------
+        Likelihood
+            New likelihood for the transfer.
+        """
+        return likelihood.transfer(self.data_tree, **kwargs)
 
     def apply(self, fn: Callable, model: pm.Model, params: dict[str, any], kwargs):
         """
@@ -589,7 +627,7 @@ class MCMC(InferenceMethod):
         nuts_sampler: str = "nutpie",
         progressbar: bool = True,
     ):
-        self.data_tree: xr.DataTree = None  # type: ignore
+        super().__init__()
         self.draws = draws
         self.tune = tune
         self.cores = cores
@@ -597,8 +635,6 @@ class MCMC(InferenceMethod):
         self.init = init
         self.nuts_sampler = nuts_sampler
         self.progressbar = progressbar
-        self.is_fitted = False
-        self.is_from_dict = False
 
     def fit(self, model: pm.Model):
         with model:
@@ -613,39 +649,13 @@ class MCMC(InferenceMethod):
             )
         self.is_fitted = True
 
-    @classmethod
-    def from_dict(cls, my_dict: Dict[str, Any], path: Optional[str] = None) -> MCMC:
-        mcmc = cls(**{k: my_dict[k] for k in MCMC_INIT_KEYS if k in my_dict})
-        if my_dict["is_fitted"]:
-            if path is not None:
-                # Models saved before v1.4.0 store their samples in idata.nc.
-                data_tree_path = os.path.join(
-                    path,
-                    os.path.basename(my_dict.get("data_tree_path", "data_tree.nc")),
-                )
-                mcmc.is_fitted = True
-                mcmc.load_data_tree(data_tree_path)
-            else:
-                raise AttributeError(
-                    Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_DATA_TREE_PATH)
-                )
-        mcmc.is_from_dict = True
-        return mcmc
-
-    def use_posterior_as_new_prior(
-        self, likelihood: Likelihood, **kwargs: Any
-    ) -> Likelihood:
-        return likelihood.transfer(self.data_tree, **kwargs)
-
 
 class Laplace(InferenceMethod):
     def __init__(self, draws=4000, progressbar=True, kwargs=None):
+        super().__init__()
         self.draws = draws
         self.progressbar = progressbar
         self.kwargs = kwargs or {}
-        self.data_tree = None
-        self.is_fitted = False
-        self.is_from_dict = False
 
     def fit(self, model: pm.Model):
         try:
@@ -661,27 +671,3 @@ class Laplace(InferenceMethod):
                 **self.kwargs,
             )
         self.is_fitted = True
-
-    @classmethod
-    def from_dict(cls, my_dict: dict, path: Optional[str]) -> InferenceMethod:
-        draws = my_dict["draws"]
-        progressbar = my_dict["progressbar"]
-        kwargs = my_dict["kwargs"] or {}
-        is_fitted = my_dict["is_fitted"]
-        laplace = cls(draws=draws, progressbar=progressbar, kwargs=kwargs)
-        if is_fitted:
-            if path is not None:
-                data_tree_path = os.path.join(path, "data_tree.nc")
-                laplace.is_fitted = True
-                laplace.load_data_tree(data_tree_path)
-            else:
-                raise AttributeError(
-                    Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_DATA_TREE_PATH)
-                )
-        laplace.is_from_dict = True
-        return laplace
-
-    def use_posterior_as_new_prior(
-        self, likelihood: Likelihood, **kwargs: Any
-    ) -> Likelihood:
-        return likelihood.transfer(self.data_tree, **kwargs)
