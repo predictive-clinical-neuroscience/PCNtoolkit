@@ -65,6 +65,13 @@ Imports
     pd.options.mode.chained_assignment = None
     pcntoolkit.util.output.Output.set_show_messages(False)
 
+
+.. code:: text
+
+    /tmp/ipykernel_3202/1734914761.py:18: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None
+
+
 Load and split the data
 -----------------------
 
@@ -152,10 +159,10 @@ Part 1: Train a model at each remote location
 Each remote location trains its own normative model independently,
 without sharing any data. Crucially, the two model types are different:
 
-- **Location 1** uses an ``HBR`` (PCNtoolkit defaults: Normal
-  likelihood, B-spline basis for μ and σ, random intercept for μ).
-- **Location 2** uses a ``BLR`` with a non-linear warp applied to the
-  response variable, allowing it to capture non-Gaussian distributions.
+-  **Location 1** uses an ``HBR`` (PCNtoolkit defaults: Normal
+   likelihood, B-spline basis for μ and σ, random intercept for μ).
+-  **Location 2** uses a ``BLR`` with a non-linear warp applied to the
+   response variable, allowing it to capture non-Gaussian distributions.
 
 Train the Location 1 model (HBR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

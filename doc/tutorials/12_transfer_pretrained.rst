@@ -18,23 +18,6 @@ pretrained models through a web browser.
 Imports
 -------
 
-Install requests manually as it is not install with
-``pip install pcntoolkit``
-
-.. code:: ipython3
-
-    !pip install requests
-
-
-.. code:: text
-
-    Requirement already satisfied: requests in C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages (2.32.5)
-    Requirement already satisfied: charset_normalizer<4,>=2 in C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages (from requests) (3.4.4)
-    Requirement already satisfied: idna<4,>=2.5 in C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages (from requests) (3.11)
-    Requirement already satisfied: urllib3<3,>=1.21.1 in C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages (from requests) (2.6.3)
-    Requirement already satisfied: certifi>=2017.4.17 in C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages (from requests) (2026.1.4)
-    
-
 .. code:: ipython3
 
     import os
@@ -44,6 +27,9 @@ Install requests manually as it is not install with
     from urllib.parse import unquote
     
     import pandas as pd
+    
+    # You should `pip install requests` manually,
+    # as it is not install with `pip install pcntoolkit`
     import requests
     import seaborn as sns
     
@@ -55,6 +41,13 @@ Install requests manually as it is not install with
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None
     pcntoolkit.util.output.Output.set_show_messages(False)
+
+
+.. code:: text
+
+    /tmp/ipykernel_3322/3108278632.py:17: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None
+
 
 1. See which pretrained models are available
 --------------------------------------------
@@ -101,35 +94,44 @@ first ask the server which ones are available.
     HBR_Sb_sa_DES_lifespan_37K_66sites.zip
     BLRw_ct_DES_lifespan_67K_89sites.zip
     HBR_Sb_sa_lifespan_DK_46K_59sites.zip
-    
+
 
 The file names tell you what each model contains:
 
-+-----------------------------------+-------------------------------------------------------------+
-| Part of the name                  | Meaning                                                     |
-+===================================+=============================================================+
-| ``BLRw``                          | Bayesian Linear Regression with a warp (`Fraza et al.,      |
-|                                   | 2021 <https://doi.org/10.1016/j.neuroimage.2021.118715>`__) |
-+-----------------------------------+-------------------------------------------------------------+
-| ``HBR_Sb``                        | Hierarchical Bayesian Regression with a SHASH likelihood    |
-|                                   | (`de Boer et al.,                                           |
-|                                   | 2024 <https://doi.org/10.1162/imag_a_00110>`__)             |
-+-----------------------------------+-------------------------------------------------------------+
-| ``ct`` / ``sa`` / ``sc``          | cortical thickness / surface area / subcortical volumes     |
-|                                   | (sMRI)                                                      |
-+-----------------------------------+-------------------------------------------------------------+
-| ``fa``                            | fractional anisotropy (dMRI)                                |
-+-----------------------------------+-------------------------------------------------------------+
-| ``fc``                            | functional connectivity (fMRI)                              |
-+-----------------------------------+-------------------------------------------------------------+
-| ``vox``                           | voxelwise normative models                                  |
-+-----------------------------------+-------------------------------------------------------------+
-| ``DK`` / ``DES``                  | Desikan-Killiany / Destrieux parcellation                   |
-+-----------------------------------+-------------------------------------------------------------+
-| ``67K``, ``79K``, …               | number of subjects the model was trained on                 |
-+-----------------------------------+-------------------------------------------------------------+
-| ``89sites``, ``100sites``, …      | number of sites the model was trained on                    |
-+-----------------------------------+-------------------------------------------------------------+
++-----------------------------------+-----------------------------------+
+| Part of the name                  | Meaning                           |
++===================================+===================================+
+| ``BLRw``                          | Bayesian Linear Regression with a |
+|                                   | warp (`Fraza et al.,              |
+|                                   | 2021 <https://doi.org/10.1        |
+|                                   | 016/j.neuroimage.2021.118715>`__) |
++-----------------------------------+-----------------------------------+
+| ``HBR_Sb``                        | Hierarchical Bayesian Regression  |
+|                                   | with a SHASH likelihood (`de Boer |
+|                                   | et al.,                           |
+|                                   | 2024 <https://direct.mit.edu/i    |
+|                                   | mag/article/doi/10.1162/imag_a_00 |
+|                                   | 132/120371/Non-Gaussian-normative |
+|                                   | -modelling-with-hierarchical>`__) |
++-----------------------------------+-----------------------------------+
+| ``ct`` / ``sa`` / ``sc``          | cortical thickness / surface area |
+|                                   | / subcortical volumes (sMRI)      |
++-----------------------------------+-----------------------------------+
+| ``fa``                            | fractional anisotropy (dMRI)      |
++-----------------------------------+-----------------------------------+
+| ``fc``                            | functional connectivity (fMRI)    |
++-----------------------------------+-----------------------------------+
+| ``vox``                           | voxelwise normative models        |
++-----------------------------------+-----------------------------------+
+| ``DK`` / ``DES``                  | Desikan-Killiany / Destrieux      |
+|                                   | parcellation                      |
++-----------------------------------+-----------------------------------+
+| ``67K``, ``79K``, …               | number of subjects the model was  |
+|                                   | trained on                        |
++-----------------------------------+-----------------------------------+
+| ``89sites``, ``100sites``, …      | number of sites the model was     |
+|                                   | trained on                        |
++-----------------------------------+-----------------------------------+
 
 All our pretrained models are estimated on healthy subject only.
 
@@ -185,8 +187,9 @@ parcellation, trained on 67.000 subjects from 89 sites.
 
 .. code:: text
 
-    Model available at c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\pretrained\BLRw_ct_DES_lifespan_67K_89sites
-    
+    Downloading BLRw_ct_DES_lifespan_67K_89sites ...
+    Model available at /home/runner/work/PCNtoolkit/PCNtoolkit/resources/pretrained/BLRw_ct_DES_lifespan_67K_89sites
+
 
 3. Load the model and see what it expects
 -----------------------------------------
@@ -217,11 +220,11 @@ models published earlier.
 
 .. code:: text
 
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\migration.py:185: UserWarning: This model was saved with PCNtoolkit v1.1.1, but you are running v1.4.0. Loading this model in v1.4.0...
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.2, but you are running v1.4.0. Loading this model in v1.4.0...
       warnings.warn(
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\migration.py:185: UserWarning: This model was saved with PCNtoolkit v1.1.2, but you are running v1.4.0. Loading this model in v1.4.0...
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.1, but you are running v1.4.0. Loading this model in v1.4.0...
       warnings.warn(
-    
+
 
 .. code:: text
 
@@ -230,7 +233,7 @@ models published earlier.
       site: 89 levels, e.g. ['ABCD_01', 'ABCD_02', 'ABCD_03']
       sex: 2 levels, e.g. ['F', 'M']
     Response vars : 150
-    
+
 
 4. Prepare our own data
 -----------------------
@@ -276,7 +279,7 @@ b. **The batch effects must use the same encoding.** The BLR lifespan
     Shared with the pretrained model : 150
     Of which successfully fitted     : 150
     Skipped (not fitted)             : []
-    
+
 
 For this tutorial we transfer only one response variable to keep the
 output readable and fast. You can skip the next cell to transfer all of
@@ -331,7 +334,7 @@ to several sites together.
     Munchen               15
     Leiden_2180           12
     Pittsburgh             3
-    
+
 
 .. code:: ipython3
 
@@ -350,7 +353,7 @@ to several sites together.
     sex
     F    122
     M     76
-    
+
 
 We wrap the dataframe in a ``NormData`` object and split it in two:
 
@@ -386,7 +389,7 @@ set can be any size, down to a single patient.
 
     Adaptation set: 99 subjects
     Test set      : 99 subjects
-    
+
 
 5. Transfer
 -----------
@@ -422,5 +425,5 @@ model.
 
 
 
-.. image:: 12_transfer_pretrained_files/12_transfer_pretrained_23_0.png
+.. image:: 12_transfer_pretrained_files/12_transfer_pretrained_21_0.png
 

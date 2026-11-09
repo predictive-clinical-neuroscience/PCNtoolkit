@@ -23,7 +23,7 @@ follow the steps below to set your local development environment:
     access to your fork so you can make changes and then submit Pull
     Requests to the original PCNtoolkit repository (that you don't have
     direct write access to). See [GitHub's guide to
-    forking](https://docs.github.com/en/get-started/quickstart/fork-a-repo).
+    forking](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo).
 
 2.  **Clone your fork** - Cloning is the process of downloading your
     GitHub copy of the project onto your computer, so you can make
@@ -136,6 +136,6 @@ how everything looks. To do that:
 ### Python code style
 
 All Python code must adhere to
-[PEP8](https://www.python.org/dev/peps/pep-0008/). We use
+[PEP8](https://peps.python.org/pep-0008/). We use
 [ruff](https://docs.astral.sh/ruff/) for linting and formatting which is
 installed in your development environment with `pip install -e ".[dev]"`.

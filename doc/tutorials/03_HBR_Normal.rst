@@ -49,6 +49,13 @@ Imports
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
 
+
+.. code:: text
+
+    /tmp/ipykernel_2666/2411158358.py:31: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None  # default='warn'
+
+
 Load data
 ---------
 
@@ -173,22 +180,22 @@ B-spline
 
 A ``BsplineBasisFunction`` has three parameters:
 
-- ``basis_column``: which column of the covariate matrix ``X`` to
-  expand, counted from 0. In this tutorial ``X`` holds a single
-  covariate, age, so ``basis_column=0`` picks age; the remaining columns
-  of ``X`` are copied through unchanged. Point it at the covariate whose
-  effect you expect to curve.
-- ``nknots``: how many knots to place. A knot is an x-value where two
-  polynomial pieces of the spline are stitched together; by default they
-  are spread evenly over the observed range of the covariate. More knots
-  give the curve more freedom to wiggle and follow the data, fewer knots
-  give a smoother curve that is cheaper to estimate. Increase ``nknots``
-  only when the effect really bends and your sample size can support the
-  extra parameters.
-- ``degree``: the polynomial order used between the knots. ``degree=1``
-  stitches straight segments, so the fitted curve has visible corners.
-  ``degree=3`` (the usual default) stitches cubic pieces, so both the
-  curve and its slope change smoothly.
+-  ``basis_column``: which column of the covariate matrix ``X`` to
+   expand, counted from 0. In this tutorial ``X`` holds a single
+   covariate, age, so ``basis_column=0`` picks age; the remaining
+   columns of ``X`` are copied through unchanged. Point it at the
+   covariate whose effect you expect to curve.
+-  ``nknots``: how many knots to place. A knot is an x-value where two
+   polynomial pieces of the spline are stitched together; by default
+   they are spread evenly over the observed range of the covariate. More
+   knots give the curve more freedom to wiggle and follow the data,
+   fewer knots give a smoother curve that is cheaper to estimate.
+   Increase ``nknots`` only when the effect really bends and your sample
+   size can support the extra parameters.
+-  ``degree``: the polynomial order used between the knots. ``degree=1``
+   stitches straight segments, so the fitted curve has visible corners.
+   ``degree=3`` (the usual default) stitches cubic pieces, so both the
+   curve and its slope change smoothly.
 
 The expanded covariate takes up ``nknots + degree - 1`` columns, so
 ``BsplineBasisFunction(degree=3, nknots=5)`` turns age into 7 columns.
@@ -504,19 +511,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.359243</td>
-          <td>5.844206</td>
-          <td>0.086936</td>
-          <td>0.308771</td>
-          <td>0.872169</td>
-          <td>-0.54677</td>
-          <td>0.359242</td>
-          <td>653.752969</td>
-          <td>0.50329</td>
-          <td>1.526992e-56</td>
-          <td>0.640758</td>
-          <td>0.880239</td>
-          <td>1.794573</td>
+          <td>0.35915</td>
+          <td>5.846954</td>
+          <td>0.086087</td>
+          <td>0.308695</td>
+          <td>0.872037</td>
+          <td>-0.546902</td>
+          <td>0.359149</td>
+          <td>653.800502</td>
+          <td>0.503593</td>
+          <td>1.280525e-56</td>
+          <td>0.640851</td>
+          <td>0.880134</td>
+          <td>1.795284</td>
         </tr>
       </tbody>
     </table>
@@ -578,19 +585,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.373257</td>
-          <td>1.208262</td>
-          <td>0.16151</td>
-          <td>0.341457</td>
-          <td>0.789316</td>
-          <td>-0.329953</td>
-          <td>0.370419</td>
-          <td>480.228052</td>
-          <td>0.496079</td>
-          <td>8.084528e-15</td>
-          <td>0.629581</td>
-          <td>0.964724</td>
-          <td>0.788497</td>
+          <td>0.373462</td>
+          <td>1.208069</td>
+          <td>0.162304</td>
+          <td>0.341537</td>
+          <td>0.789367</td>
+          <td>-0.329902</td>
+          <td>0.370628</td>
+          <td>480.14855</td>
+          <td>0.494679</td>
+          <td>9.868469e-15</td>
+          <td>0.629372</td>
+          <td>0.964754</td>
+          <td>0.788291</td>
         </tr>
       </tbody>
     </table>
@@ -603,12 +610,12 @@ What’s next?
 Now we have a normative hierarchical Bayesian regression model, we can
 use it to:
 
-- Make predictions on new data
-- Harmonize data, this means that we ‘remove’ the batch effects from the
-  data, by simulating what the data would have looked like if all data
-  was from the same batch.
-- Synthesize new data
-- Extend the model using data from new batches
+-  Make predictions on new data
+-  Harmonize data, this means that we ‘remove’ the batch effects from
+   the data, by simulating what the data would have looked like if all
+   data was from the same batch.
+-  Synthesize new data
+-  Extend the model using data from new batches
 
 Predicting
 ~~~~~~~~~~

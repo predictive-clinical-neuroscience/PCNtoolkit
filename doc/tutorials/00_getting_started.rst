@@ -36,6 +36,13 @@ Imports
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
 
+
+.. code:: text
+
+    /tmp/ipykernel_2550/824129747.py:19: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None  # default='warn'
+
+
 Load data
 ---------
 
@@ -692,7 +699,7 @@ All results can be found in the save directory.
         Y                  (observations, response_vars) float64 5kB 2.721e+03 .....
         X                  (observations, covariates) float64 2kB 63.0 ... 23.0
         batch_effects      (observations, batch_effect_dims) &lt;U17 29kB &#x27;F&#x27; ... &#x27;Q...
-        Z                  (observations, response_vars) float64 5kB 0.8681 ... -...
+        Z                  (observations, response_vars) float64 5kB 0.8678 ... -...
         centiles           (centile, observations, response_vars) float64 26kB 75...
         baseline_logp      (observations, response_vars) float64 5kB -3.66 ... -2...
         logp               (observations, response_vars) float64 5kB -1.254 ... -...
@@ -705,9 +712,9 @@ All results can be found in the save directory.
         unique_batch_effects:           {np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;sit...
         batch_effect_counts:            defaultdict(&lt;function NormData.register_b...
         covariate_ranges:               {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}
-        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-455c7c6f-5719-4bc0-90cc-d79955ae6bc5' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-455c7c6f-5719-4bc0-90cc-d79955ae6bc5' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 3</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>centile</span>: 5</li><li><span class='xr-has-index'>statistic</span>: 13</li></ul></div></li><li class='xr-section-item'><input id='section-0de4fae6-caa7-475c-99db-c5bc77e08779' class='xr-section-summary-in' type='checkbox' checked /><label for='section-0de4fae6-caa7-475c-99db-c5bc77e08779' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-673f1c1e-4438-4584-b72a-105acd9fe3e9' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-673f1c1e-4438-4584-b72a-105acd9fe3e9' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-536c29ec-700a-4124-bcb7-066f07da61e7' class='xr-var-data-in' type='checkbox'><label for='data-536c29ec-700a-4124-bcb7-066f07da61e7' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U22</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; ... &#x27;Brain-...</div><input id='attrs-84c7c0cb-7b62-470b-890a-2afb01ee2eb4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-84c7c0cb-7b62-470b-890a-2afb01ee2eb4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ecbe7751-7b47-4988-85bb-c51cb5081947' class='xr-var-data-in' type='checkbox'><label for='data-ecbe7751-7b47-4988-85bb-c51cb5081947' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Left-Lateral-Ventricle&#x27;, &#x27;Brain-Stem&#x27;],
-          dtype=&#x27;&lt;U22&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-b5138713-90aa-41c7-a6a1-d7653a7f0e21' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b5138713-90aa-41c7-a6a1-d7653a7f0e21' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-06f8c3e1-1815-4105-a572-3adf92a8123e' class='xr-var-data-in' type='checkbox'><label for='data-06f8c3e1-1815-4105-a572-3adf92a8123e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-e12aa07f-78ea-4b06-ad68-1c03b5689eb6' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-e12aa07f-78ea-4b06-ad68-1c03b5689eb6' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3737681e-1909-474d-b758-968191fc33e3' class='xr-var-data-in' type='checkbox'><label for='data-3737681e-1909-474d-b758-968191fc33e3' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-818676d6-7bd8-430b-ac30-7b6b19df3bb8' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-818676d6-7bd8-430b-ac30-7b6b19df3bb8' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-9b07a30a-f046-42ef-bc4f-e6fce442af52' class='xr-var-data-in' type='checkbox'><label for='data-9b07a30a-f046-42ef-bc4f-e6fce442af52' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;Kurtosis&#x27; ... &#x27;Skewness&#x27;</div><input id='attrs-88ccea03-7435-47fe-b696-a6e1730bc7a1' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-88ccea03-7435-47fe-b696-a6e1730bc7a1' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-93db88b1-a678-45af-a571-54c3c4303715' class='xr-var-data-in' type='checkbox'><label for='data-93db88b1-a678-45af-a571-54c3c4303715' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;Kurtosis&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MLL&#x27;, &#x27;MSLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;,
-           &#x27;Rho_p&#x27;, &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;, &#x27;Skewness&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-49cb1d0c-8b1d-4aa7-bf09-6c7fe7befb9c' class='xr-section-summary-in' type='checkbox' checked /><label for='section-49cb1d0c-8b1d-4aa7-bf09-6c7fe7befb9c' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;Munchen_sub96752&#x27; ... &#x27;Queensla...</div><input id='attrs-d649b2f5-6b17-47fc-b9f7-29ffcb79aec5' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-d649b2f5-6b17-47fc-b9f7-29ffcb79aec5' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-4a43f325-6e38-4e07-a2f8-b9d6a30f057a' class='xr-var-data-in' type='checkbox'><label for='data-4a43f325-6e38-4e07-a2f8-b9d6a30f057a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;Munchen_sub96752&#x27;, &#x27;NewYork_a_sub18638&#x27;, &#x27;Leiden_2200_sub87320&#x27;,
+        batch_effect_covariate_ranges:  {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {...</pre><div class='xr-wrap' style='display:none'><div class='xr-header'><div class='xr-obj-type'>xarray.NormData</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-bbb19f47-576a-46f2-94e1-5cf79391960b' class='xr-section-summary-in' type='checkbox' disabled /><label for='section-bbb19f47-576a-46f2-94e1-5cf79391960b' class='xr-section-summary'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>observations</span>: 216</li><li><span class='xr-has-index'>response_vars</span>: 3</li><li><span class='xr-has-index'>covariates</span>: 1</li><li><span class='xr-has-index'>batch_effect_dims</span>: 2</li><li><span class='xr-has-index'>centile</span>: 5</li><li><span class='xr-has-index'>statistic</span>: 13</li></ul></div></li><li class='xr-section-item'><input id='section-7cc5ede8-2f1b-42e4-801a-48d7e2164323' class='xr-section-summary-in' type='checkbox' checked /><label for='section-7cc5ede8-2f1b-42e4-801a-48d7e2164323' class='xr-section-summary' title='Expand/collapse section'>Coordinates: <span>(6)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>observations</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>756 769 692 616 ... 751 470 1043</div><input id='attrs-75d7d752-8e06-46df-8db4-cb17dddcca1f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-75d7d752-8e06-46df-8db4-cb17dddcca1f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ea107ead-2caf-4e81-9b9d-bcc24c2e9db7' class='xr-var-data-in' type='checkbox'><label for='data-ea107ead-2caf-4e81-9b9d-bcc24c2e9db7' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([ 756,  769,  692, ...,  751,  470, 1043], shape=(216,))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>response_vars</span></div><div class='xr-var-dims'>(response_vars)</div><div class='xr-var-dtype'>&lt;U22</div><div class='xr-var-preview xr-preview'>&#x27;WM-hypointensities&#x27; ... &#x27;Brain-...</div><input id='attrs-b901ca11-c4a1-4d7f-8b63-81f7b58df4e6' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-b901ca11-c4a1-4d7f-8b63-81f7b58df4e6' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-05329095-d6e1-41a7-825c-18f17aeddcc8' class='xr-var-data-in' type='checkbox'><label for='data-05329095-d6e1-41a7-825c-18f17aeddcc8' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;WM-hypointensities&#x27;, &#x27;Left-Lateral-Ventricle&#x27;, &#x27;Brain-Stem&#x27;],
+          dtype=&#x27;&lt;U22&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>covariates</span></div><div class='xr-var-dims'>(covariates)</div><div class='xr-var-dtype'>&lt;U3</div><div class='xr-var-preview xr-preview'>&#x27;age&#x27;</div><input id='attrs-2e116c8a-24f0-481a-85c2-4f32628224cc' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-2e116c8a-24f0-481a-85c2-4f32628224cc' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2640deeb-687a-4a9f-87c9-11c17d8f0092' class='xr-var-data-in' type='checkbox'><label for='data-2640deeb-687a-4a9f-87c9-11c17d8f0092' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;age&#x27;], dtype=&#x27;&lt;U3&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>batch_effect_dims</span></div><div class='xr-var-dims'>(batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U4</div><div class='xr-var-preview xr-preview'>&#x27;sex&#x27; &#x27;site&#x27;</div><input id='attrs-9cfc1d3d-9492-4c1f-a8c6-1bce9cccfd72' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9cfc1d3d-9492-4c1f-a8c6-1bce9cccfd72' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-63fbd4c1-5ac1-4466-ae98-c3cdbf13f4a5' class='xr-var-data-in' type='checkbox'><label for='data-63fbd4c1-5ac1-4466-ae98-c3cdbf13f4a5' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;sex&#x27;, &#x27;site&#x27;], dtype=&#x27;&lt;U4&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>centile</span></div><div class='xr-var-dims'>(centile)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.05 0.25 0.5 0.75 0.95</div><input id='attrs-97b080a2-7c69-465d-8132-e6a783bf690c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-97b080a2-7c69-465d-8132-e6a783bf690c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-457c7793-0d24-4ef3-9c79-c598a25bd24a' class='xr-var-data-in' type='checkbox'><label for='data-457c7793-0d24-4ef3-9c79-c598a25bd24a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0.05, 0.25, 0.5 , 0.75, 0.95])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>statistic</span></div><div class='xr-var-dims'>(statistic)</div><div class='xr-var-dtype'>&lt;U8</div><div class='xr-var-preview xr-preview'>&#x27;EXPV&#x27; &#x27;Kurtosis&#x27; ... &#x27;Skewness&#x27;</div><input id='attrs-f17653d2-ea98-471f-be2a-5ec7036d44a0' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-f17653d2-ea98-471f-be2a-5ec7036d44a0' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-094b1cb2-1ec0-4c4f-9ed1-40aa1d95189f' class='xr-var-data-in' type='checkbox'><label for='data-094b1cb2-1ec0-4c4f-9ed1-40aa1d95189f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;EXPV&#x27;, &#x27;Kurtosis&#x27;, &#x27;MACE&#x27;, &#x27;MAPE&#x27;, &#x27;MLL&#x27;, &#x27;MSLL&#x27;, &#x27;R2&#x27;, &#x27;RMSE&#x27;, &#x27;Rho&#x27;,
+           &#x27;Rho_p&#x27;, &#x27;SMSE&#x27;, &#x27;ShapiroW&#x27;, &#x27;Skewness&#x27;], dtype=&#x27;&lt;U8&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-ea763de7-7aa6-4d2a-9b81-2c04deb510a5' class='xr-section-summary-in' type='checkbox' checked /><label for='section-ea763de7-7aa6-4d2a-9b81-2c04deb510a5' class='xr-section-summary' title='Expand/collapse section'>Data variables: <span>(10)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>subject_ids</span></div><div class='xr-var-dims'>(observations)</div><div class='xr-var-dtype'>object</div><div class='xr-var-preview xr-preview'>&#x27;Munchen_sub96752&#x27; ... &#x27;Queensla...</div><input id='attrs-8c118080-c64d-4c67-8e5e-b085f112747d' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-8c118080-c64d-4c67-8e5e-b085f112747d' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-336e76d4-1306-4275-b9a4-64b13d554d32' class='xr-var-data-in' type='checkbox'><label for='data-336e76d4-1306-4275-b9a4-64b13d554d32' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;Munchen_sub96752&#x27;, &#x27;NewYork_a_sub18638&#x27;, &#x27;Leiden_2200_sub87320&#x27;,
            &#x27;ICBM_sub47658&#x27;, &#x27;AnnArbor_b_sub45569&#x27;, &#x27;Beijing_Zang_sub18960&#x27;,
            &#x27;Leiden_2200_sub18456&#x27;, &#x27;Berlin_Margulies_sub27711&#x27;,
            &#x27;Beijing_Zang_sub87776&#x27;, &#x27;Milwaukee_b_sub63196&#x27;,
@@ -747,7 +754,7 @@ All results can be found in the save directory.
            &#x27;AnnArbor_b_sub30250&#x27;, &#x27;Berlin_Margulies_sub86111&#x27;,
            &#x27;Beijing_Zang_sub89592&#x27;, &#x27;Beijing_Zang_sub68012&#x27;,
            &#x27;NewYork_a_sub50559&#x27;, &#x27;Munchen_sub66933&#x27;,
-           &#x27;Cambridge_Buckner_sub59729&#x27;, &#x27;Queensland_sub86245&#x27;], dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.721e+03 1.362e+04 ... 1.681e+04</div><input id='attrs-d159c04f-0826-41aa-bf26-94664c51034a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-d159c04f-0826-41aa-bf26-94664c51034a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-831745fd-8aee-4c97-a77b-f81fc75c5f80' class='xr-var-data-in' type='checkbox'><label for='data-831745fd-8aee-4c97-a77b-f81fc75c5f80' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 2721.4, 13617.8, 22653.2],
+           &#x27;Cambridge_Buckner_sub59729&#x27;, &#x27;Queensland_sub86245&#x27;], dtype=object)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Y</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.721e+03 1.362e+04 ... 1.681e+04</div><input id='attrs-1faab064-3dc6-4d9b-a21b-b3033438e69b' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-1faab064-3dc6-4d9b-a21b-b3033438e69b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e111fba9-5659-4f5f-ad50-dd26cffa6981' class='xr-var-data-in' type='checkbox'><label for='data-e111fba9-5659-4f5f-ad50-dd26cffa6981' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 2721.4, 13617.8, 22653.2],
            [ 1143.1, 10922.3, 20821.3],
            [  955.8,  8374.3, 19278.9],
            [ 1473.9, 16068.7, 25724. ],
@@ -787,7 +794,7 @@ All results can be found in the save directory.
            [  604.7,  8933.9, 18852.1],
            [ 2343.2, 19039.7, 18791.2],
            [ 2721.7,  4899.1, 23784.8],
-           [  703.5, 10060.7, 16805.6]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 23.27 22.0 ... 72.0 23.0 23.0</div><input id='attrs-6fd82c9c-d23b-432f-96ff-ed8fc17e2e56' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-6fd82c9c-d23b-432f-96ff-ed8fc17e2e56' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-8fc07fe1-bf32-4d02-9703-8f8016379cb4' class='xr-var-data-in' type='checkbox'><label for='data-8fc07fe1-bf32-4d02-9703-8f8016379cb4' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[63.  ],
+           [  703.5, 10060.7, 16805.6]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>X</span></div><div class='xr-var-dims'>(observations, covariates)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>63.0 23.27 22.0 ... 72.0 23.0 23.0</div><input id='attrs-3b692e4d-093b-473f-a4ec-f703d5d73e64' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-3b692e4d-093b-473f-a4ec-f703d5d73e64' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b908f7fc-8d87-493c-8856-9db46e1f2a63' class='xr-var-data-in' type='checkbox'><label for='data-b908f7fc-8d87-493c-8856-9db46e1f2a63' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[63.  ],
            [23.27],
            [22.  ],
            [42.  ],
@@ -827,7 +834,7 @@ All results can be found in the save directory.
            [22.79],
            [72.  ],
            [23.  ],
-           [23.  ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-810aa9c6-fd7e-4eed-a313-46e45e6acc85' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-810aa9c6-fd7e-4eed-a313-46e45e6acc85' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c1b340e1-3216-41d9-9770-b2605338b922' class='xr-var-data-in' type='checkbox'><label for='data-c1b340e1-3216-41d9-9770-b2605338b922' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
+           [23.  ]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>batch_effects</span></div><div class='xr-var-dims'>(observations, batch_effect_dims)</div><div class='xr-var-dtype'>&lt;U17</div><div class='xr-var-preview xr-preview'>&#x27;F&#x27; &#x27;Munchen&#x27; ... &#x27;M&#x27; &#x27;Queensland&#x27;</div><input id='attrs-1152d679-9106-4cdd-be38-de213efe822a' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-1152d679-9106-4cdd-be38-de213efe822a' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-b8fd849e-10aa-46a4-89f3-d5467f514eac' class='xr-var-data-in' type='checkbox'><label for='data-b8fd849e-10aa-46a4-89f3-d5467f514eac' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[&#x27;F&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;F&#x27;, &#x27;Leiden_2200&#x27;],
            [&#x27;M&#x27;, &#x27;ICBM&#x27;],
@@ -867,86 +874,86 @@ All results can be found in the save directory.
            [&#x27;M&#x27;, &#x27;NewYork_a&#x27;],
            [&#x27;M&#x27;, &#x27;Munchen&#x27;],
            [&#x27;M&#x27;, &#x27;Cambridge_Buckner&#x27;],
-           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8681 0.3703 ... 0.7406 -1.556</div><input id='attrs-ff9377db-713e-4a0d-a21f-18c3aacfa037' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-ff9377db-713e-4a0d-a21f-18c3aacfa037' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e5402d03-8838-45e9-ac3a-93577514955b' class='xr-var-data-in' type='checkbox'><label for='data-e5402d03-8838-45e9-ac3a-93577514955b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 8.68050427e-01,  3.70323407e-01,  8.36221702e-01],
-           [-3.51254255e-02,  9.48730585e-01,  8.49790658e-02],
-           [-2.39376648e-01,  3.48187823e-01, -5.45562934e-01],
-           [-1.37096721e-01,  1.65029723e+00,  2.09032291e+00],
-           [-1.63782699e+00, -2.01209266e+00, -1.64067079e+00],
-           [-3.75946561e-01, -2.89767858e-01,  1.31513122e+00],
-           [ 1.10818471e-01,  3.27173916e+00,  1.38201038e+00],
-           [-8.13867842e-01, -4.83584174e-01,  2.32310274e-01],
-           [-5.61464250e-01,  2.26314627e-02, -2.13233893e+00],
-           [-1.64935106e+00, -9.06449218e-01, -7.15750526e-02],
-           [ 6.67432756e-01, -6.93307940e-01,  5.02061271e-01],
-           [-7.19607720e-01, -2.67416184e-01, -6.19211599e-01],
-           [ 4.27297820e-01, -2.06486071e-01,  5.90778967e-01],
-           [ 8.68309390e-01, -7.12950392e-01,  9.65409569e-01],
-           [ 5.20544881e-01, -1.23956846e+00,  2.47214033e+00],
-           [-8.46822585e-01, -2.61506448e-01,  1.93233044e-01],
-           [ 8.62121759e-02, -8.10291138e-02,  1.33235151e+00],
-           [-2.95889244e-01,  2.60439063e-01,  1.36252812e-01],
-           [-5.25754725e-01, -4.13996977e-01, -1.08081102e-01],
-           [ 8.70362937e-01, -5.10253867e-01, -8.05927475e-01],
+           [&#x27;M&#x27;, &#x27;Queensland&#x27;]], dtype=&#x27;&lt;U17&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Z</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.8678 0.37 ... 0.7407 -1.556</div><input id='attrs-6b4ea785-4389-471e-bc63-bd30de6df13b' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-6b4ea785-4389-471e-bc63-bd30de6df13b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f6416a1b-9af7-4a0d-bb91-2df98fc1925d' class='xr-var-data-in' type='checkbox'><label for='data-f6416a1b-9af7-4a0d-bb91-2df98fc1925d' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 8.67755001e-01,  3.70003521e-01,  8.36222126e-01],
+           [-3.50826925e-02,  9.48776777e-01,  8.49788110e-02],
+           [-2.39323066e-01,  3.48245854e-01, -5.45563103e-01],
+           [-1.37213278e-01,  1.65017010e+00,  2.09032274e+00],
+           [-1.63811912e+00, -2.01240952e+00, -1.64066681e+00],
+           [-3.75901462e-01, -2.89718933e-01,  1.31513068e+00],
+           [ 1.10880484e-01,  3.27180579e+00,  1.38200970e+00],
+           [-8.13848200e-01, -4.83562930e-01,  2.32310120e-01],
+           [-5.61402085e-01,  2.26987940e-02, -2.13233875e+00],
+           [-1.64952611e+00, -9.06639752e-01, -7.15740336e-02],
+           [ 6.67503140e-01, -6.93231210e-01,  5.02060749e-01],
+           [-7.19562551e-01, -2.67367264e-01, -6.19211711e-01],
+           [ 4.27368261e-01, -2.06409455e-01,  5.90778422e-01],
+           [ 8.68328728e-01, -7.12929109e-01,  9.65409271e-01],
+           [ 5.20487675e-01, -1.23963017e+00,  2.47214006e+00],
+           [-8.46760355e-01, -2.61439054e-01,  1.93232653e-01],
+           [ 8.62656888e-02, -8.09709943e-02,  1.33235091e+00],
+           [-2.95810119e-01,  2.60524798e-01,  1.36252336e-01],
+           [-5.25803202e-01, -4.14049628e-01, -1.08080809e-01],
+           [ 8.70450248e-01, -5.10158703e-01, -8.05927716e-01],
     ...
-           [-4.29031342e-01, -1.67405563e-01, -1.62717680e-01],
-           [ 1.46160702e+00, -4.85582192e-01,  2.85314152e+00],
-           [-4.92598169e-01, -3.45518463e-01,  1.40620116e+00],
-           [ 2.97264178e-01,  3.36612747e-02, -2.79533212e+00],
-           [-4.99360583e-01,  6.44329927e-01,  3.40435211e-01],
-           [ 1.92167686e+00,  1.50198108e+00,  1.28042289e+00],
-           [-3.36207943e-01,  9.47859070e-02,  2.16882593e-01],
-           [-5.76806544e-01,  9.05018310e-01,  1.95951278e+00],
-           [ 1.04592009e+00,  2.62583905e-01,  8.20470104e-01],
-           [-4.29076719e-01,  1.16027440e+00, -5.86211131e-02],
-           [ 3.01018861e-01,  7.52224942e-01,  7.40712283e-01],
-           [-5.57664700e-01, -1.33549860e-01,  3.41531974e-01],
-           [ 7.31937396e-02, -1.44381259e-01, -2.15422068e+00],
-           [-9.58028076e-01,  6.66512514e-02, -2.01635803e+00],
-           [-1.97850105e-01,  9.31762157e-01, -2.95862050e-01],
-           [-9.76345269e-01, -5.91774995e-01,  4.13363274e-01],
-           [-7.11274199e-01,  4.63944956e-01, -7.19899399e-01],
-           [ 1.33408839e-01,  1.44213468e+00, -7.33482498e-01],
-           [ 1.99445724e+00, -5.57133095e-01,  1.29612660e+00],
-           [-5.90622708e-01,  7.40621663e-01, -1.55628215e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>752.3 5.573e+03 ... 2.464e+04</div><input id='attrs-a185d37b-a959-46e1-a240-04ae43947afa' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-a185d37b-a959-46e1-a240-04ae43947afa' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-30861a36-4afe-4bca-8d71-2504e365c258' class='xr-var-data-in' type='checkbox'><label for='data-30861a36-4afe-4bca-8d71-2504e365c258' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[  752.29394222,  5573.13286211, 16560.12771737],
-            [ -113.62127992,   606.84799863, 16588.82717329],
-            [ -141.51115319,   447.02576072, 16589.08591226],
+           [-4.28969207e-01, -1.67338190e-01, -1.62717983e-01],
+           [ 1.46167721e+00, -4.85505511e-01,  2.85314038e+00],
+           [-4.92544533e-01, -3.45460289e-01,  1.40620054e+00],
+           [ 2.97292128e-01,  3.36916653e-02, -2.79533171e+00],
+           [-4.99332485e-01,  6.44360208e-01,  3.40434987e-01],
+           [ 1.92129477e+00,  1.50156767e+00,  1.28042210e+00],
+           [-3.36154340e-01,  9.48439904e-02,  2.16882246e-01],
+           [-5.76803969e-01,  9.05020843e-01,  1.95951239e+00],
+           [ 1.04591336e+00,  2.62576755e-01,  8.20469983e-01],
+           [-4.28997560e-01,  1.16035991e+00, -5.86215338e-02],
+           [ 3.01089333e-01,  7.52301335e-01,  7.40711698e-01],
+           [-5.57611050e-01, -1.33491730e-01,  3.41531598e-01],
+           [ 7.32727691e-02, -1.44295424e-01, -2.15422052e+00],
+           [-9.57991377e-01,  6.66908719e-02, -2.01635781e+00],
+           [-1.97788023e-01,  9.31829291e-01, -2.95862320e-01],
+           [-9.76308566e-01, -5.91735252e-01,  4.13362985e-01],
+           [-7.11227244e-01,  4.63995672e-01, -7.19899498e-01],
+           [ 1.33038799e-01,  1.44173057e+00, -7.33478868e-01],
+           [ 1.99450186e+00, -5.57084119e-01,  1.29612607e+00],
+           [-5.90577566e-01,  7.40670387e-01, -1.55628206e+00]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>centiles</span></div><div class='xr-var-dims'>(centile, observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>752.5 5.574e+03 ... 2.464e+04</div><input id='attrs-8981d66a-9d6b-4003-a0b1-b08fbd73ee62' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-8981d66a-9d6b-4003-a0b1-b08fbd73ee62' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-84947dcf-9b9f-4b8c-94fe-857b895e84df' class='xr-var-data-in' type='checkbox'><label for='data-84947dcf-9b9f-4b8c-94fe-857b895e84df' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[  752.52284768,  5574.39965398, 16560.11790777],
+            [ -113.65489195,   606.66229533, 16588.82687454],
+            [ -141.55322041,   446.79331465, 16589.08569941],
             ...,
-            [  946.6875119 ,  6689.16629877, 16548.1078189 ],
-            [ -119.54953172,   572.87560298, 16588.88560005],
-            [ -119.54953172,   572.87560298, 16588.88560005]],
+            [  946.97535507,  6690.75951723, 16548.0940368 ],
+            [ -119.58494098,   572.67996387, 16588.88532069],
+            [ -119.58494098,   572.67996387, 16588.88532069]],
     
-           [[ 1512.66892952,  9446.86418123, 18943.16589981],
-            [  643.94570069,  4466.2723232 , 18963.06761723],
-            [  616.09008872,  4306.62464909, 18963.43369989],
+           [[ 1512.89883498,  9448.13588841, 18943.15951952],
+            [  643.9122395 ,  4466.08736135, 18963.06783578],
+            [  616.04818273,  4306.39299549, 18963.43403993],
             ...,
-            [ 1708.73771431, 10571.43295571, 18936.39460621],
-            [  638.02408897,  4432.33375922, 18963.14684793],
-            [  638.02408897,  4432.33375922, 18963.14684793]],
+            [ 1709.02706259, 10573.03357224, 18936.38598559],
+            [  637.98883256,  4432.13887144, 18963.14709277],
+            [  637.98883256,  4432.13887144, 18963.14709277]],
     
-           [[ 2041.19760574, 12139.45418004, 20599.59073887],
-            [ 1170.52256093,  7148.9176802 , 20613.37724056],
-            [ 1142.69076363,  6989.39134356, 20613.81793668],
+           [[ 2041.42820629, 12140.7293038 , 20599.58674226],
+            [ 1170.48920459,  7148.73323373, 20613.37781867],
+            [ 1142.6489697 ,  6989.1602408 , 20613.81866103],
             ...,
-            [ 2238.43081498, 13269.9557783 , 20596.46769545],
-            [ 1164.60556465,  7115.00263226, 20613.47093186],
-            [ 1164.60556465,  7115.00263226, 20613.47093186]],
+            [ 2238.72120944, 13271.56153715, 20596.46266253],
+            [ 1164.5704145 ,  7114.80826673, 20613.47154106],
+            [ 1164.5704145 ,  7114.80826673, 20613.47154106]],
     
-           [[ 2569.72628196, 14832.04417886, 22256.01557793],
-            [ 1697.09942117,  9831.5630372 , 22263.68686388],
-            [ 1669.29143854,  9672.15803803, 22264.20217348],
+           [[ 2569.9575776 , 14833.3227192 , 22256.013965  ],
+            [ 1697.06616968,  9831.3791061 , 22263.68780156],
+            [ 1669.24975668,  9671.92748611, 22264.20328213],
             ...,
-            [ 2768.12391565, 15968.47860088, 22256.54078469],
-            [ 1691.18704034,  9797.67150529, 22263.79501579],
-            [ 1691.18704034,  9797.67150529, 22263.79501579]],
+            [ 2768.4153563 , 15970.08950205, 22256.53933946],
+            [ 1691.15199643,  9797.47766201, 22263.79598935],
+            [ 1691.15199643,  9797.47766201, 22263.79598935]],
     
-           [[ 3330.10126925, 18705.77549797, 24639.05376037],
-            [ 2454.66640178, 13690.98736177, 24637.92730782],
-            [ 2426.89268045, 13531.7569264 , 24638.54996111],
+           [[ 3330.3335649 , 18707.05895363, 24639.05557675],
+            [ 2454.63330114, 13690.80417212, 24637.92876279],
+            [ 2426.85115981, 13531.52716695, 24638.55162265],
             ...,
-            [ 3530.17411806, 19850.74525782, 24644.827572  ],
-            [ 2448.76066103, 13657.12966153, 24638.05626368],
-            [ 2448.76066103, 13657.12966153, 24638.05626368]]],
-          shape=(5, 216, 3))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-3.66 -1.738 ... -1.094 -2.024</div><input id='attrs-bdf6c13e-d058-43c1-b4ed-a3b814ed5704' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-bdf6c13e-d058-43c1-b4ed-a3b814ed5704' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c8a642f3-8aef-4892-8695-4df0ac4d994f' class='xr-var-data-in' type='checkbox'><label for='data-c8a642f3-8aef-4892-8695-4df0ac4d994f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -3.66025491,  -1.73846195,  -1.29939438],
+            [ 3530.46706382, 19852.36355706, 24644.83128826],
+            [ 2448.72576998, 13656.93656959, 24638.05776143],
+            [ 2448.72576998, 13656.93656959, 24638.05776143]]],
+          shape=(5, 216, 3))</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>baseline_logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-3.66 -1.738 ... -1.094 -2.024</div><input id='attrs-c8bbb8d5-21c2-470e-a4d6-0d4fbe60e6f2' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c8bbb8d5-21c2-470e-a4d6-0d4fbe60e6f2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-2404face-ec25-431d-b65c-4c388844ed6a' class='xr-var-data-in' type='checkbox'><label for='data-2404face-ec25-431d-b65c-4c388844ed6a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -3.66025491,  -1.73846195,  -1.29939438],
            [ -0.62929369,  -1.19488079,  -1.01881575],
            [ -0.72099829,  -0.99957402,  -1.14174432],
            [ -0.70127013,  -2.53343325,  -2.80869403],
@@ -986,101 +993,101 @@ All results can be found in the save directory.
            [ -1.1509269 ,  -1.01593959,  -1.23376028],
            [ -2.31442671,  -3.88114912,  -1.2489397 ],
            [ -3.66147746,  -1.23223672,  -1.70413974],
-           [ -0.99591923,  -1.09419693,  -2.02427972]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.254 -0.9282 ... -1.13 -2.132</div><input id='attrs-a8fbac5a-a5ba-4f82-8e13-809d57eaa9cc' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-a8fbac5a-a5ba-4f82-8e13-809d57eaa9cc' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-d9aa10e7-90c8-4a54-99bf-e78c7802b75a' class='xr-var-data-in' type='checkbox'><label for='data-d9aa10e7-90c8-4a54-99bf-e78c7802b75a' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -1.25430906,  -0.92819793,  -1.27414414],
-           [ -0.87447043,  -1.30597291,  -0.92442284],
-           [ -0.90254934,  -0.91659065,  -1.06967679],
-           [ -0.88376337,  -2.21818065,  -3.10604898],
-           [ -2.21879191,  -2.88388665,  -2.27041109],
-           [ -0.9445302 ,  -0.89791952,  -1.78560594],
-           [ -0.88008187,  -6.20815461,  -1.87587642],
-           [ -1.20498112,  -0.97279202,  -0.94773333],
-           [ -1.03156256,  -0.85627212,  -3.19433473],
-           [ -2.23530223,  -1.26802253,  -0.92464248],
-           [ -1.09672379,  -1.09640303,  -1.04698186],
-           [ -1.13277993,  -0.89169252,  -1.11253238],
-           [ -0.96528226,  -0.87738333,  -1.09545899],
-           [ -1.25077128,  -1.11001433,  -1.38675711],
-           [ -1.00939937,  -1.62425539,  -3.97661337],
-           [ -1.23249575,  -0.89020884,  -0.93956958],
-           [ -0.87761502,  -0.85925613,  -1.80843761],
-           [ -0.9178211 ,  -0.89003467,  -0.93028683],
-           [ -1.01208581,  -0.94164806,  -0.92667614],
-           [ -1.25287332,  -0.98636155,  -1.24582556],
+           [ -0.99591923,  -1.09419693,  -2.02427972]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>logp</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>-1.254 -0.9281 ... -1.13 -2.132</div><input id='attrs-988fb6f3-c777-4284-bda9-b62ae0130530' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-988fb6f3-c777-4284-bda9-b62ae0130530' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-77501c9b-36d0-4832-a8ea-17e7d3113bad' class='xr-var-data-in' type='checkbox'><label for='data-77501c9b-36d0-4832-a8ea-17e7d3113bad' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ -1.25405398,  -0.92808079,  -1.27414593],
+           [ -0.87446913,  -1.30601692,  -0.92442304],
+           [ -0.90253673,  -0.91661107,  -1.06967711],
+           [ -0.88377971,  -2.2179712 ,  -3.10604902],
+           [ -2.21927173,  -2.88452553,  -2.27040599],
+           [ -0.94451345,  -0.89790554,  -1.78560546],
+           [ -0.88008897,  -6.20837281,  -1.87587572],
+           [ -1.20496531,  -0.97278192,  -0.94773349],
+           [ -1.03152788,  -0.85627387,  -3.19433459],
+           [ -2.23559155,  -1.26819582,  -0.92464304],
+           [ -1.09677101,  -1.09635007,  -1.04698186],
+           [ -1.13274763,  -0.89167963,  -1.11253268],
+           [ -0.96531261,  -0.87736774,  -1.09545893],
+           [ -1.25078826,  -1.10999933,  -1.38675702],
+           [ -1.00936981,  -1.6243321 ,  -3.97661293],
+           [ -1.23244328,  -0.89019144,  -0.93956975],
+           [ -0.87761985,  -0.85925163,  -1.80843703],
+           [ -0.91779795,  -0.89005725,  -0.93028705],
+           [ -1.0121115 ,  -0.94167006,  -0.92667633],
+           [ -1.2529496 ,  -0.98631326,  -1.24582606],
     ...
-           [ -0.96597545,  -0.87002834,  -0.93413859],
-           [ -1.94213809,  -0.97396011,  -4.99115737],
-           [ -0.99522523,  -0.91566478,  -1.90955819],
-           [ -0.91799126,  -0.85644931,  -4.82770771],
-           [ -0.99848876,  -1.0634633 ,  -0.97871493],
-           [ -2.72645001,  -1.99007782,  -1.74672717],
-           [ -0.93041664,  -0.86046546,  -0.94437636],
-           [ -1.04012732,  -1.26537801,  -2.84057821],
-           [ -1.42075045,  -0.89032569,  -1.25732024],
-           [ -0.9660993 ,  -1.52923876,  -0.92272263],
-           [ -0.91929673,  -1.13898626,  -1.19527644],
-           [ -1.02939371,  -0.86489106,  -0.97917938],
-           [ -0.87672454,  -0.86654339,  -3.2413378 ],
-           [ -1.33274103,  -0.85812784,  -2.95364058],
-           [ -0.89351384,  -1.29010639,  -0.96466725],
-           [ -1.35045717,  -1.03100546,  -1.00622532],
-           [ -1.12682492,  -0.96356641,  -1.17995559],
-           [ -0.88865297,  -1.9017054 ,  -1.19570912],
-           [ -2.86279214,  -1.01113545,  -1.76079297],
-           [ -1.04827989,  -1.13019704,  -2.13182795]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.041e+03 1.214e+04 ... 2.061e+04</div><input id='attrs-c1074884-ceb6-4104-8cee-3ff060c6514b' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-c1074884-ceb6-4104-8cee-3ff060c6514b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-9a91aac0-c3e5-4531-aecd-abce38fea223' class='xr-var-data-in' type='checkbox'><label for='data-9a91aac0-c3e5-4531-aecd-abce38fea223' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 2041.19760574, 12139.45418004, 20599.59073887],
-           [ 1170.52256093,  7148.9176802 , 20613.37724056],
-           [ 1142.69076363,  6989.39134356, 20613.81793668],
-           [ 1580.98678417,  9501.61711746, 20606.87784019],
-           [ 2041.19760574, 12139.45418004, 20599.59073887],
-           [ 1164.60556465,  7115.00263226, 20613.47093186],
-           [ 1120.7759626 ,  6863.78005487, 20614.16494151],
-           [ 1230.34996774,  7491.83649834, 20612.42991739],
-           [ 1120.7759626 ,  6863.78005487, 20614.16494151],
-           [ 1734.39039136, 10380.89613832, 20604.44880642],
-           [ 1098.86116157,  6738.16876617, 20614.51194633],
-           [ 1164.60556465,  7115.00263226, 20613.47093186],
-           [ 1098.86116157,  6738.16876617, 20614.51194633],
-           [ 1230.34996774,  7491.83649834, 20612.42991739],
-           [ 1427.58317698,  8622.33809659, 20609.30687396],
-           [ 1120.7759626 ,  6863.78005487, 20614.16494151],
-           [ 1142.69076363,  6989.39134356, 20613.81793668],
-           [ 1076.94636055,  6612.55747748, 20614.85895116],
-           [ 1405.66837595,  8496.7268079 , 20609.65387879],
-           [ 1055.03155952,  6486.94618878, 20615.20595598],
+           [ -0.96594902,  -0.87001728,  -0.93413889],
+           [ -1.94224092,  -0.97392311,  -4.99115438],
+           [ -0.99519903,  -0.91564489,  -1.90955754],
+           [ -0.91799975,  -0.85645051,  -4.82770676],
+           [ -0.99847491,  -1.06348299,  -0.97871506],
+           [ -2.72571789,  -1.98945896,  -1.7467284 ],
+           [ -0.93039884,  -0.86047117,  -0.94437652],
+           [ -1.04012601,  -1.26538047,  -2.84057764],
+           [ -1.42074358,  -0.89032398,  -1.25732033],
+           [ -0.96606559,  -1.52933823,  -0.92272294],
+           [ -0.91931818,  -1.13904396,  -1.19527627],
+           [ -1.02936401,  -0.8648835 ,  -0.97917948],
+           [ -0.87673059,  -0.86653125,  -3.24133771],
+           [ -1.33270606,  -0.85813066,  -2.95364034],
+           [ -0.89350178,  -1.29016916,  -0.96466757],
+           [ -1.35042153,  -1.03098213,  -1.00622542],
+           [ -1.12679173,  -0.96359014,  -1.17995588],
+           [ -0.88860565,  -1.90112461,  -1.19570862],
+           [ -2.86288133,  -1.01110836,  -1.7607925 ],
+           [ -1.04825343,  -1.13023332,  -2.13182802]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>Yhat</span></div><div class='xr-var-dims'>(observations, response_vars)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>2.041e+03 1.214e+04 ... 2.061e+04</div><input id='attrs-51e30a4b-2e49-450e-81d1-0014b1b42eef' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-51e30a4b-2e49-450e-81d1-0014b1b42eef' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-fa27c350-364a-4724-b7ac-b935468e2662' class='xr-var-data-in' type='checkbox'><label for='data-fa27c350-364a-4724-b7ac-b935468e2662' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 2041.42820629, 12140.7293038 , 20599.58674226],
+           [ 1170.48920459,  7148.73323373, 20613.37781867],
+           [ 1142.6489697 ,  6989.1602408 , 20613.81866103],
+           [ 1581.0778656 ,  9502.12075934, 20606.87626163],
+           [ 2041.42820629, 12140.7293038 , 20599.58674226],
+           [ 1164.5704145 ,  7114.80826673, 20613.47154106],
+           [ 1120.72752491,  6863.51221487, 20614.165781  ],
+           [ 1230.33474888,  7491.75234451, 20612.43018115],
+           [ 1120.72752491,  6863.51221487, 20614.165781  ],
+           [ 1734.52797916, 10381.65694083, 20604.44642184],
+           [ 1098.80608011,  6737.86418895, 20614.51290097],
+           [ 1164.5704145 ,  7114.80826673, 20613.47154106],
+           [ 1098.80608011,  6737.86418895, 20614.51290097],
+           [ 1230.33474888,  7491.75234451, 20612.43018115],
+           [ 1427.62775204,  8622.58457785, 20609.30610142],
+           [ 1120.72752491,  6863.51221487, 20614.165781  ],
+           [ 1142.6489697 ,  6989.1602408 , 20613.81866103],
+           [ 1076.88463532,  6612.21616302, 20614.86002094],
+           [ 1405.70630724,  8496.93655192, 20609.65322139],
+           [ 1054.96319052,  6486.56813709, 20615.20714091],
     ...
-           [ 1120.7759626 ,  6863.78005487, 20614.16494151],
-           [ 1098.86116157,  6738.16876617, 20614.51194633],
-           [ 1142.69076363,  6989.39134356, 20613.81793668],
-           [ 1208.43516671,  7366.22520965, 20612.77692221],
-           [ 1208.43516671,  7366.22520965, 20612.77692221],
-           [ 2260.34561601, 13395.56706699, 20596.12069063],
-           [ 1142.69076363,  6989.39134356, 20613.81793668],
-           [ 1274.17956979,  7743.05907573, 20611.73590774],
-           [ 1297.40925888,  7876.20704175, 20611.36808262],
-           [ 1076.94636055,  6612.55747748, 20614.85895116],
-           [ 1098.86116157,  6738.16876617, 20614.51194633],
-           [ 1142.69076363,  6989.39134356, 20613.81793668],
-           [ 1076.94636055,  6612.55747748, 20614.85895116],
-           [ 1186.52036568,  7240.61392095, 20613.12392704],
-           [ 1120.7759626 ,  6863.78005487, 20614.16494151],
-           [ 1186.52036568,  7240.61392095, 20613.12392704],
-           [ 1160.00345644,  7088.62426163, 20613.54380287],
-           [ 2238.43081498, 13269.9557783 , 20596.46769545],
-           [ 1164.60556465,  7115.00263226, 20613.47093186],
-           [ 1164.60556465,  7115.00263226, 20613.47093186]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1501 1.46 ... 0.9891 0.06137</div><input id='attrs-6d95a070-b037-4613-a7d0-206ee92b1e7e' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-6d95a070-b037-4613-a7d0-206ee92b1e7e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-650da510-8849-472c-8969-d9f6ff03e0ce' class='xr-var-data-in' type='checkbox'><label for='data-650da510-8849-472c-8969-d9f6ff03e0ce' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 1.50136454e-01,  1.46012213e+00,  1.89419269e-01,
-             4.44148246e-01,  1.13078731e+00,  1.15182662e-02,
-             1.43993846e-01,  5.59964146e+02, -2.74954850e-02,
-             6.87808664e-01,  8.56006154e-01,  9.72405147e-01,
-             6.08599725e-01],
-           [ 1.75440320e-01,  2.55165424e+00,  1.74560323e-01,
-             4.30686233e-01,  1.40451237e+00, -9.24094806e-02,
-             1.71541732e-01,  4.16827208e+03,  2.20610013e-01,
-             1.09934943e-03,  8.28458268e-01,  8.98343682e-01,
-             1.37027940e+00],
-           [-2.74133014e-04,  8.67244246e-01,  2.21514158e-01,
-             1.03239535e-01,  1.52597383e+00,  9.74880124e-03,
-            -3.08769888e-04,  2.69212000e+03, -1.05739320e-01,
-             1.21291931e-01,  1.00030877e+00,  9.89058401e-01,
-             6.13690487e-02]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-57e04bd4-baf5-4459-982e-92503efcee03' class='xr-section-summary-in' type='checkbox' checked /><label for='section-57e04bd4-baf5-4459-982e-92503efcee03' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x7f44f1216980&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}}}}</dd></dl></div></li></ul></div></div>
+           [ 1120.72752491,  6863.51221487, 20614.165781  ],
+           [ 1098.80608011,  6737.86418895, 20614.51290097],
+           [ 1142.6489697 ,  6989.1602408 , 20613.81866103],
+           [ 1208.41330409,  7366.10431858, 20612.77730112],
+           [ 1208.41330409,  7366.10431858, 20612.77730112],
+           [ 2260.64265424, 13397.20956307, 20596.11554256],
+           [ 1142.6489697 ,  6989.1602408 , 20613.81866103],
+           [ 1274.17763847,  7743.04839636, 20611.73594121],
+           [ 1297.41436995,  7876.23530384, 20611.36799404],
+           [ 1076.88463532,  6612.21616302, 20614.86002094],
+           [ 1098.80608011,  6737.86418895, 20614.51290097],
+           [ 1142.6489697 ,  6989.1602408 , 20613.81866103],
+           [ 1076.88463532,  6612.21616302, 20614.86002094],
+           [ 1186.49185929,  7240.45629265, 20613.12442109],
+           [ 1120.72752491,  6863.51221487, 20614.165781  ],
+           [ 1186.49185929,  7240.45629265, 20613.12442109],
+           [ 1159.96691109,  7088.42218128, 20613.54443625],
+           [ 2238.72120944, 13271.56153715, 20596.46266253],
+           [ 1164.5704145 ,  7114.80826673, 20613.47154106],
+           [ 1164.5704145 ,  7114.80826673, 20613.47154106]])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>statistics</span></div><div class='xr-var-dims'>(response_vars, statistic)</div><div class='xr-var-dtype'>float64</div><div class='xr-var-preview xr-preview'>0.1501 1.46 ... 0.9891 0.06137</div><input id='attrs-3410339f-77f5-46b7-bec2-0d4118820830' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-3410339f-77f5-46b7-bec2-0d4118820830' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1fc75638-ca57-415c-bcc0-497acd1350b1' class='xr-var-data-in' type='checkbox'><label for='data-1fc75638-ca57-415c-bcc0-497acd1350b1' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[ 1.50113590e-01,  1.45953795e+00,  1.89419269e-01,
+             4.44157498e-01,  1.13079416e+00,  1.15251248e-02,
+             1.43971321e-01,  5.59971514e+02, -2.74954850e-02,
+             6.87808664e-01,  8.56028679e-01,  9.72422276e-01,
+             6.08184689e-01],
+           [ 1.75453776e-01,  2.55172213e+00,  1.74560323e-01,
+             4.30680492e-01,  1.40450357e+00, -9.24182800e-02,
+             1.71554991e-01,  4.16823872e+03,  2.20610013e-01,
+             1.09934943e-03,  8.28445009e-01,  8.98361665e-01,
+             1.37015762e+00],
+           [-2.74224927e-04,  8.67245079e-01,  2.21514158e-01,
+             1.03239538e-01,  1.52597379e+00,  9.74876300e-03,
+            -3.08861702e-04,  2.69212013e+03, -1.05739320e-01,
+             1.21291931e-01,  1.00030886e+00,  9.89058383e-01,
+             6.13693531e-02]])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-8c0d6ac1-0771-48e3-8a46-3302c4f1c8b8' class='xr-section-summary-in' type='checkbox' checked /><label for='section-8c0d6ac1-0771-48e3-8a46-3302c4f1c8b8' class='xr-section-summary' title='Expand/collapse section'>Attributes: <span>(7)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>real_ids :</span></dt><dd>True</dd><dt><span>is_scaled :</span></dt><dd>False</dd><dt><span>name :</span></dt><dd>fcon1000_test</dd><dt><span>unique_batch_effects :</span></dt><dd>{np.str_(&#x27;sex&#x27;): [&#x27;M&#x27;, &#x27;F&#x27;], np.str_(&#x27;site&#x27;): [&#x27;AnnArbor_a&#x27;, &#x27;AnnArbor_b&#x27;, &#x27;Atlanta&#x27;, &#x27;Baltimore&#x27;, &#x27;Bangor&#x27;, &#x27;Beijing_Zang&#x27;, &#x27;Berlin_Margulies&#x27;, &#x27;Cambridge_Buckner&#x27;, &#x27;Cleveland&#x27;, &#x27;ICBM&#x27;, &#x27;Leiden_2180&#x27;, &#x27;Leiden_2200&#x27;, &#x27;Milwaukee_b&#x27;, &#x27;Munchen&#x27;, &#x27;NewYork_a&#x27;, &#x27;NewYork_a_ADHD&#x27;, &#x27;Newark&#x27;, &#x27;Oulu&#x27;, &#x27;Oxford&#x27;, &#x27;PaloAlto&#x27;, &#x27;Pittsburgh&#x27;, &#x27;Queensland&#x27;, &#x27;SaintLouis&#x27;]}</dd><dt><span>batch_effect_counts :</span></dt><dd>defaultdict(&lt;function NormData.register_batch_effects.&lt;locals&gt;.&lt;lambda&gt; at 0x7f15a6a89620&gt;, {np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: 489, &#x27;F&#x27;: 589}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: 24, &#x27;AnnArbor_b&#x27;: 32, &#x27;Atlanta&#x27;: 28, &#x27;Baltimore&#x27;: 23, &#x27;Bangor&#x27;: 20, &#x27;Beijing_Zang&#x27;: 198, &#x27;Berlin_Margulies&#x27;: 26, &#x27;Cambridge_Buckner&#x27;: 198, &#x27;Cleveland&#x27;: 31, &#x27;ICBM&#x27;: 85, &#x27;Leiden_2180&#x27;: 12, &#x27;Leiden_2200&#x27;: 19, &#x27;Milwaukee_b&#x27;: 46, &#x27;Munchen&#x27;: 15, &#x27;NewYork_a&#x27;: 83, &#x27;NewYork_a_ADHD&#x27;: 25, &#x27;Newark&#x27;: 19, &#x27;Oulu&#x27;: 102, &#x27;Oxford&#x27;: 22, &#x27;PaloAlto&#x27;: 17, &#x27;Pittsburgh&#x27;: 3, &#x27;Queensland&#x27;: 19, &#x27;SaintLouis&#x27;: 31}})</dd><dt><span>covariate_ranges :</span></dt><dd>{np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}</dd><dt><span>batch_effect_covariate_ranges :</span></dt><dd>{np.str_(&#x27;sex&#x27;): {&#x27;M&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 9.21, &#x27;max&#x27;: 78.0}}, &#x27;F&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 85.0}}}, np.str_(&#x27;site&#x27;): {&#x27;AnnArbor_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 13.41, &#x27;max&#x27;: 40.98}}, &#x27;AnnArbor_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 79.0}}, &#x27;Atlanta&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 57.0}}, &#x27;Baltimore&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 40.0}}, &#x27;Bangor&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 38.0}}, &#x27;Beijing_Zang&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 26.0}}, &#x27;Berlin_Margulies&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 23.0, &#x27;max&#x27;: 44.0}}, &#x27;Cambridge_Buckner&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 30.0}}, &#x27;Cleveland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 24.0, &#x27;max&#x27;: 60.0}}, &#x27;ICBM&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 19.0, &#x27;max&#x27;: 85.0}}, &#x27;Leiden_2180&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 27.0}}, &#x27;Leiden_2200&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 18.0, &#x27;max&#x27;: 28.0}}, &#x27;Milwaukee_b&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 44.0, &#x27;max&#x27;: 65.0}}, &#x27;Munchen&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 63.0, &#x27;max&#x27;: 74.0}}, &#x27;NewYork_a&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 7.88, &#x27;max&#x27;: 49.16}}, &#x27;NewYork_a_ADHD&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.69, &#x27;max&#x27;: 50.9}}, &#x27;Newark&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 39.0}}, &#x27;Oulu&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 23.0}}, &#x27;Oxford&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 35.0}}, &#x27;PaloAlto&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 22.0, &#x27;max&#x27;: 46.0}}, &#x27;Pittsburgh&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 25.0, &#x27;max&#x27;: 47.0}}, &#x27;Queensland&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 20.0, &#x27;max&#x27;: 34.0}}, &#x27;SaintLouis&#x27;: {np.str_(&#x27;age&#x27;): {&#x27;min&#x27;: 21.0, &#x27;max&#x27;: 29.0}}}}</dd></dl></div></li></ul></div></div>
 
 
 
@@ -1202,39 +1209,39 @@ NormData object as a new data variable.
           <td>1.390658e-01</td>
           <td>0.999996</td>
           <td>0.996466</td>
-          <td>0.152073</td>
+          <td>0.152074</td>
         </tr>
         <tr>
           <th>Left-Lateral-Ventricle</th>
           <td>0.162276</td>
-          <td>6.848109</td>
+          <td>6.847038</td>
           <td>0.118596</td>
-          <td>0.401734</td>
+          <td>0.401732</td>
           <td>1.330158</td>
           <td>-0.088780</td>
           <td>0.162276</td>
-          <td>3877.069187</td>
+          <td>3877.068546</td>
           <td>0.269669</td>
           <td>7.905570e-16</td>
           <td>0.837724</td>
-          <td>0.877568</td>
-          <td>1.847707</td>
+          <td>0.877597</td>
+          <td>1.847420</td>
         </tr>
         <tr>
           <th>WM-hypointensities</th>
           <td>0.132905</td>
-          <td>42.153437</td>
+          <td>42.146882</td>
           <td>0.160084</td>
-          <td>0.410158</td>
-          <td>1.345555</td>
+          <td>0.410171</td>
+          <td>1.345554</td>
           <td>-0.073384</td>
           <td>0.132905</td>
-          <td>760.501165</td>
+          <td>760.501058</td>
           <td>0.019769</td>
           <td>5.621687e-01</td>
           <td>0.867095</td>
-          <td>0.722254</td>
-          <td>4.526783</td>
+          <td>0.722303</td>
+          <td>4.526148</td>
         </tr>
       </tbody>
     </table>
@@ -1297,13 +1304,13 @@ NormData object as a new data variable.
         <tr>
           <th>Brain-Stem</th>
           <td>-0.000274</td>
-          <td>0.867244</td>
+          <td>0.867245</td>
           <td>0.221514</td>
           <td>0.103240</td>
           <td>1.525974</td>
           <td>0.009749</td>
           <td>-0.000309</td>
-          <td>2692.120004</td>
+          <td>2692.120127</td>
           <td>-0.105739</td>
           <td>0.121292</td>
           <td>1.000309</td>
@@ -1312,35 +1319,35 @@ NormData object as a new data variable.
         </tr>
         <tr>
           <th>Left-Lateral-Ventricle</th>
-          <td>0.175440</td>
-          <td>2.551654</td>
+          <td>0.175454</td>
+          <td>2.551722</td>
           <td>0.174560</td>
-          <td>0.430686</td>
-          <td>1.404512</td>
-          <td>-0.092409</td>
-          <td>0.171542</td>
-          <td>4168.272079</td>
+          <td>0.430680</td>
+          <td>1.404504</td>
+          <td>-0.092418</td>
+          <td>0.171555</td>
+          <td>4168.238723</td>
           <td>0.220610</td>
           <td>0.001099</td>
-          <td>0.828458</td>
-          <td>0.898344</td>
-          <td>1.370279</td>
+          <td>0.828445</td>
+          <td>0.898362</td>
+          <td>1.370158</td>
         </tr>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.150136</td>
-          <td>1.460122</td>
+          <td>0.150114</td>
+          <td>1.459538</td>
           <td>0.189419</td>
-          <td>0.444148</td>
-          <td>1.130787</td>
-          <td>0.011518</td>
-          <td>0.143994</td>
-          <td>559.964146</td>
+          <td>0.444157</td>
+          <td>1.130794</td>
+          <td>0.011525</td>
+          <td>0.143971</td>
+          <td>559.971514</td>
           <td>-0.027495</td>
           <td>0.687809</td>
-          <td>0.856006</td>
-          <td>0.972405</td>
-          <td>0.608600</td>
+          <td>0.856029</td>
+          <td>0.972422</td>
+          <td>0.608185</td>
         </tr>
       </tbody>
     </table>

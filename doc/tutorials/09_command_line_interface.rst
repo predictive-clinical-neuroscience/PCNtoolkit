@@ -178,8 +178,8 @@ Constructing command
 
 .. code:: text
 
-    normative -a blr -f fit_predict -c c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\covariates.csv -r c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\responses.csv -t c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\test_responses.csv -e c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\test_covariates.csv -k 5 be=c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\batch_effects.csv t_be=c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\test_batch_effects.csv cross_validate=True parallelize=False job_type=local n_jobs=2 temp_dir=resources\cli_example\temp log_dir=resources\cli_example\log environment=c:\Users\kontsi\AppData\Local\anaconda3\envs save_dir=resources\cli_example\blr_cli\save_dir savemodel=True saveresults=True basis_function=linear inscaler=standardize outscaler=standardize optimizer=l-bfgs-b n_iter=200 heteroskedastic=True fixed_effect=True warp=WarpSinhArcsinh warp_reparam=True
-    
+    normative -a blr -f fit_predict -c /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/covariates.csv -r /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/responses.csv -t /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/test_responses.csv -e /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/test_covariates.csv -k 5 be=/home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/batch_effects.csv t_be=/home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/test_batch_effects.csv cross_validate=True parallelize=False job_type=local n_jobs=2 temp_dir=resources/cli_example/temp log_dir=resources/cli_example/log environment=/opt/hostedtoolcache/Python/3.13.16/x64 save_dir=resources/cli_example/blr_cli/save_dir savemodel=True saveresults=True basis_function=linear inscaler=standardize outscaler=standardize optimizer=l-bfgs-b n_iter=200 heteroskedastic=True fixed_effect=True warp=WarpSinhArcsinh warp_reparam=True
+
 
 Running command
 ~~~~~~~~~~~~~~~
@@ -191,7 +191,7 @@ Running command
 
 .. code:: text
 
-    Process: 34708 - 2026-10-15 16:52:12 - Dataset "fit_data" created.
+    Process: 3155 - 2026-10-27 14:43:17 - Dataset "fit_data" created.
         - 862 observations
         - 862 unique subjects
         - 1 covariates
@@ -200,7 +200,7 @@ Running command
         	batch_effect_0 (2)
     	batch_effect_1 (23)
         
-    Process: 34708 - 2026-10-15 16:52:12 - Dataset "predict_data" created.
+    Process: 3155 - 2026-10-27 14:43:17 - Dataset "predict_data" created.
         - 216 observations
         - 216 unique subjects
         - 1 covariates
@@ -209,385 +209,399 @@ Running command
         	batch_effect_0 (2)
     	batch_effect_1 (23)
         
-    Process: 34708 - 2026-10-15 16:52:12 - Task ID created: fit_predict_fit_data__2026-10-15_16-52-12_71.303223
-    Process: 34708 - 2026-10-15 16:52:12 - Temporary directory created:
-    	c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\temp\fit_predict_fit_data__2026-10-15_16-52-12_71.303223
-    Process: 34708 - 2026-10-15 16:52:12 - Log directory created:
-    	c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\log\fit_predict_fit_data__2026-10-15_16-52-12_71.303223
-    Process: 34708 - 2026-10-15 16:52:12 - Fitting models on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:12 - Fitting model for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:12 - Fitting model for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:12 - Saving model to:
-    	resources\cli_example\blr_cli\save_dir\folds\fold_0.
-    Process: 34708 - 2026-10-15 16:52:12 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:12 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:13 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:13 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:13 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:13 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:13 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:13 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:14 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:14 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:14 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:14 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:14 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:14 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:14 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:14 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:15 - Fitting models on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:15 - Fitting model for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:15 - Fitting model for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:15 - Saving model to:
-    	resources\cli_example\blr_cli\save_dir\folds\fold_1.
-    Process: 34708 - 2026-10-15 16:52:15 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:15 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:16 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:16 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:16 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:16 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:16 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:16 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:17 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:17 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:17 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:17 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:17 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:17 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:17 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:18 - Fitting models on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:18 - Fitting model for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:18 - Fitting model for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:18 - Saving model to:
-    	resources\cli_example\blr_cli\save_dir\folds\fold_2.
-    Process: 34708 - 2026-10-15 16:52:18 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:18 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:19 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:19 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:19 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:19 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:19 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:19 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:20 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:20 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:20 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:20 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:20 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:20 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:20 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:20 - Fitting models on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:20 - Fitting model for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:20 - Fitting model for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:21 - Saving model to:
-    	resources\cli_example\blr_cli\save_dir\folds\fold_3.
-    Process: 34708 - 2026-10-15 16:52:21 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:21 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:21 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:21 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:21 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:21 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:21 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:22 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:22 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:23 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:23 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:23 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:23 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:23 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:23 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:23 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:23 - Fitting models on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:23 - Fitting model for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:23 - Fitting model for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:24 - Saving model to:
-    	resources\cli_example\blr_cli\save_dir\folds\fold_4.
-    Process: 34708 - 2026-10-15 16:52:24 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:24 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:24 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:24 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:24 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:24 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:24 - Harmonizing data for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:25 - Making predictions on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing z-scores for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing z-scores for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing z-scores for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing log-probabilities for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing log-probabilities for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing log-probabilities for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing yhat for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing yhat for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:25 - Computing yhat for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:26 - Dataset "centile" created.
-        - 150 observations
-        - 150 unique subjects
-        - 1 covariates
-        - 2 response variables
-        - 2 batch effects:
-        	batch_effect_0 (1)
-    	batch_effect_1 (1)
-        
-    Process: 34708 - 2026-10-15 16:52:26 - Computing centiles for 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:26 - Computing centiles for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:26 - Computing centiles for response_var_0.
-    Process: 34708 - 2026-10-15 16:52:26 - Harmonizing data on 2 response variables.
-    Process: 34708 - 2026-10-15 16:52:26 - Harmonizing data for response_var_1.
-    Process: 34708 - 2026-10-15 16:52:26 - Harmonizing data for response_var_0.
-    
-
-.. code:: text
-
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:342: UserWarning: Process: 34708 - 2026-10-15 16:52:12 - Predict data not used in k-fold cross-validation
+    Process: 3155 - 2026-10-27 14:43:17 - Task ID created: fit_predict_fit_data__2026-10-27_14-43-17_964.687012
+    Process: 3155 - 2026-10-27 14:43:17 - Temporary directory created:
+    	/home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/temp/fit_predict_fit_data__2026-10-27_14-43-17_964.687012
+    Process: 3155 - 2026-10-27 14:43:17 - Log directory created:
+    	/home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/log/fit_predict_fit_data__2026-10-27_14-43-17_964.687012
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:342: UserWarning: Process: 3155 - 2026-10-27 14:43:17 - Predict data not used in k-fold cross-validation
       warnings.warn(message, category)
-    C:\Users\kontsi\AppData\Local\anaconda3\envs\.ptk-dev\Lib\site-packages\sklearn\model_selection\_split.py:813: UserWarning: The least populated class in y has only 2 members, which is less than n_splits=5.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/sklearn/model_selection/_split.py:812: UserWarning: The least populated class in y has only 2 members, which is less than n_splits=5.
       warnings.warn(
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.523723939977167e-27.
+    Process: 3155 - 2026-10-27 14:43:17 - Fitting models on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:17 - Fitting model for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:18 - Fitting model for response_var_1.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.523723946631791e-27.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:342: UserWarning: Process: 34708 - 2026-10-15 16:52:12 - Posterior estimation failed: 
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:342: UserWarning: Process: 3155 - 2026-10-27 14:43:18 - Posterior estimation failed: 
     Matrix is not positive definite. 
     The optimizer could not find a stable solution. Retrying optimization.
       warnings.warn(message, category)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.3754965555983415e-27.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.375496563279125e-27.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.998072107792363e-27.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.9980721138137064e-27.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.746691655603508e-27.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.746691663731469e-27.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.1046590579409974e-27.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 6.104659065295494e-27.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.6685293780657852e-18.
+    Process: 3155 - 2026-10-27 14:43:18 - Saving model to:
+    	resources/cli_example/blr_cli/save_dir/folds/fold_0.
+    Process: 3155 - 2026-10-27 14:43:18 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:18 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:19 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:19 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:19 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:19 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:19 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:19 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:19 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:20 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:20 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:21 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:21 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:21 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:21 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:21 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:21 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:21 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:21 - Fitting models on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:21 - Fitting model for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:22 - Fitting model for response_var_1.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.2455126268504203e-20.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:342: UserWarning: Process: 34708 - 2026-10-15 16:52:18 - Posterior estimation failed: 
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:342: UserWarning: Process: 3155 - 2026-10-27 14:43:22 - Posterior estimation failed: 
     Matrix is not positive definite. 
     The optimizer could not find a stable solution. Retrying optimization.
       warnings.warn(message, category)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.157907796551295e-18.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.910057133212752e-20.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.581032369390217e-18.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 3.8415638861183265e-20.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.3509470739771384e-18.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.185259614266013e-20.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.766179425038374e-17.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.691929377086917e-20.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:342: UserWarning: Process: 34708 - 2026-10-15 16:52:21 - Posterior estimation failed: 
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:711: RuntimeWarning: overflow encountered in divide
+      df_dx = [delf / delx for delf, delx in zip(df, dx)]
+    Process: 3155 - 2026-10-27 14:43:22 - Saving model to:
+    	resources/cli_example/blr_cli/save_dir/folds/fold_1.
+    Process: 3155 - 2026-10-27 14:43:22 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:22 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:23 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:23 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:23 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:23 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:23 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:23 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:23 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:24 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:24 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:24 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:24 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:24 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:24 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:25 - Fitting models on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:25 - Fitting model for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:25 - Fitting model for response_var_1.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.701875421761123e-19.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:342: UserWarning: Process: 3155 - 2026-10-27 14:43:25 - Posterior estimation failed: 
     Matrix is not positive definite. 
     The optimizer could not find a stable solution. Retrying optimization.
       warnings.warn(message, category)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.117392383857963e-18.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 3.6521548448675865e-19.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 3.6239455744947366e-18.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.3656485817707845e-19.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.17546773588249e-18.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 4.502124577440806e-19.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.0452962015588918e-62.
+    Process: 3155 - 2026-10-27 14:43:25 - Saving model to:
+    	resources/cli_example/blr_cli/save_dir/folds/fold_2.
+    Process: 3155 - 2026-10-27 14:43:25 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:25 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:26 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:26 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:26 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:26 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:26 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:26 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:26 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:26 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:26 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:26 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:27 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:27 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:28 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:28 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:28 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:28 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:28 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:28 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:28 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:29 - Fitting models on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:29 - Fitting model for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:29 - Fitting model for response_var_1.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 2.345402012863007e-18.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\output.py:342: UserWarning: Process: 34708 - 2026-10-15 16:52:24 - Posterior estimation failed: 
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:342: UserWarning: Process: 3155 - 2026-10-27 14:43:29 - Posterior estimation failed: 
     Matrix is not positive definite. 
     The optimizer could not find a stable solution. Retrying optimization.
       warnings.warn(message, category)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.161818075084269e-55.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 3.416128457233547e-18.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.204861832584378e-55.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.01776121710389e-18.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\regression_model\blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.0207110394196985e-62.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 1.4551614365857112e-18.
       invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
-    
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/scipy/optimize/_numdiff.py:711: RuntimeWarning: overflow encountered in divide
+      df_dx = [delf / delx for delf, delx in zip(df, dx)]
+    Process: 3155 - 2026-10-27 14:43:29 - Saving model to:
+    	resources/cli_example/blr_cli/save_dir/folds/fold_3.
+    Process: 3155 - 2026-10-27 14:43:29 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:29 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:30 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:30 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:30 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:30 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:30 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:30 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:30 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:31 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:31 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:32 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:32 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:32 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:32 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:32 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:32 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:32 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:32 - Fitting models on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:32 - Fitting model for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:33 - Fitting model for response_var_1.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.204862148507314e-55.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:342: UserWarning: Process: 3155 - 2026-10-27 14:43:33 - Posterior estimation failed: 
+    Matrix is not positive definite. 
+    The optimizer could not find a stable solution. Retrying optimization.
+      warnings.warn(message, category)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 5.1618189276041684e-55.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.204835921010135e-55.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/regression_model/blr.py:697: LinAlgWarning: An ill-conditioned matrix detected: slice 0 has rcond = 8.204861445939724e-55.
+      invAXt: np.ndarray = linalg.solve(self.A, X.T, check_finite=False)
+    Process: 3155 - 2026-10-27 14:43:33 - Saving model to:
+    	resources/cli_example/blr_cli/save_dir/folds/fold_4.
+    Process: 3155 - 2026-10-27 14:43:33 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:33 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:34 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:34 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:34 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:34 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:34 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:34 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:34 - Harmonizing data for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:35 - Making predictions on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing z-scores for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing z-scores for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing z-scores for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing log-probabilities for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing log-probabilities for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing log-probabilities for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing yhat for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing yhat for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing yhat for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:35 - Dataset "centile" created.
+        - 150 observations
+        - 150 unique subjects
+        - 1 covariates
+        - 2 response variables
+        - 2 batch effects:
+        	batch_effect_0 (1)
+    	batch_effect_1 (1)
+        
+    Process: 3155 - 2026-10-27 14:43:35 - Computing centiles for 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing centiles for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:35 - Computing centiles for response_var_0.
+    Process: 3155 - 2026-10-27 14:43:35 - Harmonizing data on 2 response variables.
+    Process: 3155 - 2026-10-27 14:43:35 - Harmonizing data for response_var_1.
+    Process: 3155 - 2026-10-27 14:43:35 - Harmonizing data for response_var_0.
+
 
 You can find the results in the
 ``resources/cli_example/blr_cli/save_dir`` folder.
@@ -755,8 +769,8 @@ Constructing command
 
 .. code:: text
 
-    normative -a hbr -f fit_predict -c c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\covariates.csv -r c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\responses.csv -t c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\test_responses.csv -e c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\test_covariates.csv be=c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\batch_effects.csv t_be=c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\cli_example\data\test_batch_effects.csv save_dir=resources\cli_example\hbr\save_dir savemodel=True saveresults=True basis_function=bspline inscaler=standardize outscaler=standardize draws=1000 tune=500 chains=4 nuts_sampler=nutpie progressbar=False likelihood=Normal linear_mu=True random_intercept_mu=True random_slope_mu=False linear_sigma=True random_intercept_sigma=False random_slope_sigma=False
-    
+    normative -a hbr -f fit_predict -c /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/covariates.csv -r /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/responses.csv -t /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/test_responses.csv -e /home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/test_covariates.csv be=/home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/batch_effects.csv t_be=/home/runner/work/PCNtoolkit/PCNtoolkit/resources/cli_example/data/test_batch_effects.csv save_dir=resources/cli_example/hbr/save_dir savemodel=True saveresults=True basis_function=bspline inscaler=standardize outscaler=standardize draws=1000 tune=500 chains=4 nuts_sampler=nutpie progressbar=False likelihood=Normal linear_mu=True random_intercept_mu=True random_slope_mu=False linear_sigma=True random_intercept_sigma=False random_slope_sigma=False
+
 
 Running command
 ~~~~~~~~~~~~~~~
@@ -768,9 +782,9 @@ Running command
 
 .. code:: text
 
-    Process: 35260 - 2026-10-15 16:52:31 - No log directory specified. Using default log directory: C:\Users\kontsi/.pcntoolkit\logs
-    Process: 35260 - 2026-10-15 16:52:31 - No temporary directory specified. Using default temporary directory: C:\Users\kontsi/.pcntoolkit\temp
-    Process: 35260 - 2026-10-15 16:52:31 - Dataset "fit_data" created.
+    Process: 3167 - 2026-10-27 14:43:39 - No log directory specified. Using default log directory: /home/runner/.pcntoolkit/logs
+    Process: 3167 - 2026-10-27 14:43:39 - No temporary directory specified. Using default temporary directory: /home/runner/.pcntoolkit/temp
+    Process: 3167 - 2026-10-27 14:43:39 - Dataset "fit_data" created.
         - 862 observations
         - 862 unique subjects
         - 1 covariates
@@ -779,7 +793,7 @@ Running command
         	batch_effect_0 (2)
     	batch_effect_1 (23)
         
-    Process: 35260 - 2026-10-15 16:52:31 - Dataset "predict_data" created.
+    Process: 3167 - 2026-10-27 14:43:39 - Dataset "predict_data" created.
         - 216 observations
         - 216 unique subjects
         - 1 covariates
@@ -788,29 +802,45 @@ Running command
         	batch_effect_0 (2)
     	batch_effect_1 (23)
         
-    Process: 35260 - 2026-10-15 16:52:31 - Task ID created: fit_predict_fit_data__2026-10-15_16-52-31_272.066895
-    Process: 35260 - 2026-10-15 16:52:31 - Temporary directory created:
-    	C:\Users\kontsi/.pcntoolkit\temp\fit_predict_fit_data__2026-10-15_16-52-31_272.066895
-    Process: 35260 - 2026-10-15 16:52:31 - Log directory created:
-    	C:\Users\kontsi/.pcntoolkit\logs\fit_predict_fit_data__2026-10-15_16-52-31_272.066895
-    Process: 35260 - 2026-10-15 16:52:31 - Fitting models on 2 response variables.
-    Process: 35260 - 2026-10-15 16:52:31 - Fitting model for response_var_0.
-    Process: 35260 - 2026-10-15 16:52:51 - Fitting model for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:02 - Saving model to:
-    	resources\cli_example\hbr\save_dir.
-    Process: 35260 - 2026-10-15 16:53:04 - Making predictions on 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:04 - Computing z-scores for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:04 - Computing z-scores for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:05 - Computing z-scores for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:05 - Computing centiles for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:05 - Computing centiles for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:08 - Computing centiles for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:10 - Computing log-probabilities for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:10 - Computing log-probabilities for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:10 - Computing log-probabilities for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:12 - Computing log-probabilities for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:12 - Computing yhat for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:14 - Dataset "centile" created.
+    Process: 3167 - 2026-10-27 14:43:39 - Task ID created: fit_predict_fit_data__2026-10-27_14-43-39_903.841797
+    Process: 3167 - 2026-10-27 14:43:39 - Temporary directory created:
+    	/home/runner/.pcntoolkit/temp/fit_predict_fit_data__2026-10-27_14-43-39_903.841797
+    Process: 3167 - 2026-10-27 14:43:39 - Log directory created:
+    	/home/runner/.pcntoolkit/logs/fit_predict_fit_data__2026-10-27_14-43-39_903.841797
+    Process: 3167 - 2026-10-27 14:43:39 - Fitting models on 2 response variables.
+    Process: 3167 - 2026-10-27 14:43:39 - Fitting model for response_var_0.
+    NUTS[nutpie]: [slope_mu, mu_intercept_mu, batch_effect_0_sigma_intercept_mu, normalized_batch_effect_0_offset_intercept_mu, batch_effect_1_sigma_intercept_mu, normalized_batch_effect_1_offset_intercept_mu, slope_sigma, intercept_sigma]
+    Process: 3167 - 2026-10-27 14:43:58 - Fitting model for response_var_1.
+    NUTS[nutpie]: [slope_mu, mu_intercept_mu, batch_effect_0_sigma_intercept_mu, normalized_batch_effect_0_offset_intercept_mu, batch_effect_1_sigma_intercept_mu, normalized_batch_effect_1_offset_intercept_mu, slope_sigma, intercept_sigma]
+    Process: 3167 - 2026-10-27 14:44:07 - Saving model to:
+    	resources/cli_example/hbr/save_dir.
+    Process: 3167 - 2026-10-27 14:44:07 - Making predictions on 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:07 - Computing z-scores for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:07 - Computing z-scores for response_var_0.
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:08 - Computing z-scores for response_var_1.
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:09 - Computing centiles for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:09 - Computing centiles for response_var_0.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:11 - Computing centiles for response_var_1.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:12 - Computing log-probabilities for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:12 - Computing log-probabilities for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:12 - Computing log-probabilities for response_var_0.
+    Process: 3167 - 2026-10-27 14:44:14 - Computing log-probabilities for response_var_1.
+    Process: 3167 - 2026-10-27 14:44:14 - Computing yhat for 2 response variables.
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:16 - Dataset "centile" created.
         - 150 observations
         - 150 unique subjects
         - 1 covariates
@@ -819,25 +849,53 @@ Running command
         	batch_effect_0 (1)
     	batch_effect_1 (1)
         
-    Process: 35260 - 2026-10-15 16:53:14 - Computing centiles for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:14 - Computing centiles for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:16 - Computing centiles for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:19 - Harmonizing data on 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:19 - Harmonizing data for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:20 - Harmonizing data for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:22 - Making predictions on 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:22 - Computing z-scores for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:22 - Computing z-scores for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:22 - Computing z-scores for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:23 - Computing centiles for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:23 - Computing centiles for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:25 - Computing centiles for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:27 - Computing log-probabilities for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:27 - Computing log-probabilities for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:27 - Computing log-probabilities for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:27 - Computing log-probabilities for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:27 - Computing yhat for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:29 - Dataset "centile" created.
+    Process: 3167 - 2026-10-27 14:44:16 - Computing centiles for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:16 - Computing centiles for response_var_0.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:17 - Computing centiles for response_var_1.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:19 - Harmonizing data on 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:19 - Harmonizing data for response_var_0.
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:20 - Harmonizing data for response_var_1.
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:21 - Making predictions on 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:21 - Computing z-scores for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:21 - Computing z-scores for response_var_0.
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:21 - Computing z-scores for response_var_1.
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:22 - Computing centiles for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:22 - Computing centiles for response_var_0.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:23 - Computing centiles for response_var_1.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:25 - Computing log-probabilities for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:25 - Computing log-probabilities for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:25 - Computing log-probabilities for response_var_0.
+    Process: 3167 - 2026-10-27 14:44:25 - Computing log-probabilities for response_var_1.
+    Process: 3167 - 2026-10-27 14:44:25 - Computing yhat for 2 response variables.
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:27 - Dataset "centile" created.
         - 150 observations
         - 150 unique subjects
         - 1 covariates
@@ -846,72 +904,24 @@ Running command
         	batch_effect_0 (1)
     	batch_effect_1 (1)
         
-    Process: 35260 - 2026-10-15 16:53:29 - Computing centiles for 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:29 - Computing centiles for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:31 - Computing centiles for response_var_1.
-    Process: 35260 - 2026-10-15 16:53:33 - Harmonizing data on 2 response variables.
-    Process: 35260 - 2026-10-15 16:53:33 - Harmonizing data for response_var_0.
-    Process: 35260 - 2026-10-15 16:53:34 - Harmonizing data for response_var_1.
-    
+    Process: 3167 - 2026-10-27 14:44:27 - Computing centiles for 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:27 - Computing centiles for response_var_0.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:28 - Computing centiles for response_var_1.
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:30 - Harmonizing data on 2 response variables.
+    Process: 3167 - 2026-10-27 14:44:30 - Harmonizing data for response_var_0.
+    Sampling: []
+    Sampling: []
+    Process: 3167 - 2026-10-27 14:44:30 - Harmonizing data for response_var_1.
+    Sampling: []
+    Sampling: []
 
-.. code:: text
-
-    NUTS[nutpie]: [slope_mu, mu_intercept_mu, batch_effect_0_sigma_intercept_mu, normalized_batch_effect_0_offset_intercept_mu, batch_effect_1_sigma_intercept_mu, normalized_batch_effect_1_offset_intercept_mu, slope_sigma, intercept_sigma]
-    NUTS[nutpie]: [slope_mu, mu_intercept_mu, batch_effect_0_sigma_intercept_mu, normalized_batch_effect_0_offset_intercept_mu, batch_effect_1_sigma_intercept_mu, normalized_batch_effect_1_offset_intercept_mu, slope_sigma, intercept_sigma]
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    Sampling: []
-    

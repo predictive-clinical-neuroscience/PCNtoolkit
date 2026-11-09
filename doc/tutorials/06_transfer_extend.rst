@@ -19,11 +19,11 @@ privacy-preserving, since each site adapts the model locally and shares
 only the model parameters, never the raw data. The two, however, play
 different roles:
 
-- Extend allows the model to be extended sequentially: the first site
-  extends it and passes it to the second, which extends it again, and so
-  on across the consortium.
-- On the other hand, a model should not be transferred sequentially but
-  only once.
+-  Extend allows the model to be extended sequentially: the first site
+   extends it and passes it to the second, which extends it again, and
+   so on across the consortium.
+-  On the other hand, a model should not be transferred sequentially but
+   only once.
 
 Imports
 -------
@@ -52,6 +52,13 @@ Imports
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
+
+
+.. code:: text
+
+    /tmp/ipykernel_2994/55121059.py:21: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None  # default='warn'
+
 
 Load data
 ---------

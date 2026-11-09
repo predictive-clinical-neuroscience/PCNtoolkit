@@ -6,7 +6,7 @@ PCNtoolkit background
 What is the PCNtoolkit?
 ****************************
 
-The **Predictive Clinical Neuroscience (PCN) toolkit** is an open-source Python package for normative modelling. It can work with any tabular data like neuroimaging data (structural and functional MRI, diffusion MRI, MEG, EEG), cognitive scores, or epigenomic data. It is developed and maintained by the `Predictive Clinical Neuroscience lab <https://predictiveclinicalneuroscience.com/>`_ at the `Donders Institute for Brain, Cognition and Behaviour <https://www.ru.nl/donders/>`_.
+The **Predictive Clinical Neuroscience (PCN) toolkit** is an open-source Python package for normative modelling. It can work with any tabular data like neuroimaging data (structural and functional MRI, diffusion MRI, MEG, EEG), cognitive scores, or epigenomic data. It is developed and maintained by the `Predictive Clinical Neuroscience lab <https://predictiveclinicalneuroscience.com/>`_ at the `Donders Institute for Brain, Cognition and Behaviour <https://www.ru.nl/en/donders-institute>`_.
 
 The limitations of case-control studies
 -----------------------------------------------------

@@ -62,7 +62,7 @@ how z-scores *normally* change over time.
 
     Controls:  67
     Patients:  98
-    
+
 
 2. Fit and transfer a normative model
 -------------------------------------
@@ -113,7 +113,7 @@ LNM site.
 
     Adaptation group: 13 people, visit 1 only
     Reference group:  54 people, both visits
-    
+
 
 .. code:: ipython3
 
@@ -127,8 +127,8 @@ LNM site.
 ---------------------------------
 
 ``bandwidth`` is the widest age gap, in years, that gets a correlation;
-wider gaps are set to 0. Our visits are at most 3 years apart, so we use
-bandwidth=3.
+wider gaps are set to 0. If we look at our data our visits are at most 3
+years apart, so we use bandwidth=3.
 
 .. code:: ipython3
 
@@ -142,7 +142,7 @@ bandwidth=3.
 
     Subjects:       54
     Observed ages:  18 to 55
-    
+
 
 4. Most of the matrix is extrapolated
 -------------------------------------

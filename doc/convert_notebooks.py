@@ -23,6 +23,12 @@ SKIP_NOTEBOOKS: set[str] = set()
 
 os.makedirs(TUTORIALS_DIR, exist_ok=True)
 
+# Fixes the issue where in Windows nbconvert leaves 4 spaces long empty lines
+NBCONVERT = (
+    "import os; os.linesep = '\\n'; "
+    "from nbconvert.nbconvertapp import main; main()"
+)
+
 
 def clean_tutorials_dir() -> None:
     """Remove previously generated RST files and support png's."""
@@ -58,11 +64,9 @@ def convert_notebooks() -> None:
 
         subprocess.run(
             [
-                sys.executable,  # resolve "jupyter" from the virtual
-                # environment that is running this script
-                "-m",
-                "jupyter",
-                "nbconvert",  # nbconvert needs the package "pandoc". Please
+                sys.executable,  # use the environment running this script
+                "-c",
+                NBCONVERT,  # nbconvert needs the package "pandoc". Please
                 # install with
                 # "conda install -c conda-forge pandoc"
                 "--to",

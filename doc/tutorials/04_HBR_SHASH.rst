@@ -50,6 +50,13 @@ Imports
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
 
+
+.. code:: text
+
+    /tmp/ipykernel_2742/684108500.py:32: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None  # default='warn'
+
+
 Load data
 ---------
 
@@ -440,19 +447,19 @@ And finally the ridge plot:
 
 .. code:: text
 
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1097: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1132: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       g.figure.tight_layout()
-    
+
 
 
 .. image:: 04_HBR_SHASH_files/04_HBR_SHASH_23_1.png
@@ -529,19 +536,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.348508</td>
-          <td>1.186211</td>
-          <td>0.082805</td>
-          <td>0.320443</td>
-          <td>0.687146</td>
-          <td>-0.731792</td>
-          <td>0.347983</td>
-          <td>659.471408</td>
-          <td>0.486244</td>
-          <td>2.345355e-52</td>
-          <td>0.652017</td>
-          <td>0.986646</td>
-          <td>0.329987</td>
+          <td>0.347995</td>
+          <td>1.193022</td>
+          <td>0.082413</td>
+          <td>0.320615</td>
+          <td>0.686963</td>
+          <td>-0.731975</td>
+          <td>0.347449</td>
+          <td>659.741486</td>
+          <td>0.48608</td>
+          <td>2.567189e-52</td>
+          <td>0.652551</td>
+          <td>0.986565</td>
+          <td>0.330588</td>
         </tr>
       </tbody>
     </table>
@@ -603,19 +610,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.394284</td>
-          <td>0.455546</td>
-          <td>0.18103</td>
-          <td>0.34707</td>
-          <td>0.747515</td>
-          <td>-0.371754</td>
-          <td>0.386611</td>
-          <td>474.012302</td>
-          <td>0.512433</td>
-          <td>7.347765e-16</td>
-          <td>0.613389</td>
-          <td>0.980354</td>
-          <td>-0.51028</td>
+          <td>0.394835</td>
+          <td>0.457966</td>
+          <td>0.180713</td>
+          <td>0.34712</td>
+          <td>0.746726</td>
+          <td>-0.372543</td>
+          <td>0.387014</td>
+          <td>473.856885</td>
+          <td>0.513068</td>
+          <td>6.676649e-16</td>
+          <td>0.612986</td>
+          <td>0.980382</td>
+          <td>-0.509495</td>
         </tr>
       </tbody>
     </table>
@@ -628,12 +635,12 @@ What’s next?
 Now we have a normative hierarchical Bayesian regression model, we can
 use it to:
 
-- Make predictions on new data
-- Harmonize data, this means that we ‘remove’ the batch effects from the
-  data, by simulating what the data would have looked like if all data
-  was from the same batch.
-- Synthesize new data
-- Extend the model using data from new batches
+-  Make predictions on new data
+-  Harmonize data, this means that we ‘remove’ the batch effects from
+   the data, by simulating what the data would have looked like if all
+   data was from the same batch.
+-  Synthesize new data
+-  Extend the model using data from new batches
 
 Predicting
 ~~~~~~~~~~
