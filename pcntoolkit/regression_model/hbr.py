@@ -486,6 +486,7 @@ class InferenceMethod(ABC):
         """
         Load an inference method from a dictionary created by ``to_dict``.
         """
+        # Get the init arguments from the subclass.
         init_args = inspect.signature(cls.__init__).parameters
         settings = {k: v for k, v in my_dict.items() if k in init_args and k != "self"}
         method = cls(**settings)
