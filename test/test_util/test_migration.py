@@ -6,6 +6,7 @@ Tests use local registry instances so they are fully isolated
 from the module-level singleton and from each other.
 """
 
+import warnings
 from unittest.mock import patch
 
 from pcntoolkit.util.migration import (
@@ -13,10 +14,10 @@ from pcntoolkit.util.migration import (
     check_forward_compatibility,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers: Create test migrations
 # ---------------------------------------------------------------------------
+
 
 def _make_registry_with_two_migrations() -> MigrationRegistry:
     """Return a fresh registry with two sequential migrations."""
@@ -42,6 +43,7 @@ def _make_registry_with_two_migrations() -> MigrationRegistry:
 # ---------------------------------------------------------------------------
 # MigrationRegistry.migrate tests
 # ---------------------------------------------------------------------------
+
 
 def test_001_migrate_should_applyMigration_when_savedVersionIsOlder():
     """
@@ -134,6 +136,7 @@ def test_005_migrate_should_notApplyMigration_when_UnknownComponent():
 # check_forward_compatibility tests
 # ---------------------------------------------------------------------------
 
+
 def test_006_checkForwardCompat_should_emitWarning_when_savedVersionIsNewer():
     """
     Arrange: saved version 2.0.0, current version 1.0.0.
@@ -144,11 +147,9 @@ def test_006_checkForwardCompat_should_emitWarning_when_savedVersionIsNewer():
     saved_model = "2.0.0"
     current_pcntoolkit = "1.0.0"
 
-    # Act & Assert — the warning line inside check_forward_compatibility 
+    # Act & Assert — the warning line inside check_forward_compatibility
     # was hit exactly once.
-    with patch(
-        "pcntoolkit.util.migration.Output.warning"
-    ) as mock_warning:
+    with patch("pcntoolkit.util.migration.Output.warning") as mock_warning:
         check_forward_compatibility(saved_model, current_pcntoolkit)
         assert mock_warning.call_count == 1
 
@@ -163,11 +164,9 @@ def test_007_checkForwardCompat_should_notEmitWarning_when_versionsSame():
     saved_model = "1.2.0"
     current_pcntoolkit = "1.2.0"
 
-    # Act & Assert — the warning line inside check_forward_compatibility 
+    # Act & Assert — the warning line inside check_forward_compatibility
     # was NOT hit.
-    with patch(
-        "pcntoolkit.util.migration.Output.warning"
-    ) as mock_warning:
+    with patch("pcntoolkit.util.migration.Output.warning") as mock_warning:
         check_forward_compatibility(saved_model, current_pcntoolkit)
         assert mock_warning.call_count == 0
 
@@ -182,10 +181,35 @@ def test_008_checkForwardCompat_should_notEmitWarning_when_savedVersionIsOlder()
     saved_model = "1.0.0"
     current_pcntoolkit = "1.2.0"
 
-    # Act & Assert — the warning line inside check_forward_compatibility 
+    # Act & Assert — the warning line inside check_forward_compatibility
     # was NOT hit.
-    with patch(
-        "pcntoolkit.util.migration.Output.warning"
-    ) as mock_warning:
+    with patch("pcntoolkit.util.migration.Output.warning") as mock_warning:
         check_forward_compatibility(saved_model, current_pcntoolkit)
         assert mock_warning.call_count == 0
+
+
+# ---------------------------------------------------------------------------
+# Migration warning tests
+# ---------------------------------------------------------------------------
+
+
+def test_009_migrate_should_warnOnce_when_calledRepeatedlyForSameVersion():
+    """
+    Arrange: a registry with two migrations.
+    Act: migrate five dicts saved at 1.0.0, then one at 1.1.5.
+    Assert: one warning per saved version.
+    """
+    # Arrange
+    reg = _make_registry_with_two_migrations()
+
+    # Act
+    with warnings.catch_warnings(record=True) as caught:
+        for _ in range(5):
+            reg.migrate("TestComp", {"old_key": "value"}, version="1.0.0")
+        reg.migrate("TestComp", {"old_key": "value"}, version="1.1.5")
+
+    migration_warnings = [
+        warning for warning in caught if "saved with PCNtoolkit" in str(warning.message)
+    ]
+    # Assert — 1.0.0 once + 1.1.5 once.
+    assert len(migration_warnings) == 2

@@ -3,8 +3,11 @@ from typing import List, Tuple
 import numpy as np
 import xarray as xr
 from scipy import stats  # type: ignore
-from sklearn.metrics import (explained_variance_score, r2_score,
-                             mean_absolute_percentage_error)
+from sklearn.metrics import (
+    explained_variance_score,
+    mean_absolute_percentage_error,
+    r2_score,
+)
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.util.data_utils import iter_batch_combinations
@@ -46,9 +49,19 @@ class Evaluator:
         # data["Yhat"] = data.centiles.sel(centile=0.5, method="nearest")
         assert "Yhat" in data.data_vars, "Yhat must be computed before evaluation"
         all_statistics = [
-            "Rho", "Rho_p", "R2", "RMSE", "SMSE",
-            "MSLL", "MLL", "ShapiroW", "MACE", "MAPE", "EXPV",
-            "Skewness", "Kurtosis",
+            "Rho",
+            "Rho_p",
+            "R2",
+            "RMSE",
+            "SMSE",
+            "MSLL",
+            "MLL",
+            "ShapiroW",
+            "MACE",
+            "MAPE",
+            "EXPV",
+            "Skewness",
+            "Kurtosis",
         ]
         if statistics:
             self.statistics = [m for m in all_statistics if m in statistics]
@@ -95,8 +108,7 @@ class Evaluator:
         """
         self.statistics = sorted(self.statistics)
         data["statistics"] = xr.DataArray(
-            np.nan * np.ones((len(data.response_var_list),
-                             len(self.statistics))),
+            np.nan * np.ones((len(data.response_var_list), len(self.statistics))),
             dims=("response_vars", "statistic"),
             coords={
                 "response_vars": data.response_var_list,
@@ -116,10 +128,12 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             rho, p_rho = self._evaluate_rho(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "Rho"}] = float(rho)
-            data.statistics.loc[{"response_vars": responsevar,
-                                 "statistic": "Rho_p"}] = float(p_rho)
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "Rho"}] = (
+                float(rho)
+            )
+            data.statistics.loc[
+                {"response_vars": responsevar, "statistic": "Rho_p"}
+            ] = float(p_rho)
 
     def evaluate_R2(self, data: NormData) -> None:
         """
@@ -128,8 +142,7 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             r2 = self._evaluate_R2(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "R2"}] = r2
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "R2"}] = r2
 
     def evaluate_rmse(self, data: NormData) -> None:
         """
@@ -143,8 +156,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             rmse = self._evaluate_rmse(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "RMSE"}] = rmse
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "RMSE"}] = (
+                rmse
+            )
 
     def evaluate_smse(self, data: NormData) -> None:
         """
@@ -161,8 +175,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             smse = self._evaluate_smse(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "SMSE"}] = smse
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "SMSE"}] = (
+                smse
+            )
 
     def evaluate_expv(self, data: NormData) -> None:
         """
@@ -179,8 +194,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             expv = self._evaluate_expv(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "EXPV"}] = expv
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "EXPV"}] = (
+                expv
+            )
 
     def evaluate_msll(self, data: NormData) -> None:
         """
@@ -200,8 +216,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             msll = self._evaluate_msll(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "MSLL"}] = msll
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "MSLL"}] = (
+                msll
+            )
 
     def evaluate_mll(self, data: NormData) -> None:
         """
@@ -223,8 +240,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel(response_vars=responsevar)
             mll = self._evaluate_mll(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "MLL"}] = mll
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "MLL"}] = (
+                mll
+            )
 
     def evaluate_bic(self, data: NormData) -> None:
         """
@@ -242,8 +260,9 @@ class Evaluator:
             resp_predict_data = data.sel(response_vars=responsevar)
             bic = self._evaluate_bic(resp_predict_data)
             self.prepare(responsevar)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "BIC"}] = bic
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "BIC"}] = (
+                bic
+            )
             self.reset()
 
     def evaluate_shapiro_w(self, data: NormData) -> None:
@@ -261,8 +280,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             shapiro_w = self._evaluate_shapiro_w(resp_predict_data)
-            data.statistics.loc[{"response_vars": responsevar,
-                                 "statistic": "ShapiroW"}] = shapiro_w
+            data.statistics.loc[
+                {"response_vars": responsevar, "statistic": "ShapiroW"}
+            ] = shapiro_w
 
     def evaluate_mace(self, data: NormData) -> None:
         """
@@ -271,8 +291,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             mace = self._evaluate_mace(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "MACE"}] = mace
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "MACE"}] = (
+                mace
+            )
 
     def evaluate_mape(self, data: NormData) -> None:
         """
@@ -281,8 +302,9 @@ class Evaluator:
         for responsevar in data.response_var_list:
             resp_predict_data = data.sel({"response_vars": responsevar})
             mape = self._evaluate_mape(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar, "statistic": "MAPE"}] = mape
+            data.statistics.loc[{"response_vars": responsevar, "statistic": "MAPE"}] = (
+                mape
+            )
 
     def evaluate_skew(self, data: NormData) -> None:
         """
@@ -291,7 +313,7 @@ class Evaluator:
         Skewness measures asymmetry of the z-score distribution.
         For a well-calibrated normative model the z-scores follow
         a standard normal distribution, so the ideal value is 0.
-        
+
         Positive values indicate a longer right tail.
         Negative values indicate a longer left tail.
 
@@ -303,15 +325,15 @@ class Evaluator:
         """
         for responsevar in data.response_var_list:
             # Select data for the current response variable
-            resp_predict_data = data.sel(
-                {"response_vars": responsevar}
-            )
+            resp_predict_data = data.sel({"response_vars": responsevar})
             # Compute skewness and store in the statistics array
             skew = self._evaluate_skew(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar,
-                "statistic": "Skewness",
-            }] = skew
+            data.statistics.loc[
+                {
+                    "response_vars": responsevar,
+                    "statistic": "Skewness",
+                }
+            ] = skew
 
     def evaluate_kurt(self, data: NormData) -> None:
         """
@@ -321,7 +343,7 @@ class Evaluator:
         distribution are relative to a normal distribution. For a
         well-calibrated normative model the z-scores follow a
         standard normal distribution, so the ideal value is 0.
-        
+
         Positive values indicate fatter tails (more outliers).
         Negative values indicate thinner tails (less outliers).
 
@@ -333,15 +355,15 @@ class Evaluator:
         """
         for responsevar in data.response_var_list:
             # Select data for the current response variable
-            resp_predict_data = data.sel(
-                {"response_vars": responsevar}
-            )
+            resp_predict_data = data.sel({"response_vars": responsevar})
             # Compute excess kurtosis and store in the statistics array
             kurt = self._evaluate_kurt(resp_predict_data)
-            data.statistics.loc[{
-                "response_vars": responsevar,
-                "statistic": "Kurtosis",
-            }] = kurt
+            data.statistics.loc[
+                {
+                    "response_vars": responsevar,
+                    "statistic": "Kurtosis",
+                }
+            ] = kurt
 
     def _evaluate_rho(self, data: NormData) -> Tuple[float, float]:
         """
@@ -436,7 +458,7 @@ class Evaluator:
         Calculate Mean Standardized Log Loss.
 
         MSLL compares the fitted model's log loss to a baseline Gaussian model.
-        Note that both should be computed on the same (scaled) data to ensure 
+        Note that both should be computed on the same (scaled) data to ensure
         proper comparison, as log-likelihoods are scale-dependent.
 
         Parameters
@@ -455,8 +477,10 @@ class Evaluator:
 
         # Check that the baseline logp is calculated on the scaled data
         if "baseline_logp" not in data:
-            print("Cannot compute MSLL because baseline log probability is "
-                  "not computed on scaled data.")
+            print(
+                "Cannot compute MSLL because baseline log probability is "
+                "not computed on scaled data."
+            )
             return None
 
         # Baseline Gaussian model mean log loss (negative log-likelihood)
@@ -514,8 +538,9 @@ class Evaluator:
 
         rss = np.sum((y - yhat) ** 2)
         n = len(y)
-        bic = float(n * np.log(rss / n) + n_params *
-                    np.log(n))  # Explicitly cast to float
+        bic = float(
+            n * np.log(rss / n) + n_params * np.log(n)
+        )  # Explicitly cast to float
         return bic
 
     def _evaluate_shapiro_w(self, data: NormData) -> float:
@@ -577,10 +602,7 @@ class Evaluator:
 
         # Check if there are batch effects
         unique_batch_effects: dict = data.attrs.get("unique_batch_effects", {})
-        has_batch = (
-            "batch_effects" in data.data_vars
-            and len(unique_batch_effects) > 0
-        )
+        has_batch = "batch_effects" in data.data_vars and len(unique_batch_effects) > 0
 
         if has_batch:
             # Get batch effects values for each subject
@@ -598,21 +620,12 @@ class Evaluator:
                 unique_batch_effects,
                 be_dims,
             ):
-
                 # Compute the empirical centile for this batch group.
-                empirical_centiles = (
-                    centile_data[:, mask]
-                    >= y[mask]
-                ).mean(axis=1)
+                empirical_centiles = (centile_data[:, mask] >= y[mask]).mean(axis=1)
 
                 # MACE for this combination
                 batch_mace.append(
-                    float(
-                        np.abs(
-                            centile_list
-                            - empirical_centiles
-                        ).mean()
-                    )
+                    float(np.abs(centile_list - empirical_centiles).mean())
                 )
 
             # Average MACE across all combinations
@@ -621,9 +634,7 @@ class Evaluator:
         else:
             # Compute MACE if data have no batch effect
             empirical_centiles = (centile_data >= y).mean(axis=1)
-            return float(
-                np.abs(centile_list - empirical_centiles).mean()
-            )
+            return float(np.abs(centile_list - empirical_centiles).mean())
 
     def _evaluate_mape(self, data: NormData) -> float:
         """
@@ -645,7 +656,7 @@ class Evaluator:
 
         Infinite values in the z-scores are replaced with NaN
         before computation and excluded via ``nan_policy='omit'``.
-        
+
 
         Parameters
         ----------
@@ -656,9 +667,9 @@ class Evaluator:
         Returns
         -------
         float
-            Adjusted sample skewness of the z-scores. Returns NaN if fewer 
+            Adjusted sample skewness of the z-scores. Returns NaN if fewer
             than 3 valid observations are available.
-            
+
         References
         ----------
         .. [1] Zwillinger, D. and Kokoska, S. (2000). CRC Standard
@@ -671,7 +682,7 @@ class Evaluator:
         # Replace ±Inf with NaN so they are excluded from the
         # calculation rather than distorting the result
         z[np.isinf(z)] = np.nan
-        
+
         # Count valid (non-NaN) observations remaining
         n_valid = int(np.sum(~np.isnan(z)))
         # Skewness denominator contains (n-1)(n-2), so n>=3 is
@@ -686,7 +697,7 @@ class Evaluator:
                 n_required=n_required,
             )
             return float("nan")
-        
+
         # Compute adjusted (unbiased) skewness, skipping NaNs
         return float(stats.skew(z, bias=False, nan_policy="omit"))
 
@@ -713,9 +724,9 @@ class Evaluator:
         Returns
         -------
         float
-            Adjusted excess kurtosis of the z-scores. Returns NaN if fewer 
+            Adjusted excess kurtosis of the z-scores. Returns NaN if fewer
             than 4 valid observations are available.
-            
+
         References
         ----------
         .. [1] Zwillinger, D. and Kokoska, S. (2000). CRC Standard
@@ -727,7 +738,7 @@ class Evaluator:
         # Replace ±Inf with NaN so they are excluded from the
         # calculation rather than distorting the result
         z[np.isinf(z)] = np.nan
-        
+
         # Count valid (non-NaN) observations remaining
         n_valid = int(np.sum(~np.isnan(z)))
         # Kurtosis denominator contains (n-1)*(n-2)*(n-3), so n>=4 is
@@ -742,12 +753,10 @@ class Evaluator:
                 n_required=n_required,
             )
             return float("nan")
-        
+
         # Compute adjusted excess kurtosis, skipping NaNs,
         # Fisher's definition is used (normal ==> 0.0)
-        return float(
-            stats.kurtosis(z, bias=False, nan_policy="omit")
-        )
+        return float(stats.kurtosis(z, bias=False, nan_policy="omit"))
 
     def empty_statistic(self) -> xr.DataArray:
         return xr.DataArray(

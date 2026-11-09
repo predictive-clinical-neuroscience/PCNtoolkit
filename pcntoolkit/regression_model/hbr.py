@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import os
 from typing import Any, Dict, Optional
 
@@ -8,10 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pymc as pm  # type: ignore
 import xarray as xr
-import copy
 
 from pcntoolkit.math_functions.factorize import *
-from pcntoolkit.math_functions.likelihood import Likelihood, get_default_normal_likelihood
+from pcntoolkit.math_functions.likelihood import (
+    Likelihood,
+    get_default_normal_likelihood,
+)
 from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Output
@@ -114,7 +117,13 @@ class HBR(RegressionModel):
         self.pymc_model: pm.Model = None  # type: ignore
         self.be_maps: dict = None  # type:ignore
 
-    def fit(self, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray) -> None:
+    def fit(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> None:
         """
         Fit the model to training data using MCMC sampling.
 
@@ -163,7 +172,7 @@ class HBR(RegressionModel):
             If ``inference_method`` is not one of "mcmc", "advi",
             "pathfinder" or "laplace".
         ImportError
-            If the packages from pymc-extras (eg "pathfinder" or "laplace") are 
+            If the packages from pymc-extras (eg "pathfinder" or "laplace") are
             requested but pymc-extras is not installed.
         """
 
@@ -237,7 +246,9 @@ class HBR(RegressionModel):
             f"'pathfinder' or 'laplace'."
         )
 
-    def forward(self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray) -> xr.DataArray:
+    def forward(
+        self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
+    ) -> xr.DataArray:
         """
         Map Y values to Z space using MCMC samples
 
@@ -309,7 +320,12 @@ class HBR(RegressionModel):
         )
 
         n_observations = model.dim_lengths["observations"].eval().item()
-        array_of_vars = list(map(lambda x: self.extract_and_reshape(post_pred, n_observations, x), var_names))
+        array_of_vars = list(
+            map(
+                lambda x: self.extract_and_reshape(post_pred, n_observations, x),
+                var_names,
+            )
+        )
         result = xr.apply_ufunc(fn, *array_of_vars, kwargs=kwargs).mean(dim="sample")
         return result
 
@@ -349,7 +365,6 @@ class HBR(RegressionModel):
             )
         return az.extract(logp, "log_likelihood", var_names=["Yhat"]).mean("sample")
 
-
     def model_specific_evaluation(self, path: str) -> None:
         """
         Save model-specific evaluation metrics.
@@ -360,18 +375,25 @@ class HBR(RegressionModel):
         os.makedirs(resultsdir, exist_ok=True)
         if self.is_fitted:
             if self.idata is not None:
-                az.summary(self.idata, fmt="wide", var_names=["~_per_subject"], filter_vars="like").to_csv(
-                    os.path.join(resultsdir, self.name + "_summary.csv")
-                )
+                az.summary(
+                    self.idata,
+                    fmt="wide",
+                    var_names=["~_per_subject"],
+                    filter_vars="like",
+                ).to_csv(os.path.join(resultsdir, self.name + "_summary.csv"))
                 # Trace and autocorrelation plots only mean something for MCMC:
                 # variational draws are independent by construction.
                 if self.inference_method == "mcmc":
                     self._save_plot(
-                        az.plot_trace_dist(self.idata, var_names="~_per_subject", filter_vars="like"),
+                        az.plot_trace_dist(
+                            self.idata, var_names="~_per_subject", filter_vars="like"
+                        ),
                         os.path.join(plotdir, self.name + "_trace.png"),
                     )
                     self._save_plot(
-                        az.plot_autocorr(self.idata, var_names="~_per_subject", filter_vars="like"),
+                        az.plot_autocorr(
+                            self.idata, var_names="~_per_subject", filter_vars="like"
+                        ),
                         os.path.join(plotdir, self.name + "_autocorr.png"),
                     )
                 elif self.vi_loss is not None:
@@ -389,7 +411,9 @@ class HBR(RegressionModel):
                         os.path.join(plotdir, self.name + "_ppc.png"),
                     )
             if self.pymc_model is not None:
-                self.pymc_model.to_graphviz(save=os.path.join(plotdir, self.name + "_model.png"))
+                self.pymc_model.to_graphviz(
+                    save=os.path.join(plotdir, self.name + "_model.png")
+                )
         else:
             raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
 
@@ -399,24 +423,33 @@ class HBR(RegressionModel):
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
         Y: xr.DataArray,
-        **kwargs,
+        **kwargs: Any,
     ) -> HBR:
         """
-                Perform transfer learning using existing model as prior.
+        Perform transfer learning using existing model as prior.
 
-                Parameters
-                ----------
-                hbrconf : HBRConf
-                    Configuration for new model
-                transferdata : HBRData
-                    Data for transfer learning
-                freedom : float
-                    Parameter controlling influence of prior model (0-1)
-        x
-                Returns
-                -------
-                HBR
-                    New model instance with transferred knowledge
+        Parameters
+        ----------
+        X : xr.DataArray
+            Covariate data of the new site(s).
+        be : xr.DataArray
+            Batch effect data of the new site(s).
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data of the new site(s).
+        **kwargs : Any
+            ``freedom`` (float, default 1) sets how far the new model may move
+            away from what the old model learned: 1 keeps the old uncertainty,
+            2 allows twice as much, 0.5 half as much. 
+            
+            Inference settings such as ``draws`` or ``inference_method`` can 
+            also be passed here to replace this model's values for the new fit.
+
+        Returns
+        -------
+        HBR
+            New model instance with transferred knowledge
         """
         new_likelihood = self.likelihood.transfer(self.idata, **kwargs)
         new_hbr_model = HBR(
@@ -466,7 +499,9 @@ class HBR(RegressionModel):
     def has_batch_effect(self) -> bool:
         return False
 
-    def extract_and_reshape(self, post_pred, observations, var_name: str) -> xr.DataArray:
+    def extract_and_reshape(
+        self, post_pred, observations, var_name: str
+    ) -> xr.DataArray:
         preds = post_pred[var_name].values
         if len(preds.shape) == 1:
             preds = np.repeat(preds[None, :], observations, axis=0)
@@ -489,11 +524,17 @@ class HBR(RegressionModel):
         my_dict = self.regmodel_dict
         my_dict["likelihood"] = self.likelihood.to_dict()
         for key, value in self.__dict__.items():
-            # Save the ptk_version currently 
+            # Save the ptk_version currently
             # used by the user
             # vi_loss is a numpy array (not JSON serializable) and is only a
             # diagnostic, so it is not persisted.
-            if key not in ["likelihood", "pymc_model", "idata", "ptk_version", "vi_loss"]:
+            if key not in [
+                "likelihood",
+                "pymc_model",
+                "idata",
+                "ptk_version",
+                "vi_loss",
+            ]:
                 my_dict[key] = value
         if self.is_fitted and (path is not None):
             idata_path = os.path.join(path, "idata.nc")
@@ -623,7 +664,7 @@ class HBR(RegressionModel):
         yhat = self.generic_MCMC_apply(X, be, Y, fn, kwargs={})
         return yhat
 
-# ------- Helpers -------
+    # ------- Helpers -------
 
     def save_idata(self, path: str) -> None:
         """
@@ -645,7 +686,9 @@ class HBR(RegressionModel):
         """
         if self.is_fitted:
             if hasattr(self, "idata"):
-                xr.DataTree.from_dict({"posterior": self.idata["posterior"].dataset}).to_netcdf(path)
+                xr.DataTree.from_dict(
+                    {"posterior": self.idata["posterior"].dataset}
+                ).to_netcdf(path)
             else:
                 raise ValueError(Output.error(Errors.ERROR_HBR_FITTED_BUT_NO_IDATA))
 
@@ -671,7 +714,9 @@ class HBR(RegressionModel):
             try:
                 self.idata = az.from_netcdf(path)
             except Exception as exc:
-                raise ValueError(Output.error(Errors.ERROR_HBR_COULD_NOT_LOAD_IDATA, path=path)) from exc
+                raise ValueError(
+                    Output.error(Errors.ERROR_HBR_COULD_NOT_LOAD_IDATA, path=path)
+                ) from exc
 
     @staticmethod
     def _save_plot(plot_collection: Any, path: str) -> None:

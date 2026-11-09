@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from os import PathLike
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -19,45 +20,32 @@ if TYPE_CHECKING:
 class ZDiffScore(LongitudinalScore):
     """Two-visit z-diff score (Rehák Bučková et al., 2025).
 
-    The z-diff score asks whether the change between two visits is larger or
-    smaller than expected under a fitted BLR normative model.
-
-        Δr_target = (y₂ - ŷ₂) - (y₁ - ŷ₁)
-
-    The toolkit scales that change by the spread of changes learned
-    from ``reference_data`` (can be the healthy subjects)::
-
-        z_diff = Δr_target / SD(Δr_reference)
-
-        where SD(Δr_reference) = sqrt(2σ²(1−ρ)) if the residuals are
-        stationary with variance σ² and visit-to-visit correlation ρ.
-
-    This score is intended for BLR-based models and subjects with at most two
-    visits.
+    Parameters
+    ----------
+    normative_model : NormativeModel
+        A fitted BLR normative model.
+    reference_data : NormData
+        People with two visits, usually healthy controls, used to learn how
+        much change is typical.
 
     Attributes
     ----------
     zdiff : xr.DataArray | None
-        The most recent z-diff scores produced by :meth:`score`. ``None`` until
-        :meth:`score` has been called at least once. It stores the same
-        ``xr.DataArray`` that :meth:`score` returns, so the result can be
-        retrieved later even if the return value was not saved.
+        Last result of ``score``, or ``None`` before the first call.
     """
 
     def __init__(
         self,
         normative_model: NormativeModel,
         reference_data: NormData,
-        subject_id_col: str, # TODO: Are these subject_id_col necessary as a keyword argument? Does the user need to specify that?
-    ):
+    ) -> None:
         # Reuse the shared setup from the base class.
-        super().__init__(normative_model, reference_data, subject_id_col)
-        # Unlike ZGainScore, this score reads the reference cohort at scoring
+        super().__init__(normative_model, reference_data)
+        # Unlike VelocityModel, this score reads the reference cohort at scoring
         # time to estimate the spread of expected change.
         if reference_data is None:
             raise ValueError(
-                "ZDiffScore needs a longitudinal reference cohort to estimate "
-                "the typical size of change. Pass reference_data."
+                "ZDiffScore needs a longitudinal reference cohort to estimate the typical size of change. Pass reference_data."
             )
         # z-diff is defined only for BLR models.
         self._check_model_is_blr(normative_model)
@@ -68,34 +56,34 @@ class ZDiffScore(LongitudinalScore):
     def score(
         self,
         score_data: NormData,
-        subject_id_col: str | None = None,
+        save_path: str | PathLike[str] | None = None,
     ) -> xr.DataArray:
-        """Compute the z-diff score for every subject in ``score_data``.
+        """Compute one z-diff per subject and response variable.
 
         Parameters
         ----------
         score_data : NormData
-            Longitudinal cohort with exactly two visits per subject, numeric
-            visit labels on the NormData object, and predictions already
-            computed.
-        subject_id_col : str, optional
-            Subject id column name override. Defaults to the value supplied
-            at construction.
+            Subjects to score, with two visits each, predictions already
+            computed and visit numbers set.
+        save_path : str | PathLike[str] | None, optional
+            If set, also save the scores to this CSV file::
+
+                subjects  lh_thickness  rh_thickness
+                sub-01            0.42         -1.10
+                sub-02           -0.35          0.87
 
         Returns
         -------
         xr.DataArray
-            One z-diff score per subject and response variable. The same array
-            is also stored on the instance as :attr:`zdiff` for later retrieval.
+            z-diff with dimensions ``(subjects, response_vars)``. Also stored
+            as ``self.zdiff``.
         """
-        # Use the stored subject id name unless the caller overrides it.
-        subject_id_col = subject_id_col or self.subject_id_col
-
         # Run checks first for both the reference and score data.
-        self._check_is_predicted(self.reference_data)
+        # z-diff is built from residuals y - Yhat, so it needs Yhat, not Z.
+        self._check_is_predicted(self.reference_data, required=("Yhat",))
         self._check_is_longitudinal(self.reference_data)
         self._check_at_most_two_visits(self.reference_data)
-        self._check_is_predicted(score_data)
+        self._check_is_predicted(score_data, required=("Yhat",))
         self._check_is_longitudinal(score_data)
         self._check_at_most_two_visits(score_data)
 
@@ -117,9 +105,7 @@ class ZDiffScore(LongitudinalScore):
         for j, rv in enumerate(response_vars):
             # Learn the typical size of expected change from the reference
             # cohort (reference_data).
-            delta_reference = self._compute_residual_change(
-                self.reference_data, rv
-            )
+            delta_reference = self._compute_residual_change(self.reference_data, rv)
             # Convert the subject-level changes into a numeric vector.
             delta_reference_values = np.fromiter(
                 delta_reference.values(),
@@ -130,10 +116,7 @@ class ZDiffScore(LongitudinalScore):
             denominator = np.sqrt(float(np.mean(delta_reference_values**2)))
             # Reject the degenerate case of no expected change at all.
             if np.isclose(denominator, 0.0):
-                raise ValueError(
-                    f"Cannot estimate denominator for '{rv}': "
-                    "reference_data has zero residual-change variability."
-                )
+                raise ValueError(f"Cannot estimate denominator for '{rv}': reference_data has zero residual-change variability.")
 
             # Compute the change for each target subject (score_data).
             # Mathematically this Δr_target.
@@ -153,6 +136,8 @@ class ZDiffScore(LongitudinalScore):
             coords={"subjects": subjects, "response_vars": response_vars},
             name="zdiff",
         )
+        if save_path is not None:
+            self._save_scores_csv(self.zdiff, save_path)
         return self.zdiff
 
     # ------------------------------------------------------------------ #
@@ -236,7 +221,7 @@ class ZDiffScore(LongitudinalScore):
             # Tell the user to switch to z-gain for longer trajectories.
             raise ValueError(
                 "ZDiffScore supports at most two visits per subject. "
-                "Some subjects have more than two visits. You can use ZGainScore "
+                "Some subjects have more than two visits. You can use VelocityModel "
                 "for three or more visits."
             )
 
@@ -248,6 +233,5 @@ class ZDiffScore(LongitudinalScore):
         if not isinstance(template, BLR):
             # Explain that z-diff is only defined for BLR models here.
             raise ValueError(
-                "ZDiffScore requires a BLR (or warped BLR) normative model. "
-                "Use ZGainScore for other regression models."
+                "ZDiffScore requires a BLR (or warped BLR) normative model. Use VelocityModel for other regression models."
             )

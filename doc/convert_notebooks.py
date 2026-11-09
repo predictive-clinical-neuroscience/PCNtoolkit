@@ -13,19 +13,21 @@ from nbconvert.preprocessors import ClearOutputPreprocessor
 EXAMPLES_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "examples")
 )
-TUTORIALS_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "tutorials")
-)
+TUTORIALS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "tutorials"))
 # Downloadable copies of the notebooks inside the doc folder
 NOTEBOOKS_DIR = os.path.join(TUTORIALS_DIR, "notebooks")
 
 # Notebooks that are not ready for the website. Names are without the
 # ".ipynb" extension.
-SKIP_NOTEBOOKS = {
-    "14_longitudinal_modelling",
-}
+SKIP_NOTEBOOKS: set[str] = set()
 
 os.makedirs(TUTORIALS_DIR, exist_ok=True)
+
+# Fixes the issue where in Windows nbconvert leaves 4 spaces long empty lines
+NBCONVERT = (
+    "import os; os.linesep = '\\n'; "
+    "from nbconvert.nbconvertapp import main; main()"
+)
 
 
 def clean_tutorials_dir() -> None:
@@ -48,8 +50,7 @@ def clean_tutorials_dir() -> None:
 
 
 def convert_notebooks() -> None:
-    """Convert every example notebook to RST using nbconvert.
-    """
+    """Convert every example notebook to RST using nbconvert."""
     # Collect all notebooks in the examples directory
     notebooks = glob.glob(os.path.join(EXAMPLES_DIR, "*.ipynb"))
 
@@ -63,13 +64,11 @@ def convert_notebooks() -> None:
 
         subprocess.run(
             [
-                sys.executable, # resolve "jupyter" from the virtual
-                                # environment that is running this script
-                "-m",
-                "jupyter",
-                "nbconvert", # nbconvert needs the package "pandoc". Please
-                             # install with
-                             # "conda install -c conda-forge pandoc"
+                sys.executable,  # use the environment running this script
+                "-c",
+                NBCONVERT,  # nbconvert needs the package "pandoc". Please
+                # install with
+                # "conda install -c conda-forge pandoc"
                 "--to",
                 "rst",
                 nb_path,
@@ -107,9 +106,7 @@ def write_stripped_notebooks() -> None:
             cell.get("metadata", {}).pop("execution", None)
 
         print(f"Adding {nb_name}.ipynb to {NOTEBOOKS_DIR} for download")
-        nbformat.write(
-            notebook, os.path.join(NOTEBOOKS_DIR, f"{nb_name}.ipynb")
-        )
+        nbformat.write(notebook, os.path.join(NOTEBOOKS_DIR, f"{nb_name}.ipynb"))
 
 
 def insert_download_link() -> None:
@@ -133,14 +130,13 @@ def insert_download_link() -> None:
             print(f"No title in {nb_name}, skipping download link")
             continue
 
-        # add a download link just below the title with a container class 
+        # add a download link just below the title with a container class
         # that can be styled in CSS.
         link = [
             "",
             ".. container:: notebook-download",
             "",
-            "   :download:`Download Jupyter notebook "
-            f"<notebooks/{nb_name}.ipynb>`",
+            f"   :download:`Download Jupyter notebook <notebooks/{nb_name}.ipynb>`",
         ]
         lines[title_end + 1 : title_end + 1] = link
 
@@ -200,9 +196,26 @@ def fix_output_blocks() -> None:
                 fh.write(fixed)
 
 
-def fix_image_paths() -> None:
-    """Fix image paths in generated RST files in Windows.
+def fix_static_image_paths() -> None:
+    """Point notebook images in doc/_static/ to the right place on the website.
+
+    Notebooks in examples/ reach the images as ``../doc/_static/``, but the
+    generated RST files live in doc/tutorials/, where the same folder is
+    ``../_static/``.
     """
+    for rst_path in glob.glob(os.path.join(TUTORIALS_DIR, "*.rst")):
+        with open(rst_path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+
+        fixed = content.replace("../doc/_static/", "../_static/")
+
+        if fixed != content:
+            with open(rst_path, "w", encoding="utf-8") as fh:
+                fh.write(fixed)
+
+
+def fix_image_paths() -> None:
+    """Fix image paths in generated RST files in Windows."""
     # Iterate over every generated RST file in the tutorials dir
     for rst_path in glob.glob(os.path.join(TUTORIALS_DIR, "*.rst")):
         # Read the file content as text
@@ -223,6 +236,7 @@ if __name__ == "__main__":
     convert_notebooks()
     write_stripped_notebooks()
     insert_download_link()
-    fix_output_blocks() # fix the light yellow output boxes
-    if os.name == "nt": # Only fix image paths on Windows
+    fix_output_blocks()  # fix the light yellow output boxes
+    fix_static_image_paths()
+    if os.name == "nt":  # Only fix image paths on Windows
         fix_image_paths()

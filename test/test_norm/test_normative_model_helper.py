@@ -35,7 +35,11 @@ def test_fit(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormDat
     assert new_norm_test_model.is_fitted
 
 
-def test_fit_predict(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData, test_norm_data_from_arrays: NormData):
+def test_fit_predict(
+    new_norm_test_model: NormativeModel,
+    norm_data_from_arrays: NormData,
+    test_norm_data_from_arrays: NormData,
+):
     if os.path.exists(new_norm_test_model.save_dir):
         shutil.rmtree(new_norm_test_model.save_dir)
     os.makedirs(new_norm_test_model.save_dir, exist_ok=True)
@@ -43,23 +47,31 @@ def test_fit_predict(new_norm_test_model: NormativeModel, norm_data_from_arrays:
     assert new_norm_test_model.is_fitted
 
 
-def test_predict(fitted_norm_test_model: NormativeModel, test_norm_data_from_arrays: NormData):
+def test_predict(
+    fitted_norm_test_model: NormativeModel, test_norm_data_from_arrays: NormData
+):
     os.makedirs(fitted_norm_test_model.save_dir, exist_ok=True)
     fitted_norm_test_model.predict(test_norm_data_from_arrays)
     assert fitted_norm_test_model.is_fitted
 
 
-def test_harmonize(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_harmonize(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     fitted_norm_test_model.harmonize(norm_data_from_arrays)
     assert fitted_norm_test_model.is_fitted
 
 
-def test_compute_zscores(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_compute_zscores(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     fitted_norm_test_model.compute_zscores(norm_data_from_arrays)
     assert fitted_norm_test_model.is_fitted
 
 
-def test_compute_centiles(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_compute_centiles(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     fitted_norm_test_model.compute_centiles(norm_data_from_arrays)
     assert fitted_norm_test_model.is_fitted
 
@@ -118,14 +130,22 @@ def assert_minmax_scaled(data):
     assert np.allclose(data.Y.data.max(axis=0), 1)
 
 
-def test_test_model_to_and_from_dict_and_args(test_model_args: dict, norm_data_from_arrays: NormData, save_dir_test_model):
+def test_test_model_to_and_from_dict_and_args(
+    test_model_args: dict, norm_data_from_arrays: NormData, save_dir_test_model
+):
     model = NormativeModel.from_args(**test_model_args)
     model_dict = model.to_dict()
-    assert model_dict["template_regression_model"]["success_ratio"] == test_model_args["success_ratio"]
+    assert (
+        model_dict["template_regression_model"]["success_ratio"]
+        == test_model_args["success_ratio"]
+    )
     model.fit(norm_data_from_arrays)
     assert model.is_fitted
     model_dict = model.to_dict()
-    assert model_dict["template_regression_model"]["success_ratio"] == test_model_args["success_ratio"]
+    assert (
+        model_dict["template_regression_model"]["success_ratio"]
+        == test_model_args["success_ratio"]
+    )
     model.predict(norm_data_from_arrays)
     assert hasattr(norm_data_from_arrays, "Z")
     Z_bak = copy.deepcopy(norm_data_from_arrays["Z"])
@@ -165,10 +185,20 @@ def hbr_model_args(save_dir_hbr):
     }
 
 
-def test_hbr_model_to_and_from_dict_and_args(hbr_model_args: dict, norm_data_from_arrays: NormData, save_dir_hbr):
+def test_hbr_model_to_and_from_dict_and_args(
+    hbr_model_args: dict, norm_data_from_arrays: NormData, save_dir_hbr
+):
     model = NormativeModel.from_args(**hbr_model_args)
     model_dict = model.to_dict()
-    for k in ["savemodel", "saveresults", "evaluate_model", "saveplots", "inscaler", "outscaler", "name"]:
+    for k in [
+        "savemodel",
+        "saveresults",
+        "evaluate_model",
+        "saveplots",
+        "inscaler",
+        "outscaler",
+        "name",
+    ]:
         assert model_dict[k] == hbr_model_args[k]
     tmplt = model.template_regression_model
     assert isinstance(tmplt, HBR)
@@ -239,10 +269,20 @@ def blr_model_args(save_dir_blr):
     }
 
 
-def test_blr_model_to_and_from_dict_and_args(blr_model_args: dict, norm_data_from_arrays: NormData, save_dir_blr):
+def test_blr_model_to_and_from_dict_and_args(
+    blr_model_args: dict, norm_data_from_arrays: NormData, save_dir_blr
+):
     model = NormativeModel.from_args(**blr_model_args)
     model_dict = model.to_dict()
-    for k in ["savemodel", "saveresults", "evaluate_model", "saveplots", "inscaler", "outscaler", "name"]:
+    for k in [
+        "savemodel",
+        "saveresults",
+        "evaluate_model",
+        "saveplots",
+        "inscaler",
+        "outscaler",
+        "name",
+    ]:
         assert model_dict[k] == blr_model_args[k]
     tmplt = model.template_regression_model
     assert isinstance(tmplt, BLR)
@@ -308,28 +348,18 @@ def test_log1p_transform(
 
     # Check that Y are non-negative in the original data. Y has to be > -1
     # for the log(Y+1) transform to work.
-    assert bool(
-        np.all(test_norm_data_from_arrays["Y"].values >= 0)
-    )
+    assert bool(np.all(test_norm_data_from_arrays["Y"].values >= 0))
 
     # Both training and test centiles should be bigger than -1 (not 0) due to
     # the exp(Y) - 1 transform
-    assert bool(
-        np.all(norm_data_from_arrays["centiles"].values > -1)
-    )
-    assert bool(
-        np.all(test_norm_data_from_arrays["centiles"].values > -1)
-    )
+    assert bool(np.all(norm_data_from_arrays["centiles"].values > -1))
+    assert bool(np.all(test_norm_data_from_arrays["centiles"].values > -1))
 
     # Yhat is a mean predicted in log1p space and mapped back with expm1, so it
     # should be bigger than -1 (not 0). A predicted mean below 0 in log1p space
     # maps to a Y between -1 and 0 due to  the exp(Y) - 1 transform
-    assert bool(
-        np.all(norm_data_from_arrays["Yhat"].values > -1)
-    )
-    assert bool(
-        np.all(test_norm_data_from_arrays["Yhat"].values > -1)
-    )
+    assert bool(np.all(norm_data_from_arrays["Yhat"].values > -1))
+    assert bool(np.all(test_norm_data_from_arrays["Yhat"].values > -1))
 
 
 def test_log_transformed(
@@ -337,35 +367,25 @@ def test_log_transformed(
     norm_data_from_arrays: NormData,
     test_norm_data_from_arrays: NormData,
 ) -> None:
-    # Force the BOTH test and train data to be >= 1e-6. 
+    # Force the BOTH test and train data to be >= 1e-6.
     # We do that as Y has to be > 0 for the log(Y) transform to work.
-    norm_data_from_arrays["Y"].values = (
-        norm_data_from_arrays["Y"].values.clip(min=1e-6))
-    test_norm_data_from_arrays["Y"].values = (
-        test_norm_data_from_arrays["Y"].values.clip(min=1e-6))
+    norm_data_from_arrays["Y"].values = norm_data_from_arrays["Y"].values.clip(min=1e-6)
+    test_norm_data_from_arrays["Y"].values = test_norm_data_from_arrays[
+        "Y"
+    ].values.clip(min=1e-6)
 
     log_transform_norm_blr_model.fit_predict(
         norm_data_from_arrays, test_norm_data_from_arrays
     )
 
     # Check that Y are positive in the original data
-    assert bool(
-        np.all(test_norm_data_from_arrays["Y"].values > 0)
-    )
+    assert bool(np.all(test_norm_data_from_arrays["Y"].values > 0))
 
     # Both training and test centiles should be bigger than 0 due to the exp(Y)
     # transform
-    assert bool(
-        np.all(norm_data_from_arrays["centiles"].values > 0)
-    )
-    assert bool(
-        np.all(test_norm_data_from_arrays["centiles"].values > 0)
-    )
+    assert bool(np.all(norm_data_from_arrays["centiles"].values > 0))
+    assert bool(np.all(test_norm_data_from_arrays["centiles"].values > 0))
 
     # We dont expect any negative yhat values in the train and test dataset
-    assert bool(
-        np.all(norm_data_from_arrays["Yhat"].values > 0)
-    )
-    assert bool(
-        np.all(test_norm_data_from_arrays["Yhat"].values > 0)
-    )
+    assert bool(np.all(norm_data_from_arrays["Yhat"].values > 0))
+    assert bool(np.all(test_norm_data_from_arrays["Yhat"].values > 0))

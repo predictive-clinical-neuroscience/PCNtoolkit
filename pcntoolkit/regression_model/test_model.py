@@ -1,4 +1,3 @@
-from optparse import Values
 
 import numpy as np
 import xarray as xr
@@ -22,24 +21,47 @@ class TestModel(RegressionModel):
         super().__init__(name)
         self.success_ratio = success_ratio
 
-    def fit(self, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray) -> None:
+    def fit(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> None:
         success = np.random.rand() < self.success_ratio
         if success:
             self.is_fitted = True
         else:
             raise ValueError("Failed to fit model")
 
-    def forward(self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray) -> xr.DataArray:
-        return (Y.copy() - X.sel(covariates=X.covariates.values[0]).values) / X.sel(covariates=X.covariates.values[0]).values
+    def forward(
+        self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
+    ) -> xr.DataArray:
+        return (Y.copy() - X.sel(covariates=X.covariates.values[0]).values) / X.sel(
+            covariates=X.covariates.values[0]
+        ).values
 
-    def backward(self, X: xr.DataArray, be: xr.DataArray, Z: xr.DataArray) -> xr.DataArray:
-        return Z.copy() * X.sel(covariates=X.covariates.values[0]).values + X.sel(covariates=X.covariates.values[0]).values
+    def backward(
+        self, X: xr.DataArray, be: xr.DataArray, Z: xr.DataArray
+    ) -> xr.DataArray:
+        return (
+            Z.copy() * X.sel(covariates=X.covariates.values[0]).values
+            + X.sel(covariates=X.covariates.values[0]).values
+        )
 
-    def elemwise_logp(self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray) -> xr.DataArray:
+    def elemwise_logp(
+        self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
+    ) -> xr.DataArray:
         logp = np.random.randn(*Y.shape)
         return xr.DataArray(logp, coords=Y.coords, dims=Y.dims, attrs=Y.attrs)
 
-    def transfer(self, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray) -> RegressionModel:
+    def transfer(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> RegressionModel:
         return TestModel(self.name, self.success_ratio)
 
     def to_dict(self, path: str | None = None) -> dict:

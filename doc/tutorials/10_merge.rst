@@ -45,29 +45,32 @@ Imports
 
 .. code:: ipython3
 
-    from pcntoolkit import load_fcon1000, HBR, NormativeModel, BLR
-    from pcntoolkit.util.plotter import plot_centiles_advanced
-    import matplotlib.pyplot as plt
-    import pcntoolkit
-    import seaborn as sns
-    
-    import pandas as pd
     import logging
     import warnings
     
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    
+    import pcntoolkit
+    from pcntoolkit import BLR, HBR, NormativeModel, load_fcon1000
+    from pcntoolkit.util.plotter import plot_centiles_advanced
     
     # Suppress some annoying warnings and logs
     pymc_logger = logging.getLogger("pymc")
     pymc_logger.setLevel(logging.WARNING)
     pymc_logger.propagate = False
     
-    warnings.simplefilter(
-        action="ignore", category=FutureWarning
-    )
+    warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None
-    pcntoolkit.util.output.Output.set_show_messages(
-        False
-    )
+    pcntoolkit.util.output.Output.set_show_messages(False)
+
+
+.. code:: text
+
+    /tmp/ipykernel_3202/1734914761.py:18: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None
+
 
 Load and split the data
 -----------------------
@@ -166,16 +169,20 @@ Train the Location 1 model (HBR)
 
 .. code:: ipython3
 
-    location1_model = NormativeModel(HBR(progressbar=False), save_dir="../out/models/location1_model")
+    location1_model = NormativeModel(
+        HBR(progressbar=False), save_dir="../out/models/location1_model"
+    )
     location1_model.fit_predict(location1_train, location1_test);
-
 
 Train the Location 2 model (BLR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: ipython3
 
-    location2_model = NormativeModel(BLR(heteroskedastic=True, warp_name="WarpSinhArcsinh"), save_dir="../out/models/location2_model")
+    location2_model = NormativeModel(
+        BLR(heteroskedastic=True, warp_name="WarpSinhArcsinh"),
+        save_dir="../out/models/location2_model",
+    )
     location2_model.fit_predict(location2_train, location2_test);
 
 Visualize the individual models
@@ -183,11 +190,12 @@ Visualize the individual models
 
 .. code:: ipython3
 
-    plot_centiles_advanced(location1_model, 
-                           scatter_data=location1_train, 
-                           batch_effects="all",
-                           show_legend=False
-                           )
+    plot_centiles_advanced(
+        location1_model,
+        scatter_data=location1_train,
+        batch_effects="all",
+        show_legend=False,
+    )
 
 
 
@@ -204,11 +212,12 @@ Visualize the individual models
 
 .. code:: ipython3
 
-    plot_centiles_advanced(location2_model, 
-                           scatter_data=location2_train, 
-                           batch_effects="all",
-                           show_legend=False
-                           )
+    plot_centiles_advanced(
+        location2_model,
+        scatter_data=location2_train,
+        batch_effects="all",
+        show_legend=False,
+    )
 
 
 
@@ -262,7 +271,9 @@ first model in the list, the merged model here will be an ``HBR``.
     # Merging is super duper easy
     
     # Merge Location 2 into Location 1 — result is a new HBR model (type of the first model in the list).
-    merged_model = NormativeModel.merge("../out/models/merged_model", [fitted_location1_model, fitted_location2_model]);
+    merged_model = NormativeModel.merge(
+        "../out/models/merged_model", [fitted_location1_model, fitted_location2_model]
+    );
     
     # If we would change the order of the models in the list, we would get a BLR model.
 
@@ -271,10 +282,9 @@ Visualize the merged model
 
 .. code:: ipython3
 
-    plot_centiles_advanced(merged_model, 
-                           scatter_data=data, 
-                           batch_effects="all",
-                           show_legend=False)
+    plot_centiles_advanced(
+        merged_model, scatter_data=data, batch_effects="all", show_legend=False
+    )
 
 
 

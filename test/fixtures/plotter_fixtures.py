@@ -2,16 +2,17 @@
 Shared helper functions for plotter-related tests
 """
 
-from pcntoolkit.normative_model import NormData
 import numpy as np
 import xarray as xr
+
+from pcntoolkit.normative_model import NormData
 
 
 def create_test_data_with_z(
     n: int = 20,
     seed: int = 0,
 ) -> NormData:
-    """Build a tiny NormData that already contains Z-scores, so there is no 
+    """Build a tiny NormData that already contains Z-scores, so there is no
     need to fit a model to generate them. This allows testing of the plotting
     functions in isolation from the modeling code and makes testing faster.
 

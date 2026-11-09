@@ -40,7 +40,9 @@ class TestBasicCLI:
 
         # Verify output files
         assert (self.save_dir / "model" / "normative_model.json").exists()
-        assert (self.save_dir / "plots" / "centiles_response_var_0_fit_data_harmonized.png").exists()
+        assert (
+            self.save_dir / "plots" / "centiles_response_var_0_fit_data_harmonized.png"
+        ).exists()
         assert (self.save_dir / "results" / "centiles_fit_data.csv").exists()
 
         model = NormativeModel.load(str(self.save_dir))
@@ -62,8 +64,14 @@ class TestBasicCLI:
         for fold in range(3):
             fold_dir = self.save_dir / "folds" / f"fold_{fold}"
             assert (fold_dir / "model" / "normative_model.json").exists()
-            assert (fold_dir / "plots" / f"centiles_response_var_0_fit_data_fold_{fold}_fit_harmonized.png").exists()
-            assert (fold_dir / "results" / f"centiles_fit_data_fold_{fold}_fit.csv").exists()
+            assert (
+                fold_dir
+                / "plots"
+                / f"centiles_response_var_0_fit_data_fold_{fold}_fit_harmonized.png"
+            ).exists()
+            assert (
+                fold_dir / "results" / f"centiles_fit_data_fold_{fold}_fit.csv"
+            ).exists()
 
     def test_blr_cli_with_batch_effects(self):
         """Test CLI command with batch effect correction."""
@@ -75,7 +83,9 @@ class TestBasicCLI:
 
         # Verify output files
         assert (self.save_dir / "model" / "normative_model.json").exists()
-        assert (self.save_dir / "plots" / "centiles_response_var_0_fit_data_harmonized.png").exists()
+        assert (
+            self.save_dir / "plots" / "centiles_response_var_0_fit_data_harmonized.png"
+        ).exists()
         assert (self.save_dir / "results" / "centiles_fit_data.csv").exists()
 
     # def test_blr_cli_with_warp_compose(self):
@@ -131,7 +141,9 @@ class TestBasicCLI:
 
         # Verify output files
         assert (self.save_dir / "model" / "normative_model.json").exists()
-        assert (self.save_dir / "plots" / "centiles_response_var_0_fit_data_harmonized.png").exists()
+        assert (
+            self.save_dir / "plots" / "centiles_response_var_0_fit_data_harmonized.png"
+        ).exists()
         assert (self.save_dir / "results" / "centiles_fit_data.csv").exists()
 
         # Load model and check if batch effect correction is used

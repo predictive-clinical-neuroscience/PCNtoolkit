@@ -29,3 +29,9 @@ Tutorials
    06_transfer_extend
    10_merge
    12_transfer_pretrained
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Longitudinal normative modelling
+
+   14_longitudinal_modelling

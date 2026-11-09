@@ -21,8 +21,12 @@ def test_approximate_normal(mu, sigma):
     xspace = np.linspace(-10, 10, 200)
     plt.plot(xspace, dens.pdf(xspace), label="observed")
     plt.plot(xspace, np.exp(pm.logp(dist, xspace).eval()), label="approsximation")
-    plt.plot(xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation")
-    plt.plot(xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation")
+    plt.plot(
+        xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation"
+    )
+    plt.plot(
+        xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation"
+    )
     plt.legend()
     plt.savefig(os.path.join("test", "output", f"normal_samples_{mu}_{sigma}.png"))
     plt.close()
@@ -43,8 +47,12 @@ def test_approximate_halfnormal(sigma):
     xspace = np.linspace(0, 10, 200)
     plt.plot(xspace, dens.pdf(xspace), label="observed")
     plt.plot(xspace, np.exp(pm.logp(dist, xspace).eval()), label="approximation")
-    plt.plot(xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation")
-    plt.plot(xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation")
+    plt.plot(
+        xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation"
+    )
+    plt.plot(
+        xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation"
+    )
     plt.legend()
     plt.savefig(os.path.join("test", "output", f"halfnormal_samples_{sigma}.png"))
     plt.close()
@@ -64,8 +72,12 @@ def test_approximate_lognormal(s, sigma):
     xspace = np.linspace(0, 10, 1000)
     plt.plot(xspace, dens.pdf(xspace), label="observed")
     plt.plot(xspace, np.exp(pm.logp(dist, xspace).eval()), label="approximation")
-    plt.plot(xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation")
-    plt.plot(xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation")
+    plt.plot(
+        xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation"
+    )
+    plt.plot(
+        xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation"
+    )
     plt.legend()
     plt.savefig(os.path.join("test", "output", f"lognormal_samples_{s}_{sigma}.png"))
     plt.close()
@@ -115,8 +127,12 @@ def test_approximate_gamma(shape, scale):
     xspace = np.linspace(0, 10, 1000)
     plt.plot(xspace, dens.pdf(xspace), label="observed")
     plt.plot(xspace, np.exp(pm.logp(dist, xspace).eval()), label="approximation")
-    plt.plot(xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation")
-    plt.plot(xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation")
+    plt.plot(
+        xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation"
+    )
+    plt.plot(
+        xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation"
+    )
     plt.legend()
     plt.savefig(os.path.join("test", "output", f"gamma_samples_{shape}_{scale}.png"))
     plt.close()
@@ -136,8 +152,12 @@ def test_approximate_uniform(lower, upper):
     xspace = np.linspace(0, 10, 1000)
     plt.plot(xspace, dens.pdf(xspace), label="observed")
     plt.plot(xspace, np.exp(pm.logp(dist, xspace).eval()), label="approximation")
-    plt.plot(xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation")
-    plt.plot(xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation")
+    plt.plot(
+        xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation"
+    )
+    plt.plot(
+        xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation"
+    )
     plt.legend()
     plt.savefig(os.path.join("test", "output", f"uniform_samples_{lower}_{upper}.png"))
     plt.close()
@@ -157,8 +177,12 @@ def test_approximate_exponential(lmb):
     xspace = np.linspace(0, 10, 1000)
     plt.plot(xspace, dens.pdf(xspace), label="observed")
     plt.plot(xspace, np.exp(pm.logp(dist, xspace).eval()), label="approximation")
-    plt.plot(xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation")
-    plt.plot(xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation")
+    plt.plot(
+        xspace, np.exp(pm.logp(loose_dist, xspace).eval()), label="loose approximation"
+    )
+    plt.plot(
+        xspace, np.exp(pm.logp(tight_dist, xspace).eval()), label="tight approximation"
+    )
     plt.legend()
     plt.savefig(os.path.join("test", "output", f"exponential_samples_{lmb}.png"))
     plt.close()

@@ -16,28 +16,26 @@ Imports
 
 .. code:: ipython3
 
-    import warnings
     import logging
+    import warnings
     
-    
-    import pandas as pd
     import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import seaborn as sns
+    
+    import pcntoolkit.util.output
     from pcntoolkit import (
         HBR,
         BsplineBasisFunction,
+        NormalLikelihood,
         NormativeModel,
         NormData,
         load_fcon1000,
-        NormalLikelihood,
         make_prior,
         plot_centiles_advanced,
         plot_qq,
-        plot_ridge,
     )
-    
-    import numpy as np
-    import pcntoolkit.util.output
-    import seaborn as sns
     
     sns.set_style("darkgrid")
     
@@ -50,6 +48,13 @@ Imports
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
+
+
+.. code:: text
+
+    /tmp/ipykernel_2666/2411158358.py:31: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None  # default='warn'
+
 
 Load data
 ---------
@@ -77,7 +82,13 @@ First we download a small example dataset from github.
     df = train.to_dataframe()
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
     
-    sns.countplot(data=df, y=("batch_effects", "site"), hue=("batch_effects", "sex"), ax=ax[0], orient="h")
+    sns.countplot(
+        data=df,
+        y=("batch_effects", "site"),
+        hue=("batch_effects", "sex"),
+        ax=ax[0],
+        orient="h",
+    )
     ax[0].legend(title="Sex")
     ax[0].set_title("Count of sites")
     ax[0].set_xlabel("Site")
@@ -262,7 +273,7 @@ NormalLikelihood, which we will use to model our response variable.
             # Mu is the mean of the intercept, which is normally distributed with a mean of 0 and a standard deviation of 1.
             mu=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
             # Sigma is the scale at which the intercepts vary between sites and sexes.
-            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0))
+            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 1.0)),
         ),
         # We use a B-spline basis function to allow for non-linearity in the mean.
         # basis_column=0 picks the covariate to expand (age here), and nknots=5 with
@@ -377,9 +388,16 @@ Let’s start with the centiles.
 
     plot_centiles_advanced(
         model,
-        centiles=[0.05, 0.5, 0.95],  # Plot these centiles, the default is [0.05, 0.25, 0.5, 0.75, 0.95]
+        centiles=[
+            0.05,
+            0.5,
+            0.95,
+        ],  # Plot these centiles, the default is [0.05, 0.25, 0.5, 0.75, 0.95]
         scatter_data=train,  # Scatter this data along with the centiles
-        batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},  # Highlight these groups
+        batch_effects={
+            "site": ["Beijing_Zang", "AnnArbor_a"],
+            "sex": ["M"],
+        },  # Highlight these groups
         show_other_data=True,  # scatter data not in those groups as smaller black circles
         harmonize_data=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
     )
@@ -493,19 +511,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.359243</td>
-          <td>5.844206</td>
-          <td>0.086936</td>
-          <td>0.308771</td>
-          <td>0.872169</td>
-          <td>-0.54677</td>
-          <td>0.359242</td>
-          <td>653.752969</td>
-          <td>0.50329</td>
-          <td>1.526992e-56</td>
-          <td>0.640758</td>
-          <td>0.880239</td>
-          <td>1.794573</td>
+          <td>0.35915</td>
+          <td>5.846954</td>
+          <td>0.086087</td>
+          <td>0.308695</td>
+          <td>0.872037</td>
+          <td>-0.546902</td>
+          <td>0.359149</td>
+          <td>653.800502</td>
+          <td>0.503593</td>
+          <td>1.280525e-56</td>
+          <td>0.640851</td>
+          <td>0.880134</td>
+          <td>1.795284</td>
         </tr>
       </tbody>
     </table>
@@ -567,19 +585,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.373257</td>
-          <td>1.208262</td>
-          <td>0.16151</td>
-          <td>0.341457</td>
-          <td>0.789316</td>
-          <td>-0.329953</td>
-          <td>0.370419</td>
-          <td>480.228052</td>
-          <td>0.496079</td>
-          <td>8.084528e-15</td>
-          <td>0.629581</td>
-          <td>0.964724</td>
-          <td>0.788497</td>
+          <td>0.373462</td>
+          <td>1.208069</td>
+          <td>0.162304</td>
+          <td>0.341537</td>
+          <td>0.789367</td>
+          <td>-0.329902</td>
+          <td>0.370628</td>
+          <td>480.14855</td>
+          <td>0.494679</td>
+          <td>9.868469e-15</td>
+          <td>0.629372</td>
+          <td>0.964754</td>
+          <td>0.788291</td>
         </tr>
       </tbody>
     </table>
@@ -622,8 +640,20 @@ Harmonize
     plt.style.use("seaborn-v0_8")
     df = test.to_dataframe()
     fig, ax = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
-    sns.scatterplot(data=df, x=("X", "age"), y=("Y", feature_to_plot), hue=("batch_effects", "site"), ax=ax[0])
-    sns.scatterplot(data=df, x=("X", "age"), y=("Y_harmonized", feature_to_plot), hue=("batch_effects", "site"), ax=ax[1])
+    sns.scatterplot(
+        data=df,
+        x=("X", "age"),
+        y=("Y", feature_to_plot),
+        hue=("batch_effects", "site"),
+        ax=ax[0],
+    )
+    sns.scatterplot(
+        data=df,
+        x=("X", "age"),
+        y=("Y_harmonized", feature_to_plot),
+        hue=("batch_effects", "site"),
+        ax=ax[1],
+    )
     ax[0].title.set_text("Unharmonized")
     ax[1].title.set_text("Harmonized")
     ax[0].legend([], [])
@@ -661,7 +691,9 @@ site B.
 .. code:: ipython3
 
     # Generate 10000 synthetic datapoints from scratch
-    synthetic_data = model.synthesize(covariate_range_per_batch_effect=True, n_samples=10000)  # <- also easy
+    synthetic_data = model.synthesize(
+        covariate_range_per_batch_effect=True, n_samples=10000
+    )  # <- also easy
     # Show the synthetic data along with the centiles
     plot_centiles_advanced(
         model,

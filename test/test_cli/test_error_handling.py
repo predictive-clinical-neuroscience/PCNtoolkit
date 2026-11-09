@@ -1,7 +1,6 @@
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -40,14 +39,14 @@ class TestCLIErrorHandling:
 
     def test_invalid_batch_effects_file(self):
         """Test error handling for invalid batch effects file."""
-        cmd = (
-            f"normative -c {self.data['cov_path']} -a blr -r {self.data['resp_path']} be=nonexistent.txt save_dir={self.save_dir}"
-        )
+        cmd = f"normative -c {self.data['cov_path']} -a blr -r {self.data['resp_path']} be=nonexistent.txt save_dir={self.save_dir}"
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         assert result.returncode != 0
         assert "File not found" in result.stderr
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="Unix file permissions not available on Windows")
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason="Unix file permissions not available on Windows"
+    )
     def test_permission_denied(self):
         """Test error handling for permission denied."""
         # Create a directory with no write permissions

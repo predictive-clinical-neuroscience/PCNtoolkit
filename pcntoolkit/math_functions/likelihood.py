@@ -20,13 +20,22 @@ class Likelihood(ABC):
     def __init__(self, name: str):
         self.name = name
 
-    def compile(self, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray) -> pm.Model:
+    def compile(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> pm.Model:
         model = self.create_model_with_data(X, be, be_maps, Y)
         self._compile(model, X, be, be_maps, Y)
         return model
 
     def create_model_with_data(self, X, be, be_maps, Y) -> pm.Model:
-        coords = {"batch_effect_dims": be.coords["batch_effect_dims"].values, "observations": X.coords["observations"].values}
+        coords = {
+            "batch_effect_dims": be.coords["batch_effect_dims"].values,
+            "observations": X.coords["observations"].values,
+        }
         for _be, _map in be_maps.items():
             coords[_be] = [k for k in sorted(_map.keys(), key=(lambda v: _map[v]))]
 
@@ -42,10 +51,19 @@ class Likelihood(ABC):
         return model
 
     def update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         with model:
-            model.set_data(name="Y", values=Y.values, coords={"observations": Y.coords["observations"].values})
+            model.set_data(
+                name="Y",
+                values=Y.values,
+                coords={"observations": Y.coords["observations"].values},
+            )
             for be_name in be.coords["batch_effect_dims"].values:
                 model.set_data(
                     name=f"{be_name}_data",
@@ -55,7 +73,12 @@ class Likelihood(ABC):
 
     @abstractmethod
     def _update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         pass
 
@@ -98,9 +121,7 @@ class Likelihood(ABC):
         pass
 
     @staticmethod
-    def from_dict(
-        dct: Dict[str, Any], version: str | None = None
-    ) -> "Likelihood":
+    def from_dict(dct: Dict[str, Any], version: str | None = None) -> "Likelihood":
         # Apply any registered Likelihood migrations for this version.
         dct = registry.migrate("Likelihood", dct, version=version)
         likelihood = dct.pop("name", "Normal")
@@ -116,7 +137,9 @@ class Likelihood(ABC):
             case "beta":
                 return BetaLikelihood._from_dict(dct, version=version)
             case "ZINB":
-                return ZeroInflatedNegativeBinomialLikelihood._from_dict(dct, version=version)
+                return ZeroInflatedNegativeBinomialLikelihood._from_dict(
+                    dct, version=version
+                )
             case _:
                 raise ValueError(f"Unknown likelihood: {likelihood}")
 
@@ -181,7 +204,9 @@ class NormalLikelihood(Likelihood):
         compiled_params = self.compile_params(model, X, be, be_maps, Y)
         compiled_params = {k: v[0] for k, v in compiled_params.items()}
         with model:
-            pm.Normal("Yhat", **compiled_params, observed=model["Y"], dims="observations")
+            pm.Normal(
+                "Yhat", **compiled_params, observed=model["Y"], dims="observations"
+            )
         return model
 
     def compile_params(
@@ -194,7 +219,10 @@ class NormalLikelihood(Likelihood):
     ) -> dict[str, Any]:
         return {
             "mu": (self.mu.compile(model, X, be, be_maps, Y), self.mu.sample_dims),
-            "sigma": (self.sigma.compile(model, X, be, be_maps, Y), self.sigma.sample_dims),
+            "sigma": (
+                self.sigma.compile(model, X, be, be_maps, Y),
+                self.sigma.sample_dims,
+            ),
         }
 
     def transfer(self, idata: xr.DataTree, **kwargs) -> "Likelihood":
@@ -203,7 +231,12 @@ class NormalLikelihood(Likelihood):
         return NormalLikelihood(new_mu, new_sigma)
 
     def _update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         self.mu.update_data(model, X, be, be_maps, Y)
         self.sigma.update_data(model, X, be, be_maps, Y)
@@ -223,7 +256,11 @@ class NormalLikelihood(Likelihood):
         return mu
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"name": self.name, "mu": self.mu.to_dict(), "sigma": self.sigma.to_dict()}
+        return {
+            "name": self.name,
+            "mu": self.mu.to_dict(),
+            "sigma": self.sigma.to_dict(),
+        }
 
     @classmethod
     def _from_dict(
@@ -245,7 +282,9 @@ class NormalLikelihood(Likelihood):
 
 
 class SHASHbLikelihood(Likelihood):
-    def __init__(self, mu: BasePrior, sigma: BasePrior, epsilon: BasePrior, delta: BasePrior):
+    def __init__(
+        self, mu: BasePrior, sigma: BasePrior, epsilon: BasePrior, delta: BasePrior
+    ):
         super().__init__(name="SHASHb")
         self.mu = mu
         self.mu.set_name("mu")
@@ -280,9 +319,18 @@ class SHASHbLikelihood(Likelihood):
     ) -> dict[str, Any]:
         return {
             "mu": (self.mu.compile(model, X, be, be_maps, Y), self.mu.sample_dims),
-            "sigma": (self.sigma.compile(model, X, be, be_maps, Y), self.sigma.sample_dims),
-            "epsilon": (self.epsilon.compile(model, X, be, be_maps, Y), self.epsilon.sample_dims),
-            "delta": (self.delta.compile(model, X, be, be_maps, Y), self.delta.sample_dims),
+            "sigma": (
+                self.sigma.compile(model, X, be, be_maps, Y),
+                self.sigma.sample_dims,
+            ),
+            "epsilon": (
+                self.epsilon.compile(model, X, be, be_maps, Y),
+                self.epsilon.sample_dims,
+            ),
+            "delta": (
+                self.delta.compile(model, X, be, be_maps, Y),
+                self.delta.sample_dims,
+            ),
         }
 
     def transfer(self, idata: xr.DataTree, **kwargs) -> "SHASHbLikelihood":
@@ -293,7 +341,12 @@ class SHASHbLikelihood(Likelihood):
         return SHASHbLikelihood(new_mu, new_sigma, new_epsilon, new_delta)
 
     def _update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         self.mu.update_data(model, X, be, be_maps, Y)
         self.sigma.update_data(model, X, be, be_maps, Y)
@@ -370,7 +423,9 @@ class SHASHbLikelihood(Likelihood):
 
 
 class SHASHoLikelihood(Likelihood):
-    def __init__(self, mu: BasePrior, sigma: BasePrior, epsilon: BasePrior, delta: BasePrior):
+    def __init__(
+        self, mu: BasePrior, sigma: BasePrior, epsilon: BasePrior, delta: BasePrior
+    ):
         super().__init__(name="SHASHo")
         self.mu = mu
         self.mu.set_name("mu")
@@ -394,10 +449,18 @@ class SHASHoLikelihood(Likelihood):
             sigma_samples = self.sigma.compile(model, X, be, be_maps, Y)
             epsilon_samples = self.epsilon.compile(model, X, be, be_maps, Y)
             delta_samples = self.delta.compile(model, X, be, be_maps, Y)
-            mu_samples = pm.Deterministic("mu_samples", mu_samples, dims=self.mu.sample_dims)
-            sigma_samples = pm.Deterministic("sigma_samples", sigma_samples, dims=self.sigma.sample_dims)
-            epsilon_samples = pm.Deterministic("epsilon_samples", epsilon_samples, dims=self.epsilon.sample_dims)
-            delta_samples = pm.Deterministic("delta_samples", delta_samples, dims=self.delta.sample_dims)
+            mu_samples = pm.Deterministic(
+                "mu_samples", mu_samples, dims=self.mu.sample_dims
+            )
+            sigma_samples = pm.Deterministic(
+                "sigma_samples", sigma_samples, dims=self.sigma.sample_dims
+            )
+            epsilon_samples = pm.Deterministic(
+                "epsilon_samples", epsilon_samples, dims=self.epsilon.sample_dims
+            )
+            delta_samples = pm.Deterministic(
+                "delta_samples", delta_samples, dims=self.delta.sample_dims
+            )
             SHASHo(
                 "Yhat",
                 mu=mu_samples,
@@ -467,7 +530,9 @@ class SHASHoLikelihood(Likelihood):
 
 
 class SHASHo2Likelihood(Likelihood):
-    def __init__(self, mu: BasePrior, sigma: BasePrior, epsilon: BasePrior, delta: BasePrior):
+    def __init__(
+        self, mu: BasePrior, sigma: BasePrior, epsilon: BasePrior, delta: BasePrior
+    ):
         super().__init__(name="SHASHo2")
         self.mu = mu
         self.mu.set_name("mu")
@@ -491,10 +556,18 @@ class SHASHo2Likelihood(Likelihood):
             sigma_samples = self.sigma.compile(model, X, be, be_maps, Y)
             epsilon_samples = self.epsilon.compile(model, X, be, be_maps, Y)
             delta_samples = self.delta.compile(model, X, be, be_maps, Y)
-            mu_samples = pm.Deterministic("mu_samples", mu_samples, dims=self.mu.sample_dims)
-            sigma_samples = pm.Deterministic("sigma_samples", sigma_samples, dims=self.sigma.sample_dims)
-            epsilon_samples = pm.Deterministic("epsilon_samples", epsilon_samples, dims=self.epsilon.sample_dims)
-            delta_samples = pm.Deterministic("delta_samples", delta_samples, dims=self.delta.sample_dims)
+            mu_samples = pm.Deterministic(
+                "mu_samples", mu_samples, dims=self.mu.sample_dims
+            )
+            sigma_samples = pm.Deterministic(
+                "sigma_samples", sigma_samples, dims=self.sigma.sample_dims
+            )
+            epsilon_samples = pm.Deterministic(
+                "epsilon_samples", epsilon_samples, dims=self.epsilon.sample_dims
+            )
+            delta_samples = pm.Deterministic(
+                "delta_samples", delta_samples, dims=self.delta.sample_dims
+            )
             SHASHo2(
                 "Yhat",
                 mu=mu_samples,
@@ -601,8 +674,14 @@ class BetaLikelihood(Likelihood):
         Y: xr.DataArray,
     ) -> dict[str, Any]:
         return {
-            "alpha": (self.alpha.compile(model, X, be, be_maps, Y), self.alpha.sample_dims),
-            "beta": (self.beta.compile(model, X, be, be_maps, Y), self.beta.sample_dims),
+            "alpha": (
+                self.alpha.compile(model, X, be, be_maps, Y),
+                self.alpha.sample_dims,
+            ),
+            "beta": (
+                self.beta.compile(model, X, be, be_maps, Y),
+                self.beta.sample_dims,
+            ),
         }
 
     def transfer(self, idata: xr.DataTree, **kwargs) -> "BetaLikelihood":
@@ -611,7 +690,12 @@ class BetaLikelihood(Likelihood):
         return BetaLikelihood(new_alpha, new_beta)
 
     def _update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         self.alpha.update_data(model, X, be, be_maps, Y)
         self.beta.update_data(model, X, be, be_maps, Y)
@@ -638,7 +722,11 @@ class BetaLikelihood(Likelihood):
         return self.alpha.has_random_effect or self.beta.has_random_effect
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"name": self.name, "alpha": self.alpha.to_dict(), "beta": self.beta.to_dict()}
+        return {
+            "name": self.name,
+            "alpha": self.alpha.to_dict(),
+            "beta": self.beta.to_dict(),
+        }
 
     @classmethod
     def _from_dict(
@@ -653,10 +741,13 @@ class BetaLikelihood(Likelihood):
 
     @classmethod
     def _from_args(cls, args: Dict[str, Any]) -> "BetaLikelihood":
-        return cls(alpha=prior_from_args("alpha", args), beta=prior_from_args("beta", args))
+        return cls(
+            alpha=prior_from_args("alpha", args), beta=prior_from_args("beta", args)
+        )
 
     def get_var_names(self) -> List[str]:
         return ["alpha_samples", "beta_samples"]
+
 
 class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
     def __init__(self, mu: BasePrior, alpha: BasePrior, psi: BasePrior):
@@ -679,7 +770,9 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         compiled_params = self.compile_params(model, X, be, be_maps, Y)
         compiled_params = {k: v[0] for k, v in compiled_params.items()}
         with model:
-            pm.ZeroInflatedNegativeBinomial("Yhat", **compiled_params, observed=model["Y"], dims="observations")
+            pm.ZeroInflatedNegativeBinomial(
+                "Yhat", **compiled_params, observed=model["Y"], dims="observations"
+            )
         return model
 
     def compile_params(
@@ -692,7 +785,10 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
     ) -> dict[str, Any]:
         return {
             "mu": (self.mu.compile(model, X, be, be_maps, Y), self.mu.sample_dims),
-            "alpha": (self.alpha.compile(model, X, be, be_maps, Y), self.alpha.sample_dims),
+            "alpha": (
+                self.alpha.compile(model, X, be, be_maps, Y),
+                self.alpha.sample_dims,
+            ),
             "psi": (self.psi.compile(model, X, be, be_maps, Y), self.psi.sample_dims),
         }
 
@@ -703,7 +799,12 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         return ZeroInflatedNegativeBinomialLikelihood(new_mu, new_alpha, new_psi)
 
     def _update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         self.mu.update_data(model, X, be, be_maps, Y)
         self.alpha.update_data(model, X, be, be_maps, Y)
@@ -715,7 +816,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
 
         The ZINB distribution is discrete, so each count y is actually an interval of
         probability rather than a single value: everything between F(y-1) and F(y), where
-        F is the CDF -- the fraction of people scoring at or below y. 
+        F is the CDF -- the fraction of people scoring at or below y.
 
         Because we want Z to be a distribution rather than a handful of single points --
         and y being an interval is what allows that -- we draw uniformly from the interval (=randomized quantile residuals)
@@ -836,7 +937,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
 
         PyMC parameterizes the negative binomial component by its mean ``mu`` and
         shape ``alpha``.
-        Scipy's ``nbinom`` takes the number of successes ``n`` and the success 
+        Scipy's ``nbinom`` takes the number of successes ``n`` and the success
         probability ``p``.
 
         Returns
@@ -854,7 +955,7 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         Evaluate the ZINB cumulative distribution function.
 
         The distribution mixes a point mass at zero with a negative binomial
-        component. The structural-zero component is a point mass at 0, so its 
+        component. The structural-zero component is a point mass at 0, so its
         CDF is 0 below zero and 1 from zero onward
 
             F(y) = (1 - psi) + psi * F_NB(y)   for y >= 0
@@ -880,7 +981,12 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         return np.where(y < 0, 0.0, (1 - psi) + psi * stats.nbinom.cdf(y, n, p))
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"name": self.name, "mu": self.mu.to_dict(), "alpha": self.alpha.to_dict(), "psi": self.psi.to_dict()}
+        return {
+            "name": self.name,
+            "mu": self.mu.to_dict(),
+            "alpha": self.alpha.to_dict(),
+            "psi": self.psi.to_dict(),
+        }
 
     @classmethod
     def _from_dict(
@@ -895,7 +1001,9 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         )
 
     @classmethod
-    def _from_args(cls, args: Dict[str, Any]) -> "ZeroInflatedNegativeBinomialLikelihood":
+    def _from_args(
+        cls, args: Dict[str, Any]
+    ) -> "ZeroInflatedNegativeBinomialLikelihood":
         return cls(
             mu=prior_from_args("mu", args),
             alpha=prior_from_args("alpha", args),
@@ -903,7 +1011,11 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
         )
 
     def has_random_effect(self) -> bool:
-        return self.mu.has_random_effect or self.alpha.has_random_effect or self.psi.has_random_effect
+        return (
+            self.mu.has_random_effect
+            or self.alpha.has_random_effect
+            or self.psi.has_random_effect
+        )
 
     def get_var_names(self) -> List[str]:
         return ["mu_samples", "alpha_samples", "psi_samples"]
@@ -912,45 +1024,45 @@ class ZeroInflatedNegativeBinomialLikelihood(Likelihood):
 def get_default_normal_likelihood() -> NormalLikelihood:
     # Random effect in mu, and also bsplines for mu and sigma
     likelihood = NormalLikelihood(
-            mu=make_prior(
-                # Mu is linear because we want to allow the mean to vary as a function of the covariates.
-                linear=True,
-                # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
-                slope=make_prior(dist_params=(0.0, 3.0)),
-                # The intercept is random, because we expect the intercept to vary between sites and sexes.
-                intercept=make_prior(
-                    random=True,
-                    # Mu is the mean of the intercept, which is  distributed with a mean of 0 and a standard deviation of 1.
-                    mu=make_prior(dist_params=(0, 1)),
-                    # Sigma is the scale at which the intercepts vary. It is a positive parameter, so we sample from a Gamma distribution
-                    sigma=make_prior(
-                        dist_name="Gamma",
-                        dist_params=(1, 0.5),
-                    ),
+        mu=make_prior(
+            # Mu is linear because we want to allow the mean to vary as a function of the covariates.
+            linear=True,
+            # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
+            slope=make_prior(dist_params=(0.0, 3.0)),
+            # The intercept is random, because we expect the intercept to vary between sites and sexes.
+            intercept=make_prior(
+                random=True,
+                # Mu is the mean of the intercept, which is  distributed with a mean of 0 and a standard deviation of 1.
+                mu=make_prior(dist_params=(0, 1)),
+                # Sigma is the scale at which the intercepts vary. It is a positive parameter, so we sample from a Gamma distribution
+                sigma=make_prior(
+                    dist_name="Gamma",
+                    dist_params=(1, 0.5),
                 ),
-                basis_function=BsplineBasisFunction(),
             ),
-            sigma=make_prior(
-                # Sigma is also linear, because we want to allow the standard deviation to vary as a function of the covariates: heteroskedasticity.
-                linear=True,
-                # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
-                slope=make_prior(dist_params=(0.0, 2.0)),
-                # The intercept is not random, because we assume the intercept of the variance to be the same for all sites and sexes.
-                intercept=make_prior(dist_params=(0.0, 1.0)),
-                # We use a softplus mapping to ensure that sigma is strictly positive.
-                mapping="softplus",
-                # We scale the softplus mapping by a factor of 2, to avoid spikes in the resulting density.
-                # The parameters (a, b, c) provided to a mapping f are used as: f_abc(x) = f((x - a) / b) * b + c
-                # This basically provides an affine transformation of the softplus function.
-                # a -> horizontal shift
-                # b -> scaling
-                # c -> vertical shift
-                # You can leave c out, and it will default to 0.
-                mapping_params=(0, 2),
-                # We use a B-spline basis function to allow for non-linearity in the standard deviation.
-                basis_function=BsplineBasisFunction(),
-            ),
-        )
+            basis_function=BsplineBasisFunction(),
+        ),
+        sigma=make_prior(
+            # Sigma is also linear, because we want to allow the standard deviation to vary as a function of the covariates: heteroskedasticity.
+            linear=True,
+            # The slope coefficients are assumed to be normally distributed, with a mean of 0 and a standard deviation of 2.
+            slope=make_prior(dist_params=(0.0, 2.0)),
+            # The intercept is not random, because we assume the intercept of the variance to be the same for all sites and sexes.
+            intercept=make_prior(dist_params=(0.0, 1.0)),
+            # We use a softplus mapping to ensure that sigma is strictly positive.
+            mapping="softplus",
+            # We scale the softplus mapping by a factor of 2, to avoid spikes in the resulting density.
+            # The parameters (a, b, c) provided to a mapping f are used as: f_abc(x) = f((x - a) / b) * b + c
+            # This basically provides an affine transformation of the softplus function.
+            # a -> horizontal shift
+            # b -> scaling
+            # c -> vertical shift
+            # You can leave c out, and it will default to 0.
+            mapping_params=(0, 2),
+            # We use a B-spline basis function to allow for non-linearity in the standard deviation.
+            basis_function=BsplineBasisFunction(),
+        ),
+    )
 
     # mu = make_prior(
     #     linear=True,

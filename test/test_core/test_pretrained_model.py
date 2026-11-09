@@ -41,9 +41,7 @@ def _load_pretrained_model(path: Path) -> NormativeModel:
         If the pretrained model is not on disk.
     """
     manifest = path / "model" / "normative_model.json"
-    assert manifest.exists(), (
-        f"Missing pre-trained pretrained model at {manifest}. "
-    )
+    assert manifest.exists(), f"Missing pre-trained pretrained model at {manifest}. "
     return NormativeModel.load(str(path))
 
 
@@ -177,7 +175,7 @@ def test_007_load_should_applyVariationalInferenceMigration_when_givenPretrained
     Act: load it with the installed version.
     Assert: the variational inference fields hold the MCMC defaults.
 
-    Tests specifically that _migrate_hbr_1_3_1 correctly sets the inference_method to 
+    Tests specifically that _migrate_hbr_1_3_1 correctly sets the inference_method to
     "mcmc" for a model saved with pcntoolkit v1.1.2.
     """
     regression_model = hbr_model.regression_models[RESPONSE_VAR]

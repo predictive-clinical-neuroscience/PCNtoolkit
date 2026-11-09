@@ -17,7 +17,9 @@ def test_parseWarpString():
     assert isinstance(warp.warps[0], WarpLog)
     assert isinstance(warp.warps[1], WarpAffine)
     assert isinstance(warp.warps[2], WarpSinhArcsinh)
-    warp = parseWarpString("WarpCompose(WarpLog, WarpAffine, WarpSinhArcsinh, WarpBoxCox)")
+    warp = parseWarpString(
+        "WarpCompose(WarpLog, WarpAffine, WarpSinhArcsinh, WarpBoxCox)"
+    )
     assert isinstance(warp, WarpCompose)
     assert len(warp.warps) == 4
     assert isinstance(warp.warps[0], WarpLog)
@@ -84,7 +86,9 @@ def test_warpsinharcsinh(epsilon, delta):
     y = np.sinh(b * np.arcsinh(x) - a)
     assert np.allclose(warp.f(x, param), y)
     assert np.allclose(warp.invf(y, param), x)
-    assert np.allclose(warp.df(x, param), b * np.cosh(b * np.arcsinh(x) - a) / np.sqrt(x**2 + 1))
+    assert np.allclose(
+        warp.df(x, param), b * np.cosh(b * np.arcsinh(x) - a) / np.sqrt(x**2 + 1)
+    )
 
 
 def test_warpcompose():

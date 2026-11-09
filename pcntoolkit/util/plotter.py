@@ -76,7 +76,7 @@ def plot_centiles(
     covariate: str, optional
         The covariate to plot on the x-axis.
     response_vars: List[str] | None
-        The response vars for which to make the plots. All are plotted if this is None, which is default.        
+        The response vars for which to make the plots. All are plotted if this is None, which is default.
     scatter_kwargs: dict, optional
         Keyword arguments for the scatter plot.
         May include:
@@ -111,12 +111,13 @@ def plot_centiles(
         }
         complete_scatter_kwargs = default_scatter_kwargs | scatter_kwargs
 
-
     if covariate is None:
         covariate = model.covariates[0]
         assert isinstance(covariate, str)
     else:
-        assert covariate in model.covariates, f"{covariate} is not a valid covariate for the model"
+        assert covariate in model.covariates, (
+            f"{covariate} is not a valid covariate for the model"
+        )
     cov_min = model.covariate_ranges[covariate]["min"]
     cov_max = model.covariate_ranges[covariate]["max"]
     covariate_range = (cov_min, cov_max)
@@ -125,11 +126,16 @@ def plot_centiles(
         response_vars = model.response_vars
     response_vars = list(set(model.response_vars).intersection(set(response_vars)))
     # Select the batch effect that has the most data in the scatter data
-    batch_effects = {k: max(v.items(), key=lambda x: x[1])[0] for k, v in model.batch_effect_counts.items()}
+    batch_effects = {
+        k: max(v.items(), key=lambda x: x[1])[0]
+        for k, v in model.batch_effect_counts.items()
+    }
 
     # Create some synthetic data with a single batch effect
     # The plotted covariate is just a linspace
-    centile_covariates = np.linspace(covariate_range[0], covariate_range[1], N_CENTILE_POINTS)
+    centile_covariates = np.linspace(
+        covariate_range[0], covariate_range[1], N_CENTILE_POINTS
+    )
     centile_df = pd.DataFrame({covariate: centile_covariates})
 
     # Any other covariates are taken to be the mean of the scatter data, or the midpoint of the covariate range
@@ -138,7 +144,9 @@ def plot_centiles(
             minc = model.covariate_ranges[cov]["min"]
             maxc = model.covariate_ranges[cov]["max"]
             if scatter_data is not None:
-                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+                centile_df[cov] = (
+                    scatter_data.X.sel(covariates=cov).mean().values.item()
+                )
             else:
                 centile_df[cov] = (minc + maxc) / 2
 
@@ -165,7 +173,7 @@ def plot_centiles(
         batch_effects = {}
 
     if scatter_data:
-        scatter_data = scatter_data.sel(response_vars = response_vars)
+        scatter_data = scatter_data.sel(response_vars=response_vars)
 
         model.harmonize(scatter_data, reference_batch_effect=batch_effects)
 
@@ -232,13 +240,8 @@ def _plot_centiles(
             **scatter_kwargs,
         )
 
-        plotname = (
-            f"centiles_{response_var}_{scatter_data.name}_harmonized"
-        )
-        title = (
-            f"Centiles of {response_var}"
-            f"\n With harmonized {scatter_data.name} data"
-        )
+        plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
+        title = f"Centiles of {response_var}\n With harmonized {scatter_data.name} data"
     else:
         plotname = f"centiles_{response_var}"
         title = f"Centiles of {response_var}"
@@ -270,25 +273,28 @@ def plot_thrivelines(
     plt_kwargs: dict | None = None,
     **kwargs: Any,
 ) -> list[Figure]:
-    """Plot normative centiles with pre-computed thrivelines overlaid.
+    """Draw the centile chart with thrivelines on top.
+
+    Each thriveline is a short blue line starting on a centile curve.
 
     Parameters
     ----------
     model : NormativeModel
-        The model used to compute centile curves.
+        The model used to draw the centile curves.
     thrivelines : pd.DataFrame
-        Pre-computed thriveline table from
-        :meth:`~pcntoolkit.longitudinal_score.zgain_score.ZGainScore.get_thrivelines`.
+        Table from ``VelocityModel.compute_thrivelines``.
     centiles : list[float] | np.ndarray | None, optional
-        Centiles to plot. If None, the model defaults are used.
+        Centile curves to draw, e.g. ``[0.05, 0.5, 0.95]``. Use the same
+        values as ``centiles`` in ``compute_thrivelines`` so every line
+        starts on a drawn curve. If None, the model defaults are used.
     covariate : str | None, optional
-        Covariate for the x-axis. Defaults to the first model covariate.
+        Covariate on the x-axis. Defaults to the covariate the thrivelines
+        were computed along (usually age). Needed when that is unknown, e.g.
+        for a table read back from CSV, and the model has more than one
+        covariate.
     covariate_ranges : dict[str, tuple[float, float]] | None, optional
-        Covariate ranges, in each covariate's own units, used for the centile
-        and for clipping the thrivelines. When the plotted covariate is
-        not given a range, it defaults to the span the thrivelines cover, so
-        the centiles start and end where the thrivelines do. Any other
-        covariate defaults to its range in the model.
+        x-axis range per covariate, e.g. ``{"age": (20, 60)}``. Thrivelines
+        outside it are not drawn. Defaults to the ages the thrivelines cover.
     response_vars : list[str] | None, optional
         Response variables to plot. Defaults to all model response variables.
     batch_effects : dict[str, list[str]] | None | Literal["all"], optional
@@ -310,17 +316,37 @@ def plot_thrivelines(
     -------
     list[Figure]
         One matplotlib Figure per response variable.
+
+    Raises
+    ------
+    ValueError
+        If ``covariate`` is not given, the table does not record it and the
+        model has more than one covariate.
     """
     validate_thrivelines(thrivelines)
 
+    # The x-axis must be the covariate the lines were computed along; any other
+    # covariate would draw them against the wrong axis.
+    if covariate is None:
+        covariate = thrivelines.attrs.get("covariate")
+    if covariate is None:
+        if len(model.covariates) > 1:
+            raise ValueError(
+                "Cannot tell which covariate the thrivelines were computed "
+                f"along. Pass covariate=, one of {list(model.covariates)}."
+            )
+        covariate = model.covariates[0]
+
     # Default the plotted covariate range to the span the thrivelines cover, so
     # the centiles start and end where the thrivelines do.
-    plot_covariate = covariate if covariate is not None else model.covariates[0]
-    if covariate_ranges is None or plot_covariate not in covariate_ranges:
+    if covariate_ranges is None or covariate not in covariate_ranges:
         wanted = response_vars if response_vars is not None else model.response_vars
         thrive_range = _thriveline_x_range(thrivelines, list(wanted))
         if thrive_range is not None:
-            covariate_ranges = {**(covariate_ranges or {}), plot_covariate: thrive_range}
+            covariate_ranges = {
+                **(covariate_ranges or {}),
+                covariate: thrive_range,
+            }
 
     grid = _build_centile_grid(
         model=model,
@@ -531,7 +557,12 @@ def plot_centiles_advanced(
             conditional_d.X.loc[{"covariates": covariate}] = c
             for rv in response_vars:
                 conditional_d.Y.loc[{"response_vars": rv}] = np.linspace(
-                    *(centile.centiles.sel(observations=0, response_vars=rv).values.tolist()), N_CENTILE_POINTS
+                    *(
+                        centile.centiles.sel(
+                            observations=0, response_vars=rv
+                        ).values.tolist()
+                    ),
+                    N_CENTILE_POINTS,
                 )
             if not hasattr(conditional_d, "logp"):
                 model.compute_logp(conditional_d)
@@ -710,9 +741,7 @@ def _plot_centiles_advanced(
     plotname = f"centiles_{response_var}"
     if scatter_data:
         if harmonize_data:
-            plotname = (
-                f"centiles_{response_var}_{scatter_data.name}_harmonized"
-            )
+            plotname = f"centiles_{response_var}_{scatter_data.name}_harmonized"
             title = f"{title}\n With harmonized {scatter_data.name} data"
         else:
             plotname = f"centiles_{response_var}_{scatter_data.name}"
@@ -1030,9 +1059,7 @@ def plot_ridge(
     figs: list[Figure] = []
     for response_var in response_vars:
         # Collect the Figure returned by each per-variable plot call.
-        fig = _plot_ridge(
-            data, variable, response_var, split_by, save_dir, **kwargs
-        )
+        fig = _plot_ridge(data, variable, response_var, split_by, save_dir, **kwargs)
         figs.append(fig)
     # Show all figures at once when requested.
     if show_figure:
@@ -1057,9 +1084,7 @@ def _plot_ridge(
     # Initialize the FacetGrid object
     palette = kwargs.get(
         "palette",
-        sns.cubehelix_palette(
-            n_colors=len(df[split_by].unique()), rot=1.5, light=0.7
-        ),
+        sns.cubehelix_palette(n_colors=len(df[split_by].unique()), rot=1.5, light=0.7),
     )
     g = sns.FacetGrid(
         df, row=split_by, hue=split_by, aspect=15, height=0.5, palette=palette
@@ -1067,8 +1092,13 @@ def _plot_ridge(
 
     # Draw the densities in a few steps
     g.map(
-        sns.kdeplot, variable, bw_adjust=0.5, clip_on=False, fill=True,
-        alpha=1, linewidth=1.5,
+        sns.kdeplot,
+        variable,
+        bw_adjust=0.5,
+        clip_on=False,
+        fill=True,
+        alpha=1,
+        linewidth=1.5,
     )
     g.map(sns.kdeplot, variable, clip_on=False, color="w", lw=2, bw_adjust=0.5)
 
@@ -1079,9 +1109,14 @@ def _plot_ridge(
     def label(x: Any, color: Any, label: str) -> None:
         ax = plt.gca()
         ax.text(
-            0, 0.2, label,
-            fontweight="bold", color=color,
-            ha="left", va="center", transform=ax.transAxes,
+            0,
+            0.2,
+            label,
+            fontweight="bold",
+            color=color,
+            ha="left",
+            va="center",
+            transform=ax.transAxes,
         )
 
     g.map(label, variable)
@@ -1171,7 +1206,7 @@ def _thrivelines_per_response_var(
             f"Available: {sorted(available)}."
         )
 
-    # Clip thrivelines to the plotted covariate range 
+    # Clip thrivelines to the plotted covariate range
     clipped = _filter_thrivelines_to_covariate_range(thrivelines, x_min, x_max)
 
     # Check which response variables are still in range after clipping.
@@ -1321,7 +1356,9 @@ def _build_centile_grid(
         if cov != covariate:
             minc, maxc = covariate_ranges[cov]
             if scatter_data is not None:
-                centile_df[cov] = scatter_data.X.sel(covariates=cov).mean().values.item()
+                centile_df[cov] = (
+                    scatter_data.X.sel(covariates=cov).mean().values.item()
+                )
             else:
                 centile_df[cov] = (minc + maxc) / 2
 
@@ -1363,7 +1400,7 @@ def _compute_centile_curves(
     model : NormativeModel
         Fitted model used to evaluate the curves.
     centile_data : NormData
-        Grid from :func:`_build_centile_grid`; gains a ``centiles``
+        Grid from ``_build_centile_grid``; gains a ``centiles``
         variable, and a ``Yhat`` variable when ``show_yhat`` is True.
     centiles : list[float] | np.ndarray | None, optional
         Centiles to compute, as proportions in (0, 1). None uses the model
@@ -1375,7 +1412,9 @@ def _compute_centile_curves(
     """
     # Skip work when a caller handed in a grid that already carries the curves.
     if not hasattr(centile_data, "centiles"):
-        model.compute_centiles(centile_data, centiles=centiles, recompute=False, **kwargs)
+        model.compute_centiles(
+            centile_data, centiles=centiles, recompute=False, **kwargs
+        )
     if show_yhat and not hasattr(centile_data, "Yhat"):
         model.compute_yhat(centile_data)
 

@@ -15,12 +15,10 @@ import xarray as xr
 from pcntoolkit.util.evaluator import Evaluator
 from test.fixtures.plotter_fixtures import create_test_data_with_z
 
-
 # ── tests for Skew ───────────────────────────────────────────
 
-def test_001_skew_should_beNearZero_when_zscoresAreNormal() -> (
-    None
-):
+
+def test_001_skew_should_beNearZero_when_zscoresAreNormal() -> None:
     """
     Skewness of standard-normal z-scores should be close to 0.
 
@@ -42,9 +40,7 @@ def test_001_skew_should_beNearZero_when_zscoresAreNormal() -> (
     assert abs(result) < 0.1
 
 
-def test_002_kurt_should_beNearZero_when_zscoresAreNormal() -> (
-    None
-):
+def test_002_kurt_should_beNearZero_when_zscoresAreNormal() -> None:
     """
     Excess kurtosis of standard-normal z-scores should be near 0.
 
@@ -66,9 +62,7 @@ def test_002_kurt_should_beNearZero_when_zscoresAreNormal() -> (
     assert abs(result) < 0.1
 
 
-def test_003_skew_should_bePositive_when_zscoresAreRightSkewed() -> (
-    None
-):
+def test_003_skew_should_bePositive_when_zscoresAreRightSkewed() -> None:
     """
     Skewness should be positive for right-skewed z-scores.
 
@@ -103,9 +97,7 @@ def test_003_skew_should_bePositive_when_zscoresAreRightSkewed() -> (
     assert result > 0.0
 
 
-def test_004_kurt_should_bePositive_when_zscoresAreLeptokurtic() -> (
-    None
-):
+def test_004_kurt_should_bePositive_when_zscoresAreLeptokurtic() -> None:
     """
     Excess kurtosis should be positive for heavy-tailed z-scores.
 
@@ -138,9 +130,7 @@ def test_004_kurt_should_bePositive_when_zscoresAreLeptokurtic() -> (
     assert result > 0.0
 
 
-def test_005_skew_should_handleNanAndInf_when_zscoresContainInvalidValues() -> (
-    None
-):
+def test_005_skew_should_handleNanAndInf_when_zscoresContainInvalidValues() -> None:
     """
     _evaluate_skew should return a finite float when z-scores
     contain Inf and NaN values.
@@ -176,9 +166,7 @@ def test_005_skew_should_handleNanAndInf_when_zscoresContainInvalidValues() -> (
     assert np.isfinite(result)
 
 
-def test_006_kurt_should_handleNanAndInf_when_zscoresContainInvalidValues() -> (
-    None
-):
+def test_006_kurt_should_handleNanAndInf_when_zscoresContainInvalidValues() -> None:
     """
     _evaluate_kurt should return a finite float when z-scores
     contain Inf and NaN values.

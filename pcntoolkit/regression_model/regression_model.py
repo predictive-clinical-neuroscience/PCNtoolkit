@@ -16,10 +16,10 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import xarray as xr
+from scipy.stats.distributions import norm
 
 from pcntoolkit.util.migration import ptk_version
 from pcntoolkit.util.output import Messages, Output
-from scipy.stats.distributions import norm
 
 
 class RegressionModel(ABC):
@@ -76,16 +76,26 @@ class RegressionModel(ABC):
         self._name = name
 
     @abstractmethod
-    def fit(self, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray) -> None:
+    def fit(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> None:
         """
         Fit the model to the data.
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        be_maps: dictionary of dictionaries mapping batch effect to indices
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------
@@ -94,14 +104,19 @@ class RegressionModel(ABC):
         pass
 
     @abstractmethod
-    def forward(self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray) -> xr.DataArray:
+    def forward(
+        self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
+    ) -> xr.DataArray:
         """Compute Z-scores for provided Y values
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------
@@ -111,14 +126,19 @@ class RegressionModel(ABC):
         pass
 
     @abstractmethod
-    def backward(self, X: xr.DataArray, be: xr.DataArray, Z: xr.DataArray) -> xr.DataArray:
+    def backward(
+        self, X: xr.DataArray, be: xr.DataArray, Z: xr.DataArray
+    ) -> xr.DataArray:
         """Compute points in feature space for given z-scores
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        Z : xr.DataArray
+            Z-scores to convert back to response variable values.
 
         Returns
         -------
@@ -127,20 +147,32 @@ class RegressionModel(ABC):
         """
 
     @abstractmethod
-    def elemwise_logp(self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray) -> xr.DataArray:
+    def elemwise_logp(
+        self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
+    ) -> xr.DataArray:
         """Compute the log-probability of the data under the model."""
         pass
 
     @abstractmethod
-    def transfer(self, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray) -> RegressionModel:
+    def transfer(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> RegressionModel:
         """Transfer the model to a new dataset.
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        be_maps: dictionary of dictionaries mapping batch effect to indices
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------

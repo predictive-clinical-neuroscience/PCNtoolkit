@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from os import PathLike
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -18,7 +20,7 @@ class LongitudinalScore(ABC):
 
     A longitudinal score asks whether a subject changed over time more or less
     than a fitted normative model would expect. Concrete subclasses such as
-    ``ZDiffScore`` and ``ZGainScore`` define the exact scoring rule.
+    ``ZDiffScore`` and ``VelocityModel`` define the exact scoring rule.
 
     Parameters
     ----------
@@ -28,19 +30,15 @@ class LongitudinalScore(ABC):
         Longitudinal reference cohort, usually healthy controls, used to learn
         how much change is typical. Only needed by scores that estimate
         something from a cohort at scoring time, such as ``ZDiffScore``.
-    subject_id_col : str, optional
-        Name of the subject identifier column used when the data was built.
     """
 
     def __init__(
         self,
         normative_model: NormativeModel,
         reference_data: NormData | None = None,
-        subject_id_col: str | None = None,
-    ):
+    ) -> None:
         self.normative_model = normative_model
         self.reference_data = reference_data
-        self.subject_id_col = subject_id_col
 
         # Fail early if the user passed an unfitted model.
         normative_model.check_is_fitted()
@@ -49,7 +47,7 @@ class LongitudinalScore(ABC):
     def score(
         self,
         score_data: NormData,
-        subject_id_col: str | None = None,
+        save_path: str | PathLike[str] | None = None,
     ) -> xr.DataArray:
         """Score subjects in ``score_data``.
 
@@ -58,15 +56,39 @@ class LongitudinalScore(ABC):
         score_data : NormData
             Longitudinal cohort to score. Must include numeric visit labels
             via ``NormData.from_dataframe(..., visits='<column>')``.
-        subject_id_col : str, optional
-            Subject id column name override. Defaults to the value supplied
-            at construction.
+        save_path : str | PathLike[str] | None, optional
+            If set, write scores to this CSV path in wide format: one row per
+            subject and one column per response variable.
 
         Returns
         -------
         xr.DataArray
             One longitudinal score per subject and response variable.
         """
+
+    @staticmethod
+    def _save_scores_csv(
+        scores: xr.DataArray,
+        save_path: str | PathLike[str],
+    ) -> None:
+        """Write subject-level scores as a wide CSV (one row per subject)."""
+        path = Path(save_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Convert a DataArray to a wide-format DataFrame.
+        wide = cast(pd.DataFrame, scores.to_pandas()).reset_index()
+        # Save as csv
+        wide.to_csv(path, index=False)
+
+    @staticmethod
+    def _save_dataframe_csv(
+        frame: pd.DataFrame,
+        save_path: str | PathLike[str],
+    ) -> None:
+        """Write a DataFrame to CSV. Currently used for saving thrivelines."""
+        path = Path(save_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Save as csv
+        frame.to_csv(path, index=False)
 
     @staticmethod
     def _ordered_unique(values: np.ndarray) -> np.ndarray:
@@ -76,17 +98,17 @@ class LongitudinalScore(ABC):
     # ------------------------------------------------------------------ #
     # Validation functions
     # ------------------------------------------------------------------ #
+
     @staticmethod
-    def _check_is_predicted(data: NormData) -> None:
-        # Check the prediction fields needed by longitudinal scores.
-        for var in ("Yhat", "Z"):
+    def _check_is_predicted(data: NormData, *, required: tuple[str, ...]) -> None:
+        """Ensure that the required prediction outputs (e.g., 'Z'. 'Yhat') are present 
+        in the data."""
+        for var in required:
             # Stop if a required prediction output is missing.
             if var not in data.data_vars:
                 # Tell the user to run prediction before scoring.
                 raise ValueError(
-                    f"The data is missing '{var}'. "
-                    "Run model.predict(data) before computing "
-                    "longitudinal scores."
+                    f"The data is missing '{var}'. Run model.predict(data) before computing longitudinal scores."
                 )
 
     @classmethod

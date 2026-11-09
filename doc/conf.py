@@ -60,9 +60,7 @@ html_theme_options = {
     # else folds into the hamburger sidebar on narrow screens.
     "navbar_persistent": ["search-button"],
     # GitHub icon in the top-right header
-    "github_url": (
-        "https://github.com/predictive-clinical-neuroscience/PCNtoolkit"
-    ),
+    "github_url": ("https://github.com/predictive-clinical-neuroscience/PCNtoolkit"),
     # Do not show the "Edit this page" button on the right sidebar (links to
     # GitHub editor)
     "use_edit_page_button": False,
@@ -80,14 +78,11 @@ html_theme_options = {
     "switcher": {
         # Stable URL so every deployed version can load the JSON list
         "json_url": (
-            "https://pcntoolkit.readthedocs.io"
-            "/en/stable/_static/switcher.json"
+            "https://pcntoolkit.readthedocs.io/en/stable/_static/switcher.json"
         ),
         # ReadTheDocs sets READTHEDOCS_VERSION automatically;
         # fall back to "dev" when building locally
-        "version_match": os.environ.get(
-            "READTHEDOCS_VERSION", "dev"
-        ),
+        "version_match": os.environ.get("READTHEDOCS_VERSION", "dev"),
     },
     # Logo: icon image on the left, bold text on the right.
     # image_light / image_dark are relative to doc/ (the conf dir).
@@ -114,7 +109,15 @@ intersphinx_mapping = {
 
 # General settings
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "**.ipynb_checkpoints",
+    # Unfinished tutorials, kept out of the website until ready.
+    "tutorials/11_composite_basis_function.rst",
+    "tutorials/16_correlation_matrix.rst",
+]
 add_module_names = False
 nitpicky = True
 

@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import random
@@ -16,9 +17,6 @@ from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.util.job_observer import JobObserver
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 from pcntoolkit.util.paths import get_default_log_dir, get_default_temp_dir
-from typing import Tuple
-from numpy.typing import ArrayLike
-import copy
 
 
 class Runner:
@@ -92,19 +90,30 @@ class Runner:
         self.n_batches = n_batches
         self.batch_size = batch_size
         if (self.n_batches is not None) and (self.batch_size is not None):
-            Output.warning(Warnings.BATCH_SIZE_AND_N_BATCHES_SPECIFIED, n_batches=self.n_batches, batch_size=self.batch_size)
+            Output.warning(
+                Warnings.BATCH_SIZE_AND_N_BATCHES_SPECIFIED,
+                n_batches=self.n_batches,
+                batch_size=self.batch_size,
+            )
             self.batch_size = None
         self.n_cores = n_cores
         try:
             if isinstance(time_limit, str):
                 self.time_limit_str = time_limit
-                self.time_limit_seconds = sum([int(v) * 60**i for i, v in enumerate(reversed(self.time_limit_str.split(":")))])
+                self.time_limit_seconds = sum(
+                    [
+                        int(v) * 60**i
+                        for i, v in enumerate(reversed(self.time_limit_str.split(":")))
+                    ]
+                )
             elif isinstance(time_limit, int):
                 self.time_limit_seconds = time_limit
                 s = self.time_limit_seconds
                 self.time_limit_str = f"{str(s // 3600)}:{str((s // 60) % 60).rjust(2, '0')}:{str(s % 60).rjust(2, '0')}"
         except Exception:
-            raise ValueError(Output.error(Errors.ERROR_PARSING_TIME_LIMIT, time_limit_str=time_limit))
+            raise ValueError(
+                Output.error(Errors.ERROR_PARSING_TIME_LIMIT, time_limit_str=time_limit)
+            )
         self.memory = memory
         self.max_retries = max_retries
         if parallelize:
@@ -113,7 +122,11 @@ class Runner:
             else:
                 # Check if the environment is valid
                 if not os.path.exists(os.path.join(environment, "bin", "python")):
-                    raise ValueError(Output.error(Errors.INVALID_ENVIRONMENT, environment=environment))
+                    raise ValueError(
+                        Output.error(
+                            Errors.INVALID_ENVIRONMENT, environment=environment
+                        )
+                    )
                 else:
                     self.environment = environment
                     self.preamble = preamble
@@ -121,7 +134,11 @@ class Runner:
         self.cross_validate = cross_validate
         self.cv_folds = cv_folds
         if self.cross_validate and self.cv_folds <= 1:
-            raise ValueError(Output.error(Errors.ERROR_CROSS_VALIDATION_FOLDS, cv_folds=self.cv_folds))
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_CROSS_VALIDATION_FOLDS, cv_folds=self.cv_folds
+                )
+            )
         if log_dir is None:
             self.log_dir = get_default_log_dir()
             Output.print(Messages.NO_LOG_DIR_SPECIFIED, log_dir=self.log_dir)
@@ -144,10 +161,14 @@ class Runner:
         self.active_jobs: Dict[str, str] = {}
         self.failed_jobs: Dict[str, str] = {}
 
-    def wait_or_finish(self, observe: bool, into: NormativeModel | None = None, *data_sources) -> NormativeModel | None:
+    def wait_or_finish(
+        self, observe: bool, into: NormativeModel | None = None, *data_sources
+    ) -> NormativeModel | None:
         if self.parallelize:
             if observe:
-                self.job_observer = JobObserver(self.active_jobs, self.job_type, self.unique_log_dir, self.task_id)
+                self.job_observer = JobObserver(
+                    self.active_jobs, self.job_type, self.unique_log_dir, self.task_id
+                )
                 self.job_observer.wait_for_jobs()
                 _, self.finished_jobs, self.failed_jobs = self.check_jobs_status()
                 if data_sources:
@@ -170,7 +191,10 @@ class Runner:
             unique_id = unique_id + data.name + "_"
         milliseconds = time.time() * 1000 % 1000
         milliseconds = f"{milliseconds:03f}"
-        self.task_id = unique_id + "_" + time.strftime("%Y-%m-%d_%H:%M:%S") + "_" + milliseconds
+        # No ":" in the time: task_id is a folder name, and Windows does not allow ":".
+        self.task_id = (
+            unique_id + "_" + time.strftime("%Y-%m-%d_%H-%M-%S") + "_" + milliseconds
+        )
         Output.print(Messages.TASK_ID_CREATED, task_id=self.task_id)
 
     def create_temp_and_log_dir(self):
@@ -264,7 +288,11 @@ class Runner:
         return self.wait_or_finish(observe, model, fit_data, predict_data)
 
     def predict(
-        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True
+        self,
+        model: NormativeModel,
+        data: NormData,
+        save_dir: Optional[str] = None,
+        observe: bool = True,
     ) -> NormativeModel | None:
         """
         Predict on a dataset.
@@ -294,7 +322,12 @@ class Runner:
         return self.wait_or_finish(observe, None, data)
 
     def transfer(
-        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True, **kwargs
+        self,
+        model: NormativeModel,
+        data: NormData,
+        save_dir: Optional[str] = None,
+        observe: bool = True,
+        **kwargs,
     ) -> NormativeModel | None:
         """
         Transfer a normative model to a new dataset.
@@ -331,7 +364,8 @@ class Runner:
         fit_data: NormData,
         predict_data: Optional[NormData] = None,
         save_dir: Optional[str] = None,
-        observe: bool = True, **kwargs,
+        observe: bool = True,
+        **kwargs,
     ) -> NormativeModel | None:
         """
         Transfer a normative model to a new dataset and predict on another dataset.
@@ -365,7 +399,12 @@ class Runner:
         return self.wait_or_finish(observe, None, fit_data, predict_data)
 
     def extend(
-        self, model: NormativeModel, data: NormData, save_dir: Optional[str] = None, observe: bool = True, **kwargs
+        self,
+        model: NormativeModel,
+        data: NormData,
+        save_dir: Optional[str] = None,
+        observe: bool = True,
+        **kwargs,
     ) -> NormativeModel | None:
         """
         Extend a normative model on a dataset.
@@ -402,7 +441,8 @@ class Runner:
         fit_data: NormData,
         predict_data: Optional[NormData] = None,
         save_dir: Optional[str] = None,
-        observe: bool = True, **kwargs,
+        observe: bool = True,
+        **kwargs,
     ) -> NormativeModel | None:
         """
         Extend a normative model on a dataset and predict on another dataset.
@@ -439,12 +479,20 @@ class Runner:
         if self.cross_validate:
 
             def kfold_fit_chunk_fn(chunk: NormData):
-                for i_fold, (fit_idx, predict_idx) in enumerate(chunk.kfold_split(self.cv_folds)):
-                    self.register_fold_indices(model.save_dir, i_fold, (fit_idx, predict_idx))
+                for i_fold, (fit_idx, predict_idx) in enumerate(
+                    chunk.kfold_split(self.cv_folds)
+                ):
+                    self.register_fold_indices(
+                        model.save_dir, i_fold, (fit_idx, predict_idx)
+                    )
                     train_data = copy.deepcopy(chunk.isel(observations=fit_idx))
                     fold_norm_model: NormativeModel = deepcopy(model)
-                    fold_norm_model.set_save_dir(os.path.join(save_dir, "folds", f"fold_{i_fold}"))
-                    train_data.attrs["name"] = train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    fold_norm_model.set_save_dir(
+                        os.path.join(save_dir, "folds", f"fold_{i_fold}")
+                    )
+                    train_data.attrs["name"] = (
+                        train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    )
                     fold_norm_model.fit(train_data)
 
             return kfold_fit_chunk_fn
@@ -456,29 +504,53 @@ class Runner:
 
             return fit_chunk_fn
 
-    def get_fit_predict_chunk_fn(self, model: NormativeModel, save_dir: str) -> Callable:
+    def get_fit_predict_chunk_fn(
+        self, model: NormativeModel, save_dir: str
+    ) -> Callable:
         """Returns a callable that fits a model on a chunk of data and predicts on another chunk of data"""
         if self.cross_validate:
 
-            def kfold_fit_predict_chunk_fn(all_data: NormData, unused_predict_data: Optional[NormData] = None):
+            def kfold_fit_predict_chunk_fn(
+                all_data: NormData, unused_predict_data: Optional[NormData] = None
+            ):
                 if unused_predict_data is not None:
-                    Output.warning(Warnings.PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION)
-                for i_fold, (fit_idx, predict_idx) in enumerate(all_data.kfold_split(self.cv_folds)):
-                    self.register_fold_indices(model.save_dir, i_fold, (fit_idx, predict_idx))
+                    Output.warning(
+                        Warnings.PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION
+                    )
+                for i_fold, (fit_idx, predict_idx) in enumerate(
+                    all_data.kfold_split(self.cv_folds)
+                ):
+                    self.register_fold_indices(
+                        model.save_dir, i_fold, (fit_idx, predict_idx)
+                    )
                     fit_data = copy.deepcopy(all_data.isel(observations=fit_idx))
-                    predict_data = copy.deepcopy(all_data.isel(observations=predict_idx))
+                    predict_data = copy.deepcopy(
+                        all_data.isel(observations=predict_idx)
+                    )
                     fold_norm_model: NormativeModel = deepcopy(model)
-                    fold_norm_model.set_save_dir(os.path.join(save_dir, "folds", f"fold_{i_fold}"))
-                    fit_data.attrs["name"] = fit_data.attrs["name"] + "_fold_" + str(i_fold) + "_train"
-                    predict_data.attrs["name"] = predict_data.attrs["name"] + "_fold_" + str(i_fold) + "_predict"
+                    fold_norm_model.set_save_dir(
+                        os.path.join(save_dir, "folds", f"fold_{i_fold}")
+                    )
+                    fit_data.attrs["name"] = (
+                        fit_data.attrs["name"] + "_fold_" + str(i_fold) + "_train"
+                    )
+                    predict_data.attrs["name"] = (
+                        predict_data.attrs["name"] + "_fold_" + str(i_fold) + "_predict"
+                    )
                     fold_norm_model.fit_predict(fit_data, predict_data)
 
             return kfold_fit_predict_chunk_fn
         else:
 
-            def fit_predict_chunk_fn(fit_data: NormData, predict_data: Optional[NormData]):
+            def fit_predict_chunk_fn(
+                fit_data: NormData, predict_data: Optional[NormData]
+            ):
                 if predict_data is None:
-                    raise ValueError(Output.error(Errors.ERROR_PREDICT_DATA_REQUIRED_FOR_FIT_PREDICT_WITHOUT_CROSS_VALIDATION))
+                    raise ValueError(
+                        Output.error(
+                            Errors.ERROR_PREDICT_DATA_REQUIRED_FOR_FIT_PREDICT_WITHOUT_CROSS_VALIDATION
+                        )
+                    )
                 assert predict_data is not None  # Make the linter happy
                 model.set_save_dir(save_dir)
                 model.fit_predict(fit_data, predict_data)
@@ -488,7 +560,11 @@ class Runner:
     def get_predict_chunk_fn(self, model: NormativeModel, save_dir: str) -> Callable:
         """Loads each fold model and predicts on the corresponding fold of data. Model n is used to predict on fold n."""
         if self.cross_validate:
-            raise ValueError(Output.error(Errors.ERROR_PREDICT_DATA_NOT_SUPPORTED_FOR_CROSS_VALIDATION))
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_PREDICT_DATA_NOT_SUPPORTED_FOR_CROSS_VALIDATION
+                )
+            )
         else:
 
             def predict_chunk_fn(chunk: NormData):
@@ -497,15 +573,23 @@ class Runner:
 
             return predict_chunk_fn
 
-    def get_transfer_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
+    def get_transfer_chunk_fn(
+        self, model: NormativeModel, save_dir: str, **kwargs
+    ) -> Callable:
         """Returns a callable that transfers a model on a chunk of data"""
         if self.cross_validate:
 
             def kfold_transfer_chunk_fn(chunk: NormData):
-                for i_fold, (fit_idx, predict_idx) in enumerate(chunk.kfold_split(self.cv_folds)):
-                    self.register_fold_indices(model.save_dir, i_fold, (fit_idx, predict_idx))
+                for i_fold, (fit_idx, predict_idx) in enumerate(
+                    chunk.kfold_split(self.cv_folds)
+                ):
+                    self.register_fold_indices(
+                        model.save_dir, i_fold, (fit_idx, predict_idx)
+                    )
                     train_data = copy.deepcopy(chunk.isel(observations=fit_idx))
-                    train_data.attrs["name"] = train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    train_data.attrs["name"] = (
+                        train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    )
                     model.transfer(
                         train_data,
                         save_dir=os.path.join(save_dir, "folds", f"fold_{i_fold}"),
@@ -521,18 +605,32 @@ class Runner:
 
             return transfer_chunk_fn
 
-    def get_transfer_predict_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
+    def get_transfer_predict_chunk_fn(
+        self, model: NormativeModel, save_dir: str, **kwargs
+    ) -> Callable:
         if self.cross_validate:
 
-            def kfold_transfer_predict_chunk_fn(chunk: NormData, unused_predict_data: Optional[NormData] = None):
+            def kfold_transfer_predict_chunk_fn(
+                chunk: NormData, unused_predict_data: Optional[NormData] = None
+            ):
                 if unused_predict_data is not None:
-                    Output.warning(Warnings.PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION)
-                for i_fold, (fit_idx, predict_idx) in enumerate(chunk.kfold_split(self.cv_folds)):
-                    self.register_fold_indices(model.save_dir, i_fold, (fit_idx, predict_idx))
+                    Output.warning(
+                        Warnings.PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION
+                    )
+                for i_fold, (fit_idx, predict_idx) in enumerate(
+                    chunk.kfold_split(self.cv_folds)
+                ):
+                    self.register_fold_indices(
+                        model.save_dir, i_fold, (fit_idx, predict_idx)
+                    )
                     train_data = copy.deepcopy(chunk.isel(observations=fit_idx))
                     predict_data = copy.deepcopy(chunk.isel(observations=predict_idx))
-                    train_data.attrs["name"] = train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
-                    predict_data.attrs["name"] = predict_data.attrs["name"] + "_fold_" + str(i_fold) + "_predict"
+                    train_data.attrs["name"] = (
+                        train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    )
+                    predict_data.attrs["name"] = (
+                        predict_data.attrs["name"] + "_fold_" + str(i_fold) + "_predict"
+                    )
                     model.transfer_predict(
                         train_data,
                         predict_data,
@@ -546,18 +644,28 @@ class Runner:
             def transfer_predict_chunk_fn(train_data: NormData, predict_data: NormData):
                 if predict_data is None:
                     raise ValueError(Output.error(Errors.ERROR_PREDICT_DATA_REQUIRED))
-                model.transfer_predict(train_data, predict_data, save_dir=save_dir, **kwargs)
+                model.transfer_predict(
+                    train_data, predict_data, save_dir=save_dir, **kwargs
+                )
 
             return transfer_predict_chunk_fn
 
-    def get_extend_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
+    def get_extend_chunk_fn(
+        self, model: NormativeModel, save_dir: str, **kwargs
+    ) -> Callable:
         if self.cross_validate:
 
             def kfold_extend_chunk_fn(chunk: NormData):
-                for i_fold, (fit_idx, predict_idx) in enumerate(chunk.kfold_split(self.cv_folds)):
-                    self.register_fold_indices(model.save_dir, i_fold, (fit_idx, predict_idx))
+                for i_fold, (fit_idx, predict_idx) in enumerate(
+                    chunk.kfold_split(self.cv_folds)
+                ):
+                    self.register_fold_indices(
+                        model.save_dir, i_fold, (fit_idx, predict_idx)
+                    )
                     train_data = copy.deepcopy(chunk.isel(observations=fit_idx))
-                    train_data.attrs["name"] = train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    train_data.attrs["name"] = (
+                        train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    )
                     model.extend(
                         data=train_data,
                         save_dir=os.path.join(save_dir, "folds", f"fold_{i_fold}"),
@@ -573,18 +681,32 @@ class Runner:
 
             return extend_chunk_fn
 
-    def get_extend_predict_chunk_fn(self, model: NormativeModel, save_dir: str, **kwargs) -> Callable:
+    def get_extend_predict_chunk_fn(
+        self, model: NormativeModel, save_dir: str, **kwargs
+    ) -> Callable:
         if self.cross_validate:
 
-            def kfold_extend_predict_chunk_fn(chunk: NormData, unused_predict_data: Optional[NormData] = None):
+            def kfold_extend_predict_chunk_fn(
+                chunk: NormData, unused_predict_data: Optional[NormData] = None
+            ):
                 if unused_predict_data is not None:
-                    Output.warning(Warnings.PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION)
-                for i_fold, (fit_idx, predict_idx) in enumerate(chunk.kfold_split(self.cv_folds)):
-                    self.register_fold_indices(model.save_dir, i_fold, (fit_idx, predict_idx))
+                    Output.warning(
+                        Warnings.PREDICT_DATA_NOT_USED_IN_KFOLD_CROSS_VALIDATION
+                    )
+                for i_fold, (fit_idx, predict_idx) in enumerate(
+                    chunk.kfold_split(self.cv_folds)
+                ):
+                    self.register_fold_indices(
+                        model.save_dir, i_fold, (fit_idx, predict_idx)
+                    )
                     train_data = copy.deepcopy(chunk.isel(observations=fit_idx))
                     predict_data = copy.deepcopy(chunk.isel(observations=predict_idx))
-                    train_data.attrs["name"] = train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
-                    predict_data.attrs["name"] = predict_data.attrs["name"] + "_fold_" + str(i_fold) + "_predict"
+                    train_data.attrs["name"] = (
+                        train_data.attrs["name"] + "_fold_" + str(i_fold) + "_fit"
+                    )
+                    predict_data.attrs["name"] = (
+                        predict_data.attrs["name"] + "_fold_" + str(i_fold) + "_predict"
+                    )
                     model.extend_predict(
                         extend_data=train_data,
                         predict_data=predict_data,
@@ -599,17 +721,29 @@ class Runner:
                 if predict_data is None:
                     raise ValueError(Output.error(Errors.ERROR_PREDICT_DATA_REQUIRED))
                 model.set_save_dir(save_dir)
-                model.extend_predict(extend_data=train_data, predict_data=predict_data, save_dir=save_dir, **kwargs)
+                model.extend_predict(
+                    extend_data=train_data,
+                    predict_data=predict_data,
+                    save_dir=save_dir,
+                    **kwargs,
+                )
 
             return extend_predict_chunk_fn
 
-    def register_fold_indices(self, save_dir: str, i_fold: int, indices: tuple[int, int]):
+    def register_fold_indices(
+        self, save_dir: str, i_fold: int, indices: tuple[int, int]
+    ):
         fit_idx, predict_idx = indices
         os.makedirs(os.path.join(save_dir, "folds", f"fold_{i_fold}"), exist_ok=True)
-        with open(os.path.join(save_dir, "folds", f"fold_{i_fold}/fit_observations.txt"), "w") as f:
+        with open(
+            os.path.join(save_dir, "folds", f"fold_{i_fold}/fit_observations.txt"), "w"
+        ) as f:
             f.truncate(0)
             f.write(str(fit_idx))
-        with open(os.path.join(save_dir, "folds", f"fold_{i_fold}/predict_observations.txt"), "w") as f:
+        with open(
+            os.path.join(save_dir, "folds", f"fold_{i_fold}/predict_observations.txt"),
+            "w",
+        ) as f:
             f.truncate(0)
             f.write(str(predict_idx))
 
@@ -633,7 +767,9 @@ class Runner:
         return data_path
 
     def get_python_callable_path(self, job_name):
-        python_callable_path = os.path.join(self.unique_temp_dir, f"python_callable_{job_name}.pkl")
+        python_callable_path = os.path.join(
+            self.unique_temp_dir, f"python_callable_{job_name}.pkl"
+        )
         return python_callable_path
 
     def check_job_status(self, job_name: str) -> tuple[bool, bool, Optional[str]]:
@@ -652,7 +788,9 @@ class Runner:
         # For cluster jobs, first check if job is still in queue/running
         is_running = False
         if self.job_type == "slurm":
-            result = subprocess.run(["squeue", "-j", job_id], capture_output=True, text=True)
+            result = subprocess.run(
+                ["squeue", "-j", job_id], capture_output=True, text=True
+            )
             is_running = job_id in result.stdout
         elif self.job_type == "torque":
             result = subprocess.run(["qstat", job_id], capture_output=True, text=True)
@@ -672,7 +810,9 @@ class Runner:
                 return False, True, f.read().strip()
         return False, True, "Job failed without error output"
 
-    def check_jobs_status(self) -> tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+    def check_jobs_status(
+        self,
+    ) -> tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
         """Check all jobs in active_job_ids for errors.
 
         Returns
@@ -737,18 +877,26 @@ class Runner:
                 raise ValueError("Either n_batches or batch_size must be specified")
 
             first_chunks = first_data_source.chunk(self.n_batches)
-            second_chunks = [None] * self.n_batches if second_data_source is None else second_data_source.chunk(self.n_batches)
+            second_chunks = (
+                [None] * self.n_batches
+                if second_data_source is None
+                else second_data_source.chunk(self.n_batches)
+            )
 
             self.active_jobs.clear()
             self.job_commands.clear()
 
-            for i, (first_chunk, second_chunk) in enumerate(zip(first_chunks, second_chunks)):
+            for i, (first_chunk, second_chunk) in enumerate(
+                zip(first_chunks, second_chunks)
+            ):
                 job_name = f"{self.task_id}_job_{i}"
                 if mode == "unary":
                     chunk_tuple = (first_chunk,)
                 else:
                     chunk_tuple = (first_chunk, second_chunk)
-                python_callable_path, data_path = self.save_callable_and_data(job_name, fn, chunk_tuple)
+                python_callable_path, data_path = self.save_callable_and_data(
+                    job_name, fn, chunk_tuple
+                )
 
                 command = self.wrap_in_job(job_name, python_callable_path, data_path)
 
@@ -761,11 +909,17 @@ class Runner:
                 stdout, stderr = process.communicate()
                 try:
                     if self.job_type == "slurm":
-                        job_id = re.search(r"Submitted batch job (\d+)", stdout).group(1)  # type: ignore
+                        job_id = re.search(r"Submitted batch job (\d+)", stdout).group(
+                            1
+                        )  # type: ignore
                     elif self.job_type == "torque":
                         job_id = re.search(r"(.*)", stdout).group(1).strip()  # type: ignore
                 except AttributeError:
-                    raise ValueError(Output.error(Errors.ERROR_SUBMITTING_JOB, job_id=job_name, stderr=stderr))
+                    raise ValueError(
+                        Output.error(
+                            Errors.ERROR_SUBMITTING_JOB, job_id=job_name, stderr=stderr
+                        )
+                    )
 
                 self.active_jobs[job_name] = job_id
                 self.job_commands[job_name] = command
@@ -784,8 +938,12 @@ class Runner:
             command = self.wrap_in_torque_job(job_name, python_callable_path, data_path)
         return command
 
-    def wrap_in_slurm_job(self, job_name: int | str, python_callable_path: str, data_path: str) -> list[str]:
-        job_path, out_file, err_file, success_file = self.get_all_job_file_paths(job_name)
+    def wrap_in_slurm_job(
+        self, job_name: int | str, python_callable_path: str, data_path: str
+    ) -> list[str]:
+        job_path, out_file, err_file, success_file = self.get_all_job_file_paths(
+            job_name
+        )
         current_file_path = os.path.abspath(__file__)
         with open(job_path, "w") as f:
             f.write(
@@ -833,8 +991,12 @@ exit $exit_code
         create_incremental_backup(err_file)
         return job_path, out_file, err_file, success_file
 
-    def wrap_in_torque_job(self, job_name: int | str, python_callable_path: str, data_path: str) -> list[str]:
-        job_path, out_file, err_file, success_file = self.get_all_job_file_paths(job_name)
+    def wrap_in_torque_job(
+        self, job_name: int | str, python_callable_path: str, data_path: str
+    ) -> list[str]:
+        job_path, out_file, err_file, success_file = self.get_all_job_file_paths(
+            job_name
+        )
         current_file_path = os.path.abspath(__file__)
         with open(job_path, "w") as f:
             f.write(
@@ -872,7 +1034,9 @@ exit $exit_code
 
         return ["qsub", job_path]
 
-    def load_model(self, fold_index: Optional[int] = 0, into: NormativeModel | None = None) -> NormativeModel:
+    def load_model(
+        self, fold_index: Optional[int] = 0, into: NormativeModel | None = None
+    ) -> NormativeModel:
         if self.cross_validate:
             path = os.path.join(self.save_dir, "folds", f"fold_{fold_index}")
             return NormativeModel.load(path, into=into)
@@ -935,7 +1099,10 @@ exit $exit_code
             state = json.load(f)
 
         runner = cls(
-            job_type=state["job_type"], n_batches=state["n_batches"], log_dir=state["log_dir"], temp_dir=state["temp_dir"]
+            job_type=state["job_type"],
+            n_batches=state["n_batches"],
+            log_dir=state["log_dir"],
+            temp_dir=state["temp_dir"],
         )
         runner.task_id = state["task_id"]
         runner.unique_log_dir = state["unique_log_dir"]
@@ -945,7 +1112,9 @@ exit $exit_code
         runner.active_jobs = state["active_jobs"]
         runner.environment = state["environment"]
         runner.batch_size = state["batch_size"]
-        runner.active_jobs, runner.finished_jobs, runner.failed_jobs = runner.check_jobs_status()
+        runner.active_jobs, runner.finished_jobs, runner.failed_jobs = (
+            runner.check_jobs_status()
+        )
         Output.print(
             Messages.RUNNER_LOADED,
             n_active_jobs=len(runner.active_jobs),
@@ -956,7 +1125,9 @@ exit $exit_code
 
     @classmethod
     def from_args(cls, args: dict) -> "Runner":
-        filtered_args = {k: v for k, v in args.items() if k in list(cls.__dict__.keys())}
+        filtered_args = {
+            k: v for k, v in args.items() if k in list(cls.__dict__.keys())
+        }
         return cls(**filtered_args)
 
     def re_submit_failed_jobs(self, observe: bool = True) -> None:
@@ -967,17 +1138,27 @@ exit $exit_code
                 command = self.wrap_in_job(job_name, python_callable_path, data_path)
 
                 process = subprocess.Popen(
-                    command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    start_new_session=True,
                 )
                 stdout, stderr = process.communicate()
 
                 try:
                     if self.job_type == "slurm":
-                        job_id = re.search(r"Submitted batch job (\d+)", stdout).group(1)  # type: ignore
+                        job_id = re.search(r"Submitted batch job (\d+)", stdout).group(
+                            1
+                        )  # type: ignore
                     elif self.job_type == "torque":
                         job_id = re.search(r"(.*)", stdout).group(1).strip()  # type: ignore
                 except AttributeError:
-                    raise ValueError(Output.error(Errors.ERROR_SUBMITTING_JOB, job_id=job_name, stderr=stderr))
+                    raise ValueError(
+                        Output.error(
+                            Errors.ERROR_SUBMITTING_JOB, job_id=job_name, stderr=stderr
+                        )
+                    )
 
                 if job_id:
                     self.active_jobs[job_name] = job_id
@@ -985,7 +1166,9 @@ exit $exit_code
 
         self.failed_jobs.clear()
         if observe:
-            self.job_observer = JobObserver(self.active_jobs, self.job_type, self.unique_log_dir, self.task_id)
+            self.job_observer = JobObserver(
+                self.active_jobs, self.job_type, self.unique_log_dir, self.task_id
+            )
             self.job_observer.wait_for_jobs()
             _, self.finished_jobs, self.failed_jobs = self.check_jobs_status()
 
@@ -1014,13 +1197,17 @@ def load_and_execute(args):
                 data = pickle.load(data_path)
             Output.print(Messages.EXECUTING_CALLABLE, attempt=i + 1, total=retries + 1)
             fn(*data)
-            Output.print(Messages.EXECUTION_SUCCESSFUL, attempt=i + 1, total=retries + 1)
+            Output.print(
+                Messages.EXECUTION_SUCCESSFUL, attempt=i + 1, total=retries + 1
+            )
             return
         except Exception as e:
             if i == retries:
                 raise e
             else:
-                Output.print(Messages.EXECUTION_FAILED, attempt=i + 1, total=retries + 1, error=e)
+                Output.print(
+                    Messages.EXECUTION_FAILED, attempt=i + 1, total=retries + 1, error=e
+                )
                 continue
 
 

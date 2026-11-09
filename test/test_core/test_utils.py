@@ -25,7 +25,9 @@ class TestRunner:
         self.norm_data = norm_data_from_arrays
 
         # Create model with BLR template
-        self.model = NormativeModel(template_regression_model=test_model, save_dir=str(self.save_dir))
+        self.model = NormativeModel(
+            template_regression_model=test_model, save_dir=str(self.save_dir)
+        )
 
     def cleanup(self, model, runner):
         """Clean up test files."""
@@ -41,7 +43,9 @@ class TestRunner:
         runner = Runner(cross_validate=False, parallelize=False)
         runner.fit(self.model, self.norm_data, observe=True)
         assert self.model.is_fitted
-        assert os.path.exists(os.path.join(self.model.save_dir, "model", "normative_model.json"))
+        assert os.path.exists(
+            os.path.join(self.model.save_dir, "model", "normative_model.json")
+        )
         self.cleanup(self.model, runner)
 
     def test_fit_kfold(self):
@@ -49,8 +53,16 @@ class TestRunner:
         runner = Runner(cross_validate=True, cv_folds=2, parallelize=False)
         runner.fit(self.model, self.norm_data, observe=True)
         assert self.model.is_fitted
-        assert os.path.exists(os.path.join(self.model.save_dir, "folds", "fold_0", "model", "normative_model.json"))
-        assert os.path.exists(os.path.join(self.model.save_dir, "folds", "fold_1", "model", "normative_model.json"))
+        assert os.path.exists(
+            os.path.join(
+                self.model.save_dir, "folds", "fold_0", "model", "normative_model.json"
+            )
+        )
+        assert os.path.exists(
+            os.path.join(
+                self.model.save_dir, "folds", "fold_1", "model", "normative_model.json"
+            )
+        )
         self.cleanup(self.model, runner)
 
     def test_predict(self):
@@ -62,7 +74,9 @@ class TestRunner:
         # Then predict
         runner.predict(self.model, self.norm_data, observe=True)
         assert self.model.is_fitted
-        assert os.path.exists(os.path.join(self.model.save_dir, "model", "normative_model.json"))
+        assert os.path.exists(
+            os.path.join(self.model.save_dir, "model", "normative_model.json")
+        )
         assert os.path.exists(os.path.join(self.model.save_dir, "results"))
         assert os.path.exists(
             os.path.join(
@@ -85,7 +99,9 @@ class TestRunner:
         runner = Runner(cross_validate=False, parallelize=False)
         runner.fit_predict(self.model, train, test, observe=True)
         assert self.model.is_fitted
-        assert os.path.exists(os.path.join(self.model.save_dir, "model", "normative_model.json"))
+        assert os.path.exists(
+            os.path.join(self.model.save_dir, "model", "normative_model.json")
+        )
         assert os.path.exists(os.path.join(self.model.save_dir, "results"))
         assert os.path.exists(
             os.path.join(
@@ -102,10 +118,22 @@ class TestRunner:
         runner = Runner(cross_validate=True, cv_folds=2, parallelize=False)
         runner.fit_predict(self.model, train, test, observe=True)
         assert self.model.is_fitted
-        assert os.path.exists(os.path.join(self.model.save_dir, "folds", "fold_0", "model", "normative_model.json"))
-        assert os.path.exists(os.path.join(self.model.save_dir, "folds", "fold_1", "model", "normative_model.json"))
-        assert os.path.exists(os.path.join(self.model.save_dir, "folds", "fold_0", "results"))
-        assert os.path.exists(os.path.join(self.model.save_dir, "folds", "fold_1", "results"))
+        assert os.path.exists(
+            os.path.join(
+                self.model.save_dir, "folds", "fold_0", "model", "normative_model.json"
+            )
+        )
+        assert os.path.exists(
+            os.path.join(
+                self.model.save_dir, "folds", "fold_1", "model", "normative_model.json"
+            )
+        )
+        assert os.path.exists(
+            os.path.join(self.model.save_dir, "folds", "fold_0", "results")
+        )
+        assert os.path.exists(
+            os.path.join(self.model.save_dir, "folds", "fold_1", "results")
+        )
         assert os.path.exists(
             os.path.join(
                 self.model.save_dir,
@@ -138,10 +166,14 @@ class TestRunner:
             shutil.rmtree(extend_dir)
         os.makedirs(extend_dir, exist_ok=True)
 
-        extended_model = runner.extend(self.model, self.norm_data, extend_dir, observe=True)
+        extended_model = runner.extend(
+            self.model, self.norm_data, extend_dir, observe=True
+        )
         assert isinstance(extended_model, NormativeModel)
         assert extended_model.is_fitted
-        assert os.path.exists(os.path.join(extended_model.save_dir, "model", "normative_model.json"))
+        assert os.path.exists(
+            os.path.join(extended_model.save_dir, "model", "normative_model.json")
+        )
         assert os.path.exists(os.path.join(extended_model.save_dir, "results"))
         assert os.path.exists(
             os.path.join(
@@ -165,10 +197,14 @@ class TestRunner:
             shutil.rmtree(extend_dir)
         os.makedirs(extend_dir, exist_ok=True)
 
-        extended_model = runner.extend_predict(self.model, train, test, extend_dir, observe=True)
+        extended_model = runner.extend_predict(
+            self.model, train, test, extend_dir, observe=True
+        )
         assert isinstance(extended_model, NormativeModel)
         assert extended_model.is_fitted
-        assert os.path.exists(os.path.join(extended_model.save_dir, "model", "normative_model.json"))
+        assert os.path.exists(
+            os.path.join(extended_model.save_dir, "model", "normative_model.json")
+        )
         assert os.path.exists(os.path.join(extended_model.save_dir, "results"))
         assert os.path.exists(
             os.path.join(

@@ -1,14 +1,16 @@
-import shutil
-from pathlib import Path
+
+import os
+import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import os
-import sys
-os.environ["PATH"] = os.path.dirname(sys.executable) + os.pathsep + os.environ.get("PATH", "")
+os.environ["PATH"] = (
+    os.path.dirname(sys.executable) + os.pathsep + os.environ.get("PATH", "")
+)
+
 
 @pytest.fixture(autouse=True, scope="session")
 def configure_matplotlib():
@@ -71,7 +73,9 @@ def batch_effect_values():
 
 # Data generation fixtures
 @pytest.fixture(scope="function")
-def synthetic_data(test_data_dir, n_train_subjects, n_covariates, n_response_vars, batch_effect_values):
+def synthetic_data(
+    test_data_dir, n_train_subjects, n_covariates, n_response_vars, batch_effect_values
+):
     """Generate synthetic data for testing."""
     # Generate covariates
     X = np.random.rand(n_train_subjects, n_covariates)
@@ -83,14 +87,21 @@ def synthetic_data(test_data_dir, n_train_subjects, n_covariates, n_response_var
 
     for i in range(n_response_vars):
         y[:, i] = y[:, i] * noise_coef[i] * X[:, 0]
-        y[:, i] = y[:, i] + slope_coefs[i, 0] + X[:, 0] * slope_coefs[i, 1] + 0.3 * X[:, 0] ** 2 * slope_coefs[i, 2]
+        y[:, i] = (
+            y[:, i]
+            + slope_coefs[i, 0]
+            + X[:, 0] * slope_coefs[i, 1]
+            + 0.3 * X[:, 0] ** 2 * slope_coefs[i, 2]
+        )
 
     y = np.square(y)
 
     # Generate batch effects
     batch_effects = []
     for batch_effect in batch_effect_values:
-        batch_effects.append(np.random.choice(batch_effect, (n_train_subjects, 1)).astype(int))
+        batch_effects.append(
+            np.random.choice(batch_effect, (n_train_subjects, 1)).astype(int)
+        )
     batch_effects = np.concatenate(batch_effects, axis=1)
     subject_ids = np.floor(np.arange(n_train_subjects) / 2).astype(int)
 
@@ -129,4 +140,9 @@ def temp_output_dir(tmp_path):
 @pytest.fixture(scope="function")
 def mock_model_config():
     """Provide a mock model configuration for testing."""
-    return {"algorithm": "blr", "n_folds": 3, "save_dir": "test_output", "log_dir": "test_logs"}
+    return {
+        "algorithm": "blr",
+        "n_folds": 3,
+        "save_dir": "test_output",
+        "log_dir": "test_logs",
+    }

@@ -24,12 +24,19 @@ from pcntoolkit.math_functions.scaler import Scaler
 from pcntoolkit.regression_model.blr import BLR  # noqa: F401 # type: ignore
 from pcntoolkit.regression_model.hbr import HBR  # noqa: F401 # type: ignore
 from pcntoolkit.regression_model.regression_model import RegressionModel
-from pcntoolkit.regression_model.test_model import TestModel  # noqa: F401 # type: ignore
+from pcntoolkit.regression_model.test_model import (
+    TestModel,  # noqa: F401 # type: ignore
+)
 from pcntoolkit.util.evaluator import Evaluator
 from pcntoolkit.util.migration import check_forward_compatibility, ptk_version
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
-from pcntoolkit.util.paths import ensure_dir_exists, get_default_save_dir, get_save_subdirs
+from pcntoolkit.util.paths import (
+    ensure_dir_exists,
+    get_default_save_dir,
+    get_save_subdirs,
+)
 from pcntoolkit.util.plotter import plot_centiles, plot_qq
+
 
 class NormativeModel:
     """
@@ -111,21 +118,24 @@ class NormativeModel:
     def _check_y_stays_integer(self) -> None:
         """
         The ZINB likelihood models integers, so Y must remain non-negative integers.
-        Scaling or transforming Y breaks that. 
-        
+        Scaling or transforming Y breaks that.
+
         Raises
         ------
         ValueError
             If ZINB likelihood is combined with a scaler or transform on Y.
         """
         likelihood = getattr(self.template_regression_model, "likelihood", None)
-        
+
         # If the likelihood is not ZINB, no need to check further.
         if not isinstance(likelihood, ZeroInflatedNegativeBinomialLikelihood):
             return
 
         # Scaler check
-        if self.outscaler not in ("none", "id"): # "id" and "none" both mean no scaling.
+        if self.outscaler not in (
+            "none",
+            "id",
+        ):  # "id" and "none" both mean no scaling.
             raise ValueError(
                 Output.error(Errors.ERROR_ZINB_SCALED_Y, outscaler=self.outscaler)
             )
@@ -220,7 +230,9 @@ class NormativeModel:
         self.predict(predict_data)
         return predict_data
 
-    def transfer(self, transfer_data: NormData, save_dir: str | None = None, **kwargs) -> NormativeModel:
+    def transfer(
+        self, transfer_data: NormData, save_dir: str | None = None, **kwargs
+    ) -> NormativeModel:
         """
         Transfers the model to a new dataset.
         """
@@ -243,16 +255,16 @@ class NormativeModel:
         new_model.inscalers = copy.deepcopy(self.inscalers)
         new_model.outscalers = copy.deepcopy(self.outscalers)
 
-        respvar_intersection = list(set(self.response_vars).intersection(transfer_data.response_vars.values))
+        respvar_intersection = list(
+            set(self.response_vars).intersection(transfer_data.response_vars.values)
+        )
         new_model.response_vars = respvar_intersection
 
         new_model.preprocess(transfer_data)
 
         if self.unique_batch_effects is not None:
             if len(transfer_data.batch_effect_dims) < len(self.batch_effect_dims):
-                Output.warning(
-                    Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS
-                )
+                Output.warning(Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS)
         new_model.register_batch_effects(transfer_data)
 
         Output.print(Messages.TRANSFERRING_MODELS, n_models=len(respvar_intersection))
@@ -260,8 +272,10 @@ class NormativeModel:
             Output.print(Messages.TRANSFERRING_MODEL, model_name=responsevar)
             resp_transfer_data = transfer_data.sel({"response_vars": responsevar})
             X, be, be_maps, Y, _ = new_model.extract_data(resp_transfer_data)
-            new_model[responsevar] = self[responsevar].transfer(X, be, be_maps, Y, **kwargs)
-            #new_model[responsevar].be_maps = copy.deepcopy(be_maps)
+            new_model[responsevar] = self[responsevar].transfer(
+                X, be, be_maps, Y, **kwargs
+            )
+            # new_model[responsevar].be_maps = copy.deepcopy(be_maps)
         new_model.is_fitted = True
         new_model.postprocess(transfer_data)
         if new_model.savemodel:
@@ -270,7 +284,11 @@ class NormativeModel:
         return new_model
 
     def transfer_predict(
-        self, transfer_data: NormData, predict_data: NormData, save_dir: str | None = None, **kwargs
+        self,
+        transfer_data: NormData,
+        predict_data: NormData,
+        save_dir: str | None = None,
+        **kwargs,
     ) -> NormativeModel:
         """
         Transfers the model to a new dataset and predicts the data.
@@ -279,11 +297,18 @@ class NormativeModel:
         new_model.predict(predict_data)
         return new_model
 
-    def extend(self, data: NormData, save_dir: str | None = None, n_synth_samples: int | None = None) -> NormativeModel:
+    def extend(
+        self,
+        data: NormData,
+        save_dir: str | None = None,
+        n_synth_samples: int | None = None,
+    ) -> NormativeModel:
         """
         Extends the model to a new dataset.
         """
-        synth = self.synthesize(n_samples=n_synth_samples, covariate_range_per_batch_effect=True)
+        synth = self.synthesize(
+            n_samples=n_synth_samples, covariate_range_per_batch_effect=True
+        )
         self.postprocess(synth)
         self.postprocess(data)
         merged_data = data.merge(synth)
@@ -306,7 +331,11 @@ class NormativeModel:
         return new_model
 
     def extend_predict(
-        self, extend_data: NormData, predict_data: NormData, save_dir: str | None = None, n_synth_samples: int | None = None
+        self,
+        extend_data: NormData,
+        predict_data: NormData,
+        save_dir: str | None = None,
+        n_synth_samples: int | None = None,
     ) -> NormativeModel:
         """
         Extends the model to a new dataset and predicts the data.
@@ -316,7 +345,9 @@ class NormativeModel:
         return new_model
 
     @classmethod
-    def merge(cls, save_dir: str, models: list[Union[NormativeModel, str]]) -> NormativeModel:
+    def merge(
+        cls, save_dir: str, models: list[Union[NormativeModel, str]]
+    ) -> NormativeModel:
         """
         Merges multiple models into a single model.
         """
@@ -341,7 +372,10 @@ class NormativeModel:
         return merged_model
 
     def synthesize(
-        self, data: NormData | None = None, n_samples: int | None = None, covariate_range_per_batch_effect=False
+        self,
+        data: NormData | None = None,
+        n_samples: int | None = None,
+        covariate_range_per_batch_effect=False,
     ) -> NormData:  # type: ignore
         """Synthesize data from the model
 
@@ -362,12 +396,18 @@ class NormativeModel:
             self.check_compatibility(data)
             data = copy.deepcopy(data)
             if n_samples is not None:
-                Output.warning(Warnings.SYNTHESIZE_N_SAMPLES_IGNORED, n_samples=n_samples)
-            n_samples = data.X.shape[0] if data.X is not None else data.batch_effects.shape[0]
+                Output.warning(
+                    Warnings.SYNTHESIZE_N_SAMPLES_IGNORED, n_samples=n_samples
+                )
+            n_samples = (
+                data.X.shape[0] if data.X is not None else data.batch_effects.shape[0]
+            )
             if not hasattr(data, "batch_effects") or data.batch_effects is None:
                 data["batch_effects"] = self.sample_batch_effects(n_samples)  # type: ignore
             if not hasattr(data, "X") or data.X is None:
-                data["X"] = self.sample_covariates(data.batch_effects, covariate_range_per_batch_effect)
+                data["X"] = self.sample_covariates(
+                    data.batch_effects, covariate_range_per_batch_effect
+                )
         else:
             if n_samples is None:
                 n_samples = self.n_fit_observations
@@ -407,7 +447,9 @@ class NormativeModel:
         self.postprocess(data)
         return data
 
-    def harmonize(self, data: NormData, reference_batch_effect: dict[str, str] | None = None) -> NormData:
+    def harmonize(
+        self, data: NormData, reference_batch_effect: dict[str, str] | None = None
+    ) -> NormData:
         """Harmonizes the data to a reference batch effect. Harmonizes to the provided reference batch effect if provided,
         otherwise, harmonizes to the first batch effect alphabetically.
 
@@ -432,14 +474,19 @@ class NormativeModel:
             ref_be_array.loc[{"batch_effect_dims": k}] = v
         ref_be_array = self.map_batch_effects(ref_be_array)
 
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        respvar_intersection = set(self.response_vars).intersection(
+            data.response_vars.values
+        )
         n_vars = len(respvar_intersection)
         Output.print(Messages.HARMONIZING_DATA, n_models=n_vars)
 
         data["Y_harmonized"] = xr.DataArray(
             np.zeros((data.X.shape[0], n_vars)),
             dims=("observations", "response_vars"),
-            coords={"observations": data.observations, "response_vars": data.response_vars},
+            coords={
+                "observations": data.observations,
+                "response_vars": data.response_vars,
+            },
         )
         for responsevar in respvar_intersection:
             Output.print(Messages.HARMONIZING_DATA_MODEL, model_name=responsevar)
@@ -480,7 +527,11 @@ class NormativeModel:
             reg_model_dict["model"] = model.to_dict(regmodel_path)
             reg_model_dict["outscaler"] = self.outscalers[responsevar].to_dict()
             # Build the text first; json.dump(f) writes many small pieces and is slow.
-            with open(os.path.join(regmodel_path, "regression_model.json"), "w", encoding="utf-8") as f:
+            with open(
+                os.path.join(regmodel_path, "regression_model.json"),
+                "w",
+                encoding="utf-8",
+            ) as f:
                 f.write(to_json_with_one_line_lists(reg_model_dict))
 
     @classmethod
@@ -535,7 +586,9 @@ class NormativeModel:
                     responsevar = reg_model_dict["model"]["name"]
                     response_vars.append(responsevar)
                     regression_model_type = globals()[reg_model_dict["model"]["type"]]
-                    regression_models[responsevar] = regression_model_type.from_dict(reg_model_dict["model"], path)
+                    regression_models[responsevar] = regression_model_type.from_dict(
+                        reg_model_dict["model"], path
+                    )
                     # Use the version stored in the regression model dict so
                     # that the outscaler migration uses the correct version.
                     reg_version: str = reg_model_dict["model"].get(
@@ -576,14 +629,18 @@ class NormativeModel:
 
         if "batch_effects_maps" in metadata:
             self.batch_effects_maps = {
-                be: {v: int(k.split("_")[1]) for k, v in mp.items()} for be, mp in metadata["batch_effects_maps"].items()
+                be: {v: int(k.split("_")[1]) for k, v in mp.items()}
+                for be, mp in metadata["batch_effects_maps"].items()
             }
         if "inverse_batch_effect_counts" in metadata:
             self.batch_effect_counts = {
-                be: {v: int(k.split("_")[1]) for k, v in mp.items()} for be, mp in metadata["inverse_batch_effect_counts"].items()
+                be: {v: int(k.split("_")[1]) for k, v in mp.items()}
+                for be, mp in metadata["inverse_batch_effect_counts"].items()
             }
         if "batch_effect_covariate_ranges" in metadata:
-            self.batch_effect_covariate_ranges = metadata["batch_effect_covariate_ranges"]
+            self.batch_effect_covariate_ranges = metadata[
+                "batch_effect_covariate_ranges"
+            ]
 
         if "unique_batch_effects" in metadata:
             self.unique_batch_effects = metadata["unique_batch_effects"]
@@ -655,7 +712,9 @@ class NormativeModel:
         for responsevar in data.response_vars.to_numpy():
             if (responsevar not in self.outscalers) or overwrite:
                 self.outscalers[responsevar] = Scaler.from_string(self.outscaler)
-                self.outscalers[responsevar].fit(data.Y.sel(response_vars=responsevar).data)
+                self.outscalers[responsevar].fit(
+                    data.Y.sel(response_vars=responsevar).data
+                )
 
         data.scale_forward(self.inscalers, self.outscalers)
 
@@ -668,7 +727,7 @@ class NormativeModel:
             data (NormData): Data to postprocess.
         """
         self.scale_backward(data)
-        # Invert Y to its original space if positivity was enforced during 
+        # Invert Y to its original space if positivity was enforced during
         # preprocessing
         self._invert_y_transform(data)
 
@@ -689,9 +748,9 @@ class NormativeModel:
 
     def _apply_y_transform(self, data: NormData) -> None:
         """
-        Apply the forward response transform (e.g. log1p) to Y-like variables 
+        Apply the forward response transform (e.g. log1p) to Y-like variables
         in the data.
-        
+
         Parameters
         ----------
         data : NormData
@@ -711,13 +770,14 @@ class NormativeModel:
             # Apply log1p transform to the response variable Y
             for var in ["Y"]:
                 if (data[var] < -1).any():
-                    raise ValueError("Cannot apply log1p transform to variable "
-                                     f"'{var}' because it contains values less "
-                                     "than -1."
-                                     )
+                    raise ValueError(
+                        "Cannot apply log1p transform to variable "
+                        f"'{var}' because it contains values less "
+                        "than -1."
+                    )
                 else:
                     data[var] = np.log1p(data[var])
-                    
+
         elif self.y_transform == "log":
             # Apply natural log transform to the response variable Y
             for var in ["Y"]:
@@ -735,7 +795,7 @@ class NormativeModel:
         """
         Apply the inverse response transform (e.g. expm1) to Y-like variables
         in the data.
-        
+
         Parameters
         ----------
         data : NormData
@@ -758,7 +818,7 @@ class NormativeModel:
             for var in ("Y", "centiles", "Yhat", "Y_harmonized"):
                 if var in data.data_vars:
                     data[var] = np.exp(data[var])
-            
+
     def evaluate(self, data: NormData) -> None:
         """
         Evaluates the model performance on the data.
@@ -791,7 +851,9 @@ class NormativeModel:
         assert self.check_compatibility(data), "Data is not compatible with the model!"
 
         self.preprocess(data)
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        respvar_intersection = set(self.response_vars).intersection(
+            data.response_vars.values
+        )
         Output.print(Messages.PREDICTING_MODELS, n_models=len(respvar_intersection))
 
         data["Z"] = xr.DataArray(
@@ -807,12 +869,19 @@ class NormativeModel:
             Output.print(Messages.COMPUTING_ZSCORES_MODEL, model_name=responsevar)
             resp_predict_data = data.sel({"response_vars": responsevar})
             X, be, _, Y, _ = self.extract_data(resp_predict_data)
-            data["Z"].loc[{"response_vars": responsevar}] = self[responsevar].forward(X, be, Y)
+            data["Z"].loc[{"response_vars": responsevar}] = self[responsevar].forward(
+                X, be, Y
+            )
 
         self.postprocess(data)
         return data
 
-    def compute_centiles(self, data: NormData, centiles: Optional[List[float] | np.ndarray] = None, **kwargs) -> NormData:
+    def compute_centiles(
+        self,
+        data: NormData,
+        centiles: Optional[List[float] | np.ndarray] = None,
+        **kwargs,
+    ) -> NormData:
         """
         Computes the centiles for each response variable in the data.
 
@@ -844,14 +913,18 @@ class NormativeModel:
             if not kwargs.get("recompute", False):
                 if all([c in data.centile.values for c in centiles]):
                     Output.warning(
-                        Warnings.CENTILES_ALREADY_COMPUTED_FOR_CENTILES, dataset_name=data.attrs["name"], centiles=centiles
+                        Warnings.CENTILES_ALREADY_COMPUTED_FOR_CENTILES,
+                        dataset_name=data.attrs["name"],
+                        centiles=centiles,
                     )
                     return data
-            del data.coords['centile']
-            del data.dims.mapping['centile']
-            del data['centiles']
+            del data.coords["centile"]
+            del data.dims.mapping["centile"]
+            del data["centiles"]
 
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        respvar_intersection = set(self.response_vars).intersection(
+            data.response_vars.values
+        )
         data["centiles"] = xr.DataArray(
             np.zeros((centiles.shape[0], data.X.shape[0], len(respvar_intersection))),
             dims=("centile", "observations", "response_vars"),
@@ -864,8 +937,12 @@ class NormativeModel:
             Output.print(Messages.COMPUTING_CENTILES_MODEL, model_name=responsevar)
             X, be, _, _, _ = self.extract_data(resp_predict_data)
             for p, c in zip(ppf, centiles):
-                Z = xr.DataArray(np.full(resp_predict_data.X.shape[0], p), dims=("observations",))
-                data["centiles"].loc[{"response_vars": responsevar, "centile": c}] = self[responsevar].backward(X, be, Z)
+                Z = xr.DataArray(
+                    np.full(resp_predict_data.X.shape[0], p), dims=("observations",)
+                )
+                data["centiles"].loc[{"response_vars": responsevar, "centile": c}] = (
+                    self[responsevar].backward(X, be, Z)
+                )
 
         self.postprocess(data)
         return data
@@ -873,7 +950,7 @@ class NormativeModel:
     def compute_baseline_logp(self, data: NormData) -> NormData:
         """
         Computes the log-probability of the data under a simple Gaussian model.
-        
+
         The baseline model is a Gaussian with mean and standard deviation
         computed from the scaled Y data. This serves as a baseline model
         to evaluate for example the MSLL (Mean Standardized Log Loss) of our
@@ -892,7 +969,9 @@ class NormativeModel:
         self.preprocess(data)
 
         # Initialize logp array for a baseline Gaussian model with mean/std of the data
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        respvar_intersection = set(self.response_vars).intersection(
+            data.response_vars.values
+        )
         data["baseline_logp"] = xr.DataArray(
             np.zeros((data.X.shape[0], len(respvar_intersection))),
             dims=("observations", "response_vars"),
@@ -929,7 +1008,9 @@ class NormativeModel:
         """
         baseline_mu = np.mean(y_scaled)
         baseline_sigma = np.std(y_scaled)
-        return -0.5 * np.log(2 * np.pi * baseline_sigma**2) - ((y_scaled - baseline_mu) ** 2) / (2 * baseline_sigma**2)
+        return -0.5 * np.log(2 * np.pi * baseline_sigma**2) - (
+            (y_scaled - baseline_mu) ** 2
+        ) / (2 * baseline_sigma**2)
 
     def compute_logp(self, data: NormData) -> NormData:
         """
@@ -949,7 +1030,9 @@ class NormativeModel:
         self.preprocess(data)
 
         # Initialise logp array with the correct dimensions and coordinates
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        respvar_intersection = set(self.response_vars).intersection(
+            data.response_vars.values
+        )
         data["logp"] = xr.DataArray(
             np.zeros((data.X.shape[0], len(respvar_intersection))),
             dims=("observations", "response_vars"),
@@ -962,7 +1045,9 @@ class NormativeModel:
             resp_predict_data = data.sel({"response_vars": responsevar})
             X, be, _, Y, _ = self.extract_data(resp_predict_data)
             Output.print(Messages.COMPUTING_LOGP_MODEL, model_name=responsevar)
-            data["logp"].loc[{"response_vars": responsevar}] = self[responsevar].elemwise_logp(X, be, Y)
+            data["logp"].loc[{"response_vars": responsevar}] = self[
+                responsevar
+            ].elemwise_logp(X, be, Y)
 
         self.postprocess(data)
         return data
@@ -972,19 +1057,24 @@ class NormativeModel:
         Computes the predicted values for each response variable in the data.
         """
         self.preprocess(data)
-        respvar_intersection = set(self.response_vars).intersection(data.response_vars.values)
+        respvar_intersection = set(self.response_vars).intersection(
+            data.response_vars.values
+        )
         data["Yhat"] = xr.DataArray(
             np.zeros((data.X.shape[0], len(respvar_intersection))),
             dims=("observations", "response_vars"),
-            coords={"observations": data.observations, "response_vars": list(respvar_intersection)},
+            coords={
+                "observations": data.observations,
+                "response_vars": list(respvar_intersection),
+            },
         )
         Output.print(Messages.COMPUTING_YHAT, n_models=len(respvar_intersection))
         for responsevar in respvar_intersection:
             resp_predict_data = data.sel({"response_vars": responsevar})
             X, be, _, _, _ = self.extract_data(resp_predict_data)
-            data["Yhat"].loc[{"response_vars": responsevar}] = self[responsevar].compute_yhat(
-                resp_predict_data, responsevar, X, be
-            )
+            data["Yhat"].loc[{"response_vars": responsevar}] = self[
+                responsevar
+            ].compute_yhat(resp_predict_data, responsevar, X, be)
         self.postprocess(data)
         return data
 
@@ -995,19 +1085,26 @@ class NormativeModel:
 
     def register_batch_effects(self, data: NormData) -> None:
         self.unique_batch_effects = copy.deepcopy(data.unique_batch_effects)
-        self.unique_batch_effects = {k: list(v) for k, v in self.unique_batch_effects.items()}
+        self.unique_batch_effects = {
+            k: list(v) for k, v in self.unique_batch_effects.items()
+        }
         self.batch_effects_maps = {
-            be: {k: i for i, k in enumerate(self.unique_batch_effects[be])} for be in self.unique_batch_effects.keys()
+            be: {k: i for i, k in enumerate(self.unique_batch_effects[be])}
+            for be in self.unique_batch_effects.keys()
         }
         self.batch_effect_counts = copy.deepcopy(data.batch_effect_counts)
-        self.batch_effect_covariate_ranges = copy.deepcopy(data.batch_effect_covariate_ranges)
+        self.batch_effect_covariate_ranges = copy.deepcopy(
+            data.batch_effect_covariate_ranges
+        )
         self.covariate_ranges = copy.deepcopy(data.covariate_ranges)
 
     def sample_batch_effects(self, n_samples: int) -> xr.DataArray:
         """
         Sample the batch effects from the estimated distribution.
         """
-        max_batch_effect_count = max([len(v) for v in self.unique_batch_effects.values()])
+        max_batch_effect_count = max(
+            [len(v) for v in self.unique_batch_effects.values()]
+        )
         if n_samples < max_batch_effect_count:
             raise ValueError(
                 Output.error(
@@ -1020,7 +1117,10 @@ class NormativeModel:
         bes = xr.DataArray(
             np.zeros((n_samples, len(self.batch_effect_counts.keys()))).astype(str),
             dims=("observations", "batch_effect_dims"),
-            coords={"observations": np.arange(n_samples), "batch_effect_dims": self.batch_effect_dims},
+            coords={
+                "observations": np.arange(n_samples),
+                "batch_effect_dims": self.batch_effect_dims,
+            },
         )
         for be in self.batch_effect_dims:
             countsum = np.sum(list(self.batch_effect_counts[be].values()))
@@ -1031,7 +1131,9 @@ class NormativeModel:
             )
         return bes
 
-    def sample_covariates(self, bes: xr.DataArray, covariate_range_per_batch_effect: bool = False) -> xr.DataArray:
+    def sample_covariates(
+        self, bes: xr.DataArray, covariate_range_per_batch_effect: bool = False
+    ) -> xr.DataArray:
         """
         Sample the covariates from the estimated distribution.
 
@@ -1040,22 +1142,39 @@ class NormativeModel:
         X = xr.DataArray(
             np.zeros((bes.shape[0], len(self.covariates))),
             dims=("observations", "covariates"),
-            coords={"observations": np.arange(bes.shape[0]), "covariates": self.covariates},
+            coords={
+                "observations": np.arange(bes.shape[0]),
+                "covariates": self.covariates,
+            },
         )
         if covariate_range_per_batch_effect:
             for c in self.covariates:
                 for i in range(X.shape[0]):
                     running_min, running_max = -np.inf, np.inf
                     for k in self.batch_effect_dims:
-                        my_be = bes.sel({"observations": i, "batch_effect_dims": k}).values.item()
-                        running_min = max(running_min, self.batch_effect_covariate_ranges[k][my_be][c]["min"])
-                        running_max = min(running_max, self.batch_effect_covariate_ranges[k][my_be][c]["max"])
+                        my_be = bes.sel(
+                            {"observations": i, "batch_effect_dims": k}
+                        ).values.item()
+                        running_min = max(
+                            running_min,
+                            self.batch_effect_covariate_ranges[k][my_be][c]["min"],
+                        )
+                        running_max = min(
+                            running_max,
+                            self.batch_effect_covariate_ranges[k][my_be][c]["max"],
+                        )
 
-                    X.loc[{"observations": i, "covariates": c}] = np.random.uniform(running_min, running_max, size=1).item()
+                    X.loc[{"observations": i, "covariates": c}] = np.random.uniform(
+                        running_min, running_max, size=1
+                    ).item()
         else:
             for c in self.covariates:
-                X.loc[{"observations": np.arange(bes.shape[0]), "covariates": c}] = np.random.uniform(
-                    self.covariate_ranges[c]["min"], self.covariate_ranges[c]["max"], size=(bes.shape[0])
+                X.loc[{"observations": np.arange(bes.shape[0]), "covariates": c}] = (
+                    np.random.uniform(
+                        self.covariate_ranges[c]["min"],
+                        self.covariate_ranges[c]["max"],
+                        size=(bes.shape[0]),
+                    )
                 )
         return X
 
@@ -1086,18 +1205,32 @@ class NormativeModel:
         # We invert the map, so that the original keys are stored as the values
         # The original integer values are then converted to strings by json, but we can safely convert them back to ints when loading
         # We also add an index to the keys to make sure they are unique
-        if hasattr(self, "batch_effect_counts") and self.batch_effect_counts is not None:
+        if (
+            hasattr(self, "batch_effect_counts")
+            and self.batch_effect_counts is not None
+        ):
             my_dict["inverse_batch_effect_counts"] = {
-                be: {f"{i}_{k}": v for i, (v, k) in enumerate(self.batch_effect_counts[be].items())}
+                be: {
+                    f"{i}_{k}": v
+                    for i, (v, k) in enumerate(self.batch_effect_counts[be].items())
+                }
                 for be, mp in self.batch_effect_counts.items()
             }
         if hasattr(self, "batch_effects_maps") and self.batch_effects_maps is not None:
             my_dict["batch_effects_maps"] = {
-                be: {f"{i}_{k}": v for i, (v, k) in enumerate(self.batch_effects_maps[be].items())}
+                be: {
+                    f"{i}_{k}": v
+                    for i, (v, k) in enumerate(self.batch_effects_maps[be].items())
+                }
                 for be in self.batch_effects_maps.keys()
             }
-        if hasattr(self, "batch_effect_covariate_ranges") and self.batch_effect_covariate_ranges is not None:
-            my_dict["batch_effect_covariate_ranges"] = copy.deepcopy(self.batch_effect_covariate_ranges)
+        if (
+            hasattr(self, "batch_effect_covariate_ranges")
+            and self.batch_effect_covariate_ranges is not None
+        ):
+            my_dict["batch_effect_covariate_ranges"] = copy.deepcopy(
+                self.batch_effect_covariate_ranges
+            )
 
         if hasattr(self, "covariate_ranges") and self.covariate_ranges is not None:
             my_dict["covariate_ranges"] = copy.deepcopy(self.covariate_ranges)
@@ -1141,7 +1274,9 @@ class NormativeModel:
         elif kwargs["alg"] == "test_model":
             template_regression_model = TestModel.from_args("template", kwargs)
         else:
-            raise ValueError(Output.error(Errors.ERROR_UNKNOWN_CLASS, class_name=kwargs["alg"]))
+            raise ValueError(
+                Output.error(Errors.ERROR_UNKNOWN_CLASS, class_name=kwargs["alg"])
+            )
         return cls(
             template_regression_model=template_regression_model,
             savemodel=savemodel,
@@ -1182,10 +1317,15 @@ class NormativeModel:
         if self.saveplots:
             ensure_dir_exists(plots_dir)
 
-
     def extract_data(
         self, data: NormData
-    ) -> Tuple[xr.DataArray, xr.DataArray, dict[str, dict[str, int]], xr.DataArray, xr.DataArray]:
+    ) -> Tuple[
+        xr.DataArray,
+        xr.DataArray,
+        dict[str, dict[str, int]],
+        xr.DataArray,
+        xr.DataArray,
+    ]:
         """Returns a 5-tuple of covariates, batch effects, batch effect maps, response vars, Z-scores.
         If the variable is not available, returns None instead of the variable.
         """
@@ -1209,7 +1349,6 @@ class NormativeModel:
         else:
             Z = None
         return X, batch_effects, batch_effects_maps, Y, Z  # type: ignore
-
 
     def check_is_fitted(self) -> None:
         """
@@ -1240,7 +1379,9 @@ class NormativeModel:
         bool
             True if compatible, False otherwise
         """
-        missing_covariates = [i for i in self.covariates if i not in data.covariates.values]
+        missing_covariates = [
+            i for i in self.covariates if i not in data.covariates.values
+        ]
         if len(missing_covariates) > 0:
             Output.warning(
                 Warnings.MISSING_COVARIATES,
@@ -1248,7 +1389,9 @@ class NormativeModel:
                 dataset_name=data.name,
             )
 
-        extra_covariates = [i for i in data.covariates.values if i not in self.covariates]
+        extra_covariates = [
+            i for i in data.covariates.values if i not in self.covariates
+        ]
         if len(extra_covariates) > 0:
             Output.warning(
                 Warnings.EXTRA_COVARIATES,
@@ -1256,7 +1399,9 @@ class NormativeModel:
                 dataset_name=data.name,
             )
 
-        extra_response_vars = [i for i in data.response_vars.values if i not in self.response_vars]
+        extra_response_vars = [
+            i for i in data.response_vars.values if i not in self.response_vars
+        ]
         if len(extra_response_vars) > 0:
             Output.warning(
                 Warnings.EXTRA_RESPONSE_VARS,
@@ -1266,9 +1411,12 @@ class NormativeModel:
 
         compatible = True
         unknown_batch_effects = {
-            be: [u for u in unique if u not in self.unique_batch_effects[be]] for be, unique in data.unique_batch_effects.items()
+            be: [u for u in unique if u not in self.unique_batch_effects[be]]
+            for be, unique in data.unique_batch_effects.items()
         }
-        compatible = sum([len(unknown) for unknown in unknown_batch_effects.values()]) == 0
+        compatible = (
+            sum([len(unknown) for unknown in unknown_batch_effects.values()]) == 0
+        )
         if not compatible:
             Output.warning(
                 Warnings.UNKNOWN_BATCH_EFFECTS,
@@ -1276,7 +1424,10 @@ class NormativeModel:
                 dataset_name=data.name,
             )
         return (
-            (len(missing_covariates) == 0) and (len(extra_covariates) == 0) and (len(extra_response_vars) == 0) and (compatible)
+            (len(missing_covariates) == 0)
+            and (len(extra_covariates) == 0)
+            and (len(extra_response_vars) == 0)
+            and (compatible)
         )
 
     def map_batch_effects(self, batch_effects: xr.DataArray) -> xr.DataArray:
@@ -1288,11 +1439,14 @@ class NormativeModel:
         for i, be in enumerate(self.unique_batch_effects.keys()):
             vals = batch_effects.sel(batch_effect_dims=be).values
             unique_vals, inverses = np.unique(vals, return_inverse=True)
-            unique_vals_mapped = np.array([self.batch_effects_maps[be][un] for un in unique_vals])
-            mapped_batch_effects.loc[{"batch_effect_dims": be}] = unique_vals_mapped[list(inverses)]
+            unique_vals_mapped = np.array(
+                [self.batch_effects_maps[be][un] for un in unique_vals]
+            )
+            mapped_batch_effects.loc[{"batch_effect_dims": be}] = unique_vals_mapped[
+                list(inverses)
+            ]
 
         return mapped_batch_effects
-
 
     def __getitem__(self, key: str) -> RegressionModel:
         if key not in self.regression_models:

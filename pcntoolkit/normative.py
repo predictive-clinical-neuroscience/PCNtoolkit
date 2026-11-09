@@ -50,7 +50,9 @@ def fit_predict(conf_dict: dict) -> None:
     fit_data = load_data(conf_dict)
     predict_data = load_test_data(conf_dict)
 
-    assert fit_data.check_compatibility(predict_data), "Fit and predict data are not compatible."
+    assert fit_data.check_compatibility(predict_data), (
+        "Fit and predict data are not compatible."
+    )
 
     normative_model: NormativeModel = NormativeModel.from_args(**conf_dict)
     runner.fit_predict(normative_model, fit_data, predict_data)
@@ -104,7 +106,9 @@ def load_test_data(conf_dict: dict) -> NormData:
     return data
 
 
-def load_response_vars(datafile: str, maskfile: str | None = None, vol: bool = True) -> tuple[np.ndarray, np.ndarray | None]:
+def load_response_vars(
+    datafile: str, maskfile: str | None = None, vol: bool = True
+) -> tuple[np.ndarray, np.ndarray | None]:
     """
     Load response variables from file. This will load the data and mask it if
     necessary. If the data is in ascii format it will be converted into a numpy
@@ -140,9 +144,15 @@ def get_argparser() -> argparse.ArgumentParser:
     #  parse arguments
     parser = argparse.ArgumentParser(description="Normative Modeling")
     parser.add_argument("-a", "--alg", help="algorithm", dest="alg", default="gpr")
-    parser.add_argument("-f", "--func", help="Function to call", dest="func", default="fit")
-    parser.add_argument("-r", "--responses", help="responses file", dest="resp", default=None)
-    parser.add_argument("-c", "--covariates", help="covariates file", dest="cov", default=None)
+    parser.add_argument(
+        "-f", "--func", help="Function to call", dest="func", default="fit"
+    )
+    parser.add_argument(
+        "-r", "--responses", help="responses file", dest="resp", default=None
+    )
+    parser.add_argument(
+        "-c", "--covariates", help="covariates file", dest="cov", default=None
+    )
     parser.add_argument(
         "-t",
         "--test_responses",
@@ -158,7 +168,9 @@ def get_argparser() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument("-m", "--mask", help="mask file", dest="mask", default=None)
-    parser.add_argument("-k", "--cvfolds", help="cross-validation folds", dest="cv_folds", default=None)
+    parser.add_argument(
+        "-k", "--cvfolds", help="cross-validation folds", dest="cv_folds", default=None
+    )
     return parser
 
 
@@ -183,7 +195,9 @@ def get_conf_dict_from_args() -> dict[str, str | int | float | bool]:
         if "=" in arg:
             key, value = arg.split("=")
             if key in conf_dict:
-                raise ValueError(Output.error(Errors.ERROR_ARGUMENT_SPECIFIED_TWICE, key=key))
+                raise ValueError(
+                    Output.error(Errors.ERROR_ARGUMENT_SPECIFIED_TWICE, key=key)
+                )
             conf_dict[key] = value
 
     for k, v in conf_dict.items():
@@ -248,7 +262,9 @@ def main(*args) -> None:
         case "fit_predict":
             fit_predict(parsed_args)
         case _:
-            raise ValueError(Output.error(Errors.ERROR_UNKNOWN_FUNCTION, func=parsed_args["func"]))
+            raise ValueError(
+                Output.error(Errors.ERROR_UNKNOWN_FUNCTION, func=parsed_args["func"])
+            )
 
 
 def entrypoint(*args):

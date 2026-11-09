@@ -3,24 +3,26 @@
 # Retrieved 2025-12-04, License - CC BY-SA 4.0
 import numpy as np
 
-def autoscale(ax=None, axis='y', margin=0.1):
-    '''Autoscales the x or y axis of a given matplotlib ax object
+
+def autoscale(ax=None, axis="y", margin=0.1):
+    """Autoscales the x or y axis of a given matplotlib ax object
     to fit the margins set by manually limits of the other axis,
     with margins in fraction of the width of the plot
 
     Defaults to current axes object if not specified.
-    '''
+    """
     import matplotlib.pyplot as plt
     import numpy as np
+
     if ax is None:
         ax = plt.gca()
     newlow, newhigh = np.inf, -np.inf
 
     for artist in ax.collections + ax.lines:
-        x,y = get_xy(artist)
+        x, y = get_xy(artist)
         type = artist.__class__.__name__
         if not type == "FillBetweenPolyCollection":
-            if axis == 'y':
+            if axis == "y":
                 setlim = ax.set_ylim
                 lim = ax.get_xlim()
                 fixed, dependent = x, y
@@ -33,16 +35,17 @@ def autoscale(ax=None, axis='y', margin=0.1):
                 newlow = low if low < newlow else newlow
                 newhigh = high if high > newhigh else newhigh
 
-    margin = margin*(newhigh - newlow)
+    margin = margin * (newhigh - newlow)
 
-    setlim(newlow-margin, newhigh+margin)
+    setlim(newlow - margin, newhigh + margin)
+
 
 def calculate_new_limit(fixed, dependent, limit):
-    '''Calculates the min/max of the dependent axis given 
+    """Calculates the min/max of the dependent axis given
     a fixed axis with limits
-    '''
+    """
     if len(fixed) > 2:
-        mask = (fixed>limit[0]) & (fixed < limit[1])
+        mask = (fixed > limit[0]) & (fixed < limit[1])
         window = dependent[mask]
         low, high = window.min(), window.max()
     else:
@@ -54,9 +57,9 @@ def calculate_new_limit(fixed, dependent, limit):
             high = -np.inf
     return low, high
 
+
 def get_xy(artist):
-    '''Gets the xy coordinates of a given artist
-    '''
+    """Gets the xy coordinates of a given artist"""
     if "Collection" in str(artist):
         x, y = artist.get_offsets().T
     elif "Line" in str(artist):

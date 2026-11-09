@@ -3,7 +3,6 @@ import os
 import subprocess
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict, List
 
 from IPython.display import clear_output
@@ -22,7 +21,13 @@ class JobStatus:
 
 
 class JobObserver:
-    def __init__(self, active_job_ids: Dict[str, str], job_type: str = "local", log_dir: str = "logs", task_id: str = ""):
+    def __init__(
+        self,
+        active_job_ids: Dict[str, str],
+        job_type: str = "local",
+        log_dir: str = "logs",
+        task_id: str = "",
+    ):
         self.all_job_ids = copy.deepcopy(active_job_ids)
         self.active_job_ids = copy.deepcopy(active_job_ids)
         self.job_type = job_type
@@ -84,7 +89,9 @@ class JobObserver:
                     if job_id in list(self.all_job_ids.values()):
                         job_name = self.job_id_to_name.get(job_id)
                         if state not in ["RUNNING", "PENDING", "COMPLETING"]:
-                            success_exists = (job_name is not None) and self.check_success_file(job_name)
+                            success_exists = (
+                                job_name is not None
+                            ) and self.check_success_file(job_name)
                         else:
                             success_exists = False
                         statuses.append(
@@ -98,7 +105,9 @@ class JobObserver:
                             )
                         )
                 except ValueError as e:
-                    Output.warning(Warnings.ERROR_PARSING_JOB_STATUS_LINE, line=line, error=e)
+                    Output.warning(
+                        Warnings.ERROR_PARSING_JOB_STATUS_LINE, line=line, error=e
+                    )
         elif stderr:
             Output.warning(Warnings.ERROR_GETTING_JOB_STATUSES, stderr=stderr)
 
@@ -141,7 +150,9 @@ class JobObserver:
         # Give the jobs time to start
         time.sleep(5)
         statuses = self.get_job_statuses()
-        while any(status.state in ["RUNNING", "PENDING", "COMPLETING"] for status in statuses):
+        while any(
+            status.state in ["RUNNING", "PENDING", "COMPLETING"] for status in statuses
+        ):
             self.show_job_status_monitor(in_notebook, statuses)
             time.sleep(check_interval)
             statuses = self.get_job_statuses()
@@ -172,10 +183,16 @@ class JobObserver:
 
             # Count completed, failed, and active jobs
         completed_jobs, failed_jobs, active_jobs = 0, 0, 0
-        for job_name, job_id in sorted(list(self.active_job_ids.items()), key=lambda x: x[0]):
+        for job_name, job_id in sorted(
+            list(self.active_job_ids.items()), key=lambda x: x[0]
+        ):
             matching_statuses = [s for s in statuses if s.job_id == job_id]
             if len(matching_statuses) > 1:
-                Output.warning(Warnings.MULTIPLE_JOBS_FOUND_FOR_JOB_ID, job_id=job_id, job_name=job_name)
+                Output.warning(
+                    Warnings.MULTIPLE_JOBS_FOUND_FOR_JOB_ID,
+                    job_id=job_id,
+                    job_name=job_name,
+                )
             elif len(matching_statuses) == 1:
                 my_status = matching_statuses[0]
                 if my_status.state == "COMPLETED":
@@ -192,7 +209,9 @@ class JobObserver:
             total_failed_jobs=failed_jobs,
         )
 
-        if not any(status.state in ["RUNNING", "PENDING", "COMPLETING"] for status in statuses):
+        if not any(
+            status.state in ["RUNNING", "PENDING", "COMPLETING"] for status in statuses
+        ):
             Output.print(Messages.NO_MORE_RUNNING_JOBS)
         else:
             if not in_notebook:

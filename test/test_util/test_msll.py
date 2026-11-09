@@ -25,8 +25,7 @@ def test_msll_remains_similar_when_scale_changes(tmp_path):
 
     for scale_factor in [1.0, 1e-4]:
         # Create data with specified scale (keep the same seed)
-        data = create_test_data(
-            n_samples=100, scale_factor=scale_factor, seed=123)
+        data = create_test_data(n_samples=100, scale_factor=scale_factor, seed=123)
 
         # Create and fit model
         blr = BLR()
@@ -43,8 +42,9 @@ def test_msll_remains_similar_when_scale_changes(tmp_path):
 
         model.fit(data)
 
-        msll = float(data.statistics.sel(
-            response_vars="test_metric", statistic="MSLL").values)
+        msll = float(
+            data.statistics.sel(response_vars="test_metric", statistic="MSLL").values
+        )
         msll_values[scale_factor] = msll
         print(f"Scale factor: {scale_factor}, MSLL: {msll}")
 

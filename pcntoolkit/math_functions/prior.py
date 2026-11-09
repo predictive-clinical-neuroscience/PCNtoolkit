@@ -12,8 +12,8 @@ from pymc import math
 
 from pcntoolkit.math_functions.basis_function import BasisFunction, LinearBasisFunction
 from pcntoolkit.math_functions.factorize import *
-from pcntoolkit.util.output import Errors, Output
 from pcntoolkit.util.migration import registry
+from pcntoolkit.util.output import Errors, Output
 
 PM_DISTMAP = {
     "Normal": pm.Normal,
@@ -94,7 +94,9 @@ def make_prior(name: str = "theta", **kwargs) -> BasePrior:
         return Prior(**kwargs)
 
 
-def prior_from_args(name: str, args: Dict[str, Any], dims: Optional[Union[Tuple[str, ...], str]] = None) -> BasePrior:
+def prior_from_args(
+    name: str, args: Dict[str, Any], dims: Optional[Union[Tuple[str, ...], str]] = None
+) -> BasePrior:
     my_args = DEFAULT_PRIOR_ARGS | args
     mapping = my_args.get(f"mapping_{name}", "identity")
     mapping_params = my_args.get(f"mapping_params_{name}", (0, 1))
@@ -102,8 +104,12 @@ def prior_from_args(name: str, args: Dict[str, Any], dims: Optional[Union[Tuple[
         dist_name = my_args.get(f"dist_name_{name}", "HalfNormal")
         dist_params = my_args.get(f"dist_params_{name}", (1.0,))
         if mapping == "identity":
-            if dist_name in ["Normal", "Cauchy"] or (dist_name == "Uniform" and dist_params[0] <= 0):
-                raise ValueError(Output.error(Errors.ENSURE_POSITIVE_DISTRIBUTION, name=name))
+            if dist_name in ["Normal", "Cauchy"] or (
+                dist_name == "Uniform" and dist_params[0] <= 0
+            ):
+                raise ValueError(
+                    Output.error(Errors.ENSURE_POSITIVE_DISTRIBUTION, name=name)
+                )
     else:
         dist_name = my_args.get(f"dist_name_{name}", "Normal")
         dist_params = my_args.get(f"dist_params_{name}", (0, 1))
@@ -125,13 +131,29 @@ def prior_from_args(name: str, args: Dict[str, Any], dims: Optional[Union[Tuple[
     elif my_args.get(f"random_{name}", False):
         mu = prior_from_args(f"mu_{name}", my_args, dims=dims)
         sigma = prior_from_args(f"sigma_{name}", my_args, dims=dims)
-        # When running a model in the CLI specify`centered_<name>` to run CenteredRandomPrior, 
-        # e.g., "centered_intercept_mu": True 
-        cls = CenteredRandomPrior if my_args.get(f"centered_{name}", False) else RandomPrior
-        return cls(mu=mu, sigma=sigma, name=name, dims=dims, mapping=mapping, mapping_params=mapping_params)
+        # When running a model in the CLI specify`centered_<name>` to run CenteredRandomPrior,
+        # e.g., "centered_intercept_mu": True
+        cls = (
+            CenteredRandomPrior
+            if my_args.get(f"centered_{name}", False)
+            else RandomPrior
+        )
+        return cls(
+            mu=mu,
+            sigma=sigma,
+            name=name,
+            dims=dims,
+            mapping=mapping,
+            mapping_params=mapping_params,
+        )
     else:
         return Prior(
-            name=name, dims=dims, mapping=mapping, mapping_params=mapping_params, dist_name=dist_name, dist_params=dist_params
+            name=name,
+            dims=dims,
+            mapping=mapping,
+            mapping_params=mapping_params,
+            dist_name=dist_name,
+            dist_params=dist_params,
         )
 
 
@@ -177,14 +199,21 @@ class BasePrior(ABC):
             # of a ZINB likelihood)
             return math.sigmoid((x - a) / b)
         else:
-            raise ValueError(Output.error(Errors.ERROR_UNKNOWN_MAPPING, mapping=self.mapping))
+            raise ValueError(
+                Output.error(Errors.ERROR_UNKNOWN_MAPPING, mapping=self.mapping)
+            )
         # This adds a third parameter to the mapping that does a verical shift
         if len(self.mapping_params) > 2:
             toreturn = toreturn + self.mapping_params[2]
         return toreturn
 
     def compile(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ) -> Any:
         samples = self._compile(model, X, be, be_maps, Y)
         return self.apply_mapping(samples)
@@ -217,14 +246,10 @@ class BasePrior(ABC):
         return dct | {"type": self.__class__.__name__}
 
     @classmethod
-    def from_dict(
-        cls, dict: dict, version: str | None = None
-    ) -> "BasePrior":
+    def from_dict(cls, dict: dict, version: str | None = None) -> "BasePrior":
         # Apply any registered Prior migrations for this version
         dict = registry.migrate("Prior", dict, version=version)
-        return globals()[dict.pop("type")].from_dict(
-            dict, version=version
-        )
+        return globals()[dict.pop("type")].from_dict(dict, version=version)
 
     def __eq__(self, other: BasePrior):
         return self.to_dict() == other.to_dict()
@@ -255,11 +280,20 @@ class Prior(BasePrior):
         Y: xr.DataArray,
     ):
         with model:
-            self.dist = PM_DISTMAP[self.dist_name](self.name, *self.dist_params, dims=self.dims)
+            self.dist = PM_DISTMAP[self.dist_name](
+                self.name, *self.dist_params, dims=self.dims
+            )
         return self.dist
 
     def transfer(self, idata: xr.DataTree, **kwargs) -> "Prior":
-        new_prior = Prior(self.name, self.dims, self.mapping, self.mapping_params, self.dist_name, self.dist_params)
+        new_prior = Prior(
+            self.name,
+            self.dims,
+            self.mapping,
+            self.mapping_params,
+            self.dist_name,
+            self.dist_params,
+        )
         freedom = kwargs.get("freedom", 1)
 
         def infer_params(s):
@@ -274,21 +308,37 @@ class Prior(BasePrior):
             elif self.dist_name == "Gamma":
                 return factorize_gamma(s, freedom)
             else:
-                raise ValueError(Output.error(Errors.ERROR_UNKNOWN_DISTRIBUTION, dist_name=self.dist_name))
+                raise ValueError(
+                    Output.error(
+                        Errors.ERROR_UNKNOWN_DISTRIBUTION, dist_name=self.dist_name
+                    )
+                )
 
         samples = az.extract(idata, var_names=self.name)
         covariate_dims = [i for i in samples.dims if i.endswith("covariates")]
         if len(covariate_dims) == 1:
-            params = [infer_params(samples.sel(**{covariate_dims[0]: i})) for i in samples.coords[covariate_dims[0]]]
+            params = [
+                infer_params(samples.sel(**{covariate_dims[0]: i}))
+                for i in samples.coords[covariate_dims[0]]
+            ]
             new_prior.dist_params = [i.tolist() for i in np.array(params).T]
         elif len(covariate_dims) == 0:
             new_prior.dist_params = infer_params(samples)
         else:
-            raise ValueError(Output.error(Errors.ERROR_MULTIPLE_COVARIATE_DIMS, covariate_dims=covariate_dims))
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_MULTIPLE_COVARIATE_DIMS, covariate_dims=covariate_dims
+                )
+            )
         return new_prior
 
     def update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         pass
 
@@ -338,7 +388,10 @@ class RandomPrior(BasePrior):
         super().__init__(name, dims, mapping, mapping_params, **kwargs)
         self.mu = mu or make_prior(dist_name="Normal", dist_params=(0, 2.0))
         self.sigma = sigma or make_prior(
-            dist_name="Normal", dist_params=(1.0, 1.0), mapping="softplus", mapping_params=(0.0, 1.0)
+            dist_name="Normal",
+            dist_params=(1.0, 1.0),
+            mapping="softplus",
+            mapping_params=(0.0, 1.0),
         )
         self.sigmas = {}
         self.offsets = {}
@@ -374,14 +427,18 @@ class RandomPrior(BasePrior):
             else:
                 acc = mu_samples  # type: ignore
             for be_i in model.coords["batch_effect_dims"]:  # type:ignore
-                be_dims = (be_i,) if not self.dims else ( *self.dims, be_i)
+                be_dims = (be_i,) if not self.dims else (*self.dims, be_i)
                 if be_i not in self.sigmas:
                     self.sigmas[be_i] = copy.deepcopy(self.sigma)
                     self.sigmas[be_i].set_name(f"{be_i}_sigma_{self.name}")
                 sig = self.sigmas[be_i].compile(model, X, be, be_maps, Y)
                 # norm = pm.Normal(f"normalized_{be_i}_offset_{self.name}", dims=be_dims,mu=0,sigma=1)
-                norm = pm.ZeroSumNormal(f"normalized_{be_i}_offset_{self.name}", dims=be_dims, sigma=1).T
-                self.scaled_offsets[be_i] = pm.Deterministic(f"{be_i}_offset_{self.name}", sig * norm)
+                norm = pm.ZeroSumNormal(
+                    f"normalized_{be_i}_offset_{self.name}", dims=be_dims, sigma=1
+                ).T
+                self.scaled_offsets[be_i] = pm.Deterministic(
+                    f"{be_i}_offset_{self.name}", sig * norm
+                )
                 indices = model[f"{be_i}_data"]
                 accumulant = self.scaled_offsets[be_i][indices]
                 acc += accumulant
@@ -392,14 +449,24 @@ class RandomPrior(BasePrior):
         new_mu = self.mu.transfer(idata, **kwargs)
         new_sigma = copy.deepcopy(self.sigma)
         new_prior = RandomPrior(
-            name=self.name, dims=self.dims, mapping=self.mapping, mapping_params=self.mapping_params, mu=new_mu, sigma=new_sigma
+            name=self.name,
+            dims=self.dims,
+            mapping=self.mapping,
+            mapping_params=self.mapping_params,
+            mu=new_mu,
+            sigma=new_sigma,
         )
         for be_i in self.sigmas.keys():
             new_prior.sigmas[be_i] = self.sigmas[be_i].transfer(idata, **kwargs)
         return new_prior
 
     def update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         pass
 
@@ -426,15 +493,17 @@ class RandomPrior(BasePrior):
         return dct
 
     @classmethod
-    def from_dict(
-        cls, dict: dict, version: str | None = None
-    ) -> "RandomPrior":
+    def from_dict(cls, dict: dict, version: str | None = None) -> "RandomPrior":
         mu = BasePrior.from_dict(dict["mu"], version=version)
         sigma = BasePrior.from_dict(dict["sigma"], version=version)
         instance = cls(
             mu=mu,
             sigma=sigma,
-            **{k: v for k, v in dict.items() if k in ["name", "dims", "mapping", "mapping_params"]},
+            **{
+                k: v
+                for k, v in dict.items()
+                if k in ["name", "dims", "mapping", "mapping_params"]
+            },
         )
         instance.sigmas = {
             k.split("_")[0]: BasePrior.from_dict(v, version=version)
@@ -449,7 +518,7 @@ class CenteredRandomPrior(RandomPrior):
     """
     A random effect drawn directly at the group scale.
 
-    Differs from :class:`RandomPrior` only in how the offsets are sampled: here
+    Differs from ``RandomPrior`` only in how the offsets are sampled: here
     they are drawn at the group's own scale, rather than at unit scale and then
     multiplied by it. The two describe the same model but sample differently.
     """
@@ -470,7 +539,7 @@ class CenteredRandomPrior(RandomPrior):
             else:
                 acc = mu_samples  # type: ignore
             for be_i in model.coords["batch_effect_dims"]:  # type:ignore
-                be_dims = (be_i,) if not self.dims else ( *self.dims,be_i)
+                be_dims = (be_i,) if not self.dims else (*self.dims, be_i)
                 if be_i not in self.sigmas:
                     self.sigmas[be_i] = copy.deepcopy(self.sigma)
                     self.sigmas[be_i].set_name(f"{be_i}_sigma_{self.name}")
@@ -481,9 +550,11 @@ class CenteredRandomPrior(RandomPrior):
                 # zero-sum axes". Fix: pass sigma[..., None] to ZeroSumNormal to give sigma a per-covariate
                 # axis and transpose the result, so shapes match RandomPrior (observations first).
                 self.scaled_offsets[be_i] = pm.ZeroSumNormal(
-                    f"{be_i}_offset_{self.name}", sigma=self.sigmas[be_i].compile(model, X, be, be_maps, Y), dims=be_dims
+                    f"{be_i}_offset_{self.name}",
+                    sigma=self.sigmas[be_i].compile(model, X, be, be_maps, Y),
+                    dims=be_dims,
                 )
-                acc += self.scaled_offsets[be_i][...,model[f"{be_i}_data"]]
+                acc += self.scaled_offsets[be_i][..., model[f"{be_i}_data"]]
             self.dist = acc
         return self.dist
 
@@ -493,7 +564,12 @@ class CenteredRandomPrior(RandomPrior):
         # Must stay centered: transferring into a RandomPrior would silently
         # switch the model to the non-centered parameterisation.
         new_prior = CenteredRandomPrior(
-            name=self.name, dims=self.dims, mapping=self.mapping, mapping_params=self.mapping_params, mu=new_mu, sigma=new_sigma
+            name=self.name,
+            dims=self.dims,
+            mapping=self.mapping,
+            mapping_params=self.mapping_params,
+            mu=new_mu,
+            sigma=new_sigma,
         )
         for be_i in self.sigmas.keys():
             new_prior.sigmas[be_i] = self.sigmas[be_i].transfer(idata, **kwargs)
@@ -514,8 +590,12 @@ class LinearPrior(BasePrior):
     ):
         super().__init__(name, dims, mapping, mapping_params, **kwargs)
         self.slope = slope or make_prior(dist_name="Normal", dist_params=(0, 10.0))
-        self.slope.dims = ("covariates",) if not self.dims else ("covariates", *self.dims)
-        self.intercept = intercept or make_prior(dist_name="Normal", dist_params=(0, 5.0))
+        self.slope.dims = (
+            ("covariates",) if not self.dims else ("covariates", *self.dims)
+        )
+        self.intercept = intercept or make_prior(
+            dist_name="Normal", dist_params=(0, 5.0)
+        )
         self.intercept.dims = self.dims
         self.sample_dims = ("observations",)
         self.set_name(self.name)
@@ -533,9 +613,18 @@ class LinearPrior(BasePrior):
             self.intercept.dims = value
         self._dims = value
 
-    def _compile(self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray):
+    def _compile(
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ):
         if not self.basis_function.is_fitted:
-            self.basis_function.fit(X.values)  # Do this indexing to avoid ordering issues
+            self.basis_function.fit(
+                X.values
+            )  # Do this indexing to avoid ordering issues
         mapped_X = self.basis_function.transform(X.values)
         covs = f"{self.name}_covariates"
         self.covariate_dims = [f"{covs}_{i}" for i in range(mapped_X.shape[1])]
@@ -553,7 +642,10 @@ class LinearPrior(BasePrior):
         if self.one_dimensional:
             return (slope_samples * pm_X)[:, 0] + intercept_samples
         else:
-            return math.sum(slope_samples * pm_X, axis=1, keepdims=False) + intercept_samples
+            return (
+                math.sum(slope_samples * pm_X, axis=1, keepdims=False)
+                + intercept_samples
+            )
 
     def transfer(self, idata: xr.DataTree, **kwargs) -> "LinearPrior":
         new_slope = self.slope.transfer(idata, **kwargs)
@@ -573,10 +665,19 @@ class LinearPrior(BasePrior):
         return new_prior
 
     def update_data(
-        self, model: pm.Model, X: xr.DataArray, be: xr.DataArray, be_maps: dict[str, dict[str, int]], Y: xr.DataArray
+        self,
+        model: pm.Model,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
     ):
         mapped_X = self.basis_function.transform(X.values)
-        model.set_data(f"{self.name}_X", mapped_X, coords={"observations": X.coords["observations"].values})
+        model.set_data(
+            f"{self.name}_X",
+            mapped_X,
+            coords={"observations": X.coords["observations"].values},
+        )
 
     def to_dict(self):
         dct = super().to_dict()
@@ -586,13 +687,9 @@ class LinearPrior(BasePrior):
         return dct
 
     @classmethod
-    def from_dict(
-        cls, dict: dict, version: str | None = None
-    ) -> "LinearPrior":
+    def from_dict(cls, dict: dict, version: str | None = None) -> "LinearPrior":
         slope = BasePrior.from_dict(dict["slope"], version=version)
-        intercept = BasePrior.from_dict(
-            dict["intercept"], version=version
-        )
+        intercept = BasePrior.from_dict(dict["intercept"], version=version)
         basis_function = BasisFunction.from_dict(
             dict["basis_function"], version=version
         )

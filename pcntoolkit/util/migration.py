@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import functools
 import importlib.metadata
+import warnings
 from typing import Callable, Literal
 
 # Use the "packaging" module to read also "post1" versions
@@ -172,11 +173,14 @@ class MigrationRegistry:
         # Apply migrations in ascending version order.
         for introduced_in, fn in self._migrations[component]:
             if saved_version < introduced_in:
-                # Emit an informational message that migration is running.
-                Output.warning(
-                    Warnings.MODEL_MIGRATION_APPLIED,
-                    saved_version=str(saved_version),
-                    current_version=current_version,
+                # Use warnings.warn, not Output.warning: otherwise the warning
+                # may show more than once per saved version.
+                warnings.warn(
+                    Warnings.MODEL_MIGRATION_APPLIED.format(
+                        saved_version=str(saved_version),
+                        current_version=current_version,
+                    ),
+                    stacklevel=1,
                 )
                 d = fn(d)
 

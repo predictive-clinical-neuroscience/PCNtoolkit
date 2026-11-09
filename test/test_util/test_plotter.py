@@ -1,7 +1,7 @@
-from pcntoolkit.util.plotter import _plot_qq
-import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.pyplot as plt
 
+from pcntoolkit.util.plotter import _plot_qq
 from test.fixtures.plotter_fixtures import create_test_data_with_z
 
 # Use non-interactive backend so no display is needed.

@@ -71,10 +71,7 @@ def create_test_data(
     # Draw age-like covariates uniformly in [20, 80]
     X = np.random.uniform(20, 80, (n_samples, 1))
     # Create a linear signal with Gaussian noise
-    Y_base = (
-        0.5 * X[:, 0]
-        + np.random.normal(0, 5, n_samples)
-    )
+    Y_base = 0.5 * X[:, 0] + np.random.normal(0, 5, n_samples)
     # Apply scale factor and reshape to (n_samples, 1)
     Y = (Y_base * scale_factor).reshape(-1, 1)
 
@@ -91,19 +88,14 @@ def create_test_data(
         # Retrieve the predefined config for this count
         config = BATCH_CONFIGS[n_batch_effects]
         # Sample each dimension independently
-        be_cols = [
-            np.random.choice(vals, size=n_samples)
-            for _, vals in config
-        ]
+        be_cols = [np.random.choice(vals, size=n_samples) for _, vals in config]
         # Stack columns into (n_samples, n_dims) array
         batch_effects = np.column_stack(be_cols)
         # Include dimension names in attrs
         my_attrs = {
             "covariates": ["age"],
             "response_vars": ["test_metric"],
-            "batch_effect_dims": [
-                name for name, _ in config
-            ],
+            "batch_effect_dims": [name for name, _ in config],
         }
 
     # Build and return the NormData

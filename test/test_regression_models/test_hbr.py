@@ -105,16 +105,28 @@ def test_hbr_to_and_from_dict_and_args(sample_args, args):
     assert hbr_dict["tune"] == sample_args.get("tune")
     assert hbr_dict["cores"] == sample_args.get("cores")
     assert hbr_dict["likelihood"]["name"] == "Normal"
-    assert args.get("linear_mu", False) == (hbr_dict["likelihood"]["mu"]["type"] == "LinearPrior")
+    assert args.get("linear_mu", False) == (
+        hbr_dict["likelihood"]["mu"]["type"] == "LinearPrior"
+    )
     if args.get("linear_mu", False):
         assert hbr_dict["likelihood"]["mu"]["type"] == "LinearPrior"
         # A centered random effect serializes under its own type name.
-        expected_slope_type = "CenteredRandomPrior" if args.get("centered_slope_mu", False) else "RandomPrior"
-        expected_intercept_type = "CenteredRandomPrior" if args.get("centered_intercept_mu", False) else "RandomPrior"
-        assert (hbr_dict["likelihood"]["mu"]["slope"]["type"] == expected_slope_type) == args.get("random_slope_mu", False)
-        assert (hbr_dict["likelihood"]["mu"]["intercept"]["type"] == expected_intercept_type) == args.get(
-            "random_intercept_mu", False
+        expected_slope_type = (
+            "CenteredRandomPrior"
+            if args.get("centered_slope_mu", False)
+            else "RandomPrior"
         )
+        expected_intercept_type = (
+            "CenteredRandomPrior"
+            if args.get("centered_intercept_mu", False)
+            else "RandomPrior"
+        )
+        assert (
+            hbr_dict["likelihood"]["mu"]["slope"]["type"] == expected_slope_type
+        ) == args.get("random_slope_mu", False)
+        assert (
+            hbr_dict["likelihood"]["mu"]["intercept"]["type"] == expected_intercept_type
+        ) == args.get("random_intercept_mu", False)
     assert hbr.is_from_dict
     assert hbr_dict["likelihood"]["sigma"]["type"] == "LinearPrior"
 
@@ -140,19 +152,25 @@ def test_hbr_to_and_from_dict_and_args(sample_args, args):
 
 
 @pytest.fixture(scope="module")
-def extract_data(fitted_norm_hbr_model: NormativeModel, norm_data_from_arrays: NormData):
+def extract_data(
+    fitted_norm_hbr_model: NormativeModel, norm_data_from_arrays: NormData
+):
     fitted_norm_hbr_model.saveplots = False
     fitted_norm_hbr_model.saveresults = True
     fitted_norm_hbr_model.savemodel = False
     fitted_norm_hbr_model.evaluate_model = True
-    fitted_norm_hbr_model.save_dir = os.path.join(gettempdir(), "pcntoolkit_tests", "save_load_test", "hbr", "results")
+    fitted_norm_hbr_model.save_dir = os.path.join(
+        gettempdir(), "pcntoolkit_tests", "save_load_test", "hbr", "results"
+    )
     if os.path.exists(fitted_norm_hbr_model.save_dir):
         shutil.rmtree(fitted_norm_hbr_model.save_dir)
     os.makedirs(fitted_norm_hbr_model.save_dir, exist_ok=True)
     fitted_norm_hbr_model.predict(norm_data_from_arrays)
     responsevar = fitted_norm_hbr_model.response_vars[0]
     resp_model: HBR = fitted_norm_hbr_model[responsevar]  # type: ignore
-    return resp_model.pymc_model, *fitted_norm_hbr_model.extract_data(norm_data_from_arrays.sel(response_vars=responsevar))[:-1]
+    return resp_model.pymc_model, *fitted_norm_hbr_model.extract_data(
+        norm_data_from_arrays.sel(response_vars=responsevar)
+    )[:-1]
 
 
 def test_normal_fixed_prior(extract_data):
@@ -186,7 +204,9 @@ def test_random_prior(extract_data):
 
 
 def test_random_prior_with_covariate_dim(extract_data):
-    prior: RandomPrior = make_prior("test_random3", random=True, dims=("mu_covariates",))  # type: ignore
+    prior: RandomPrior = make_prior(
+        "test_random3", random=True, dims=("mu_covariates",)
+    )  # type: ignore
     samples = prior.compile(*extract_data)
     assert prior.name == "test_random3"
     assert len(samples.shape.eval()) == 2
@@ -195,7 +215,7 @@ def test_random_prior_with_covariate_dim(extract_data):
 
 
 def test_centered_random_prior_compiles_centered(extract_data):
-    """Test that offests are not a Deterministic (eg that offsets are not equal to 
+    """Test that offests are not a Deterministic (eg that offsets are not equal to
     normalised_offets*site_scale) and that there is no normalized_offsets exists"""
     model = extract_data[0]
     prior: CenteredRandomPrior = make_prior(name="mu13", random=True, centered=True)  # type: ignore
@@ -206,7 +226,7 @@ def test_centered_random_prior_compiles_centered(extract_data):
     for be_i in model.coords["batch_effect_dims"]:
         assert f"{be_i}_offset_mu13" in free_rvs
         assert f"{be_i}_offset_mu13" not in deterministics
-        # The unit-scale draw (normalized_{be}_offset_mu13) belongs to the non-centered 
+        # The unit-scale draw (normalized_{be}_offset_mu13) belongs to the non-centered
         # form only.
         assert f"normalized_{be_i}_offset_mu13" not in free_rvs
 
@@ -214,7 +234,7 @@ def test_centered_random_prior_compiles_centered(extract_data):
 
 
 def test_random_prior_compiles_non_centered(extract_data):
-    """Test that offests are Deterministic (eg that offsets are equal to 
+    """Test that offests are Deterministic (eg that offsets are equal to
     normalised_offets*site_scale) and that there is a normalized_offsets parameter"""
     model = extract_data[0]
     prior: RandomPrior = make_prior(name="mu14", random=True)  # type: ignore
@@ -265,7 +285,9 @@ def test_linear_prior_with_random_intercept(extract_data):
 def test_linear_prior_with_random_intercept_and_slope(extract_data):
     intercept: RandomPrior = make_prior("test_intercept", random=True)  # type: ignore
     slope: RandomPrior = make_prior("test_slope", random=True)  # type: ignore
-    prior: LinearPrior = make_prior("test_linear4", linear=True, intercept=intercept, slope=slope)  # type: ignore
+    prior: LinearPrior = make_prior(
+        "test_linear4", linear=True, intercept=intercept, slope=slope
+    )  # type: ignore
     samples = prior.compile(*extract_data)
     assert len(samples.shape.eval()) == 1
     assert samples.shape.eval()[0] == len(extract_data[0].coords["observations"])
@@ -359,7 +381,9 @@ def test_prior_from_args_random_with_covariate_dim(extract_data):
         f"intercept_{my_new_prior_name}": None,
         f"slope_{my_new_prior_name}": None,
     }
-    mu: RandomPrior = prior_from_args(my_new_prior_name, prior_dict, dims=("mu_covariates",))  # type: ignore
+    mu: RandomPrior = prior_from_args(
+        my_new_prior_name, prior_dict, dims=("mu_covariates",)
+    )  # type: ignore
     samples = mu.compile(*extract_data)
     assert mu.name == my_new_prior_name
     assert mu.dims == ("mu_covariates",)

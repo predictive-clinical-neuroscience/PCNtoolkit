@@ -24,12 +24,9 @@ AUTHOR_METADATA: dict[str, dict] = {
     "Andre Marquand": {
         "family-names": "Marquand",
         "given-names": "Andre",
-        "orcid": (
-            "https://orcid.org/0000-0001-5903-203X"
-        ),
+        "orcid": ("https://orcid.org/0000-0001-5903-203X"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition, and Behavior",
+            "Donders Institute for Brain, Cognition, and Behavior",
             "Radboud University Medical Center",
             "King's College London",
         ],
@@ -37,49 +34,37 @@ AUTHOR_METADATA: dict[str, dict] = {
     "Stijn de Boer": {
         "family-names": "de Boer",
         "given-names": "Stijn",
-        "orcid": (
-            "https://orcid.org/0000-0002-8657-8959"
-        ),
+        "orcid": ("https://orcid.org/0000-0002-8657-8959"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition and Behaviour",
+            "Donders Institute for Brain, Cognition and Behaviour",
             "Radboud University Medical Center",
         ],
     },
     "Konstantinos Tsilimparis": {
         "family-names": "Tsilimparis",
         "given-names": "Konstantinos",
-        "orcid": (
-            "https://orcid.org/0009-0008-5734-7538"
-        ),
+        "orcid": ("https://orcid.org/0009-0008-5734-7538"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition and Behaviour",
+            "Donders Institute for Brain, Cognition and Behaviour",
             "Radboud University Medical Center",
         ],
     },
     "Seyed Mostafa Kia": {
         "family-names": "Kia",
         "given-names": "Seyed Mostafa",
-        "orcid": (
-            "https://orcid.org/0000-0002-7128-814X"
-        ),
+        "orcid": ("https://orcid.org/0000-0002-7128-814X"),
         "affiliations": [
             "Tilburg University",
-            "Donders Institute for Brain,"
-            " Cognition, and Behavior",
+            "Donders Institute for Brain, Cognition, and Behavior",
             "University Medical Center Utrecht",
         ],
     },
     "Saige Rutherford": {
         "family-names": "Rutherford",
         "given-names": "Saige",
-        "orcid": (
-            "https://orcid.org/0000-0003-3006-9044"
-        ),
+        "orcid": ("https://orcid.org/0000-0003-3006-9044"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition, and Behavior",
+            "Donders Institute for Brain, Cognition, and Behavior",
             "Radboud University Medical Center",
             "University of Michigan",
         ],
@@ -87,31 +72,22 @@ AUTHOR_METADATA: dict[str, dict] = {
     "Charlotte Fraza": {
         "family-names": "Fraza",
         "given-names": "Charlotte",
-        "orcid": (
-            "https://orcid.org/0000-0002-7088-9250"
-        ),
+        "orcid": ("https://orcid.org/0000-0002-7088-9250"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition, and Behavior",
+            "Donders Institute for Brain, Cognition, and Behavior",
             "Radboud University Medical Center",
         ],
     },
     "Barbora Rehak Buckova": {
         "family-names": "Rehak Buckova",
         "given-names": "Barbora",
-        "orcid": (
-            "https://orcid.org/0000-0001-5619-3946"
-        ),
+        "orcid": ("https://orcid.org/0000-0001-5619-3946"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition, and Behavior",
+            "Donders Institute for Brain, Cognition, and Behavior",
             "Radboud University Medical Center",
-            "National Institute of Mental Health:"
-            " Klecany, CZ",
-            "Czech Technical University in Prague:"
-            " Prague, CZ",
-            "Institute of Computer Science:"
-            " Prague, CZ",
+            "National Institute of Mental Health: Klecany, CZ",
+            "Czech Technical University in Prague: Prague, CZ",
+            "Institute of Computer Science: Prague, CZ",
         ],
     },
     "Pieter Barkema": {
@@ -119,8 +95,7 @@ AUTHOR_METADATA: dict[str, dict] = {
         "given-names": "Pieter",
         "affiliations": [
             "University College London",
-            "Donders Center for Brain,"
-            " Cognition, and Behavior",
+            "Donders Center for Brain, Cognition, and Behavior",
         ],
     },
     "Thomas Wolfers": {
@@ -130,23 +105,17 @@ AUTHOR_METADATA: dict[str, dict] = {
     "Johanna Bayer": {
         "family-names": "Bayer",
         "given-names": "Johanna",
-        "orcid": (
-            "https://orcid.org/0000-0003-4891-6256"
-        ),
+        "orcid": ("https://orcid.org/0000-0003-4891-6256"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition and Behaviour",
+            "Donders Institute for Brain, Cognition and Behaviour",
         ],
     },
     "Maarten Mennes": {
         "family-names": "Mennes",
         "given-names": "Maarten",
-        "orcid": (
-            "https://orcid.org/0000-0002-7279-3439"
-        ),
+        "orcid": ("https://orcid.org/0000-0002-7279-3439"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition and Behaviour",
+            "Donders Institute for Brain, Cognition and Behaviour",
             "Radboud University",
             "SBGneuro Ltd.",
         ],
@@ -154,30 +123,24 @@ AUTHOR_METADATA: dict[str, dict] = {
     "Hester Huijsdens": {
         "family-names": "Huijsdens",
         "given-names": "Hester",
-        "orcid": (
-            "https://orcid.org/0000-0001-7039-8390"
-        ),
+        "orcid": ("https://orcid.org/0000-0001-7039-8390"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition and Behaviour",
+            "Donders Institute for Brain, Cognition and Behaviour",
         ],
     },
     "Pierre Berthet": {
         "family-names": "Berthet",
         "given-names": "Pierre",
-        "orcid": (
-            "https://orcid.org/0000-0002-6878-6842"
-        ),
+        "orcid": ("https://orcid.org/0000-0002-6878-6842"),
         "affiliations": [
-            "Donders Institute for Brain,"
-            " Cognition and Behaviour",
+            "Donders Institute for Brain, Cognition and Behaviour",
             "University of Oslo",
             "Stockholm University",
             "Universite de Bordeaux",
             "Universite Pierre Mendes-France",
             "Universite Savoie Mont-Blanc",
         ],
-    }
+    },
 }
 # --------------------------------------------------
 # Map git author names → canonical names.
@@ -225,7 +188,8 @@ def get_lines_per_author() -> dict[str, int]:
     # that was merged into the current branch.
     result = subprocess.run(
         [
-            "git", "log",
+            "git",
+            "log",
             "--format=%aN",
             "--numstat",
         ],
@@ -243,20 +207,13 @@ def get_lines_per_author() -> dict[str, int]:
             continue
         # Numstat lines: adds<TAB>dels<TAB>filename.
         # Binary files show "-" instead of numbers.
-        match = re.match(
-            r"^(\d+|-)\t(\d+|-)\t", stripped
-        )
+        match = re.match(r"^(\d+|-)\t(\d+|-)\t", stripped)
         if match:
             # Only count text-file additions.
-            if (
-                current_author
-                and match.group(1) != "-"
-            ):
+            if current_author and match.group(1) != "-":
                 additions = int(match.group(1))
                 # Resolve to canonical name.
-                canonical = NAME_MAP.get(
-                    current_author, current_author
-                )
+                canonical = NAME_MAP.get(current_author, current_author)
                 lines_by_author[canonical] += additions
         else:
             # This line is an author name.
@@ -286,37 +243,21 @@ def format_author_yaml(
     yaml_lines: list[str] = []
     if meta:
         # Use the curated metadata.
-        yaml_lines.append(
-            '  - family-names: "'
-            f'{meta["family-names"]}"'
-        )
-        yaml_lines.append(
-            '    given-names: "'
-            f'{meta["given-names"]}"'
-        )
+        yaml_lines.append(f'  - family-names: "{meta["family-names"]}"')
+        yaml_lines.append(f'    given-names: "{meta["given-names"]}"')
         if "orcid" in meta:
-            yaml_lines.append(
-                f'    orcid: "{meta["orcid"]}"'
-            )
+            yaml_lines.append(f'    orcid: "{meta["orcid"]}"')
         for aff in meta.get("affiliations", []):
-            yaml_lines.append(
-                f'    affiliation: "{aff}"'
-            )
+            yaml_lines.append(f'    affiliation: "{aff}"')
     else:
         # Unknown author: split on last space.
         parts = name.rsplit(" ", 1)
         if len(parts) == 2:
-            yaml_lines.append(
-                f'  - family-names: "{parts[1]}"'
-            )
-            yaml_lines.append(
-                f'    given-names: "{parts[0]}"'
-            )
+            yaml_lines.append(f'  - family-names: "{parts[1]}"')
+            yaml_lines.append(f'    given-names: "{parts[0]}"')
         else:
             # Single-word name / username.
-            yaml_lines.append(
-                f'  - family-names: "{name}"'
-            )
+            yaml_lines.append(f'  - family-names: "{name}"')
     return "\n".join(yaml_lines)
 
 
@@ -377,15 +318,11 @@ def main() -> None:
     }
 
     # Load and render the Jinja2 template.
-    with open(
-        "citation.cff.in", encoding="utf-8"
-    ) as f:
+    with open("citation.cff.in", encoding="utf-8") as f:
         template = Template(f.read())
 
     # Write rendered output to CITATION.cff.
-    with open(
-        "CITATION.cff", "w", encoding="utf-8"
-    ) as f:
+    with open("CITATION.cff", "w", encoding="utf-8") as f:
         f.write(template.render(**context))
 
     print("CITATION.cff generated.")

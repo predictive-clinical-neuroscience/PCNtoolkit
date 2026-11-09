@@ -40,7 +40,9 @@ def new_norm_test_model(test_model, save_dir_test_model):
 
 
 @pytest.fixture
-def fitted_norm_test_model(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def fitted_norm_test_model(
+    new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     if os.path.exists(new_norm_test_model.save_dir):
         shutil.rmtree(new_norm_test_model.save_dir)
     os.makedirs(new_norm_test_model.save_dir, exist_ok=True)

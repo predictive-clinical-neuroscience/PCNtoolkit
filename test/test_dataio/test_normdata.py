@@ -55,7 +55,9 @@ def test_split_with_stratify(
     split_ratio,
     batch_effect_values,
 ):
-    splits = norm_data_from_arrays.train_test_split(splits=split_ratio, split_names=("train", "val"))
+    splits = norm_data_from_arrays.train_test_split(
+        splits=split_ratio, split_names=("train", "val")
+    )
 
     # Check basic split properties
     assert len(splits) == 2
@@ -73,7 +75,9 @@ def test_split_with_stratify(
         assert split.covariates.shape == (n_covariates,)
         assert split.batch_effect_dims.shape == (len(batch_effect_values),)
         assert split.coords["observations"].shape == (expected_samples,)
-        assert split.coords["covariates"].to_numpy().tolist() == [f"covariate_{i}" for i in range(n_covariates)]
+        assert split.coords["covariates"].to_numpy().tolist() == [
+            f"covariate_{i}" for i in range(n_covariates)
+        ]
         assert split.coords["batch_effect_dims"].to_numpy().tolist() == [
             f"batch_effect_{i}" for i in range(len(batch_effect_values))
         ]
@@ -83,28 +87,39 @@ def test_split_with_stratify(
 
     # Check column-wise value distributions
     for col_idx in range(original_batch_effects.shape[1]):
-        original_values, original_counts = np.unique(original_batch_effects[:, col_idx], return_counts=True)
+        original_values, original_counts = np.unique(
+            original_batch_effects[:, col_idx], return_counts=True
+        )
         original_frequencies = original_counts / len(original_batch_effects)
 
         for split in splits:
-            split_values, split_counts = np.unique(split.batch_effects.data[:, col_idx], return_counts=True)
+            split_values, split_counts = np.unique(
+                split.batch_effects.data[:, col_idx], return_counts=True
+            )
             split_frequencies = split_counts / len(split.batch_effects.data)
 
             # Check if all unique values from original exist in split
-            assert np.all(np.isin(original_values, split_values)), f"Split missing some values from column {col_idx}"
+            assert np.all(np.isin(original_values, split_values)), (
+                f"Split missing some values from column {col_idx}"
+            )
 
             # Check if frequencies are approximately equal (within 10% tolerance)
             for val, orig_freq in zip(original_values, original_frequencies):
                 split_freq = split_frequencies[split_values == val][0]
                 np.testing.assert_allclose(
-                    split_freq, orig_freq, atol=0.1, err_msg=f"Frequency mismatch for value {val} in column {col_idx}"
+                    split_freq,
+                    orig_freq,
+                    atol=0.1,
+                    err_msg=f"Frequency mismatch for value {val} in column {col_idx}",
                 )
 
     # Check if all unique batch effects are present in both splits
     original_unique_batch_effects = np.unique(original_batch_effects, axis=0)
     for split in splits:
         split_unique_batch_effects = np.unique(split.batch_effects.data, axis=0)
-        assert np.all(np.isin(original_unique_batch_effects, split_unique_batch_effects))
+        assert np.all(
+            np.isin(original_unique_batch_effects, split_unique_batch_effects)
+        )
 
         # Check if the data in splits is a subset of the original data
         original_data = np.hstack(
@@ -115,7 +130,9 @@ def test_split_with_stratify(
             )
         )
         for split in splits:
-            split_data = np.hstack((split.X.data, split.Y.data, split.batch_effects.data))
+            split_data = np.hstack(
+                (split.X.data, split.Y.data, split.batch_effects.data)
+            )
             assert np.all(np.isin(split_data, original_data))
 
         # Check if the attributes are preserved in the splits
@@ -147,7 +164,9 @@ def test_chunk(norm_data_from_arrays):
 def test_merge(norm_data_from_arrays: NormData):
     datacopy = copy.deepcopy(norm_data_from_arrays)
     merged = datacopy.merge(norm_data_from_arrays)
-    assert merged.X.to_numpy().shape[0] == 2 * norm_data_from_arrays.X.to_numpy().shape[0]
+    assert (
+        merged.X.to_numpy().shape[0] == 2 * norm_data_from_arrays.X.to_numpy().shape[0]
+    )
 
 
 def test_merge_preserves_observations(norm_data_from_arrays: NormData):
@@ -184,7 +203,9 @@ def test_merge_shifts_duplicate_observations(norm_data_from_arrays: NormData):
     merged.to_dataframe()  # raises on duplicate labels
 
 
-def test_merge_knows_all_batch_effects(norm_data_from_arrays: NormData, transfer_norm_data_from_arrays: NormData):
+def test_merge_knows_all_batch_effects(
+    norm_data_from_arrays: NormData, transfer_norm_data_from_arrays: NormData
+):
     """Merging A and B must give data that knows the batch effects of both."""
     # The transfer data was collected at a site the training data never saw.
     merged = norm_data_from_arrays.merge(transfer_norm_data_from_arrays)
@@ -208,14 +229,31 @@ def test_to_dataframe():
     subjects = np.random.choice(n_subjects, n_samples, replace=True)
     coefs = np.random.rand(n_subjects, 2)
     covariates = np.random.choice(10, n_samples, replace=True) + 1
-    responses1 = covariates + 0.1 * covariates * coefs[subjects, 0] + np.random.randn(n_samples) * 0.03
-    responses2 = covariates + 0.1 * covariates * coefs[subjects, 1] + np.random.randn(n_samples) * 0.03
+    responses1 = (
+        covariates
+        + 0.1 * covariates * coefs[subjects, 0]
+        + np.random.randn(n_samples) * 0.03
+    )
+    responses2 = (
+        covariates
+        + 0.1 * covariates * coefs[subjects, 1]
+        + np.random.randn(n_samples) * 0.03
+    )
 
     df = pd.DataFrame(
-        {"subjects": subjects, "age": covariates, "resp1": responses1, "resp2": responses2},
+        {
+            "subjects": subjects,
+            "age": covariates,
+            "resp1": responses1,
+            "resp2": responses2,
+        },
     )
     data = NormData.from_dataframe(
-        name="dummy", dataframe=df, covariates=["age"], response_vars=["resp1", "resp2"], subject_ids="subjects"
+        name="dummy",
+        dataframe=df,
+        covariates=["age"],
+        response_vars=["resp1", "resp2"],
+        subject_ids="subjects",
     )
 
     print(df)
@@ -250,7 +288,9 @@ def test_to_dataframe_preserves_ordered_observations(norm_data_from_arrays: Norm
 
 def test_netcdf(norm_data_from_arrays: NormData):
     norm_data_from_arrays.to_netcdf(os.path.join(gettempdir(), "test.nc"))
-    norm_data_from_netcdf = NormData.from_netcdf("from_arrays", os.path.join(gettempdir(), "test.nc"))
+    norm_data_from_netcdf = NormData.from_netcdf(
+        "from_arrays", os.path.join(gettempdir(), "test.nc")
+    )
 
     # Check if the two norm data objects are equal
     # Checks for data variables and coordinates.

@@ -11,11 +11,9 @@ from unittest.mock import patch
 import numpy as np
 import xarray as xr
 
-from pcntoolkit.util.data_utils import (
-    iter_batch_combinations
-)
-from pcntoolkit.util.evaluator import Evaluator
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.util.data_utils import iter_batch_combinations
+from pcntoolkit.util.evaluator import Evaluator
 from test.fixtures.evaluator_fixtures import create_test_data
 
 
@@ -79,10 +77,7 @@ def test_001_mace_should_averageAllCombos_when_fourBatchDims() -> None:
                 batch_dims,
             )
         )
-        visited.extend(
-            tuple(combination.values())
-            for combination, _ in combinations
-        )
+        visited.extend(tuple(combination.values()) for combination, _ in combinations)
         return iter(combinations)
 
     # Run _evaluate_mace
@@ -94,10 +89,7 @@ def test_001_mace_should_averageAllCombos_when_fourBatchDims() -> None:
         actual = evaluator._evaluate_mace(data_with_centiles)
 
     # Check that all helper combinations were averaged.
-    assert visited == [
-        tuple(combination.values())
-        for combination in expected_combos
-    ]
+    assert visited == [tuple(combination.values()) for combination in expected_combos]
 
     # Check MACE value.
     assert 0.0 <= actual <= 1.0

@@ -1,7 +1,6 @@
 """Path-related utilities for PCNtoolkit."""
 
 import os
-from typing import Optional
 
 
 def get_default_home_dir() -> str:

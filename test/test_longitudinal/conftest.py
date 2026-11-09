@@ -12,8 +12,8 @@ import pytest
 import xarray as xr
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.longitudinal.correlation_matrix import CorrelationMatrix
 from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
-from pcntoolkit.math_functions.correlation_matrix import CorrelationMatrix
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
 from test.fixtures.blr_model_fixtures import BLR_BASE_CONFIG
@@ -32,11 +32,11 @@ pytest_plugins = [
 #
 # Fitting a BLR takes ~2s and ~40 tests here need one, so the model is fitted
 # once per module rather than once per test: ~55s -> ~4s. These replace the
-# function-scoped equivalents in test/fixtures/blr_model_fixtures.py: norm_data_fixtures 
-# and blr_model_fixtures 
+# function-scoped equivalents in test/fixtures/blr_model_fixtures.py: norm_data_fixtures
+# and blr_model_fixtures
 #
 # Safe here as in the current longitudinal tests: the fitted model is reused read-only.
-# If the fitted model was modified in one test then the next tests would see the modified 
+# If the fitted model was modified in one test then the next tests would see the modified
 # state, potentially causing test failures.
 # ------------------------------------------------------------------ #
 
@@ -322,9 +322,11 @@ class BatchEffectModel:
         "sex": {"F": 30, "M": 35},
     }
 
+
 # ------------------------------------------------------------------ #
 # Function-scoped fixtures for longitudinal test data.
 # ------------------------------------------------------------------ #
+
 
 @pytest.fixture
 def longitudinal_dataframe() -> pd.DataFrame:

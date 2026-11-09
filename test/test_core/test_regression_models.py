@@ -29,15 +29,23 @@ class TestBLR:
 
         # Create NormData object
         self.norm_data = NormData.from_ndarrays(
-            "test_data", self.data["covariates"], self.data["responses"], self.data["batch_effects"]
+            "test_data",
+            self.data["covariates"],
+            self.data["responses"],
+            self.data["batch_effects"],
         )
         self.unique_batch_effects = {
-            k: np.unique(self.norm_data.batch_effects.sel(batch_effect_dims=k).to_numpy())
+            k: np.unique(
+                self.norm_data.batch_effects.sel(batch_effect_dims=k).to_numpy()
+            )
             for k in self.norm_data.batch_effect_dims.to_numpy()
         }
-        self.unique_batch_effects = {k: list(v) for k, v in self.unique_batch_effects.items()}
+        self.unique_batch_effects = {
+            k: list(v) for k, v in self.unique_batch_effects.items()
+        }
         self.be_maps = {
-            be: {k: i for i, k in enumerate(self.unique_batch_effects[be])} for be in self.unique_batch_effects.keys()
+            be: {k: i for i, k in enumerate(self.unique_batch_effects[be])}
+            for be in self.unique_batch_effects.keys()
         }
         self.mapped_batch_effects = self.norm_data.batch_effects.copy()
         for i in range(self.norm_data.batch_effects.shape[1]):
@@ -127,7 +135,10 @@ class TestHBR:
 
         # Create NormData object
         self.norm_data = NormData.from_ndarrays(
-            "test_data", self.data["covariates"], self.data["responses"], self.data["batch_effects"]
+            "test_data",
+            self.data["covariates"],
+            self.data["responses"],
+            self.data["batch_effects"],
         )
 
         # Create HBR model
@@ -138,9 +149,24 @@ class TestHBR:
         [
             {"likelihood": "Normal", "linear_mu": False, "random_mu": False},
             {"likelihood": "Normal", "linear_mu": False, "random_mu": True},
-            {"likelihood": "Normal", "linear_mu": True, "random_slope_mu": False, "random_intercept_mu": False},
-            {"likelihood": "Normal", "linear_mu": True, "random_slope_mu": True, "random_intercept_mu": False},
-            {"likelihood": "Normal", "linear_mu": True, "random_slope_mu": True, "random_intercept_mu": True},
+            {
+                "likelihood": "Normal",
+                "linear_mu": True,
+                "random_slope_mu": False,
+                "random_intercept_mu": False,
+            },
+            {
+                "likelihood": "Normal",
+                "linear_mu": True,
+                "random_slope_mu": True,
+                "random_intercept_mu": False,
+            },
+            {
+                "likelihood": "Normal",
+                "linear_mu": True,
+                "random_slope_mu": True,
+                "random_intercept_mu": True,
+            },
         ],
     )
     def test_model_creation(self, args):
@@ -165,7 +191,9 @@ class TestHBR:
             if args.get("random_slope_mu", False):
                 assert model_dict["likelihood"]["mu"]["slope"]["type"] == "RandomPrior"
             if args.get("random_intercept_mu", False):
-                assert model_dict["likelihood"]["mu"]["intercept"]["type"] == "RandomPrior"
+                assert (
+                    model_dict["likelihood"]["mu"]["intercept"]["type"] == "RandomPrior"
+                )
 
         # Test deserialization
         loaded_model = HBR.from_dict(model_dict)
@@ -205,7 +233,10 @@ class TestHBR:
 
         # Test linear prior with random components
         prior = make_prior(
-            "linear_random", linear=True, intercept=make_prior("random", random=True), slope=make_prior("random", random=True)
+            "linear_random",
+            linear=True,
+            intercept=make_prior("random", random=True),
+            slope=make_prior("random", random=True),
         )
         assert isinstance(prior, LinearPrior)
         assert prior.name == "linear_random"
@@ -218,9 +249,11 @@ class TestHBR:
         """Test fitting with the pymc-extras approximate inference methods."""
         pytest.importorskip("pymc_extras")
 
-        # The shared synthetic_data fixture is unseeded. Here we choose a seed to make 
+        # The shared synthetic_data fixture is unseeded. Here we choose a seed to make
         # the results reproducible
-        rng = np.random.default_rng(20) # seed 42 for Laplace gives inf for batch_effect_0_sigma_intercept_mu
+        rng = np.random.default_rng(
+            20
+        )  # seed 42 for Laplace gives inf for batch_effect_0_sigma_intercept_mu
         n_subjects = 1000
         X = rng.random((n_subjects, 2))
         Y = 1.0 + 0.5 * X[:, 0] + 0.3 * rng.standard_normal(n_subjects)

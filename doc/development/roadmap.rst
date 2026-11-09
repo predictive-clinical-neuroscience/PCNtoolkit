@@ -6,9 +6,12 @@ This page describes the future goals of PCNtoolkit.
 1. Features & fixes
 -------------------
 
-**Add longitudinal normative modelling**
+**Extend longitudinal normative modelling**
 
-* Normative models were originally cross-sectional: one snapshot, deviation scores at a single point. Longitudinal data carry clinical information that a single cross-sectional datapoint misses. For this reason we want to implement the longitudinal models by `Bučková et al., 2025 <https://elifesciences.org/reviewed-preprints/95823>`_ and `Bayer et al., 2026 (preprint) <https://arxiv.org/abs/2601.07591>`_.
+* Version 1.4.0 added the z-diff score (`Bučková et al., 2025 <https://doi.org/10.7554/eLife.95823>`_), and the velocity models (z-gain score, thrivelines; `Bayer et al., 2026 (preprint) <https://arxiv.org/abs/2601.07591>`_).
+* Forecast a subject's future z-score from their full visit history (conditional forecasting).
+* Compute z-gain from all of a subject's visits, not only the last two.
+* Compute your own correlation matrix.
 
 **Improve federated learning**
 
@@ -22,13 +25,8 @@ This page describes the future goals of PCNtoolkit.
 
 **Migrate PCNportal to the newest version of PCNtoolkit**
 
-**Redesign website**
-
-* Make it more modular, extendable and improve the aesthetic.
-
 **Expand website documentation**
 
-* Cover the new longitudinal modelling.
 * Better explain difficult topics (teaching material on, e.g., federated learning and data handling with xarrays).
 * Document federated learning with pretrained models, and provide a better way of documenting and sharing our models so they are findable via Google search.
 
@@ -50,7 +48,6 @@ This page describes the future goals of PCNtoolkit.
 **Dependency management**
 
 * Handle dependencies better so that future versions of PCNtoolkit don't break when our dependencies update.
-* Add Python 3.13 support.
 
 **Track usage**
 

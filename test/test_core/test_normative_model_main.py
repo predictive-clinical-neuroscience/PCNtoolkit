@@ -1,4 +1,3 @@
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -20,7 +19,9 @@ class TestNormativeModel:
         self.save_dir.mkdir()
 
         # Create template regression model
-        self.template_model = BLR.from_args("template", {"alg": "blr", "save_dir": str(self.save_dir)})
+        self.template_model = BLR.from_args(
+            "template", {"alg": "blr", "save_dir": str(self.save_dir)}
+        )
 
         # Create normative model
         self.model = NormativeModel(
@@ -96,7 +97,10 @@ class TestNormativeModel:
 
         # Load model
         loaded_model = NormativeModel.load(str(self.save_dir))
-        assert loaded_model.template_regression_model.__class__ == self.model.template_regression_model.__class__
+        assert (
+            loaded_model.template_regression_model.__class__
+            == self.model.template_regression_model.__class__
+        )
         assert loaded_model.is_fitted == self.model.is_fitted
 
         # Compare predictions

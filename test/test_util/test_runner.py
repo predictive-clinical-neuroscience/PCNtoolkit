@@ -18,28 +18,54 @@ def cleanup(model, runner):
     shutil.rmtree(os.path.join(runner.temp_dir))
 
 
-def test_runner_fit(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_fit(
+    new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=False, parallelize=False)
     runner.fit(new_norm_test_model, norm_data_from_arrays, observe=True)
     assert new_norm_test_model.is_fitted
-    assert os.path.exists(os.path.join(new_norm_test_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(new_norm_test_model.save_dir, "model", "normative_model.json")
+    )
     cleanup(new_norm_test_model, runner)
 
 
-def test_runner_fit_kfold(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_fit_kfold(
+    new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=True, cv_folds=2, parallelize=False)
     runner.fit(new_norm_test_model, norm_data_from_arrays, observe=True)
     assert new_norm_test_model.is_fitted
-    assert os.path.exists(os.path.join(new_norm_test_model.save_dir, "folds", "fold_0", "model", "normative_model.json"))
-    assert os.path.exists(os.path.join(new_norm_test_model.save_dir, "folds", "fold_1", "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(
+            new_norm_test_model.save_dir,
+            "folds",
+            "fold_0",
+            "model",
+            "normative_model.json",
+        )
+    )
+    assert os.path.exists(
+        os.path.join(
+            new_norm_test_model.save_dir,
+            "folds",
+            "fold_1",
+            "model",
+            "normative_model.json",
+        )
+    )
     cleanup(new_norm_test_model, runner)
 
 
-def test_runner_predict(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_predict(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=False, parallelize=False)
     runner.predict(fitted_norm_test_model, norm_data_from_arrays, observe=True)
     assert fitted_norm_test_model.is_fitted
-    assert os.path.exists(os.path.join(fitted_norm_test_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(fitted_norm_test_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             fitted_norm_test_model.save_dir,
@@ -56,19 +82,25 @@ def test_runner_predict(fitted_norm_test_model: NormativeModel, norm_data_from_a
     cleanup(fitted_norm_test_model, runner)
 
 
-def test_runner_predict_kfold(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_predict_kfold(
+    new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=True, cv_folds=2, parallelize=False)
     # assert this throws an error
     with pytest.raises(ValueError):
         runner.predict(new_norm_test_model, norm_data_from_arrays, observe=True)
 
 
-def test_runner_fit_predict(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_fit_predict(
+    new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     train, test = norm_data_from_arrays.train_test_split(splits=[0.2, 0.8])
     runner = Runner(cross_validate=False, parallelize=False)
     runner.fit_predict(new_norm_test_model, train, test, observe=True)
     assert new_norm_test_model.is_fitted
-    assert os.path.exists(os.path.join(new_norm_test_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(new_norm_test_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             new_norm_test_model.save_dir,
@@ -76,18 +108,40 @@ def test_runner_fit_predict(new_norm_test_model: NormativeModel, norm_data_from_
         )
     )
     assert os.path.exists(
-        os.path.join(new_norm_test_model.save_dir, "plots", f"centiles_{test.response_vars.values[0]}_{test.name}_harmonized.png")
+        os.path.join(
+            new_norm_test_model.save_dir,
+            "plots",
+            f"centiles_{test.response_vars.values[0]}_{test.name}_harmonized.png",
+        )
     )
     cleanup(new_norm_test_model, runner)
 
 
-def test_runner_fit_predict_kfold(new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_fit_predict_kfold(
+    new_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     train, test = norm_data_from_arrays.train_test_split(splits=[0.2, 0.8])
     runner = Runner(cross_validate=True, cv_folds=2, parallelize=False)
     runner.fit_predict(new_norm_test_model, train, test, observe=True)
     assert new_norm_test_model.is_fitted
-    assert os.path.exists(os.path.join(new_norm_test_model.save_dir, "folds", "fold_0", "model", "normative_model.json"))
-    assert os.path.exists(os.path.join(new_norm_test_model.save_dir, "folds", "fold_1", "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(
+            new_norm_test_model.save_dir,
+            "folds",
+            "fold_0",
+            "model",
+            "normative_model.json",
+        )
+    )
+    assert os.path.exists(
+        os.path.join(
+            new_norm_test_model.save_dir,
+            "folds",
+            "fold_1",
+            "model",
+            "normative_model.json",
+        )
+    )
     assert os.path.exists(
         os.path.join(
             new_norm_test_model.save_dir,
@@ -125,17 +179,23 @@ def test_runner_fit_predict_kfold(new_norm_test_model: NormativeModel, norm_data
     cleanup(new_norm_test_model, runner)
 
 
-def test_runner_extend(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_extend(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=False, parallelize=False)
     # Create extend dir:
     extend_dir = os.path.join(fitted_norm_test_model.save_dir, "extend")
     if os.path.exists(extend_dir):
         shutil.rmtree(extend_dir)
     os.makedirs(extend_dir, exist_ok=True)
-    extended_model = runner.extend(fitted_norm_test_model, norm_data_from_arrays, extend_dir, observe=True)
+    extended_model = runner.extend(
+        fitted_norm_test_model, norm_data_from_arrays, extend_dir, observe=True
+    )
     assert isinstance(extended_model, NormativeModel)
     assert extended_model.is_fitted
-    assert os.path.exists(os.path.join(extended_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(extended_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             extended_model.save_dir,
@@ -152,17 +212,23 @@ def test_runner_extend(fitted_norm_test_model: NormativeModel, norm_data_from_ar
     cleanup(extended_model, runner)
 
 
-def test_runner_extend_predict(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_extend_predict(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=False, parallelize=False)
     train, test = norm_data_from_arrays.train_test_split(splits=[0.2, 0.8])
     extend_dir = os.path.join(fitted_norm_test_model.save_dir, "extend_predict")
     if os.path.exists(extend_dir):
         shutil.rmtree(extend_dir)
     os.makedirs(extend_dir, exist_ok=True)
-    extended_model = runner.extend_predict(fitted_norm_test_model, train, test, extend_dir, observe=True)
+    extended_model = runner.extend_predict(
+        fitted_norm_test_model, train, test, extend_dir, observe=True
+    )
     assert isinstance(extended_model, NormativeModel)
     assert extended_model.is_fitted
-    assert os.path.exists(os.path.join(extended_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(extended_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             extended_model.save_dir,
@@ -170,21 +236,31 @@ def test_runner_extend_predict(fitted_norm_test_model: NormativeModel, norm_data
         )
     )
     assert os.path.exists(
-        os.path.join(extended_model.save_dir, "plots", f"centiles_{test.response_vars.values[0]}_{test.name}_harmonized.png")
+        os.path.join(
+            extended_model.save_dir,
+            "plots",
+            f"centiles_{test.response_vars.values[0]}_{test.name}_harmonized.png",
+        )
     )
     cleanup(extended_model, runner)
 
 
-def test_runner_extend_predict_kfold(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_extend_predict_kfold(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=True, cv_folds=2, parallelize=False)
     extend_dir = os.path.join(fitted_norm_test_model.save_dir, "extend_predict_kfold")
     if os.path.exists(extend_dir):
         shutil.rmtree(extend_dir)
     os.makedirs(extend_dir, exist_ok=True)
-    extended_model = runner.extend_predict(fitted_norm_test_model, norm_data_from_arrays, None, extend_dir, observe=True)
+    extended_model = runner.extend_predict(
+        fitted_norm_test_model, norm_data_from_arrays, None, extend_dir, observe=True
+    )
     assert isinstance(extended_model, NormativeModel)
     assert extended_model.is_fitted
-    assert os.path.exists(os.path.join(extended_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(extended_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             extended_model.save_dir,
@@ -201,16 +277,22 @@ def test_runner_extend_predict_kfold(fitted_norm_test_model: NormativeModel, nor
     cleanup(extended_model, runner)
 
 
-def test_runner_transfer(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_transfer(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=False, parallelize=False)
     transfer_dir = os.path.join(fitted_norm_test_model.save_dir, "transfer")
     if os.path.exists(transfer_dir):
         shutil.rmtree(transfer_dir)
     os.makedirs(transfer_dir, exist_ok=True)
-    transferred_model = runner.transfer(fitted_norm_test_model, norm_data_from_arrays, transfer_dir, observe=True)
+    transferred_model = runner.transfer(
+        fitted_norm_test_model, norm_data_from_arrays, transfer_dir, observe=True
+    )
     assert isinstance(transferred_model, NormativeModel)
     assert transferred_model.is_fitted
-    assert os.path.exists(os.path.join(transferred_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(transferred_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             transferred_model.save_dir,
@@ -227,13 +309,19 @@ def test_runner_transfer(fitted_norm_test_model: NormativeModel, norm_data_from_
     cleanup(transferred_model, runner)
 
 
-def test_runner_transfer_predict(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_transfer_predict(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=False, parallelize=False)
     train, test = norm_data_from_arrays.train_test_split(splits=[0.2, 0.8])
-    transferred_model = runner.transfer_predict(fitted_norm_test_model, train, test, observe=True)
+    transferred_model = runner.transfer_predict(
+        fitted_norm_test_model, train, test, observe=True
+    )
     assert isinstance(transferred_model, NormativeModel)
     assert transferred_model.is_fitted
-    assert os.path.exists(os.path.join(transferred_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(transferred_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             transferred_model.save_dir,
@@ -241,17 +329,27 @@ def test_runner_transfer_predict(fitted_norm_test_model: NormativeModel, norm_da
         )
     )
     assert os.path.exists(
-        os.path.join(transferred_model.save_dir, "plots", f"centiles_{test.response_vars.values[0]}_{test.name}_harmonized.png")
+        os.path.join(
+            transferred_model.save_dir,
+            "plots",
+            f"centiles_{test.response_vars.values[0]}_{test.name}_harmonized.png",
+        )
     )
     cleanup(transferred_model, runner)
 
 
-def test_runner_transfer_predict_kfold(fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData):
+def test_runner_transfer_predict_kfold(
+    fitted_norm_test_model: NormativeModel, norm_data_from_arrays: NormData
+):
     runner = Runner(cross_validate=True, cv_folds=2, parallelize=False)
-    transferred_model = runner.transfer_predict(fitted_norm_test_model, norm_data_from_arrays, None, observe=True)
+    transferred_model = runner.transfer_predict(
+        fitted_norm_test_model, norm_data_from_arrays, None, observe=True
+    )
     assert isinstance(transferred_model, NormativeModel)
     assert transferred_model.is_fitted
-    assert os.path.exists(os.path.join(transferred_model.save_dir, "model", "normative_model.json"))
+    assert os.path.exists(
+        os.path.join(transferred_model.save_dir, "model", "normative_model.json")
+    )
     assert os.path.exists(
         os.path.join(
             transferred_model.save_dir,
@@ -287,15 +385,13 @@ def _save_zscores_one_var(save_dir: str, i: int, n_obs: int, barrier: Barrier) -
         data.save_zscores(save_dir)
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32", reason="fork is not available on Windows"
-)
+@pytest.mark.skipif(sys.platform == "win32", reason="fork is not available on Windows")
 def test_save_zscores_parallel_no_duplicate_header(tmp_path: Path) -> None:
     """Regression test for #534: parallel Runner jobs saving into one folder must
     give one valid CSV.
 
     The Runner itself is not used: with parallelize=False its jobs run one after
-    another, and parallelize=True needs SLURM. Instead, here we simulate10 processes 
+    another, and parallelize=True needs SLURM. Instead, here we simulate10 processes
     to call save_zscores at the same moment, as parallel jobs do.
 
     This test fails for pcntoolkit <= 1.1.2.

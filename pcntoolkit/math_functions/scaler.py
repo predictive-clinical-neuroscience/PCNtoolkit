@@ -56,8 +56,8 @@ from typing import Any, Dict, List, Optional, Type, Union
 import numpy as np
 from numpy.typing import NDArray
 
-from pcntoolkit.util.output import Errors, Output
 from pcntoolkit.util.migration import registry
+from pcntoolkit.util.output import Errors, Output
 
 
 class Scaler(ABC):
@@ -199,7 +199,9 @@ class Scaler(ABC):
         }
 
         if scaler_type not in scalers:
-            raise ValueError(Output.error(Errors.ERROR_UNKNOWN_SCALER_TYPE, scaler_type=scaler_type))
+            raise ValueError(
+                Output.error(Errors.ERROR_UNKNOWN_SCALER_TYPE, scaler_type=scaler_type)
+            )
 
         return scalers[scaler_type].from_dict(my_dict, version=version)
 
@@ -232,7 +234,9 @@ class Scaler(ABC):
         }
 
         if scaler_type not in scalers:
-            raise ValueError(Output.error(Errors.ERROR_UNKNOWN_SCALER_TYPE, scaler_type=scaler_type))
+            raise ValueError(
+                Output.error(Errors.ERROR_UNKNOWN_SCALER_TYPE, scaler_type=scaler_type)
+            )
 
         return scalers[scaler_type](**kwargs)
 
@@ -279,21 +283,27 @@ class StandardScaler(Scaler):
 
     def transform(self, X: NDArray, index: Optional[NDArray] = None) -> NDArray:
         if self.m is None or self.s is None:
-            raise ValueError(Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="transform"))
+            raise ValueError(
+                Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="transform")
+            )
         if index is None:
             return (X - self.m) / self.s
         return (X - self.m[index]) / self.s[index]
 
     def inverse_transform(self, X: NDArray, index: Optional[NDArray] = None) -> NDArray:
         if self.m is None or self.s is None:
-            raise ValueError(Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="inverse_transform"))
+            raise ValueError(
+                Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="inverse_transform")
+            )
         if index is None:
             return X * self.s + self.m
         return X * self.s[index] + self.m[index]
 
     def to_dict(self) -> Dict[str, Union[bool, str, float, List[float]]]:
         if self.m is None or self.s is None:
-            raise ValueError(Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="to_dict"))
+            raise ValueError(
+                Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="to_dict")
+            )
         return {
             "scaler_type": "standardize",
             "adjust_outliers": self.adjust_outliers,
@@ -361,7 +371,9 @@ class MinMaxScaler(Scaler):
 
     def transform(self, X: NDArray, index: Optional[NDArray] = None) -> NDArray:
         if self.min is None or self.max is None:
-            raise ValueError(Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="transform"))
+            raise ValueError(
+                Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="transform")
+            )
         if index is None:
             X_scaled = (X - self.min) / (self.max - self.min)
         else:
@@ -373,14 +385,18 @@ class MinMaxScaler(Scaler):
 
     def inverse_transform(self, X: NDArray, index: Optional[NDArray] = None) -> NDArray:
         if self.min is None or self.max is None:
-            raise ValueError(Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="inverse_transform"))
+            raise ValueError(
+                Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="inverse_transform")
+            )
         if index is None:
             return X * (self.max - self.min) + self.min
         return X * (self.max[index] - self.min[index]) + self.min[index]
 
     def to_dict(self) -> Dict[str, Union[bool, str, float, List[float]]]:
         if self.min is None or self.max is None:
-            raise ValueError(Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="to_dict"))
+            raise ValueError(
+                Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="to_dict")
+            )
         return {
             "scaler_type": "minmax",
             "adjust_outliers": self.adjust_outliers,
@@ -453,7 +469,9 @@ class RobustMinMaxScaler(MinMaxScaler):
 
     def to_dict(self) -> Dict[str, Union[bool, str, float, List[float]]]:
         if self.min is None or self.max is None:
-            raise ValueError(Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="to_dict"))
+            raise ValueError(
+                Output.error(Errors.ERROR_SCALER_NOT_FITTED, method="to_dict")
+            )
         return {
             "scaler_type": "robminmax",
             "adjust_outliers": self.adjust_outliers,
