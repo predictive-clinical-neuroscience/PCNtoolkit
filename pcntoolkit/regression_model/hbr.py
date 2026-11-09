@@ -297,7 +297,7 @@ class HBR(RegressionModel):
         **kwargs : Any
             ``freedom`` (float, default 1) sets how far the new model may move
             away from what the old model learned: 1 keeps the old uncertainty,
-            2 allows twice as much, 0.5 half as much. 
+            2 allows twice as much, 0.5 half as much.
 
         Returns
         -------
