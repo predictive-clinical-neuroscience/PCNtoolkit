@@ -141,9 +141,8 @@ class Warnings:
     )
     HBR_BATCH_EFFECTS_NOT_PROVIDED = BLR_BATCH_EFFECTS_NOT_PROVIDED
     HBR_MCMC_KWARGS_DEPRECATED = (
-        "The MCMC arguments {kwargs} have been provided directly to HBR instead of through the MCMC InferenceMethod. "
-        "This behavior will be deprecated in the future. "
-        "We will create a default MCMC InferenceMethod and replace its attributes with the ones you provided."
+        "Passing {kwargs} directly to HBR(...) is deprecated. "
+        "Use HBR(inference_method=MCMC(...)) instead."
     )
     ERROR_SUBMITTING_JOB = "Error submitting job {job_id}: {stderr}"
     NO_RESPONSE_VARS = "No response variables provided for dataset {dataset_name}. Please provide a list of response variables for which you want to fit or predict."

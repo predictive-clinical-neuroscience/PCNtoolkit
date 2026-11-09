@@ -114,7 +114,7 @@ This notebook shows three things:
     
     
     def compare(models, seconds, data, site, title):
-        """Plot z-scores of MCMC vs Laplace on `data`, then their centiles at `site`."""
+        """Z-scores of MCMC vs Laplace on `data` (top), and their centiles at `site` (bottom)."""
         z = {}
         for name, model in models.items():
             d = data.copy(deep=True)
@@ -125,30 +125,28 @@ This notebook shows three things:
         y = data.Y.values.ravel()
         ages = np.linspace(*np.percentile(age, [2.5, 97.5]), 100)
     
-        # Figure 1: z-scores
-        fig, ax = plt.subplots(figsize=(6, 6))
+        # One image: z-scores on top, centiles for women and men below
+        fig, axes = plt.subplot_mosaic([["z", "z"], ["F", "M"]], figsize=(12, 11), height_ratios=[6, 5])
+        ax = axes["z"]
+        ax.set_box_aspect(1)
         for s, color in [("F", "tab:red"), ("M", "tab:green")]:
             ax.scatter(z["MCMC"][sex == s], z["Laplace"][sex == s], s=12, alpha=0.6, color=color, label=s)
         ax.plot([-4, 4], [-4, 4], "k--", lw=1)
         r = np.corrcoef(z["MCMC"], z["Laplace"])[0, 1]
-        ax.set(xlabel="Z (MCMC)", ylabel="Z (Laplace)",
-               title=f"{title}: test z-scores, r = {r:.3f}\n"
-                     f"fit time: MCMC {seconds['MCMC']:.0f} s, Laplace {seconds['Laplace']:.0f} s")
+        ax.set(xlabel="Z (MCMC)", ylabel="Z (Laplace)", title=f"Test z-scores, r = {r:.3f}")
         ax.legend(title="sex")
-        fig.tight_layout()
-        plt.show()
     
-        # Figure 2: centiles
-        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-        for ax, s in zip(axes, ["F", "M"]):
+        # Plot centiles for each sex
+        for s in ["F", "M"]:
+            ax = axes[s]
             ax.scatter(age[sex == s], y[sex == s], s=8, color="grey", alpha=0.4)
             for name in models:
                 c = centiles(models[name], ages, site, s)
                 for j in range(len(CENTILES)):
                     ax.plot(ages, c[j], lw=1.5, **STYLE[name], label=name if j == 0 else None)
-            ax.set(xlabel="age", ylabel=RV, title=f"Centiles, sex {s}")
+            ax.set(xlabel="age", ylabel=RV, title=f"Centiles, sex {s}, site {site}")
             ax.legend()
-        fig.suptitle(f"{title}: centiles at site {site}")
+        fig.suptitle(f"{title}  (fit time: MCMC {seconds['MCMC']:.0f} s, Laplace {seconds['Laplace']:.0f} s)")
         fig.tight_layout()
         plt.show()
     
@@ -173,10 +171,6 @@ Also we see that Laplace is significantly faster than MCMC.
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_5_0.png
 
 
-
-.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_5_1.png
-
-
 2. Centered priors
 ------------------
 
@@ -191,10 +185,6 @@ results are closer to MCMC now.
 
 
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_7_0.png
-
-
-
-.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_7_1.png
 
 
 3. Transfer to new sites
@@ -213,10 +203,6 @@ subjects.
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_9_0.png
 
 
-
-.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_9_1.png
-
-
 4. Extend to new sites
 ----------------------
 
@@ -232,8 +218,4 @@ models are not fitted on the same data.
 
 
 .. image:: 17_HBR_Laplace_files/17_HBR_Laplace_11_0.png
-
-
-
-.. image:: 17_HBR_Laplace_files/17_HBR_Laplace_11_1.png
 
