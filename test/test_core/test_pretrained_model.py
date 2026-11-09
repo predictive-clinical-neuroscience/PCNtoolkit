@@ -166,7 +166,7 @@ def test_006_load_should_deserializeIdata_when_givenPretrainedHBR(
     assert regression_model.idata["posterior"].dataset.sizes["draw"] > 0
 
 
-def test_007_load_should_applyVariationalInferenceMigration_when_givenPretrainedHBR(
+def test_007_load_should_applyInferenceMethodMigration_when_givenPretrainedHBR(
     hbr_model: NormativeModel,
 ) -> None:
     """
@@ -175,7 +175,7 @@ def test_007_load_should_applyVariationalInferenceMigration_when_givenPretrained
     Act: load it with the installed version.
     Assert: the saved MCMC settings moved into an MCMC inference method.
 
-    Tests specifically that _migrate_variational_inference_1_4_0 builds an MCMC
+    Tests that _migrate_inference_method_as_class_1_5_0 builds an MCMC
     inference method for a model saved with pcntoolkit v1.1.2.
     """
     regression_model = hbr_model.regression_models[RESPONSE_VAR]
