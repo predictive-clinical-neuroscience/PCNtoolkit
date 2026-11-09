@@ -1,0 +1,58 @@
+# This configuration does the following:
+
+#   It runs a short smoke test on Linux, macOS and Windows when code is
+#   pushed to dev and when a pull request to dev is created.
+#   It installs the package (not in editable mode), checks the import and
+#   the command line tool, then fits small BLR and HBR models.
+#   The full test suite runs on Linux only, in testing.yml.
+
+name: smoke-test
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.12', '3.13']
+    env:
+      MPLBACKEND: Agg
+      PYTHONUTF8: '1'
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install package
+      run: pip install .
+
+    # Run from outside the checkout, so that Python imports the installed package.
+    - name: Check import
+      working-directory: ${{ runner.temp }}
+      run: python -c "import pcntoolkit; print(pcntoolkit.__version__, pcntoolkit.__file__)"
+
+    - name: Check command line tool
+      working-directory: ${{ runner.temp }}
+      run: normative --help
+
+    - name: Fit and predict with BLR and HBR
+      working-directory: ${{ runner.temp }}
+      run: python "${GITHUB_WORKSPACE}/.github/scripts/smoke_test.py"
