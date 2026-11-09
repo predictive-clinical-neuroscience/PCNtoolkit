@@ -29,7 +29,7 @@ from typing import Callable, Literal
 # Use the "packaging" module to read also "post1" versions
 from packaging.version import Version
 
-from pcntoolkit.util.output import Output, Warnings
+from pcntoolkit.util.output import Errors, Output, Warnings
 
 
 @functools.cache
@@ -298,37 +298,6 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
     return d
 
 
-@registry.register("HBR", introduced_in="1.4.0")
-def _migrate_variational_inference_1_4_0(d: dict) -> dict:
-    """Move the MCMC settings of an HBR dict into a nested MCMC inference method.
-
-    Before v1.4.0, HBR stored draws, tune, etc. at the top level and its
-    posterior samples in idata.nc. From v1.4.0 these live under
-    ``inference_method`` with ``type: "MCMC"``.
-
-    Parameters
-    ----------
-    d : dict
-        Raw dict read from the saved JSON file.
-
-    Returns
-    -------
-    dict
-        Dict with an ``inference_method`` entry of type MCMC.
-    """
-    from pcntoolkit.regression_model.hbr import MCMC_INIT_KEYS
-
-    inference_method = {"type": "MCMC", "is_fitted": d.get("is_fitted", False)}
-    for key in MCMC_INIT_KEYS:
-        if key in d:
-            inference_method[key] = d.pop(key)
-    if "idata_path" in d:
-        inference_method["data_tree_path"] = d.pop("idata_path")
-    d["inference_method"] = inference_method
-
-    return d
-
-
 @registry.register("BasisFunction", introduced_in="1.4.0")
 def _migrate_bspline_basis_function_1_4_0(d: dict) -> dict:
     """Preserve legacy B-spline behavior for models saved before v1.4.0.
@@ -400,5 +369,58 @@ def _migrate_blr_slope_indices_1_4_0(d: dict) -> dict:
     for key in ("fixed_effect_slope_indices", "fixed_effect_var_slope_indices"):
         if d.get(key) is None:
             d[key] = [0]
+
+    return d
+
+
+@registry.register("HBR", introduced_in="1.5.0")
+def _migrate_inference_method_as_class_1_5_0(d: dict) -> dict:
+    """Turn the string inference_method of older HBR dicts into an MCMC() class entry.
+
+    We handle two cases:
+
+    1. Models saved before v1.4.0 have no ``inference_method`` and are
+       treated as "mcmc" (see 2.).
+    2. Models saved with v1.4.0 store ``inference_method="mcmc"`` as a
+       string. From v1.5.0 it is saved as ``{"type": "MCMC", ...}`` and
+       loaded as ``MCMC()``.
+
+    Parameters
+    ----------
+    d : dict
+        Raw dict read from the saved JSON file.
+
+    Returns
+    -------
+    dict
+        Dict with an ``inference_method`` entry of type MCMC.
+
+    Raises
+    ------
+    ValueError
+        If the model was fitted with a v1.4.0 method other than "mcmc".
+        Those methods were experimental, so the model must be refitted.
+    """
+    from pcntoolkit.regression_model.hbr import MCMC_INIT_KEYS
+
+    method = d.get("inference_method", "mcmc")
+    # Handle models saved from the dev branch: already in the new format,
+    # but still stamped 1.4.0
+    if isinstance(method, dict):
+        return d
+    if method != "mcmc":
+        raise ValueError(
+            Output.error(Errors.ERROR_HBR_UNSUPPORTED_SAVED_INFERENCE, method=method)
+        )
+
+    inference_method = {"type": "MCMC", "is_fitted": d.get("is_fitted", False)}
+    for key in MCMC_INIT_KEYS:
+        if key in d:
+            inference_method[key] = d.pop(key)
+    if "idata_path" in d:
+        inference_method["data_tree_path"] = d.pop("idata_path")
+    for key in ("vi_iterations", "vi_draws", "vi_kwargs"):
+        d.pop(key, None)
+    d["inference_method"] = inference_method
 
     return d
