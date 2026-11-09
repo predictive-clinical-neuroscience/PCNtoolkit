@@ -104,8 +104,9 @@ def run_hbr(save_dir: Path) -> None:
         Folder for the model and its results.
     """
     train, test = make_data()
-    # Few draws and one core: this only checks that sampling works.
-    hbr = HBR(draws=20, tune=20, chains=1, cores=1, progressbar=False)
+    # Few draws: this only checks that sampling works. Two chains on two
+    # cores test parallel sampling, which users get by default.
+    hbr = HBR(draws=20, tune=20, chains=2, cores=2, progressbar=False)
     model = NormativeModel(hbr, save_dir=str(save_dir), saveplots=False)
     check_z(model.fit_predict(train, test), "HBR fit_predict")
 
@@ -127,6 +128,7 @@ def main() -> int:
     return 0
 
 
-# The guard is necessary because macOS and Windows start subprocesses with spawn.
+# macOS and Windows start worker processes with spawn, which imports this
+# file again; the guard stops each worker from rerunning the tests.
 if __name__ == "__main__":
     sys.exit(main())
