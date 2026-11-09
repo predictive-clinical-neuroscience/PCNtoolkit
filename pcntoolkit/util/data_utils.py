@@ -209,7 +209,7 @@ def dedupe(
 
     ``q`` is reduced in one of these ways:
 
-    1. If ``q`` is constant along an axis, keep one slice.
+    1. If ``q`` is constant along an axis (same bits), keep one slice.
     2. If ``q`` has more than ``sample_size`` elements, and at most
        ``max_unique_fraction`` of a sample of ``sample_size`` elements is
        distinct, keep each distinct value once (``np.unique``).
@@ -255,9 +255,13 @@ def dedupe(
     shape = q.shape
     if q.size == 0:
         return q, lambda r: r
+    # Compare bits, as in _same_grouping: keeps -0.0 and 0.0 apart, and
+    # finds an axis constant also if it holds NaN.
+    bits = q.view(np.uint64)
     for axis in range(q.ndim):
         first = np.take(q, [0], axis=axis)
-        if shape[axis] > 1 and np.array_equal(q, np.broadcast_to(first, shape)):
+        first_bits = np.broadcast_to(first.view(np.uint64), shape)
+        if shape[axis] > 1 and np.array_equal(bits, first_bits):
             reduced, inner = dedupe(first, sample_size, max_unique_fraction, use_cache)
             return reduced, partial(_broadcast_copy, inner=inner, shape=shape)
     if q.size > sample_size:

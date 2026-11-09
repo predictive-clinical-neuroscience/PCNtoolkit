@@ -86,6 +86,24 @@ def test_dedupe_keeps_signed_zeros_apart():
         assert np.array_equal(expand(1 / reduced), 1 / q)
 
 
+def test_dedupe_constant_axis_keeps_signed_zeros_apart():
+    # 0.0 == -0.0, but the bits differ, so axis 0 is not constant.
+    q = np.ones((50, 30))
+    q[::2, 0] = 0.0
+    q[1::2, 0] = -0.0
+    reduced, expand = dedupe(q)
+    with np.errstate(divide="ignore"):
+        assert np.array_equal(expand(1 / reduced), 1 / q)
+
+
+def test_dedupe_constant_axis_with_nan():
+    # NaN != NaN, but a column of the same NaN bits is constant.
+    q = np.broadcast_to(np.array([[np.nan, 1.0, 2.0]]), (50, 3)).copy()
+    reduced, out = _roundtrip(q)
+    assert reduced.size == 3
+    assert np.array_equal(out, np.sqrt(q), equal_nan=True)
+
+
 def test_dedupe_without_cache():
     rng = np.random.default_rng(0)
     q = _grouped(rng, rng.integers(0, 5, 200))
