@@ -1,6 +1,7 @@
 import copy
 
 import arviz as az
+import numpy as np
 import pandas as pd
 import pymc as pm
 import xarray as xr
@@ -8,6 +9,14 @@ import xarray as xr
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.util.output import Output, Warnings
+
+# Largest difference, on the scale the models were fitted on, between the
+# response values two models see, for the values to count as equal. Fitting
+# scales the data and scales it back in place, which can change the last
+# digits of some values (about 1e-16 relative). A second model fitted on the
+# same data object can therefore store outscaler parameters that differ from
+# the first model's in the last digits.
+SCALE_TOLERANCE = 1e-9
 
 
 def compare_hbr_models(
@@ -73,7 +82,7 @@ def compare_hbr_models(
 
     comparisons = {}
     for respvar in next(iter(loaded_models.values())).response_vars:
-        _check_same_response_scale(loaded_models, respvar)
+        _check_same_response_scale(loaded_models, data, respvar)
         for name, model in loaded_models.items():
             _warn_if_approximate_posterior(name, model, respvar)
         traces = {
@@ -156,29 +165,52 @@ def _warn_if_approximate_posterior(
         )
 
 
-def _check_same_response_scale(models: dict[str, NormativeModel], respvar: str) -> None:
-    """Raise if the models do not map the response variable to the same scale.
+def _check_same_response_scale(
+    models: dict[str, NormativeModel], data: NormData, respvar: str
+) -> None:
+    """Raise if the models do not see the same response values.
+
+    The log-likelihoods are computed on the scale the models were fitted on,
+    after ``y_transform`` and the outscaler. They are comparable only if
+    every model maps the values of ``respvar`` in ``data`` to the same values
+    on that scale. Differences up to ``SCALE_TOLERANCE`` are accepted: they
+    come from rounding, not from a different scaling.
+
+    Comparing the transformed values rather than the outscaler parameters
+    keeps the tolerance meaningful on a known scale. A relative tolerance on
+    the parameters would fail for a mean close to zero, for instance.
 
     Parameters
     ----------
     models : dict[str, NormativeModel]
         The loaded models, by name.
+    data : NormData
+        The data the models were fitted on.
     respvar : str
         The response variable.
 
     Raises
     ------
     ValueError
-        If the models differ in ``y_transform`` or in their fitted outscaler
-        for ``respvar``.
+        If the transformed values differ by more than ``SCALE_TOLERANCE``
+        between two models.
     """
-    scales = {
-        name: (model.y_transform, model.outscalers[respvar].to_dict())
-        for name, model in models.items()
-    }
-    reference_name, reference_scale = next(iter(scales.items()))
-    for name, scale in scales.items():
-        if scale != reference_scale:
+    transformed = {}
+    for name, model in models.items():
+        # preprocess transforms and scales the data in place
+        model_data = copy.deepcopy(data)
+        model.preprocess(model_data)
+        transformed[name] = model_data.Y.sel(response_vars=respvar).to_numpy()
+    reference_name, reference_values = next(iter(transformed.items()))
+    for name, values in transformed.items():
+        # Missing values at the same positions are not a scaling difference
+        if not np.allclose(
+            values,
+            reference_values,
+            rtol=SCALE_TOLERANCE,
+            atol=SCALE_TOLERANCE,
+            equal_nan=True,
+        ):
             raise ValueError(
                 f"Models '{reference_name}' and '{name}' do not transform or scale "
                 f"'{respvar}' identically, so their log-likelihoods are not on the "

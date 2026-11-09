@@ -106,7 +106,10 @@ def fitted(tmp_path_factory):
     for name, sigma in sigmas.items():
         path = str(tmp_path_factory.mktemp(name))
         model = make_model(sigma, path)
-        model.fit(data.copy(deep=True))
+        # Fit on `data` itself, as tutorial 07 does: fitting scales the data
+        # and scales it back in place, so the second model is fitted on values
+        # that differ from the first in the last digits.
+        model.fit(data)
         paths[name] = path
         in_memory[name] = model
     return data, paths, in_memory
@@ -159,14 +162,52 @@ def test_data_is_not_modified(fitted):
     np.testing.assert_array_equal(data.X.values, before.X.values)
 
 
-def test_models_on_different_scales_are_rejected(fitted, monkeypatch):
+def test_rounding_differences_in_the_outscaler_are_accepted(fitted, monkeypatch):
+    """Tutorial 07 case: same data, outscalers that differ in the last digit.
+
+    Fitting scales the data and scales it back in place. In tutorial 07 this
+    round trip changes the minimum stored in the outscaler of the second
+    model by one unit in the last place (2047.8 and 2047.8000000000002). With
+    the toy data it changes no outscaler value, so the difference is set by
+    hand: one unit in the last place of the minimum, the mean and the
+    standard deviation.
+    """
     data, paths, _ = fitted
     original_load = NormativeModel.load
 
-    def load_with_other_outscaler(path):
+    def load_with_rounded_outscaler(path: str) -> NormativeModel:
         model = original_load(path)
         if path == paths["too_narrow"]:
-            model.outscalers[RESPVAR].s = model.outscalers[RESPVAR].s * 2
+            scaler = model.outscalers[RESPVAR]
+            scaler.min = np.nextafter(scaler.min, np.inf)
+            scaler.m = np.nextafter(scaler.m, np.inf)
+            scaler.s = np.nextafter(scaler.s, np.inf)
+        return model
+
+    monkeypatch.setattr(NormativeModel, "load", load_with_rounded_outscaler)
+    table = compare_hbr_models(paths, data)[RESPVAR]
+    assert list(table.index) == ["free", "too_narrow"]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param(lambda scaler: setattr(scaler, "s", scaler.s * 2), id="sd x2"),
+        # One millionth of a standard deviation: small, but a real difference
+        pytest.param(
+            lambda scaler: setattr(scaler, "m", scaler.m + 1e-6 * scaler.s),
+            id="mean + 1e-6 sd",
+        ),
+    ],
+)
+def test_models_on_different_scales_are_rejected(fitted, monkeypatch, change):
+    data, paths, _ = fitted
+    original_load = NormativeModel.load
+
+    def load_with_other_outscaler(path: str) -> NormativeModel:
+        model = original_load(path)
+        if path == paths["too_narrow"]:
+            change(model.outscalers[RESPVAR])
         return model
 
     monkeypatch.setattr(NormativeModel, "load", load_with_other_outscaler)
