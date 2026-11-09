@@ -156,9 +156,10 @@ def main() -> int:
     """
     print(f"[smoke] pcntoolkit {pcntoolkit.__version__} from {pcntoolkit.__file__}")
     print(f"[smoke] python {sys.version}")
-    with tempfile.TemporaryDirectory() as tmp:
-        run_blr(Path(tmp) / "blr")
-        run_hbr(Path(tmp) / "hbr")
+    save_dir = Path(tempfile.mkdtemp(prefix="pcntoolkit_smoke_"))
+    print(f"[smoke] saving models in {save_dir}")
+    run_blr(save_dir / "blr")
+    run_hbr(save_dir / "hbr")
     print("[smoke] all checks passed")
     return 0
 
