@@ -8,6 +8,7 @@ import xarray as xr
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
+from pcntoolkit.regression_model.hbr import HBR
 from pcntoolkit.util.output import Output, Warnings
 
 # Largest difference, on the scale the models were fitted on, between the
@@ -58,6 +59,8 @@ def compare_hbr_models(
 
     Raises
     ------
+    TypeError
+        If a model is not an HBR model.
     ValueError
         If no model could be loaded, if no response variable is in ``data``
         and in every model, if ``data`` is not compatible with a model, or
@@ -74,6 +77,9 @@ def compare_hbr_models(
             print("Cannot load model at location:", v, e)
     if not loaded_models:
         raise ValueError("None of the models could be loaded.")
+
+    for name, model in loaded_models.items():
+        _check_is_hbr(name, model)
 
     response_vars = _shared_response_vars(loaded_models, data)
     # Without this selection, check_compatibility would reject data that has
@@ -170,6 +176,29 @@ def _warn_if_approximate_posterior(
             model_name=name,
             inference_method=method_name,
         )
+
+
+def _check_is_hbr(name: str, model: NormativeModel) -> None:
+    """Raise if a model does not use HBR regression models.
+
+    Parameters
+    ----------
+    name : str
+        The model name used in the comparison.
+    model : NormativeModel
+        The loaded model.
+
+    Raises
+    ------
+    TypeError
+        If a regression model of ``model`` is not an HBR.
+    """
+    for regression_model in model.regression_models.values():
+        if not isinstance(regression_model, HBR):
+            raise TypeError(
+                f"Model '{name}' is a {type(regression_model).__name__} model. "
+                "compare_hbr_models only compares HBR models."
+            )
 
 
 def _shared_response_vars(

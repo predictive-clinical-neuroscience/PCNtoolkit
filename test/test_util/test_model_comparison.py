@@ -9,7 +9,10 @@ models by how narrow their predictive distribution is rather than by how well
 they fit the data. These tests check that every model is scored on the fit
 data, that a model whose predictive distribution is far too narrow for the
 data is ranked last, and that the result does not depend on the global random
-state.
+state. They also check which models and response variables are compared: only
+HBR models, only response variables that are in the data and in every model,
+and only models that put the response variable on the same scale, up to
+rounding differences.
 """
 
 import copy
@@ -23,6 +26,7 @@ from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.math_functions.likelihood import NormalLikelihood
 from pcntoolkit.math_functions.prior import make_prior
 from pcntoolkit.normative_model import NormativeModel
+from pcntoolkit.regression_model.blr import BLR
 from pcntoolkit.regression_model.hbr import HBR
 from pcntoolkit.util.model_comparison import (
     _log_likelihood_tree,
@@ -253,6 +257,21 @@ def test_no_shared_response_var_is_rejected(fitted):
     _, paths, _ = fitted
     data = make_data(extra_response_var="y_extra").sel({"response_vars": ["y_extra"]})
     with pytest.raises(ValueError, match="nothing to compare"):
+        compare_hbr_models(paths, data)
+
+
+def test_non_hbr_model_is_rejected(fitted, monkeypatch):
+    data, paths, _ = fitted
+    original_load = NormativeModel.load
+
+    def load_as_blr(path: str) -> NormativeModel:
+        model = original_load(path)
+        if path == paths["too_narrow"]:
+            model.regression_models[RESPVAR] = BLR(RESPVAR)
+        return model
+
+    monkeypatch.setattr(NormativeModel, "load", load_as_blr)
+    with pytest.raises(TypeError, match="'too_narrow' is a BLR model"):
         compare_hbr_models(paths, data)
 
 
