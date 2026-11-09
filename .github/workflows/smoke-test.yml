@@ -28,7 +28,6 @@ jobs:
         python-version: ['3.12', '3.13']
     env:
       MPLBACKEND: Agg
-      PYTHONUTF8: '1'
     defaults:
       run:
         shell: bash
