@@ -681,26 +681,3 @@ class Laplace(InferenceMethod):
         self, likelihood: Likelihood, **kwargs: Any
     ) -> Likelihood:
         return likelihood.transfer(self.data_tree, **kwargs)
-
-
-class ADVI(InferenceMethod):
-    def __init__(
-        self,
-        iterations: int,
-        progressbar: bool = True,
-        method: str = "advi",
-        kwargs=None,
-    ):
-        self.iterations = iterations
-        self.progressbar = progressbar
-        # "advi" is mean-field; "fullrank_advi" models correlations.
-        self.method = method
-        self.approximation = None
-        self.kwargs = kwargs or {}
-
-    def fit(self, model: pm.Model):
-        self.approx = pm.fit(
-            n=self.iterations,
-            method=self.method,
-            progressbar=self.progressbar**self.kwargs,
-        )
