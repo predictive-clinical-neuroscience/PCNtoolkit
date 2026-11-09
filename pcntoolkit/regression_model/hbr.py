@@ -37,13 +37,14 @@ class HBR(RegressionModel):
         is_from_dict: bool = False,
         likelihood: Likelihood = None,  # type:ignore
         inference_method: InferenceMethod = None,
-        # Deprecation kwargs, drop them in a future release. Here for backward compatibility.
+        # TODO: Deprecation kwargs, drop them in a future release. Here for backward compatibility.
         draws: int = None,
         tune: int = None,
         cores: int = None,
         chains: int = None,
         init: str = None,
         nuts_sampler: str = None,
+        progressbar: Optional[bool] = None,
     ):
         """
         This class implements a Bayesian hierarchical regression model using PyMC for
@@ -105,6 +106,7 @@ class HBR(RegressionModel):
             "chains": chains,
             "init": init,
             "nuts_sampler": nuts_sampler,
+            "progressbar": progressbar,
         }
         provided = {k: v for k, v in legacy.items() if v is not None}
         if len(provided) > 0:
