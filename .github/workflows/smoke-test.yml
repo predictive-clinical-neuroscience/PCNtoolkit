@@ -46,8 +46,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    # uv installs much faster than pip, mostly on Windows.
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v10.3.3
+
     - name: Install package
-      run: pip install .
+      run: uv pip install --system .
 
     # Run from outside the checkout, so that Python imports the installed package.
     - name: Check import
