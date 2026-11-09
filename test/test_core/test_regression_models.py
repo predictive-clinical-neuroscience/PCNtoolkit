@@ -12,7 +12,7 @@ from pcntoolkit.math_functions.prior import (
     make_prior,
 )
 from pcntoolkit.regression_model.blr import BLR
-from pcntoolkit.regression_model.hbr import HBR, LaPlace  # noqa: F401, F403
+from pcntoolkit.regression_model.hbr import HBR, Laplace  # noqa: F401, F403
 from test.fixtures.data_fixtures import *  # noqa: F401, F403
 from test.fixtures.hbr_model_fixtures import *  # noqa: F401, F403
 from test.fixtures.norm_data_fixtures import *  # noqa: F401, F403
@@ -288,7 +288,7 @@ class TestHBR:
         n_draws = 50
         model = HBR(
             "test_hbr_laplace",
-            inference_method=LaPlace(draws=n_draws, progressbar=False),
+            inference_method=Laplace(draws=n_draws, progressbar=False),
         )
         model.fit(data.X, mapped_batch_effects, be_maps, data.Y)
 
@@ -309,7 +309,7 @@ class TestHBR:
             data.X, mapped_batch_effects, be_maps, data.Y, freedom=2
         )
         assert transferred.is_fitted
-        assert isinstance(transferred.inference_method, LaPlace)
+        assert isinstance(transferred.inference_method, Laplace)
         assert (
             transferred.likelihood.mu.slope.dist_params
             != model.likelihood.mu.slope.dist_params

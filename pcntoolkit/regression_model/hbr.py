@@ -634,7 +634,7 @@ class MCMC(InferenceMethod):
         return likelihood.transfer(self.data_tree, **kwargs)
 
 
-class LaPlace(InferenceMethod):
+class Laplace(InferenceMethod):
     def __init__(self, draws=4000, progressbar=True, kwargs=None):
         self.draws = draws
         self.progressbar = progressbar
