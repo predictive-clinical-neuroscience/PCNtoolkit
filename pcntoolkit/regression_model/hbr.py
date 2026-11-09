@@ -33,10 +33,11 @@ class HBR(RegressionModel):
     def __init__(
         self,
         name: str = "template",
+        likelihood: Optional[Likelihood] = None,
+        *,
+        inference_method: Optional[InferenceMethod] = None,
         is_fitted: bool = False,
         is_from_dict: bool = False,
-        likelihood: Optional[Likelihood] = None,
-        inference_method: Optional[InferenceMethod] = None,
         # TODO: Deprecation kwargs, drop them in a future release. Here for backward 
         # compatibility.
         draws: Optional[int] = None,
@@ -56,15 +57,15 @@ class HBR(RegressionModel):
         ----------
         name : str, optional
             Unique identifier for the model instance, by default "template".
-        is_fitted : bool, optional
-            Whether the model has been fitted, by default False.
-        is_from_dict : bool, optional
-            Whether the model was created from a dictionary, by default False.
         likelihood : Likelihood, optional
             Distribution of the response variable. By default a Normal likelihood.
         inference_method : InferenceMethod, optional
             How to approximate the posterior, by default ``MCMC()``.
             Current supported methods include ``MCMC`` and ``Laplace``.
+        is_fitted : bool, optional
+            Whether the model has been fitted, by default False.
+        is_from_dict : bool, optional
+            Whether the model was created from a dictionary, by default False.
         draws, tune, cores, chains, init, nuts_sampler, progressbar : optional
             Deprecated MCMC arguments; pass them to ``MCMC(...)`` instead.
 
