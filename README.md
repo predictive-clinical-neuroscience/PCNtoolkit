@@ -39,11 +39,11 @@ model.fit_predict(train, test)
 ### Users
 The best place to learn Normative Modelling and the PCNtoolkit is our [website documentation](https://pcntoolkit.readthedocs.io/en/latest/).
 
-Feel free to ask your questions and engage in discussions with the community on the [NeuroStars online forum](https://neurostars.org/tags/pcntoolkit). Please add the tag *pcntoolkit* to your post.
+Feel free to ask your questions and engage in discussions with the community on the [NeuroStars online forum](https://neurostars.org/tag/pcntoolkit/1106). Please add the tag *pcntoolkit* to your post.
 
 ### Contributors
 
-Contributions are always welcome! To start see our [website contributing guidelines](https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html).
+Contributions are always welcome! To start see our [website contributing guidelines](https://pcntoolkit.readthedocs.io/en/stable/development/contributing.html).
 
 You can find more in depth guidelines in our [GitHub Wiki](https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki).
 

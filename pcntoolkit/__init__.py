@@ -1,8 +1,12 @@
 from importlib.metadata import version
 
-from .dataio.data_factory import load_fcon1000
+from .dataio.data_factory import (
+    fetch_example_correlation_matrix,
+    load_fcon1000,
+    load_lnm,
+)
 from .dataio.norm_data import NormData
-from .longitudinal_score import LongitudinalScore, ZDiffScore, ZGainScore
+from .longitudinal import CorrelationMatrix, VelocityModel, ZDiffScore
 from .math_functions.basis_function import (
     BsplineBasisFunction,
     CompositeBasisFunction,
@@ -10,7 +14,6 @@ from .math_functions.basis_function import (
     LinearBasisFunction,
     PolynomialBasisFunction,
 )
-from .math_functions.correlation_matrix import CorrelationMatrix
 from .math_functions.likelihood import (
     BetaLikelihood,
     NormalLikelihood,
@@ -50,11 +53,12 @@ __all__ = [
     "plot_centiles",
     "plot_qq",
     "plot_ridge",
+    "fetch_example_correlation_matrix",
     "load_fcon1000",
+    "load_lnm",
     "Runner",
     "plot_centiles_advanced",
     "plot_thrivelines",
-    "LongitudinalScore",
     "ZDiffScore",
-    "ZGainScore",
+    "VelocityModel",
 ]

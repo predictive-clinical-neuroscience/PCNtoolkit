@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
-from pcntoolkit.longitudinal_score.longitudinal_score import LongitudinalScore
+from pcntoolkit.longitudinal.longitudinal_score import LongitudinalScore
 
 
 @pytest.mark.parametrize(
@@ -59,7 +59,15 @@ def test_get_visits_requires_numeric_labels(
         predicted_norm_data_factory(df).get_visits()
 
 
-def test_score_validation_requires_predictions(predicted_longitudinal_norm_data):
+def test_score_validation_requires_z(predicted_longitudinal_norm_data):
+    data= predicted_longitudinal_norm_data.drop_vars("Z")
+    with pytest.raises(ValueError, match="'Z'"):
+        LongitudinalScore._check_is_predicted(data, required=("Z",))
+
+
+def test_score_validation_requires_yhat(
+    predicted_longitudinal_norm_data,
+):
     data = predicted_longitudinal_norm_data.drop_vars("Yhat")
     with pytest.raises(ValueError, match="'Yhat'"):
-        LongitudinalScore._check_is_predicted(data)
+        LongitudinalScore._check_is_predicted(data, required=("Yhat",))

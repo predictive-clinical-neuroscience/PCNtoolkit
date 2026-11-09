@@ -31,11 +31,12 @@ Imports
 .. code:: ipython3
 
     import warnings
-    import logging
     
-    
-    import pandas as pd
     import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    
+    import pcntoolkit.util.output
     from pcntoolkit import (
         BLR,
         BsplineBasisFunction,
@@ -45,15 +46,19 @@ Imports
         plot_centiles_advanced,
     )
     
-    import pcntoolkit.util.output
-    import seaborn as sns
-    
     sns.set_style("darkgrid")
     
     # Suppress some annoying warnings and logs
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
+
+
+.. code:: text
+
+    /tmp/ipykernel_2994/55121059.py:21: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None  # default='warn'
+
 
 Load data
 ---------
@@ -71,14 +76,14 @@ smaller datasets with 2 sites
     norm_data: NormData = load_fcon1000()
     
     # Select the white matter hypointensities feature
-    features_to_model = [
-        "WM-hypointensities"
-    ]
+    features_to_model = ["WM-hypointensities"]
     norm_data = norm_data.sel({"response_vars": features_to_model})
     
     # Leave two sites out for doing transfer and extend later
     transfer_sites = ["Milwaukee_b", "Oulu"]
-    transfer_data, fit_data = norm_data.batch_effects_split({"site": transfer_sites}, names=("transfer", "fit"))
+    transfer_data, fit_data = norm_data.batch_effects_split(
+        {"site": transfer_sites}, names=("transfer", "fit")
+    )
     
     # Split into train and test sets
     train, test = fit_data.train_test_split()
@@ -92,18 +97,12 @@ Visualize the data
     feature_to_plot = features_to_model[0]
     datasets = {
         "Fit data": train.merge(test, name="fit"),
-        "Transfer data": transfer_train.merge(
-            transfer_test, name="transfer"
-        ),
+        "Transfer data": transfer_train.merge(transfer_test, name="transfer"),
     }
     
-    fig, axes = plt.subplots(
-        2, 2, figsize=(15, 8)
-    )
+    fig, axes = plt.subplots(2, 2, figsize=(15, 8))
     
-    for i, (name, data) in enumerate(
-        datasets.items()
-    ):
+    for i, (name, data) in enumerate(datasets.items()):
         df = data.to_dataframe()
         # Count plot
         sns.countplot(
@@ -178,13 +177,9 @@ We first fit a BLR model on the dataset with 21 sites.
 
 .. code:: ipython3
 
-    test = model.fit_predict(train, test);
-    
+    test = model.fit_predict(train, test)
     plot_centiles_advanced(
-        model,
-        scatter_data=train,
-        batch_effects = 'all',
-        show_legend = False
+        model, scatter_data=train, batch_effects="all", show_legend=False
     )
 
 
@@ -221,11 +216,7 @@ the small dataset, we can show how bad such a model would be:
     
     small_model.fit_predict(transfer_train, transfer_test)
     
-    plot_centiles_advanced(
-        small_model,
-        scatter_data=transfer_test,
-        batch_effects='all'
-    )
+    plot_centiles_advanced(small_model, scatter_data=transfer_test, batch_effects="all")
 
 
 
@@ -254,14 +245,15 @@ merges it with the real local data, and refits a full model.
 
 .. code:: ipython3
 
-    extended_model = model.extend_predict(transfer_train, transfer_test);
-    
+    extended_model = model.extend_predict(transfer_train, transfer_test)
     plot_centiles_advanced(
         extended_model,
         scatter_data=test,
-        batch_effects='all',
-        show_legend = False,
-        covariate_ranges = {"age": (20, 65)} # for comparison reasons: force the x-axis to be the same as the transfer plot
+        batch_effects="all",
+        show_legend=False,
+        covariate_ranges={
+            "age": (20, 65)
+        },  # for comparison reasons: force the x-axis to be the same as the transfer plot
     )
 
 
@@ -303,13 +295,12 @@ centiles plot below), not the age range of the reference model.
 
 .. code:: ipython3
 
-    transfered_model = model.transfer_predict(transfer_train, transfer_test);
-    
+    transfered_model = model.transfer_predict(transfer_train, transfer_test)
     plot_centiles_advanced(
         transfered_model,
-        scatter_data=transfer_test, # note you can not select scatter_data=test as with transfer we lose info about the reference model sites 
-        batch_effects='all',
-        show_legend = False
+        scatter_data=transfer_test,  # note you can not select scatter_data=test as with transfer we lose info about the reference model sites
+        batch_effects="all",
+        show_legend=False,
     )
 
 
@@ -351,14 +342,15 @@ reference point that both methods are trying to approximate.
         outscaler="standardize",
     )
     
-    pooled_model.fit_predict(all_train, all_test);
-    
+    pooled_model.fit_predict(all_train, all_test)
     plot_centiles_advanced(
         pooled_model,
         scatter_data=all_test,
         batch_effects="all",
         show_legend=False,
-        covariate_ranges = {"age": (20, 65)} # for comparison reasons: force the x-axis to be the same as the transfer plot
+        covariate_ranges={
+            "age": (20, 65)
+        },  # for comparison reasons: force the x-axis to be the same as the transfer plot
     );
 
 

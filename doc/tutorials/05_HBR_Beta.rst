@@ -16,29 +16,27 @@ Imports
 
 .. code:: ipython3
 
-    import warnings
     import logging
+    import warnings
     
-    
-    import pandas as pd
     import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import seaborn as sns
+    
+    import pcntoolkit.util.output
     from pcntoolkit import (
         HBR,
+        BetaLikelihood,
         BsplineBasisFunction,
         NormativeModel,
         NormData,
         load_fcon1000,
-        BetaLikelihood,
         make_prior,
         plot_centiles_advanced,
         plot_qq,
         plot_ridge,
     )
-    
-    import numpy as np
-    import pcntoolkit.util.output
-    import seaborn as sns
-    import os
     
     sns.set_style("darkgrid")
     
@@ -52,6 +50,13 @@ Imports
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
 
+
+.. code:: text
+
+    /tmp/ipykernel_2864/962494376.py:32: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None  # default='warn'
+
+
 Load data
 ---------
 
@@ -63,13 +68,11 @@ First we download a small example dataset from github.
     norm_data: NormData = load_fcon1000()
     
     # Select only one feature to speed up the tutorial. Feel free to experiment with other features and see how the model performs on them.
-    features_to_model = [
-        "WM-hypointensities"
-    ]
+    features_to_model = ["WM-hypointensities"]
     norm_data = norm_data.sel({"response_vars": features_to_model})
     
     # Split into train and test sets
-    train, test = norm_data.train_test_split() 
+    train, test = norm_data.train_test_split()
 
 .. code:: ipython3
 
@@ -78,7 +81,13 @@ First we download a small example dataset from github.
     df = train.to_dataframe()
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
     
-    sns.countplot(data=df, y=("batch_effects", "site"), hue=("batch_effects", "sex"), ax=ax[0], orient="h")
+    sns.countplot(
+        data=df,
+        y=("batch_effects", "site"),
+        hue=("batch_effects", "sex"),
+        ax=ax[0],
+        orient="h",
+    )
     ax[0].legend(title="Sex")
     ax[0].set_title("Count of sites")
     ax[0].set_xlabel("Site")
@@ -238,7 +247,12 @@ BetaLikelihood, which we will use to model our response variable.
         intercept=make_prior(
             random=True,
             mu=make_prior(dist_name="Normal", dist_params=(10.0, 3.0)),
-            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 3.0), mapping="softplus", mapping_params=(0.0, 3.0)),
+            sigma=make_prior(
+                dist_name="Normal",
+                dist_params=(0.0, 3.0),
+                mapping="softplus",
+                mapping_params=(0.0, 3.0),
+            ),
         ),
         mapping="softplus",
         mapping_params=(0.0, 3.0),
@@ -250,7 +264,12 @@ BetaLikelihood, which we will use to model our response variable.
         intercept=make_prior(
             random=True,
             mu=make_prior(dist_name="Normal", dist_params=(10.0, 3.0)),
-            sigma=make_prior(dist_name="Normal", dist_params=(0.0, 3.0), mapping="softplus", mapping_params=(0.0, 3.0)),
+            sigma=make_prior(
+                dist_name="Normal",
+                dist_params=(0.0, 3.0),
+                mapping="softplus",
+                mapping_params=(0.0, 3.0),
+            ),
         ),
         mapping="softplus",
         mapping_params=(0.0, 3.0),
@@ -334,9 +353,16 @@ Let’s start with the centiles.
 
     plot_centiles_advanced(
         model,
-        centiles=[0.05, 0.5, 0.95],  # Plot these centiles, the default is [0.05, 0.25, 0.5, 0.75, 0.95]
+        centiles=[
+            0.05,
+            0.5,
+            0.95,
+        ],  # Plot these centiles, the default is [0.05, 0.25, 0.5, 0.75, 0.95]
         scatter_data=train,  # Scatter this data along with the centiles
-        batch_effects={"site": ["Beijing_Zang", "AnnArbor_a"], "sex": ["M"]},  # Highlight these groups
+        batch_effects={
+            "site": ["Beijing_Zang", "AnnArbor_a"],
+            "sex": ["M"],
+        },  # Highlight these groups
         show_other_data=True,  # scatter data not in those groups as smaller black circles
         harmonize_data=True,  # harmonize the scatterdata, this means that we 'remove' the batch effects from the data, by simulating what the data would have looked like if all data was from the same batch.
     )
@@ -396,17 +422,17 @@ And finally the ridge plot:
 
 .. code:: text
 
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+    /opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/seaborn/axisgrid.py:123: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
       self._figure.tight_layout(*args, **kwargs)
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1097: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/plotter.py:1132: UserWarning: Tight layout not applied. tight_layout cannot make Axes height small enough to accommodate all Axes decorations.
       g.figure.tight_layout()
 
 
@@ -485,19 +511,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>0.011828</td>
-          <td>1.975035</td>
-          <td>0.077831</td>
-          <td>0.343376</td>
-          <td>-1.985708</td>
-          <td>-0.756492</td>
-          <td>0.003686</td>
-          <td>815.200848</td>
-          <td>0.516317</td>
-          <td>6.623198e-60</td>
-          <td>0.996314</td>
-          <td>0.971188</td>
-          <td>0.466029</td>
+          <td>0.01296</td>
+          <td>1.978176</td>
+          <td>0.076723</td>
+          <td>0.343466</td>
+          <td>-1.985721</td>
+          <td>-0.756505</td>
+          <td>0.00478</td>
+          <td>814.753339</td>
+          <td>0.516142</td>
+          <td>7.366258e-60</td>
+          <td>0.99522</td>
+          <td>0.971157</td>
+          <td>0.465121</td>
         </tr>
       </tbody>
     </table>
@@ -559,19 +585,19 @@ Evaluation statistcs are stored in the NormData object:
       <tbody>
         <tr>
           <th>WM-hypointensities</th>
-          <td>-0.460387</td>
-          <td>0.332068</td>
-          <td>0.167125</td>
-          <td>0.384523</td>
-          <td>-1.915831</td>
-          <td>-0.386946</td>
-          <td>-0.492298</td>
-          <td>739.348998</td>
-          <td>0.468309</td>
-          <td>3.579291e-13</td>
-          <td>1.492298</td>
-          <td>0.994312</td>
-          <td>0.219507</td>
+          <td>-0.458982</td>
+          <td>0.333505</td>
+          <td>0.165538</td>
+          <td>0.384646</td>
+          <td>-1.915961</td>
+          <td>-0.387075</td>
+          <td>-0.490981</td>
+          <td>739.022838</td>
+          <td>0.469397</td>
+          <td>3.105044e-13</td>
+          <td>1.490981</td>
+          <td>0.994214</td>
+          <td>0.223006</td>
         </tr>
       </tbody>
     </table>
@@ -614,8 +640,20 @@ Harmonize
     plt.style.use("seaborn-v0_8")
     df = test.to_dataframe()
     fig, ax = plt.subplots(1, 2, figsize=(13, 5), sharey=True)
-    sns.scatterplot(data=df, x=("X", "age"), y=("Y", feature_to_plot), hue=("batch_effects", "site"), ax=ax[0])
-    sns.scatterplot(data=df, x=("X", "age"), y=("Y_harmonized", feature_to_plot), hue=("batch_effects", "site"), ax=ax[1])
+    sns.scatterplot(
+        data=df,
+        x=("X", "age"),
+        y=("Y", feature_to_plot),
+        hue=("batch_effects", "site"),
+        ax=ax[0],
+    )
+    sns.scatterplot(
+        data=df,
+        x=("X", "age"),
+        y=("Y_harmonized", feature_to_plot),
+        hue=("batch_effects", "site"),
+        ax=ax[1],
+    )
     ax[0].title.set_text("Unharmonized")
     ax[1].title.set_text("Harmonized")
     ax[0].legend([], [])
@@ -653,7 +691,9 @@ site B.
 .. code:: ipython3
 
     # Generate 10000 synthetic datapoints from scratch
-    synthetic_data = model.synthesize(covariate_range_per_batch_effect=True, n_samples=1000)  # <- also easy
+    synthetic_data = model.synthesize(
+        covariate_range_per_batch_effect=True, n_samples=1000
+    )  # <- also easy
     # Show the synthetic data along with the centiles
     plot_centiles_advanced(
         model,

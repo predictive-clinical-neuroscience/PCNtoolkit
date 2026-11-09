@@ -279,8 +279,31 @@ class HBR(RegressionModel):
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
         Y: xr.DataArray,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> HBR:
+        """
+        Perform transfer learning using existing model as prior.
+
+        Parameters
+        ----------
+        X : xr.DataArray
+            Covariate data of the new site(s).
+        be : xr.DataArray
+            Batch effect data of the new site(s).
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data of the new site(s).
+        **kwargs : Any
+            ``freedom`` (float, default 1) sets how far the new model may move
+            away from what the old model learned: 1 keeps the old uncertainty,
+            2 allows twice as much, 0.5 half as much. 
+
+        Returns
+        -------
+        HBR
+            New model instance with transferred knowledge
+        """
         new_likelihood = self.inference_method.use_posterior_as_new_prior(
             self.likelihood, **kwargs
         )

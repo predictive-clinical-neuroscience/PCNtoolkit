@@ -18,23 +18,6 @@ pretrained models through a web browser.
 Imports
 -------
 
-Install requests manually as it is not install with
-``pip install pcntoolkit``
-
-.. code:: ipython3
-
-    !pip install requests
-
-
-.. code:: text
-
-    Requirement already satisfied: requests in /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages (2.34.2)
-    Requirement already satisfied: charset_normalizer<4,>=2 in /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages (from requests) (3.5.1)
-    Requirement already satisfied: idna<4,>=2.5 in /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages (from requests) (3.20)
-    Requirement already satisfied: urllib3<3,>=1.26 in /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages (from requests) (2.8.0)
-    Requirement already satisfied: certifi>=2023.5.7 in /opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/site-packages (from requests) (2026.7.22)
-
-
 .. code:: ipython3
 
     import os
@@ -43,8 +26,10 @@ Install requests manually as it is not install with
     import zipfile
     from urllib.parse import unquote
     
-    import matplotlib.pyplot as plt
     import pandas as pd
+    
+    # You should `pip install requests` manually,
+    # as it is not install with `pip install pcntoolkit`
     import requests
     import seaborn as sns
     
@@ -56,6 +41,13 @@ Install requests manually as it is not install with
     warnings.simplefilter(action="ignore", category=FutureWarning)
     pd.options.mode.chained_assignment = None
     pcntoolkit.util.output.Output.set_show_messages(False)
+
+
+.. code:: text
+
+    /tmp/ipykernel_3322/3108278632.py:17: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
+      pd.options.mode.chained_assignment = None
+
 
 1. See which pretrained models are available
 --------------------------------------------
@@ -117,8 +109,10 @@ The file names tell you what each model contains:
 | ``HBR_Sb``                        | Hierarchical Bayesian Regression  |
 |                                   | with a SHASH likelihood (`de Boer |
 |                                   | et al.,                           |
-|                                   | 2024 <https://                    |
-|                                   | doi.org/10.1162/imag_a_00110>`__) |
+|                                   | 2024 <https://direct.mit.edu/i    |
+|                                   | mag/article/doi/10.1162/imag_a_00 |
+|                                   | 132/120371/Non-Gaussian-normative |
+|                                   | -modelling-with-hierarchical>`__) |
 +-----------------------------------+-----------------------------------+
 | ``ct`` / ``sa`` / ``sc``          | cortical thickness / surface area |
 |                                   | / subcortical volumes (sMRI)      |
@@ -226,14 +220,10 @@ models published earlier.
 
 .. code:: text
 
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:309: UserWarning: Process: 3147 - 2026-09-25 18:00:42 - This model was saved with PCNtoolkit v1.1.2, but you are running v1.4.0. Loading this model in v1.4.0...
-      warnings.warn(message, category)
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:309: UserWarning: Process: 3147 - 2026-09-25 18:00:42 - This model was saved with PCNtoolkit v1.1.1, but you are running v1.4.0. Loading this model in v1.4.0...
-      warnings.warn(message, category)
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:309: UserWarning: Process: 3147 - 2026-09-25 18:00:43 - This model was saved with PCNtoolkit v1.1.1, but you are running v1.4.0. Loading this model in v1.4.0...
-      warnings.warn(message, category)
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/output.py:309: UserWarning: Process: 3147 - 2026-09-25 18:00:43 - This model was saved with PCNtoolkit v1.1.2, but you are running v1.4.0. Loading this model in v1.4.0...
-      warnings.warn(message, category)
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.2, but you are running v1.4.0. Loading this model in v1.4.0...
+      warnings.warn(
+    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.1, but you are running v1.4.0. Loading this model in v1.4.0...
+      warnings.warn(
 
 
 .. code:: text
@@ -268,7 +258,9 @@ b. **The batch effects must use the same encoding.** The BLR lifespan
     fcon.columns = [c[1] if isinstance(c, tuple) else c for c in fcon.columns]
     
     # The lifespan BLR models expect sex coded as F/M
-    if set(fcon["sex"].unique()) <= {0, 1}: # note that load_fcon1000() already converts sex to M/F, so this check is not strictly necessary
+    if (
+        set(fcon["sex"].unique()) <= {0, 1}
+    ):  # note that load_fcon1000() already converts sex to M/F, so this check is not strictly necessary
         fcon["sex"] = fcon["sex"].map({0: "F", 1: "M"})
     
     fcon["sub_id"] = fcon.index.astype(str)
@@ -433,5 +425,5 @@ model.
 
 
 
-.. image:: 12_transfer_pretrained_files/12_transfer_pretrained_23_0.png
+.. image:: 12_transfer_pretrained_files/12_transfer_pretrained_21_0.png
 

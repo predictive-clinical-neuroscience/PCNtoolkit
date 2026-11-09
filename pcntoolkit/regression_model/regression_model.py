@@ -88,10 +88,14 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        be_maps: dictionary of dictionaries mapping batch effect to indices
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------
@@ -107,9 +111,12 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------
@@ -126,9 +133,12 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        Z : xr.DataArray
+            Z-scores to convert back to response variable values.
 
         Returns
         -------
@@ -155,10 +165,14 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        be_maps: dictionary of dictionaries mapping batch effect to indices
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------

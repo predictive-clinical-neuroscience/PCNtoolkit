@@ -286,6 +286,7 @@ class Errors:
     ERROR_BASIS_FUNCTION_NOT_FITTED = (
         "Basis function is not fitted. Please fit the basis function first."
     )
+    ERROR_WRONG_TYPE = "{name} must be {expected}."
     ERROR_DATA_MUST_BE_1D = (
         "Data must be a 1D array or a N-dimensional array with a single column"
     )
