@@ -35,67 +35,49 @@ class HBR(RegressionModel):
         name: str = "template",
         is_fitted: bool = False,
         is_from_dict: bool = False,
-        likelihood: Likelihood = None,  # type:ignore
-        inference_method: InferenceMethod = None,
-        # TODO: Deprecation kwargs, drop them in a future release. Here for backward compatibility.
-        draws: int = None,
-        tune: int = None,
-        cores: int = None,
-        chains: int = None,
-        init: str = None,
-        nuts_sampler: str = None,
+        likelihood: Optional[Likelihood] = None,
+        inference_method: Optional[InferenceMethod] = None,
+        # TODO: Deprecation kwargs, drop them in a future release. Here for backward 
+        # compatibility.
+        draws: Optional[int] = None,
+        tune: Optional[int] = None,
+        cores: Optional[int] = None,
+        chains: Optional[int] = None,
+        init: Optional[str] = None,
+        nuts_sampler: Optional[str] = None,
         progressbar: Optional[bool] = None,
-    ):
+    ) -> None:
         """
-        This class implements a Bayesian hierarchical regression model using PyMC for
-        posterior sampling.
+        Hierarchical Bayesian regression model fitted with PyMC.
+
+        Select an ``inference_method`` to approximate the posterior distribution.
 
         Parameters
         ----------
-        name : str
-            Unique identifier for the model instance
-        likelihood : Likelihood
-            Likelihood function to use for the model
-        draws : int, optional
-            Number of samples to draw from the posterior distribution per chain, by default 1000
-        tune : int, optional
-            Number of tuning samples to draw from the posterior distribution per chain, by default 500
-        cores : int, optional
-            Number of cores to use for parallel sampling, by default 4
-        chains : int, optional
-            Number of chains to use for parallel sampling, by default 4
-        nuts_sampler : str, optional
-            NUTS sampler to use for parallel sampling, by default "nutpie"
-        init : str, optional
-            Initialization method for the model, by default "auto". External
-            samplers such as nutpie ignore this and use their own initialization.
-        progressbar : bool, optional
-            Whether to display a progress bar during sampling, by default True
+        name : str, optional
+            Unique identifier for the model instance, by default "template".
         is_fitted : bool, optional
-            Whether the model has been fitted, by default False
+            Whether the model has been fitted, by default False.
         is_from_dict : bool, optional
-            Whether the model was created from a dictionary, by default False
-        inference_method : str, optional
-            How to approximate the posterior, by default "mcmc".
-            One of "mcmc" (NUTS sampling), "advi" (mean-field variational
-            inference), "pathfinder" or "laplace" (a Gaussian centred on the
-            posterior mode, with covariance from the Hessian there); the last
-            two are provided by pymc-extras. The variational methods are much
-            faster but return an approximate posterior; in particular they can
-            misestimate the width of the posterior, which propagates into the
-            z-scores.
-        vi_iterations : int, optional
-            Number of optimizer steps for inference_method="advi", by default 30000
-        vi_draws : int, optional
-            Number of draws taken from the fitted variational approximation,
-            by default 1000. Ignored when inference_method="mcmc".
-        vi_kwargs : dict, optional
-            Extra keyword arguments forwarded to the variational fitter:
-            ``pm.fit`` for "advi" (e.g. obj_optimizer, callbacks, method) and
-            ``pymc_extras.fit`` for "pathfinder" (e.g. num_paths, jitter,
-            importance_sampling, maxcor) and "laplace" (e.g. optimize_method,
-            use_hessp). Ignored when inference_method="mcmc".
+            Whether the model was created from a dictionary, by default False.
+        likelihood : Likelihood, optional
+            Distribution of the response variable. By default a Normal likelihood.
+        inference_method : InferenceMethod, optional
+            How to approximate the posterior, by default ``MCMC()``.
+            Current supported methods include ``MCMC`` and ``Laplace``.
+        draws, tune, cores, chains, init, nuts_sampler, progressbar : optional
+            Deprecated MCMC arguments; pass them to ``MCMC(...)`` instead.
 
+        Raises
+        ------
+        ValueError
+            If a deprecated argument is given together with
+            ``inference_method``.
+
+        Examples
+        --------
+        >>> mcmc = MCMC(draws=1000, progressbar=False)
+        >>> model = HBR(likelihood=likelihood, inference_method=mcmc)
         """
         super().__init__(name, is_fitted, is_from_dict)
 
@@ -124,6 +106,10 @@ class HBR(RegressionModel):
                 inference_method = MCMC()
                 for k, v in provided.items():
                     setattr(inference_method, k, v)
+
+        if inference_method is None:
+            Output.print("No inference_method given; using MCMC()")
+            inference_method = MCMC()
 
         self.likelihood = likelihood or get_default_normal_likelihood()
         self.inference_method = inference_method
@@ -454,9 +440,32 @@ class HBR(RegressionModel):
 
 
 class InferenceMethod(ABC):
+    # Results of fitting; clone() does not copy these.
+    _FITTED_ATTRS: tuple[str, ...] = ("data_tree", "is_fitted", "is_from_dict")
+
     @abstractmethod
     def fit(self, model: pm.Model):
         pass
+
+    def clone(self) -> InferenceMethod:
+        """
+        Return a copy with the same settings (e.g. draws, chains) but no fitted results
+        (e.g. ```data_tree``` which are the posterior samples).
+
+        For example, a fitted ``MCMC(draws=1000)`` gives back a new, unfitted
+        ``MCMC(draws=1000)``. ``HBR.transfer`` uses this to refit on new data.
+
+        Returns
+        -------
+        InferenceMethod
+            Unfitted copy of this inference method.
+        """
+        settings = {
+            k: copy.deepcopy(v)
+            for k, v in self.__dict__.items()
+            if k not in self._FITTED_ATTRS
+        }
+        return type(self)(**settings)
 
     @classmethod
     @abstractmethod
@@ -586,13 +595,6 @@ class MCMC(InferenceMethod):
         self.is_fitted = False
         self.is_from_dict = False
 
-    def clone(self) -> MCMC:
-        fitted_attrs = ["data_tree", "is_fitted", "is_from_dict"]
-        mcmc = MCMC(**{k: v for k, v in self.__dict__.items() if k not in fitted_attrs})
-        mcmc.is_fitted = False
-        mcmc.is_from_dict = False
-        return mcmc
-
     def fit(self, model: pm.Model):
         with model:
             self.data_tree = pm.sample(
@@ -639,15 +641,6 @@ class LaPlace(InferenceMethod):
         self.data_tree = None
         self.is_fitted = False
         self.is_from_dict = False
-
-    def clone(self) -> LaPlace:
-        fitted_attrs = ["data_tree", "is_fitted", "is_from_dict"]
-        mcmc = LaPlace(
-            **{k: v for k, v in self.__dict__.items() if k not in fitted_attrs}
-        )
-        mcmc.is_fitted = False
-        mcmc.is_from_dict = False
-        return mcmc
 
     def fit(self, model: pm.Model):
         try:
