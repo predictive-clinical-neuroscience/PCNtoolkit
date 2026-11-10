@@ -6,8 +6,10 @@ pcntoolkit/util/migration.py which was introduced in v1.1.2.
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 
+from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
 from pcntoolkit.regression_model.hbr import HBR, MCMC
@@ -181,3 +183,31 @@ def test_007_load_should_applyInferenceMethodMigration_when_givenPretrainedHBR(
     regression_model = hbr_model.regression_models[RESPONSE_VAR]
     assert isinstance(regression_model.inference_method, MCMC)
     assert regression_model.inference_method.draws == 15
+
+
+@pytest.mark.parametrize(
+    ("n_observations", "single_draw"), [(1, False), (1, True), (2, True)]
+)
+def test_predict_hbr_preserves_singleton_axes(
+    tmp_path: Path, n_observations: int, single_draw: bool
+) -> None:
+    model = _load_pretrained_model(PRETRAINED_HBR)
+    model.save_dir = str(tmp_path)
+    if single_draw:
+        inference = model[RESPONSE_VAR].inference_method
+        inference.data_tree = inference.data_tree.isel(
+            chain=slice(0, 1), draw=slice(0, 1)
+        )
+
+    data = NormData.from_ndarrays(
+        "hbr-predict",
+        X=np.array([[30.0], [40.0]])[:n_observations],
+        Y=np.array([[0.5], [0.7]])[:n_observations],
+        batch_effects=np.array([["0"], ["1"]])[:n_observations],
+        attrs={"batch_effect_dims": ["site"]},
+    )
+    predicted = model.predict(data)
+
+    for variable in ("Z", "centiles", "logp", "Yhat"):
+        assert predicted[variable].sizes["observations"] == n_observations
+        assert np.isfinite(predicted[variable].values).all()
