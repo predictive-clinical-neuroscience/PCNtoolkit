@@ -187,6 +187,14 @@ class Warnings:
         "Falling back to the default 'l-bfgs-b' optimizer. "
         "Please set optimizer='l-bfgs-b' to avoid this warning."
     )
+    MODEL_COMPARISON_NO_MCMC = (
+        "'{model_name}' model was not fitted with MCMC sampling, so its "
+        "comparison results may be inaccurate."
+    )
+    MODEL_COMPARISON_SKIPPED_RESPONSE_VARS = (
+        "Only response variables that are in the data and in every model are "
+        "compared. Skipped: {response_vars}."
+    )
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
         "Transfer data contain fewer batch effect levels than training data. "
         "This may lead to biased results."
