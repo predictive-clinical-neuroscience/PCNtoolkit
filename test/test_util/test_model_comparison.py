@@ -27,9 +27,10 @@ from pcntoolkit.math_functions.likelihood import NormalLikelihood
 from pcntoolkit.math_functions.prior import make_prior
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
-from pcntoolkit.regression_model.hbr import HBR
+from pcntoolkit.regression_model.hbr import HBR, Laplace
 from pcntoolkit.util.model_comparison import (
     _log_likelihood_tree,
+    _warn_if_not_mcmc,
     compare_hbr_models,
 )
 
@@ -275,16 +276,9 @@ def test_non_hbr_model_is_rejected(fitted, monkeypatch):
         compare_hbr_models(paths, data)
 
 
-def test_approximate_posterior_triggers_a_warning(fitted, monkeypatch):
-    data, paths, _ = fitted
-    original_load = NormativeModel.load
-
-    def load_as_advi(path):
-        model = original_load(path)
-        if path == paths["too_narrow"]:
-            model[RESPVAR].inference_method = "advi"
-        return model
-
-    monkeypatch.setattr(NormativeModel, "load", load_as_advi)
-    with pytest.warns(UserWarning, match="inference_method='advi'"):
-        compare_hbr_models(paths, data)
+def test_non_mcmc_model_triggers_a_warning(fitted):
+    _, paths, _ = fitted
+    model = NormativeModel.load(paths["too_narrow"])
+    model[RESPVAR].inference_method = Laplace()
+    with pytest.warns(UserWarning, match="fitted with MCMC sampling"):
+        _warn_if_not_mcmc("too_narrow", model, RESPVAR)

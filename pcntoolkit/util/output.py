@@ -187,11 +187,9 @@ class Warnings:
         "Falling back to the default 'l-bfgs-b' optimizer. "
         "Please set optimizer='l-bfgs-b' to avoid this warning."
     )
-    MODEL_COMPARISON_APPROXIMATE_POSTERIOR = (
-        "Model comparison needs models fitted with MCMC sampling "
-        "(inference_method='mcmc'). Model '{model_name}' was fitted with "
-        "inference_method='{inference_method}', an approximate method, so its "
-        "results in this comparison may be inaccurate."
+    MODEL_COMPARISON_NO_MCMC = (
+        "'{model_name}' model was not fitted with MCMC sampling, so its "
+        "comparison results may be inaccurate."
     )
     MODEL_COMPARISON_SKIPPED_RESPONSE_VARS = (
         "Only response variables that are in the data and in every model are "

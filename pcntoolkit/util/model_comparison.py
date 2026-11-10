@@ -8,7 +8,7 @@ import xarray as xr
 
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
-from pcntoolkit.regression_model.hbr import HBR
+from pcntoolkit.regression_model.hbr import HBR, MCMC
 from pcntoolkit.util.output import Output, Warnings
 
 # Largest difference, on the scale the models were fitted on, between the
@@ -97,7 +97,7 @@ def compare_hbr_models(
     for respvar in response_vars:
         _check_same_response_scale(loaded_models, data, respvar)
         for name, model in loaded_models.items():
-            _warn_if_approximate_posterior(name, model, respvar)
+            _warn_if_not_mcmc(name, model, respvar)
         traces = {
             name: _log_likelihood_tree(model, data, respvar)
             for name, model in loaded_models.items()
@@ -149,33 +149,11 @@ def _log_likelihood_tree(
     )
 
 
-def _warn_if_approximate_posterior(
-    name: str, model: NormativeModel, respvar: str
-) -> None:
-    """Warn if the posterior samples of a model come from an approximation.
-
-    PSIS-LOO assumes draws from the exact posterior. With ADVI, Pathfinder or
-    Laplace draws it would need an extra correction for the approximation,
-    which is not applied here.
-
-    Parameters
-    ----------
-    name : str
-        The model name used in the comparison.
-    model : NormativeModel
-        The loaded model.
-    respvar : str
-        The response variable.
-    """
-    method = getattr(model[respvar], "inference_method", "mcmc")
-    # A string on dev; an InferenceMethod object once #597 is merged
-    method_name = method if isinstance(method, str) else type(method).__name__
-    if method_name.lower() != "mcmc":
-        Output.warning(
-            Warnings.MODEL_COMPARISON_APPROXIMATE_POSTERIOR,
-            model_name=name,
-            inference_method=method_name,
-        )
+def _warn_if_not_mcmc(name: str, model: NormativeModel, respvar: str) -> None:
+    """Warn if not fitted with MCMC: PSIS-LOO assumes exact posterior draws."""
+    method = model[respvar].inference_method
+    if not isinstance(method, MCMC):
+        Output.warning(Warnings.MODEL_COMPARISON_NO_MCMC, model_name=name)
 
 
 def _check_is_hbr(name: str, model: NormativeModel) -> None:
