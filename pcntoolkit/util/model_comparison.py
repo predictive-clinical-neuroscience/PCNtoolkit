@@ -212,22 +212,13 @@ def _shared_response_vars(
         for respvar in in_data
         if all(respvar in model.response_vars for model in models.values())
     ]
-    all_response_vars = set(in_data).union(
+    skipped = set(in_data).union(
         *(model.response_vars for model in models.values())
-    )
-    skipped = []
-    for respvar in sorted(all_response_vars - set(shared)):
-        missing_from = [] if respvar in in_data else ["the data"]
-        missing_from += [
-            f"model '{name}'"
-            for name, model in models.items()
-            if respvar not in model.response_vars
-        ]
-        skipped.append(f"'{respvar}' (missing from {', '.join(missing_from)})")
+    ) - set(shared)
     if skipped:
         Output.warning(
             Warnings.MODEL_COMPARISON_SKIPPED_RESPONSE_VARS,
-            response_vars="; ".join(skipped),
+            response_vars=", ".join(sorted(skipped)),
         )
     if not shared:
         raise ValueError(

@@ -230,13 +230,8 @@ def test_models_on_different_scales_are_rejected(fitted, monkeypatch, change):
         compare_hbr_models(paths, data)
 
 
-def test_response_vars_missing_somewhere_are_skipped(fitted, monkeypatch):
-    """Only the response variables in the data and in every model are compared.
-
-    The data has an extra response variable "y_extra", and model "free" is
-    given an extra response variable "only_in_free" that the data and the
-    other model do not have.
-    """
+def test_response_vars_not_shared_between_models_are_skipped(fitted, monkeypatch):
+    """y_extra is only in the data, only_in_free only in model "free"."""
     _, paths, _ = fitted
     data = make_data(extra_response_var="y_extra")
     original_load = NormativeModel.load
@@ -252,8 +247,7 @@ def test_response_vars_missing_somewhere_are_skipped(fitted, monkeypatch):
         comparison = compare_hbr_models(paths, data)
     assert list(comparison) == [RESPVAR]
     message = next(str(w.message) for w in record if "Skipped" in str(w.message))
-    assert "'only_in_free' (missing from the data, model 'too_narrow')" in message
-    assert "'y_extra' (missing from model 'free', model 'too_narrow')" in message
+    assert "Skipped: only_in_free, y_extra." in message
 
 
 def test_no_shared_response_var_is_rejected(fitted):
