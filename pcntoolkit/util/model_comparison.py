@@ -93,13 +93,19 @@ def compare_hbr_models(
                 "the models were fitted on."
             )
 
+    # preprocess works in place, so copy first
+    scaled = {}
+    for name, model in loaded_models.items():
+        scaled[name] = copy.deepcopy(data)
+        model.preprocess(scaled[name])
+
     comparisons = {}
     for respvar in response_vars:
-        _check_same_response_scale(loaded_models, data, respvar)
+        _check_same_response_scale(scaled, respvar)
         for name, model in loaded_models.items():
             _warn_if_not_mcmc(name, model, respvar)
         traces = {
-            name: _log_likelihood_tree(model, data, respvar)
+            name: _log_likelihood_tree(model, scaled[name], respvar)
             for name, model in loaded_models.items()
         }
         comparisons[respvar] = az.compare(traces)
@@ -107,7 +113,7 @@ def compare_hbr_models(
 
 
 def _log_likelihood_tree(
-    model: NormativeModel, data: NormData, respvar: str
+    model: NormativeModel, scaled_data: NormData, respvar: str
 ) -> xr.DataTree:
     """Posterior samples and pointwise log-likelihood of ``data`` for one response var.
 
@@ -115,8 +121,8 @@ def _log_likelihood_tree(
     ----------
     model : NormativeModel
         A fitted normative model with an HBR regression model.
-    data : NormData
-        The data the model was fitted on.
+    scaled_data : NormData
+        The data the model was fitted on, preprocessed by ``model``.
     respvar : str
         The response variable.
 
@@ -127,10 +133,7 @@ def _log_likelihood_tree(
         dimensions (chain, draw, observations), as expected by
         ``arviz.compare``.
     """
-    # preprocess scales the data in place
-    data = copy.deepcopy(data)
-    model.preprocess(data)
-    X, be, _, Y, _ = model.extract_data(data.sel({"response_vars": respvar}))
+    X, be, _, Y, _ = model.extract_data(scaled_data.sel({"response_vars": respvar}))
     regression_model = model[respvar]
     # A new PyMC model holding the given data, so the regression model's own
     # pymc_model (which holds whatever data was predicted last) is left untouched.
@@ -234,9 +237,7 @@ def _shared_response_vars(
     return shared
 
 
-def _check_same_response_scale(
-    models: dict[str, NormativeModel], data: NormData, respvar: str
-) -> None:
+def _check_same_response_scale(scaled: dict[str, NormData], respvar: str) -> None:
     """Raise if the models do not see the same response values.
 
     The log-likelihoods are computed on the scale the models were fitted on,
@@ -251,10 +252,8 @@ def _check_same_response_scale(
 
     Parameters
     ----------
-    models : dict[str, NormativeModel]
-        The loaded models, by name.
-    data : NormData
-        The data the models were fitted on.
+    scaled : dict[str, NormData]
+        The data preprocessed by each model, by model name.
     respvar : str
         The response variable.
 
@@ -264,12 +263,10 @@ def _check_same_response_scale(
         If the transformed values differ by more than ``SCALE_TOLERANCE``
         between two models.
     """
-    transformed = {}
-    for name, model in models.items():
-        # preprocess transforms and scales the data in place
-        model_data = copy.deepcopy(data)
-        model.preprocess(model_data)
-        transformed[name] = model_data.Y.sel(response_vars=respvar).to_numpy()
+    transformed = {
+        name: model_data.Y.sel(response_vars=respvar).to_numpy()
+        for name, model_data in scaled.items()
+    }
     reference_name, reference_values = next(iter(transformed.items()))
     for name, values in transformed.items():
         # Missing values at the same positions are not a scaling difference

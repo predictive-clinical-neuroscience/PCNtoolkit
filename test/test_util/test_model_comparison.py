@@ -131,7 +131,9 @@ def fitted(tmp_path_factory):
 def test_log_likelihood_is_evaluated_on_fit_data(fitted):
     data, paths, in_memory = fitted
     loaded = NormativeModel.load(paths["free"])
-    tree = _log_likelihood_tree(loaded, data, RESPVAR)
+    scaled = copy.deepcopy(data)
+    loaded.preprocess(scaled)
+    tree = _log_likelihood_tree(loaded, scaled, RESPVAR)
     loglik = tree["log_likelihood"]["Yhat"]
     assert loglik.sizes["observations"] == N_OBS
     assert loglik.sizes["chain"] == CHAINS
