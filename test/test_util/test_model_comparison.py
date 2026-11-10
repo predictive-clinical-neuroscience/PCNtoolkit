@@ -1,19 +1,4 @@
-"""
-Tests for compare_hbr_models.
-
-PSIS-LOO estimates how well a model predicts new subjects from its posterior
-samples, by removing each fitted subject in turn. It is only valid on the
-observations the posterior was fitted on. compare_hbr_models used to score
-each model on a few points synthesized from that same model, which ranks
-models by how narrow their predictive distribution is rather than by how well
-they fit the data. These tests check that every model is scored on the fit
-data, that a model whose predictive distribution is far too narrow for the
-data is ranked last, and that the result does not depend on the global random
-state. They also check which models and response variables are compared: only
-HBR models, only response variables that are in the data and in every model,
-and only models that put the response variable on the same scale, up to
-rounding differences.
-"""
+"""Tests for compare_hbr_models: models are scored on the fit data."""
 
 import copy
 
@@ -42,11 +27,7 @@ RESPVAR = "y"
 
 
 def make_data(extra_response_var: str | None = None) -> NormData:
-    """Linear effect of age, a site offset and unit residual noise.
-
-    If ``extra_response_var`` is given, the data also has a response
-    variable of that name, which the fitted models do not have.
-    """
+    """Linear age effect, site offset, unit noise; optional extra response var."""
     rng = np.random.default_rng(7)
     age = rng.uniform(20, 80, N_OBS)
     site = rng.choice(["A", "B"], N_OBS)
@@ -98,13 +79,7 @@ def make_model(sigma, save_dir: str) -> NormativeModel:
 
 @pytest.fixture(scope="module")
 def fitted(tmp_path_factory):
-    """Two models fitted on the same data and saved to disk.
-
-    "free" estimates the residual standard deviation. "too_narrow" forces it
-    into [0.045, 0.05] on the standardized scale, about sixteen times smaller
-    than the true value (about 0.8): on its own synthetic draws it would look
-    better than "free", on the data it is far worse.
-    """
+    """Two saved models: "free" and "too_narrow" (residual SD ~16x too small)."""
     data = make_data()
     sigmas = {
         "free": make_prior(
@@ -119,9 +94,7 @@ def fitted(tmp_path_factory):
     for name, sigma in sigmas.items():
         path = str(tmp_path_factory.mktemp(name))
         model = make_model(sigma, path)
-        # Fit on `data` itself, as tutorial 07 does: fitting scales the data
-        # and scales it back in place, so the second model is fitted on values
-        # that differ from the first in the last digits.
+        # Same data object for both, as in tutorial 07
         model.fit(data)
         paths[name] = path
         in_memory[name] = model
@@ -151,12 +124,16 @@ def test_log_likelihood_is_evaluated_on_fit_data(fitted):
 
 
 def test_too_narrow_model_is_ranked_last(fitted):
+    """
+    The "too_narrow" model has a residual standard deviation that is much too small,
+    so it is expected to be ranked last by the model comparison.
+    """
     data, paths, _ = fitted
     table = compare_hbr_models(paths, data)[RESPVAR]
     assert list(table.index) == ["free", "too_narrow"]
+    # too_narrow is expected to have a lower ELPD than free
     assert table.loc["too_narrow", "elpd_diff"] < -5 * table.loc["too_narrow", "dse"]
-    # Stacking weights are not model probabilities: "too_narrow" keeps a small
-    # weight because it predicts the few subjects closest to the mean better.
+    # too_narrow is expected to have a small weight
     assert table.loc["free", "weight"] > table.loc["too_narrow", "weight"]
 
 
@@ -178,14 +155,12 @@ def test_data_is_not_modified(fitted):
 
 
 def test_rounding_differences_in_the_outscaler_are_accepted(fitted, monkeypatch):
-    """Tutorial 07 case: same data, outscalers that differ in the last digit.
+    """Accepts minor rounding differences in the outscaler.
 
-    Fitting scales the data and scales it back in place. In tutorial 07 this
-    round trip changes the minimum stored in the outscaler of the second
-    model by one unit in the last place (2047.8 and 2047.8000000000002). With
-    the toy data it changes no outscaler value, so the difference is set by
-    hand: one unit in the last place of the minimum, the mean and the
-    standard deviation.
+    Fitting model 1 scales the data and then scales it back. That round trip changes the
+    values very slightly, because of computer rounding. Then Model 2 is fitted on this
+    slightly changed train, so its saved scaling numbers differ from model 1's in the
+    last digit.
     """
     data, paths, _ = fitted
     original_load = NormativeModel.load
@@ -208,7 +183,6 @@ def test_rounding_differences_in_the_outscaler_are_accepted(fitted, monkeypatch)
     "change",
     [
         pytest.param(lambda scaler: setattr(scaler, "s", scaler.s * 2), id="sd x2"),
-        # One millionth of a standard deviation: small, but a real difference
         pytest.param(
             lambda scaler: setattr(scaler, "m", scaler.m + 1e-6 * scaler.s),
             id="mean + 1e-6 sd",
