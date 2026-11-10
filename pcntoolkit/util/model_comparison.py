@@ -17,7 +17,7 @@ SCALE_TOLERANCE = 1e-9
 
 
 def compare_hbr_models(
-    models: dict[str, str], data: NormData
+    models: dict[str, str], fit_data: NormData
 ) -> dict[str, pd.DataFrame]:
     """Compare HBR models with PSIS-LOO (``arviz.compare``).
 
@@ -29,22 +29,22 @@ def compare_hbr_models(
     models : dict[str, str]
         Mapping model name to the directory the model was saved in. Models
         that cannot be loaded are skipped.
-    data : NormData
+    fit_data : NormData
         The data all models were fitted on (PSIS-LOO is only valid on it).
-        It is not modified.
+        Do not use test data.
 
     Returns
     -------
     dict[str, pd.DataFrame]
         The ``arviz.compare`` table for each response variable that is in
-        ``data`` and in every model.
+        ``fit_data`` and in every model.
 
     Raises
     ------
     TypeError
         If a model is not an HBR model.
     ValueError
-        If no model could be loaded, no response variable is shared, ``data``
+        If no model could be loaded, no response variable is shared, ``fit_data``
         is not compatible with a model, or the models scale a response
         variable differently.
     """
@@ -60,12 +60,12 @@ def compare_hbr_models(
     for name, model in loaded_models.items():
         _check_is_hbr(name, model)
 
-    response_vars = _shared_response_vars(loaded_models, data)
+    response_vars = _shared_response_vars(loaded_models, fit_data)
     # check_compatibility rejects response variables a model does not have
-    data = data.sel({"response_vars": response_vars})
+    fit_data = fit_data.sel({"response_vars": response_vars})
 
     for name, model in loaded_models.items():
-        if not model.check_compatibility(data):
+        if not model.check_compatibility(fit_data):
             raise ValueError(
                 f"The data is not compatible with model '{name}'. Pass the data "
                 "the models were fitted on."
@@ -74,7 +74,7 @@ def compare_hbr_models(
     # preprocess works in place, so copy first
     scaled = {}
     for name, model in loaded_models.items():
-        scaled[name] = copy.deepcopy(data)
+        scaled[name] = copy.deepcopy(fit_data)
         model.preprocess(scaled[name])
 
     comparisons = {}
