@@ -203,6 +203,11 @@ class BsplineBasisFunction(BasisFunction):
         If True, prepend the original covariate to the B-spline design matrix.
         This reproduces the behavior of earlier PCNtoolkit versions and may
         introduce a redundant column.
+    drop_first : bool, default=False
+        If True, drop the first B-spline column. The B-spline columns sum to
+        one, so together with an intercept one of them is redundant. Dropping
+        it keeps the same set of curves, but makes each coefficient
+        identifiable, which keeps transferred priors informative.
 
     Raises
     ------
@@ -220,6 +225,7 @@ class BsplineBasisFunction(BasisFunction):
         knot_method: str = "uniform",
         knots: np.ndarray | list = None,
         include_linear: bool = False,
+        drop_first: bool = False,
         **kwargs,
     ):
         super().__init__(basis_column, **kwargs)
@@ -234,6 +240,7 @@ class BsplineBasisFunction(BasisFunction):
         self.right_expand = right_expand
         self.knot_method = knot_method
         self.include_linear = include_linear
+        self.drop_first = drop_first
         if knots is not None:
             self.knots = list(knots)
         else:
@@ -262,6 +269,8 @@ class BsplineBasisFunction(BasisFunction):
             self.degree,
             extrapolate=True,
         ).toarray()
+        if self.drop_first:
+            spline = spline[:, 1:]
 
         if self.include_linear:
             return np.concatenate((data.reshape(-1, 1), spline), axis=1)
@@ -276,6 +285,7 @@ class BsplineBasisFunction(BasisFunction):
         mydict["right_expand"] = self.right_expand
         mydict["knot_method"] = self.knot_method
         mydict["include_linear"] = self.include_linear
+        mydict["drop_first"] = self.drop_first
         if self.knots is not None:
             mydict["knots"] = list(self.knots)
         else:
@@ -284,7 +294,13 @@ class BsplineBasisFunction(BasisFunction):
 
     @property
     def dimension(self):
-        return self.degree + self.nknots - 1 + int(self.include_linear)
+        return (
+            self.degree
+            + self.nknots
+            - 1
+            + int(self.include_linear)
+            - int(self.drop_first)
+        )
 
 
 class LinearBasisFunction(BasisFunction):

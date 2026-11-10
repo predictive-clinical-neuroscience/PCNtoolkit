@@ -90,6 +90,24 @@ def test_bspline_with_linear_term(norm_data_from_arrays, nknots, degree):
     )
 
 
+def test_bspline_drop_first_keeps_span_with_intercept(norm_data_from_arrays):
+    """Dropping the first column must lose no curves once an intercept is added."""
+    X = norm_data_from_arrays.X.values[:, :1]
+    full = create_basis_function("bspline", degree=3, nknots=5)
+    dropped = create_basis_function("bspline", degree=3, nknots=5, drop_first=True)
+    full.fit(X)
+    dropped.fit(X)
+    Phi_full = full.transform(X)
+    Phi_dropped = dropped.transform(X)
+
+    assert dropped.dimension == full.dimension - 1
+    assert np.array_equal(Phi_dropped, Phi_full[:, 1:])
+    # Every full column is an exact combination of an intercept and the kept ones.
+    design = np.column_stack([np.ones(len(X)), Phi_dropped])
+    coef = np.linalg.lstsq(design, Phi_full, rcond=None)[0]
+    assert np.allclose(design @ coef, Phi_full)
+
+
 def test_composite_from_dict_passes_version_to_parts() -> None:
     """Loading a saved composite basis must not migrate its parts as if they
     were saved with v0.0.0 (the parts have no ptk_version of their own)."""
