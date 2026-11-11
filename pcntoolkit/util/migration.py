@@ -173,15 +173,19 @@ class MigrationRegistry:
         # Apply migrations in ascending version order.
         for introduced_in, fn in self._migrations[component]:
             if saved_version < introduced_in:
-                # Use warnings.warn, not Output.warning: otherwise the warning
-                # may show more than once per saved version.
-                warnings.warn(
-                    Warnings.MODEL_MIGRATION_APPLIED.format(
-                        saved_version=str(saved_version),
-                        current_version=current_version,
-                    ),
-                    stacklevel=1,
-                )
+                # On the dev branch a migration can be registered for the next
+                # release while models are still stamped with the last one.
+                # The warning would then name the same version twice.
+                if saved_version != Version(current_version):
+                    # Use warnings.warn, not Output.warning: otherwise the
+                    # warning may show more than once per saved version.
+                    warnings.warn(
+                        Warnings.MODEL_MIGRATION_APPLIED.format(
+                            saved_version=str(saved_version),
+                            current_version=current_version,
+                        ),
+                        stacklevel=1,
+                    )
                 d = fn(d)
 
         return d
