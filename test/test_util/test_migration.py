@@ -213,3 +213,30 @@ def test_009_migrate_should_warnOnce_when_calledRepeatedlyForSameVersion():
     ]
     # Assert — 1.0.0 once + 1.1.5 once.
     assert len(migration_warnings) == 2
+
+
+def test_010_migrate_should_notWarn_when_savedVersionIsInstalledVersion():
+    """
+    Arrange: a migration registered for 1.2.0 while 1.1.5 is installed, as on
+    the dev branch before a release.
+    Act: migrate a dict saved at 1.1.5.
+    Assert: the migration runs, without the "saved with ... but you are
+    running ..." warning.
+    """
+    # Arrange
+    reg = _make_registry_with_two_migrations()
+
+    # Act
+    with (
+        patch("pcntoolkit.util.migration.ptk_version", return_value="1.1.5"),
+        warnings.catch_warnings(record=True) as caught,
+    ):
+        warnings.simplefilter("always")
+        result = reg.migrate("TestComp", {"new_key": "value"}, version="1.1.5")
+
+    migration_warnings = [
+        warning for warning in caught if "saved with PCNtoolkit" in str(warning.message)
+    ]
+    # Assert
+    assert result["new_key"] == 42
+    assert len(migration_warnings) == 0
