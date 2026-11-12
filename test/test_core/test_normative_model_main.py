@@ -1,4 +1,3 @@
-
 import numpy as np
 import pytest
 
@@ -147,3 +146,15 @@ class TestNormativeModel:
         assert "Z" in predictions
         assert predictions.Z.shape == self.data["responses"].shape
         assert not np.isnan(predictions.Z).any()
+
+
+def test_load_path_must_be_string() -> None:
+    """load(None) raises a TypeError saying the path must be a string."""
+    with pytest.raises(TypeError, match="Load path must be a string"):
+        NormativeModel.load(None)
+
+
+def test_load_missing_path_raises(tmp_path) -> None:
+    """load() on a folder that does not exist raises FileNotFoundError."""
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        NormativeModel.load(str(tmp_path / "missing"))

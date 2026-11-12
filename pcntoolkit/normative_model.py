@@ -552,9 +552,24 @@ class NormativeModel:
         into : NormBase, optional
             The normative model to load the data into. If None, a new normative model is created.
             This is useful if you want to load a normative model into an existing normative model, for example in the runner.
+
+        Raises
+        ------
+        TypeError
+            If ``path`` is not a string, e.g. None.
+        FileNotFoundError
+            If ``path`` does not exist.
         """
-        assert isinstance(path, str), f"Path must be a string, got {type(path)}"
-        assert os.path.exists(path), f"Path {path} does not exist"
+        if not isinstance(path, str):
+            raise TypeError(
+                Output.error(
+                    Errors.ERROR_LOAD_PATH_NOT_STRING, path_type=type(path).__name__
+                )
+            )
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                Output.error(Errors.ERROR_LOAD_PATH_NOT_FOUND, path=path)
+            )
         model_path = os.path.join(path, "model", "normative_model.json")
         with open(model_path, mode="r", encoding="utf-8") as f:
             metadata = json.load(f)

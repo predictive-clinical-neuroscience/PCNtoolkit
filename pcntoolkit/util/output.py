@@ -289,6 +289,8 @@ class Errors:
         "e.g. HBR(inference_method=MCMC()). "
         "Models fitted this way must be refitted."
     )
+    ERROR_LOAD_PATH_NOT_STRING = "Load path must be a string (got {path_type})."
+    ERROR_LOAD_PATH_NOT_FOUND = "Load path {path} does not exist."
     ERROR_HBR_FITTED_BUT_NO_DATA_TREE_PATH ="The model that you are trying to load is marked as fitted but does not contain a DataTree"
     ERROR_HBR_LAPLACE_REQUIRES_PYMC_EXTRAS = (
         "The Laplace inference method requires pymc-extras. It ships as a "
