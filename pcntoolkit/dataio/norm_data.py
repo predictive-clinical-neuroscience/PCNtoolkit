@@ -497,16 +497,36 @@ class NormData(xr.Dataset):
             for respvar in response_vars:
                 if respvar not in dataframe.columns:
                     dataframe[respvar] = np.nan
+<<<<<<< Updated upstream
             data_vars["Y"] = (
                 ["observations", "response_vars"],
                 dataframe[response_vars].to_numpy(),
+=======
+            response_data = dataframe[response_vars].to_numpy()
+            if response_data.dtype != np.float32:
+                response_data = response_data.astype(np.float64)
+
+            data_vars["Y"] = (
+                ["observations", "response_vars"],
+                response_data,
+>>>>>>> Stashed changes
             )
             coords["response_vars"] = response_vars
 
         if covariates is not None and len(covariates) > 0:
+<<<<<<< Updated upstream
             data_vars["X"] = (
                 ["observations", "covariates"],
                 dataframe[covariates].to_numpy(),
+=======
+            covariate_data = dataframe[covariates].to_numpy()
+            if covariate_data.dtype != np.float32:
+                covariate_data = covariate_data.astype(np.float64)
+
+            data_vars["X"] = (
+                ["observations", "covariates"],
+                covariate_data,
+>>>>>>> Stashed changes
             )
             coords["covariates"] = covariates
 
