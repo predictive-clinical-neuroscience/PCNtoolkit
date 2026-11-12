@@ -5,6 +5,7 @@ from tempfile import gettempdir
 import numpy as np
 import pytest
 
+from pcntoolkit.dataio import norm_data
 from test.fixtures.norm_data_fixtures import *
 
 """
@@ -299,3 +300,48 @@ def test_netcdf(norm_data_from_arrays: NormData):
     # Check if the two norm data objects are identical
     # Additionally checks for object's name and attributes.
     assert norm_data_from_arrays.identical(norm_data_from_netcdf)
+
+def test_normdata_mixed_numeric_covariates_save():
+    """Mixed integer and float covariates should not break model saving."""
+    import pandas as pd
+
+    df = pd.DataFrame({
+        "age": pd.Series([20, 25.5, 30, 35.5], dtype=object),
+        "response": [1.2, 2.3, 3.4, 4.5],
+        "site": ["A", "A", "B", "B"],
+    })
+
+    norm_data = NormData.from_dataframe(
+        name="mixed_numeric",
+        dataframe=df,
+        covariates=["age"],
+        response_vars=["response"],
+        batch_effects=["site"],
+    )
+    assert norm_data.X.dtype == np.float64
+    assert norm_data.Y.dtype == np.float64 
+
+    from pcntoolkit.math_functions.scaler import StandardScaler
+
+    scaler = StandardScaler()
+    scaler.fit(norm_data.X.sel(covariates="age").data)
+
+    scaler.to_dict()
+
+def test_normdata_preserves_float32():
+    import pandas as pd
+
+    df = pd.DataFrame({
+        "age": pd.Series([20.0, 25.5, 30.0], dtype=np.float32),
+        "response": pd.Series([1.2, 2.3, 3.4], dtype=np.float32),
+    })
+
+    norm_data = NormData.from_dataframe(
+        name="float32_data",
+        dataframe=df,
+        covariates=["age"],
+        response_vars=["response"],
+    )
+
+    assert norm_data.X.dtype == np.float32
+    assert norm_data.Y.dtype == np.float32
