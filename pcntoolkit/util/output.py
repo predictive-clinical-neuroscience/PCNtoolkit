@@ -140,6 +140,10 @@ class Warnings:
         "batch_effects is not provided, setting self.batch_effects to zeros"
     )
     HBR_BATCH_EFFECTS_NOT_PROVIDED = BLR_BATCH_EFFECTS_NOT_PROVIDED
+    HBR_MCMC_KWARGS_DEPRECATED = (
+        "Passing {kwargs} directly to HBR(...) is deprecated. "
+        "Use HBR(inference_method=MCMC(...)) instead."
+    )
     ERROR_SUBMITTING_JOB = "Error submitting job {job_id}: {stderr}"
     NO_RESPONSE_VARS = "No response variables provided for dataset {dataset_name}. Please provide a list of response variables for which you want to fit or predict."
     RESPONSE_VAR_NOT_FOUND = "Response variable {response_var} not found in dataset {dataset_name}. Setting to NaN."
@@ -182,6 +186,14 @@ class Warnings:
         "The 'cg' optimizer requires analytical gradients, which are not implemented for heteroskedastic models. "
         "Falling back to the default 'l-bfgs-b' optimizer. "
         "Please set optimizer='l-bfgs-b' to avoid this warning."
+    )
+    MODEL_COMPARISON_NO_MCMC = (
+        "'{model_name}' model was not fitted with MCMC sampling, so its "
+        "comparison results may be inaccurate."
+    )
+    MODEL_COMPARISON_SKIPPED_RESPONSE_VARS = (
+        "Only response variables that are in the data and in every model are "
+        "compared. Skipped: {response_vars}."
     )
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
         "Transfer data contain fewer batch effect levels than training data. "
@@ -260,6 +272,25 @@ class Errors:
         "HBR model is fitted but does not have idata. This should not happen."
     )
     ERROR_HBR_COULD_NOT_LOAD_IDATA = "Could not load idata from {path}"
+    ERROR_HBR_MCMC_KWARGS_AND_INFERENCE_METHOD = (
+        "The MCMC arguments {kwargs} have been provided directly to HBR instead of through the MCMC InferenceMethod, "
+        "while an InferenceMethod has also been provided. Only one of those can be provided. "
+        "Please specify the arguments only in the InferenceMethod object."
+    )
+    ERROR_HBR_FROM_ARGS_ONLY_MCMC = (
+        "Only inference_method='mcmc' is supported from command line arguments."
+    )
+    ERROR_HBR_INFERENCE_METHOD_STRING = (
+        "inference_method='{method}' as a string is not supported anymore. "
+        "Use one of the available classes instead like MCMC() or Laplace(), "
+        "e.g. HBR(inference_method=MCMC()). "
+        "Models fitted this way must be refitted."
+    )
+    ERROR_HBR_FITTED_BUT_NO_DATA_TREE_PATH ="The model that you are trying to load is marked as fitted but does not contain a DataTree"
+    ERROR_HBR_LAPLACE_REQUIRES_PYMC_EXTRAS = (
+        "The Laplace inference method requires pymc-extras. It ships as a "
+        "dependency; reinstall it with: pip install 'pymc-extras>=0.11.0'"
+    )
     ERROR_UNKNOWN_MAPPING = "Unknown mapping ({mapping})"
     ERROR_UNKNOWN_DISTRIBUTION = "Unknown distribution ({dist_name})"
     ERROR_SOURCE_ARRAY_NOT_FOUND = (
@@ -268,6 +299,7 @@ class Errors:
     ERROR_BASIS_FUNCTION_NOT_FITTED = (
         "Basis function is not fitted. Please fit the basis function first."
     )
+    ERROR_WRONG_TYPE = "{name} must be {expected}."
     ERROR_DATA_MUST_BE_1D = (
         "Data must be a 1D array or a N-dimensional array with a single column"
     )

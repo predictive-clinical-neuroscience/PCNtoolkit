@@ -1,0 +1,254 @@
+"""Tests for compare_hbr_models: models are scored on the fit data."""
+
+import copy
+
+import numpy as np
+import pandas as pd
+import pymc as pm
+import pytest
+
+from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.math_functions.likelihood import NormalLikelihood
+from pcntoolkit.math_functions.prior import make_prior
+from pcntoolkit.normative_model import NormativeModel
+from pcntoolkit.regression_model.blr import BLR
+from pcntoolkit.regression_model.hbr import HBR, Laplace
+from pcntoolkit.util.model_comparison import (
+    _log_likelihood_tree,
+    _warn_if_not_mcmc,
+    compare_hbr_models,
+)
+
+N_OBS = 120
+DRAWS = 100
+TUNE = 100
+CHAINS = 2
+RESPVAR = "y"
+
+
+def make_data(extra_response_var: str | None = None) -> NormData:
+    """Linear age effect, site offset, unit noise; optional extra response var."""
+    rng = np.random.default_rng(7)
+    age = rng.uniform(20, 80, N_OBS)
+    site = rng.choice(["A", "B"], N_OBS)
+    y = 0.05 * age + 0.5 * (site == "B") + rng.normal(0.0, 1.0, N_OBS)
+    df = pd.DataFrame(
+        {"age": age, "site": site, "y": y, "sub": [f"s{i}" for i in range(N_OBS)]}
+    )
+    response_vars = ["y"]
+    if extra_response_var is not None:
+        df[extra_response_var] = 2 * y
+        response_vars.append(extra_response_var)
+    return NormData.from_dataframe(
+        "toy",
+        df,
+        covariates=["age"],
+        batch_effects=["site"],
+        response_vars=response_vars,
+        subject_ids="sub",
+    )
+
+
+def make_model(sigma, save_dir: str) -> NormativeModel:
+    mu = make_prior(
+        linear=True,
+        intercept=make_prior(random=True),
+        slope=make_prior(dist_name="Normal", dist_params=(0.0, 10.0)),
+    )
+    hbr = HBR(
+        "template",
+        likelihood=NormalLikelihood(mu=mu, sigma=sigma),
+        nuts_sampler="nutpie",
+        draws=DRAWS,
+        tune=TUNE,
+        chains=CHAINS,
+        cores=CHAINS,
+        progressbar=False,
+    )
+    return NormativeModel(
+        hbr,
+        savemodel=True,
+        evaluate_model=False,
+        saveresults=False,
+        saveplots=False,
+        save_dir=save_dir,
+        inscaler="standardize",
+        outscaler="standardize",
+    )
+
+
+@pytest.fixture(scope="module")
+def fitted(tmp_path_factory):
+    """Two saved models: "free" and "too_narrow" (residual SD ~16x too small)."""
+    data = make_data()
+    sigmas = {
+        "free": make_prior(
+            dist_name="Normal",
+            dist_params=(1.0, 1.0),
+            mapping="softplus",
+            mapping_params=(0.0, 3.0),
+        ),
+        "too_narrow": make_prior(dist_name="Uniform", dist_params=(0.045, 0.05)),
+    }
+    paths, in_memory = {}, {}
+    for name, sigma in sigmas.items():
+        path = str(tmp_path_factory.mktemp(name))
+        model = make_model(sigma, path)
+        # Same data object for both, as in tutorial 07
+        model.fit(data)
+        paths[name] = path
+        in_memory[name] = model
+    return data, paths, in_memory
+
+
+def test_log_likelihood_is_evaluated_on_fit_data(fitted):
+    data, paths, in_memory = fitted
+    loaded = NormativeModel.load(paths["free"])
+    scaled = copy.deepcopy(data)
+    loaded.preprocess(scaled)
+    tree = _log_likelihood_tree(loaded, scaled, RESPVAR)
+    loglik = tree["log_likelihood"]["Yhat"]
+    assert loglik.sizes["observations"] == N_OBS
+    assert loglik.sizes["chain"] == CHAINS
+    assert loglik.sizes["draw"] == DRAWS
+
+    # Reference: the PyMC model built during fit, which holds the fit data.
+    reference_model = in_memory["free"][RESPVAR]
+    reference = pm.compute_log_likelihood(
+        reference_model.idata,
+        model=reference_model.pymc_model,
+        extend_inferencedata=False,
+        progressbar=False,
+    )
+    np.testing.assert_allclose(loglik.values, reference["Yhat"].values, rtol=1e-10)
+
+
+def test_too_narrow_model_is_ranked_last(fitted):
+    """
+    The "too_narrow" model has a residual standard deviation that is much too small,
+    so it is expected to be ranked last by the model comparison.
+    """
+    data, paths, _ = fitted
+    table = compare_hbr_models(paths, data)[RESPVAR]
+    assert list(table.index) == ["free", "too_narrow"]
+    # too_narrow is expected to have a lower ELPD than free
+    assert table.loc["too_narrow", "elpd_diff"] < -5 * table.loc["too_narrow", "dse"]
+    # too_narrow is expected to have a small weight
+    assert table.loc["free", "weight"] > table.loc["too_narrow", "weight"]
+
+
+def test_result_does_not_depend_on_global_random_state(fitted):
+    data, paths, _ = fitted
+    np.random.seed(0)
+    first = compare_hbr_models(paths, data)[RESPVAR]
+    np.random.seed(1)
+    second = compare_hbr_models(paths, data)[RESPVAR]
+    pd.testing.assert_frame_equal(first, second)
+
+
+def test_data_is_not_modified(fitted):
+    data, paths, _ = fitted
+    before = copy.deepcopy(data)
+    compare_hbr_models(paths, data)
+    np.testing.assert_array_equal(data.Y.values, before.Y.values)
+    np.testing.assert_array_equal(data.X.values, before.X.values)
+
+
+def test_rounding_differences_in_the_outscaler_are_accepted(fitted, monkeypatch):
+    """Accepts minor rounding differences in the outscaler.
+
+    Fitting model 1 scales the data and then scales it back. That round trip changes the
+    values very slightly, because of computer rounding. Then Model 2 is fitted on this
+    slightly changed train, so its saved scaling numbers differ from model 1's in the
+    last digit.
+    """
+    data, paths, _ = fitted
+    original_load = NormativeModel.load
+
+    def load_with_rounded_outscaler(path: str) -> NormativeModel:
+        model = original_load(path)
+        if path == paths["too_narrow"]:
+            scaler = model.outscalers[RESPVAR]
+            scaler.min = np.nextafter(scaler.min, np.inf)
+            scaler.m = np.nextafter(scaler.m, np.inf)
+            scaler.s = np.nextafter(scaler.s, np.inf)
+        return model
+
+    monkeypatch.setattr(NormativeModel, "load", load_with_rounded_outscaler)
+    table = compare_hbr_models(paths, data)[RESPVAR]
+    assert list(table.index) == ["free", "too_narrow"]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param(lambda scaler: setattr(scaler, "s", scaler.s * 2), id="sd x2"),
+        pytest.param(
+            lambda scaler: setattr(scaler, "m", scaler.m + 1e-6 * scaler.s),
+            id="mean + 1e-6 sd",
+        ),
+    ],
+)
+def test_models_on_different_scales_are_rejected(fitted, monkeypatch, change):
+    data, paths, _ = fitted
+    original_load = NormativeModel.load
+
+    def load_with_other_outscaler(path: str) -> NormativeModel:
+        model = original_load(path)
+        if path == paths["too_narrow"]:
+            change(model.outscalers[RESPVAR])
+        return model
+
+    monkeypatch.setattr(NormativeModel, "load", load_with_other_outscaler)
+    with pytest.raises(ValueError, match="identically"):
+        compare_hbr_models(paths, data)
+
+
+def test_response_vars_not_shared_between_models_are_skipped(fitted, monkeypatch):
+    """y_extra is only in the data, only_in_free only in model "free"."""
+    _, paths, _ = fitted
+    data = make_data(extra_response_var="y_extra")
+    original_load = NormativeModel.load
+
+    def load_with_extra_response_var(path: str) -> NormativeModel:
+        model = original_load(path)
+        if path == paths["free"]:
+            model.response_vars = model.response_vars + ["only_in_free"]
+        return model
+
+    monkeypatch.setattr(NormativeModel, "load", load_with_extra_response_var)
+    with pytest.warns(UserWarning, match="Skipped") as record:
+        comparison = compare_hbr_models(paths, data)
+    assert list(comparison) == [RESPVAR]
+    message = next(str(w.message) for w in record if "Skipped" in str(w.message))
+    assert "Skipped: only_in_free, y_extra." in message
+
+
+def test_no_shared_response_var_is_rejected(fitted):
+    _, paths, _ = fitted
+    data = make_data(extra_response_var="y_extra").sel({"response_vars": ["y_extra"]})
+    with pytest.raises(ValueError, match="nothing to compare"):
+        compare_hbr_models(paths, data)
+
+
+def test_non_hbr_model_is_rejected(fitted, monkeypatch):
+    data, paths, _ = fitted
+    original_load = NormativeModel.load
+
+    def load_as_blr(path: str) -> NormativeModel:
+        model = original_load(path)
+        if path == paths["too_narrow"]:
+            model.regression_models[RESPVAR] = BLR(RESPVAR)
+        return model
+
+    monkeypatch.setattr(NormativeModel, "load", load_as_blr)
+    with pytest.raises(TypeError, match="'too_narrow' is a BLR model"):
+        compare_hbr_models(paths, data)
+
+
+def test_non_mcmc_model_triggers_a_warning(fitted):
+    _, paths, _ = fitted
+    model = NormativeModel.load(paths["too_narrow"])
+    model[RESPVAR].inference_method = Laplace()
+    with pytest.warns(UserWarning, match="fitted with MCMC sampling"):
+        _warn_if_not_mcmc("too_narrow", model, RESPVAR)

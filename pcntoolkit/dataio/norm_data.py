@@ -383,8 +383,8 @@ class NormData(xr.Dataset):
         visits: str, optional
             The name of the column containing visit labels for longitudinal
             data (e.g. ``"visit"``). Labels must be numeric (e.g. 1, 2, 3) so
-            that visits can be ordered in time. Required by the longitudinal
-            scores (``ZDiffScore`` / ``ZGainScore``).
+            that visits can be ordered in time. Required by ``ZDiffScore``
+            and ``VelocityModel``.
         attrs : Mapping[str, Any] | None, optional
             Additional attributes for the dataset, by default None.
         remove_Nan: bool
@@ -1657,18 +1657,40 @@ class NormData(xr.Dataset):
         pandas_df.index = pandas_df.index.astype(str)
         return pandas_df
 
-    def save_zscores(self, save_dir: str) -> None:
-        zdf = self.Z.to_dataframe().unstack(level="response_vars")
-        zdf.columns = zdf.columns.droplevel(0)
-        zdf = zdf.merge(self.subject_ids.to_dataframe(), on="observations", how="left")
-        zdf = zdf[
+    # ------------------------------------------------------------------ #
+    # Saving and loading results (Z, centiles, logp, Yhat, statistics)
+    # ------------------------------------------------------------------ #
+
+    def _save_per_observation(self, var: str, save_dir: str) -> None:
+        """Save a per-observation result to ``{save_dir}/{var}_{name}.csv``.
+
+        Rows are observations, columns are ``subject_ids`` followed by one
+        column per response variable. If the file already exists, columns for
+        the same response variable are overwritten and others are kept.
+
+        Parameters
+        ----------
+        var : str
+            Name of the data variable to save, e.g. ``"Z"``, ``"logp"`` or
+            ``"Yhat"``. Must have dims ``(observations, response_vars)``.
+        save_dir : str
+            Directory to write the CSV file to.
+
+        Returns
+        -------
+        None
+        """
+        df = self[var].to_dataframe().unstack(level="response_vars")
+        df.columns = df.columns.droplevel(0)
+        df = df.merge(self.subject_ids.to_dataframe(), on="observations", how="left")
+        df = df[
             [
                 "subject_ids",
-                *[z for z in sorted(zdf.columns.tolist()) if z not in ["subject_ids"]],
+                *[c for c in sorted(df.columns.tolist()) if c not in ["subject_ids"]],
             ]
         ]
-        zdf.index = zdf.index.astype(str)
-        res_path = os.path.join(save_dir, f"Z_{self.name}.csv")
+        df.index = df.index.astype(str)
+        res_path = os.path.join(save_dir, f"{var}_{self.name}.csv")
         lock_path = res_path + ".lock"
         with FileLock(lock_path):
             with open(
@@ -1685,14 +1707,14 @@ class NormData(xr.Dataset):
                     old_results.set_index(["observations"], inplace=True)
                     # Merge on observations, keeping right (new) values for overlapping columns
                     new_results = old_results.merge(
-                        zdf, on="observations", how="outer", suffixes=("_old", "")
+                        df, on="observations", how="outer", suffixes=("_old", "")
                     )
                     # Drop columns ending with '_old' as they're the duplicates from old_results
                     new_results = new_results.loc[
                         :, ~new_results.columns.str.endswith("_old")
                     ]
                 else:
-                    new_results = zdf
+                    new_results = df
                 f.seek(0)
                 f.truncate()
                 if "observations" in new_results.columns:
@@ -1710,19 +1732,45 @@ class NormData(xr.Dataset):
                     new_results.index = new_results.index.astype(str)
                 new_results.to_csv(f)
 
-    def load_zscores(self, save_dir) -> None:
-        Z_path = os.path.join(save_dir, f"Z_{self.name}.csv")
-        if os.path.isfile(Z_path):
-            df = pd.read_csv(Z_path)
-            non_index_columns = [i for i in list(df.columns) if not i == "observations"]
-            self["Z"] = xr.DataArray(
-                df[non_index_columns],
+    def _load_per_observation(self, var: str, save_dir: str) -> None:
+        """Load a per-observation result written by ``_save_per_observation``.
+
+        Parameters
+        ----------
+        var : str
+            Name of the data variable to load, e.g. ``"Z"``, ``"logp"`` or
+            ``"Yhat"``.
+        save_dir : str
+            Directory containing ``{var}_{name}.csv``.
+
+        Returns
+        -------
+        None
+        """
+        res_path = os.path.join(save_dir, f"{var}_{self.name}.csv")
+        # Only load if the result file exists. Older result folders may not have all
+        # variables (e.g. "Yhat").
+        if os.path.isfile(res_path):
+            df = pd.read_csv(res_path)
+            # load only the response variables as NormData already holds
+            # subject_ids and observations
+            response_columns = [
+                c for c in df.columns if c not in ("observations", "subject_ids")
+            ]
+            self[var] = xr.DataArray(
+                df[response_columns].to_numpy(dtype=float),
                 dims=("observations", "response_vars"),
                 coords={
                     "observations": df["observations"],
-                    "response_vars": non_index_columns,
+                    "response_vars": response_columns,
                 },
             )
+
+    def save_zscores(self, save_dir: str) -> None:
+        self._save_per_observation("Z", save_dir)
+
+    def load_zscores(self, save_dir: str) -> None:
+        self._load_per_observation("Z", save_dir)
 
     def save_centiles(self, save_dir: str) -> None:
         centiles = self.centiles.to_dataframe().unstack(level="response_vars")
@@ -1827,73 +1875,16 @@ class NormData(xr.Dataset):
             )
 
     def save_logp(self, save_dir: str) -> None:
-        logp = self.logp.to_dataframe().unstack(level="response_vars")
-        logp.columns = logp.columns.droplevel(0)
-        logp = logp.merge(
-            self.subject_ids.to_dataframe(), on="observations", how="left"
-        )
-        logp = logp[
-            [
-                "subject_ids",
-                *[z for z in sorted(logp.columns.tolist()) if z not in ["subject_ids"]],
-            ]
-        ]
-        logp.index = logp.index.astype(str)
-        res_path = os.path.join(save_dir, f"logp_{self.name}.csv")
-        lock_path = res_path + ".lock"
-        with FileLock(lock_path):
-            with open(
-                res_path,
-                mode="r+" if os.path.exists(res_path) else "w",
-                encoding="utf-8",
-            ) as f:
-                f.seek(0)
-                old_results = pd.read_csv(f) if os.path.getsize(res_path) > 0 else None
-                if old_results is not None:
-                    old_results["observations"] = old_results["observations"].astype(
-                        str
-                    )
-                    old_results.set_index(["observations"], inplace=True)
-                    # Merge on observations, keeping right (new) values for overlapping columns
-                    new_results = old_results.merge(
-                        logp, on="observations", how="outer", suffixes=("_old", "")
-                    )
-                    # Drop columns ending with '_old' as they're the duplicates from old_results
-                    new_results = new_results.loc[
-                        :, ~new_results.columns.str.endswith("_old")
-                    ]
-                else:
-                    new_results = logp
-                f.seek(0)
-                f.truncate()
-                if "observations" in new_results.columns:
-                    new_results = new_results.sort_values(
-                        by="observations",
-                        key=lambda col: pd.to_numeric(col, errors="coerce"),
-                    )
-                    new_results["observations"] = new_results["observations"].astype(
-                        str
-                    )
-                else:
-                    new_results = new_results.sort_index(
-                        key=lambda idx: pd.to_numeric(idx, errors="coerce")
-                    )
-                    new_results.index = new_results.index.astype(str)
-                new_results.to_csv(f)
+        self._save_per_observation("logp", save_dir)
 
-    def load_logp(self, save_dir) -> None:
-        logp_path = os.path.join(save_dir, f"logp_{self.name}.csv")
-        if os.path.isfile(logp_path):
-            df = pd.read_csv(logp_path)
-            non_index_columns = [i for i in list(df.columns) if not i == "observations"]
-            self["logp"] = xr.DataArray(
-                df[non_index_columns],
-                dims=("observations", "response_vars"),
-                coords={
-                    "observations": df["observations"],
-                    "response_vars": non_index_columns,
-                },
-            )
+    def load_logp(self, save_dir: str) -> None:
+        self._load_per_observation("logp", save_dir)
+
+    def save_yhat(self, save_dir: str) -> None:
+        self._save_per_observation("Yhat", save_dir)
+
+    def load_yhat(self, save_dir: str) -> None:
+        self._load_per_observation("Yhat", save_dir)
 
     def save_statistics(self, save_dir: str) -> None:
         mdf = self.statistics.to_dataframe().unstack(level="response_vars")
@@ -1940,7 +1931,7 @@ class NormData(xr.Dataset):
             )
 
     def save_results(self, save_dir: str) -> None:
-        """Saves the results (zscores, centiles, logp, statistics) to disk
+        """Saves the results (Z, centiles, logp, yhat, statistics) to disk
 
         Args:
             save_dir (str): Where the results are saved. I.e.: {save_dir}/Z_fit_test.csv
@@ -1948,10 +1939,11 @@ class NormData(xr.Dataset):
         self.save_zscores(save_dir)
         self.save_centiles(save_dir)
         self.save_logp(save_dir)
+        self.save_yhat(save_dir)
         self.save_statistics(save_dir)
 
     def load_results(self, save_dir: str) -> None:
-        """Loads the results (zscores, centiles, logp, statistics) back into the data
+        """Loads the results (Z, centiles, logp, Yhat, statistics) back into the data
 
         Args:
             save_dir (str): Where the results are saved. I.e.: {save_dir}/Z_fit_test.csv
@@ -1959,7 +1951,12 @@ class NormData(xr.Dataset):
         self.load_zscores(save_dir)
         self.load_centiles(save_dir)
         self.load_logp(save_dir)
+        self.load_yhat(save_dir)
         self.load_statistics(save_dir)
+
+    # ------------------------------------------------------------------ #
+    # Statistics helpers and properties
+    # ------------------------------------------------------------------ #
 
     def create_statistics_group(self) -> None:
         """

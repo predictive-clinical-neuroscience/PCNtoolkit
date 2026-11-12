@@ -12,9 +12,6 @@
 # Nothing is committed unless every notebook succeeds.
 #
 # Notebook 08_cluster.ipynb is always skipped — it requires SLURM.
-# Notebooks 14_longitudinal_modelling.ipynb and
-# 15_longitudinal_modelling_loading_precomputed_matrix.ipynb are
-# temporarily skipped.
 
 name: Run Notebooks
 
@@ -82,14 +79,6 @@ jobs:
           for nb in examples/*.ipynb; do
             if [[ "$nb" == *"08_cluster"* ]]; then
               echo "Skipping (SLURM-only): $nb"
-              continue
-            fi
-            if [[ "$nb" == *"14_longitudinal"* ]]; then
-              echo "Skipping (temporarily disabled): $nb"
-              continue
-            fi
-            if [[ "$nb" == *"15_longitudinal"* ]]; then
-              echo "Skipping (temporarily disabled): $nb"
               continue
             fi
 

@@ -109,7 +109,15 @@ intersphinx_mapping = {
 
 # General settings
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "**.ipynb_checkpoints",
+    # Unfinished tutorials, kept out of the website until ready.
+    "tutorials/11_composite_basis_function.rst",
+    "tutorials/16_correlation_matrix.rst",
+]
 add_module_names = False
 nitpicky = True
 
