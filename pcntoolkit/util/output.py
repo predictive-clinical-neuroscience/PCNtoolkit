@@ -12,6 +12,9 @@ class Messages:
         "Fitting and predicting {n_models} response variables."
     )
     FITTING_AND_PREDICTING_MODEL = "Fitting and predicting model for {model_name}."
+    NO_SAVE_DIR_SPECIFIED = (
+        "No save_dir given. Saving to the default folder:\n\t{save_dir}."
+    )
     SAVING_MODEL = "Saving model to:\n\t{save_dir}."
     SAVING_RESULTS = "Saving results to:\n\t{save_dir}."
     SAVING_STATISTICS = "Saving statistics to:\n\t{save_dir}."

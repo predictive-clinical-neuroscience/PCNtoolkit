@@ -75,9 +75,9 @@ def get_default_save_dir() -> str:
     """Get the default save directory for normative models.
 
     The save directory is determined in the following order:
-    1. PCN_SAVE_DIR environment variable if set
-    2. ~/.pcntoolkit/saves if the directory exists or can be created
-    3. ./saves as a fallback
+    1. $PCN_HOME_DIR/saves if the PCN_HOME_DIR environment variable is set
+    2. ~/.pcntoolkit/saves otherwise
+    3. ./saves if the directory from 1 or 2 cannot be created
 
     Returns
     -------

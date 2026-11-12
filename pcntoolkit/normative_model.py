@@ -56,8 +56,8 @@ class NormativeModel:
         Whether to save the results.
     saveplots : bool
         Whether to save the plots.
-    save_dir : str
-        Directory to save the model, results, and plots.
+    save_dir : str or None
+        Directory to save the model, results, and plots. Default is None.
     inscaler : str
         Input (X/covariates) scaler to use.
     outscaler: str
@@ -90,7 +90,11 @@ class NormativeModel:
         self.evaluate_model: bool = evaluate_model
         self.saveresults: bool = saveresults
         self.saveplots: bool = saveplots
-        self._save_dir = save_dir if save_dir is not None else get_default_save_dir()
+        if save_dir is None:
+            save_dir = get_default_save_dir()
+            if savemodel or saveresults or saveplots:
+                Output.print(Messages.NO_SAVE_DIR_SPECIFIED, save_dir=save_dir)
+        self._save_dir = save_dir
         self.inscaler: str = inscaler
         self.outscaler: str = outscaler
         self.y_transform: Optional[str] = y_transform
