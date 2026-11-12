@@ -12,6 +12,7 @@ from pcntoolkit.regression_model.blr import (
     BLR,
     create_design_matrix,
 )
+from pcntoolkit.regression_model.regression_model import RegressionModel
 from pcntoolkit.util.migration import registry
 from test.fixtures.blr_model_fixtures import *
 from test.fixtures.norm_data_fixtures import *
@@ -117,6 +118,32 @@ def test_forward_backward(
     Y_prime = fitted_blr_model.backward(X, be, Z)
     assert Y_prime.shape == Y.shape
     assert np.allclose(Y_prime, Y)
+
+
+def test_compute_yhat_matches_between_subclass_and_base_class(
+    blr_model_factory,
+    norm_data_from_arrays: NormData,
+    fitted_norm_blr_model: NormativeModel,
+) -> None:
+    """BLR.compute_yhat computes bit-identical yhat as the base-class 
+    RegressionModel.compute_yhat.
+
+    Uses a heteroskedastic, warped, transferred model, so the warp and the
+    transfer corrections are both checked.
+    
+    Introduced in PR #579.
+    """
+    response_var = norm_data_from_arrays.response_vars[0]
+    resp_data = norm_data_from_arrays.sel(response_vars=response_var)
+    X, be, be_maps, Y, _ = fitted_norm_blr_model.extract_data(resp_data)
+    model = blr_model_factory()
+    model.fit(X, be, be_maps, Y)
+    model = model.transfer(X, be, be_maps, Y)
+    assert model.transfered and model.warp is not None
+    new = model.compute_yhat(resp_data, response_var, X, be)
+    old = RegressionModel.compute_yhat(model, resp_data, response_var, X, be)
+    # Yhat's have zero tolerance (they are bit-identical) 
+    np.testing.assert_array_equal(new, old)
 
 
 def test_parse_hyps(norm_data_from_arrays: NormData):
