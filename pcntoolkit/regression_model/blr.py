@@ -27,7 +27,11 @@ from pcntoolkit.math_functions.basis_function import (
     create_basis_function,
 )
 from pcntoolkit.math_functions.warp import *
-from pcntoolkit.regression_model.regression_model import RegressionModel
+from pcntoolkit.regression_model.regression_model import (
+    YHAT_N_Z,
+    YHAT_Z_MAX,
+    RegressionModel,
+)
 from pcntoolkit.util.data_utils import iter_batch_combinations
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
@@ -467,8 +471,7 @@ class BLR(RegressionModel):
         """
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.BLR_MODEL_NOT_FITTED))
-        n_importance_samples = 200
-        Z_space = np.linspace(-4, 4, n_importance_samples)
+        Z_space = np.linspace(-YHAT_Z_MAX, YHAT_Z_MAX, YHAT_N_Z)
         Output.print(Messages.COMPUTING_YHAT_MODEL, model_name=responsevar)
         ys, s2 = self.predictive_ys_s2(X, be)
         # Column i is backward() at Z = Z_space[i]: Z * std + mean.
