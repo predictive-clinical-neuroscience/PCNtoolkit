@@ -1931,16 +1931,27 @@ class NormData(xr.Dataset):
             )
 
     def save_results(self, save_dir: str) -> None:
-        """Saves the results (Z, centiles, logp, yhat, statistics) to disk
+        """Save the results (Z, centiles, logp, yhat, statistics) to disk.
 
-        Args:
-            save_dir (str): Where the results are saved. I.e.: {save_dir}/Z_fit_test.csv
+        Statistics are only saved if they exist, i.e. if the model was
+        evaluated (``NormativeModel(evaluate_model=True)``).
+
+        Parameters
+        ----------
+        save_dir : str
+            Where the results are saved, e.g. ``{save_dir}/Z_fit_test.csv``.
+
+        Returns
+        -------
+        None
         """
         self.save_zscores(save_dir)
         self.save_centiles(save_dir)
         self.save_logp(save_dir)
         self.save_yhat(save_dir)
-        self.save_statistics(save_dir)
+        # 'statistics' is only created by the Evaluator
+        if "statistics" in self.data_vars:
+            self.save_statistics(save_dir)
 
     def load_results(self, save_dir: str) -> None:
         """Loads the results (Z, centiles, logp, Yhat, statistics) back into the data
