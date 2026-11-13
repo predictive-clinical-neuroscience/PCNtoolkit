@@ -1045,6 +1045,84 @@ class NormData(xr.Dataset):
         """
         return reduce(np.char.add, arrays)
 
+    def isel(
+        self,
+        indexers: Mapping[Any, Any] | None = None,
+        drop: bool = False,
+        missing_dims: str = "raise",
+        **indexers_kwargs: Any,
+    ) -> NormData:
+        """
+        Select a subset of the data by integer position, like ``xarray.Dataset.isel``.
+
+        A subset also gets its own counts and covariate ranges. Example: if you
+        keep only the subjects under 30 from fcon1000, the subset reports 815
+        observations and an age range of 7.9 to 29.2, not the 1078 observations
+        and 7.9 to 85 of the full dataset. A model fitted on the subset stores
+        these values, so its centile plots, ``merge`` and ``synthesize`` stay
+        within the data it was fitted on.
+
+        ``sel``, ``.loc``, ``dropna`` and boolean masks all go through this
+        method, so they behave the same way.
+
+        Parameters
+        ----------
+        indexers : Mapping[Any, Any] | None, optional
+            A mapping from dimension name to the integer positions to keep,
+            by default None.
+        drop : bool, optional
+            Drop coordinates that become scalars, by default False.
+        missing_dims : str, optional
+            What to do with dimensions that do not exist: "raise", "warn" or
+            "ignore", by default "raise".
+        **indexers_kwargs : Any
+            The same as ``indexers``, given as keyword arguments.
+
+        Returns
+        -------
+        NormData
+            The selected subset.
+        """
+        subset = super().isel(
+            indexers, drop=drop, missing_dims=missing_dims, **indexers_kwargs
+        )
+        # xarray gives the subset the parent's own attrs dict. Copy it, so
+        # that changing the subset (e.g. its name) does not change the parent.
+        subset.attrs = copy.deepcopy(subset.attrs)
+
+        selected_dims = set(indexers or {}) | set(indexers_kwargs)
+        # Selecting only response variables leaves the summaries unchanged,
+        # so skip the recompute (fit and predict do this once per variable).
+        if selected_dims & {"observations", "covariates", "batch_effect_dims"}:
+            if subset._can_register_metadata():
+                subset.register_batch_effects(force=True)
+        return subset
+
+    def _can_register_metadata(self) -> bool:
+        """
+        Check whether the batch effect and covariate summaries can be computed.
+
+        They cannot be computed when the batch effects or covariates are no
+        longer an (observations x columns) table, e.g. after selecting a single
+        observation, or when the covariates are scaled: the ranges would then
+        be stored in scaled units instead of e.g. years.
+
+        Returns
+        -------
+        bool
+            True if ``register_batch_effects`` can safely run on this data.
+        """
+        if self.attrs.get("is_scaled", False):
+            return False
+        if "batch_effects" not in self.data_vars or self.batch_effects.dims != (
+            "observations",
+            "batch_effect_dims",
+        ):
+            return False
+        if "X" in self.data_vars and self.X.dims != ("observations", "covariates"):
+            return False
+        return True
+
     def chunk(self, n_chunks: int) -> Generator[NormData]:
         """
         Split the data into n_chunks with roughly equal number of response variables
@@ -1107,10 +1185,10 @@ class NormData(xr.Dataset):
             random_state=random_state,
             stratify=batch_effects_stringified,
         )
+        # Each split gets its own attrs, with counts and covariate ranges of
+        # its own observations (see isel).
         split1 = self.isel(observations=train_idx)
-        split1.attrs = copy.deepcopy(self.attrs)
         split2 = self.isel(observations=test_idx)
-        split2.attrs = copy.deepcopy(self.attrs)
         if split_names is not None:
             split1.attrs["name"] = split_names[0]
             split2.attrs["name"] = split_names[1]
