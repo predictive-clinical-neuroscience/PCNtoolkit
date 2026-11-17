@@ -31,7 +31,14 @@ class Likelihood(ABC):
         self._compile(model, X, be, be_maps, Y)
         return model
 
-    def create_model_with_data(self, X, be, be_maps, Y) -> pm.Model:
+    def create_model_with_data(
+        self,
+        X: xr.DataArray,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        Y: xr.DataArray,
+    ) -> pm.Model:
+        self._validate_batch_effects(be, be_maps)
         coords = {
             "batch_effect_dims": be.coords["batch_effect_dims"].values,
             "observations": X.coords["observations"].values,
@@ -57,7 +64,8 @@ class Likelihood(ABC):
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
         Y: xr.DataArray,
-    ):
+    ) -> None:
+        self._validate_batch_effects(be, be_maps)
         with model:
             model.set_data(
                 name="Y",
@@ -70,6 +78,34 @@ class Likelihood(ABC):
                     values=be.sel(batch_effect_dims=be_name).values,
                 )
         self._update_data(model, X, be, be_maps, Y)
+
+    @staticmethod
+    def _validate_batch_effects(
+        be: xr.DataArray, be_maps: dict[str, dict[str, int]]
+    ) -> None:
+        """Reject unknown codes before they reach compiled array indexing.
+
+        Parameters
+        ----------
+        be : xr.DataArray
+            Encoded batch effects for each observation.
+        be_maps : dict[str, dict[str, int]]
+            Known levels and their codes for each batch-effect dimension.
+
+        Raises
+        ------
+        ValueError
+            If a code is not present in the corresponding map.
+        """
+        for be_name in be.coords["batch_effect_dims"].values:
+            codes = be.sel(batch_effect_dims=be_name).values
+            valid_codes = sorted(be_maps[be_name].values())
+            invalid_codes = np.unique(codes[~np.isin(codes, valid_codes)])
+            if invalid_codes.size:
+                raise ValueError(
+                    f"Invalid codes {invalid_codes.tolist()} for batch effect "
+                    f"'{be_name}'. Expected one of {valid_codes}."
+                )
 
     @abstractmethod
     def _update_data(
