@@ -43,6 +43,7 @@ Notes
 All scalers support both fitting to the entire dataset and transforming specific
 indices of features, allowing for flexible scaling strategies. The scalers can
 be serialized to dictionaries for saving/loading trained parameters.
+The fit method of the standardization operation requires data with non-zero variance.
 
 See Also
 --------
@@ -280,6 +281,10 @@ class StandardScaler(Scaler):
         self.max = np.max(X, axis=0)
         self.m = np.mean(X, axis=0)
         self.s = np.std(X, axis=0)
+        if np.isclose(self.s, 0):
+            raise ValueError(
+                Output.error(Errors.ERROR_DATA_IS_ZERO_VARIANCE, method="transform")
+            )
 
     def transform(self, X: NDArray, index: Optional[NDArray] = None) -> NDArray:
         if self.m is None or self.s is None:
