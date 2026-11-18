@@ -1,5 +1,5 @@
 """
-Tests for BLR.transfer with few adaptation subjects (issue #621).
+Tests for BLR.transfer (issues #621 and #644).
 
 The new-site data are simulated from the reference prediction itself:
 
@@ -129,13 +129,8 @@ def test_transfer_correction_coefficients(reference_blr: BLR) -> None:
 def test_transfer_zscores_follow_student_t(reference_blr: BLR) -> None:
     """Z-scores of healthy new-site subjects follow a Student t(n - 1).
 
-    With n = 10 adaptation subjects per cell and a constant reference
-    variance, the expected share of |Z| > 1.96 is 2 * t.sf(1.96, 9) = 0.082.
-    Treating the estimated offset and scale as exact gave 0.110.
-
-    Tolerance: 300 sites x 100 test subjects. The standard error of the share
-    is about 0.003 (subjects of a site share the same estimates), so 0.012 is
-    about 4 standard errors and still excludes 0.110.
+    With n = 10, the share of |Z| > 1.96 should be 0.082 (0.110 before the
+    fix). Tolerance 0.012 is about 4 standard errors over 300 sites.
     """
     rng = np.random.default_rng(20261112)
     n = 10

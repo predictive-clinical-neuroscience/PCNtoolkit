@@ -293,19 +293,6 @@ Another consequence is that a transferred model centiles cover the age
 range present in the data you transferred to (see x-axis range in the
 centiles plot below), not the age range of the reference model.
 
-**How many subjects do you need to transfer a BLR model?** For every
-combination of batch effects in your data (for example each site and
-sex), transfer estimates two numbers from your subjects: an offset and a
-scale. Each combination therefore needs at least 2 subjects, otherwise
-``transfer`` raises an error.
-
-With few subjects these two numbers are uncertain, and the Z-scores of
-your site are more spread out than they should be. If the reference
-model predicts the same variance for all subjects, the share of healthy
-subjects with \|Z\| > 1.96 is about 12% with 5 subjects per combination,
-8% with 10, 6.5% with 20 and 5.6% with 50, where 5% is expected. Keep
-this in mind when you interpret Z-scores close to a threshold.
-
 .. code:: ipython3
 
     transfered_model = model.transfer_predict(transfer_train, transfer_test)

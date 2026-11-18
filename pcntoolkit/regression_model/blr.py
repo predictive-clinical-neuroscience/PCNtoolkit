@@ -39,8 +39,7 @@ from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 if TYPE_CHECKING:
     from pcntoolkit.dataio.norm_data import NormData
 
-# Minimum number of adaptation subjects per combination of batch effects in
-# BLR.transfer. With fewer, the scale of that combination cannot be estimated.
+# Minimum subjects per combination of batch effects in BLR.transfer
 MIN_TRANSFER_SUBJECTS = 2
 
 
@@ -584,23 +583,13 @@ class BLR(RegressionModel):
     ) -> BLR:
         """Adapt a fitted BLR to new batch effects (e.g. a new site).
 
-        For each combination of batch effects in the adaptation data (a
-        "cell", e.g. site x sex), an offset and a scale factor are estimated
-        from the residuals of the adaptation subjects. They are then applied
-        to the predictive mean and standard deviation of the reference model.
-
-        The offset and the scale are estimates, so they are uncertain. The
-        scale factor is therefore computed from the unbiased variance
-        (``ddof=1``) and multiplied by ``sqrt(1 + 1/n)``, with ``n`` the
-        number of adaptation subjects in the cell. This widens the predictive
-        distribution to account for the uncertainty of the offset.
-
-        Example, for a reference model with constant noise: with 10
-        adaptation subjects per cell, about 8% of healthy new-site subjects
-        get ``abs(Z) > 1.96``, where 5% is expected (it was 11% without this
-        correction). The remaining excess comes from the uncertainty of the
-        scale, which a Gaussian predictive distribution cannot represent. It
-        shrinks as ``n`` grows: 6.5% at 20 subjects per cell, 5.6% at 50.
+        For each combination of batch effects (e.g. site x sex), an offset
+        and a scale factor are estimated from the residuals of its ``n``
+        adaptation subjects and applied to the reference prediction. The
+        scale factor uses ``ddof=1`` and is multiplied by ``sqrt(1 + 1/n)``
+        because the offset is itself estimated. With small ``n``, Z-scores
+        stay slightly too spread out: with 10 subjects, 8% of healthy
+        subjects get ``abs(Z) > 1.96`` instead of 5%.
 
         Parameters
         ----------
@@ -618,16 +607,14 @@ class BLR(RegressionModel):
         Returns
         -------
         BLR
-            A copy of the model that holds the per-cell corrections.
+            A copy of the model that holds the corrections.
 
         Raises
         ------
         ValueError
-            If a cell has fewer than 2 adaptation subjects: its scale cannot
-            be estimated.
+            If a combination has fewer than 2 adaptation subjects.
         """
-        # Every cell needs at least 2 subjects, otherwise its scale is 0 or
-        # undefined and the Z-scores of that cell are infinite.
+        # With 1 subject the scale is 0 and the Z-scores are infinite
         too_small = []
         for t, mask in self.be_idx_gen(be, be_maps):
             if mask.sum() < MIN_TRANSFER_SUBJECTS:
@@ -676,15 +663,12 @@ class BLR(RegressionModel):
             # Then we correct the variance
             # The predicted average std is:
             pred_avg_std = np.mean(np.sqrt(synth_s2[mask]))
-            # The actual std is estimated without bias (ddof=1), because the
-            # mean of the residuals was estimated from the same subjects:
+            # The actual std (ddof=1: the mean comes from the same subjects):
             n_subjects = int(mask.sum())
             real_avg_std = np.std(y[mask] - corrected_mean, ddof=1)
             # So the predicted average std has to be corrected with a factor of:
             correction_factor = real_avg_std / pred_avg_std
-            # The offset is itself uncertain (its variance is 1/n of the
-            # residual variance), so the predictive std of a new subject is
-            # wider by sqrt(1 + 1/n):
+            # The offset is estimated from n subjects: widen the prediction
             correction_factor *= np.sqrt(1 + 1 / n_subjects)
 
             # We have to save these correction coefficients:

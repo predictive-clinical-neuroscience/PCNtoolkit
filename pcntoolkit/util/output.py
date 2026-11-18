@@ -326,11 +326,8 @@ class Errors:
     HBR_MODEL_NOT_FITTED = "HBR model is not fitted"
     ERROR_BLR_TRANSFER_NOT_IMPLEMENTED = "BLR transfer not implemented"
     ERROR_BLR_TRANSFER_TOO_FEW_SUBJECTS = (
-        "Cannot transfer: at least {min_subjects} adaptation subjects are "
-        "needed per combination of batch effects to estimate its offset and "
-        "scale. Too few subjects for: {batch_effects}. Add adaptation "
-        "subjects with these batch effects, or remove these batch effects "
-        "from the transfer data."
+        "Cannot transfer: each combination of batch effects needs at least "
+        "{min_subjects} subjects. Too few for: {batch_effects}."
     )
     ERROR_BLR_TRANSFER_UNSEEN_BATCH_EFFECTS = (
         "No subjects for {batch_effects} in the transfer data, so they "
