@@ -332,6 +332,10 @@ class Errors:
         "subjects with these batch effects, or remove these batch effects "
         "from the transfer data."
     )
+    ERROR_BLR_TRANSFER_UNSEEN_BATCH_EFFECTS = (
+        "No subjects for {batch_effects} in the transfer data, so they "
+        "cannot be predicted."
+    )
     ERROR_MULTIPLE_COVARIATE_DIMS = (
         "Multiple covariate dimensions found: {covariate_dims}"
     )

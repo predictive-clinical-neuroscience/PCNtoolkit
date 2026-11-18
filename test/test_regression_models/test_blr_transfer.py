@@ -92,6 +92,16 @@ def test_transfer_accepts_a_cell_absent_from_the_data(reference_blr: BLR) -> Non
     assert list(transferred.correction_coefficients) == ["(0, 0)"]
 
 
+def test_predict_raises_on_a_cell_absent_from_transfer(reference_blr: BLR) -> None:
+    """Predicting a combination without adaptation subjects names it (#644)."""
+    rng = np.random.default_rng(4)
+    X, B, Y = _new_site(rng, reference_blr, (10, 0))
+    transferred = reference_blr.transfer(X, B, NEW_BE_MAPS, Y)
+    Xt, Bt, Yt = _new_site(rng, reference_blr, (5, 5))
+    with pytest.raises(ValueError, match=r"No subjects for site=new, sex=M"):
+        transferred.forward(Xt, Bt, Yt)
+
+
 def test_transfer_correction_coefficients(reference_blr: BLR) -> None:
     """The stored offset and scale factor match their definition.
 

@@ -44,6 +44,29 @@ if TYPE_CHECKING:
 MIN_TRANSFER_SUBJECTS = 2
 
 
+def _batch_effect_labels(
+    t: dict[str, object], be_maps: dict[str, dict[str, int]]
+) -> str:
+    """Return the labels of an encoded batch-effect combination.
+
+    Parameters
+    ----------
+    t : dict[str, object]
+        Encoded combination, e.g. ``{"site": 0, "sex": 1}``.
+    be_maps : dict[str, dict[str, int]]
+        Mapping from batch-effect labels to encoded integer ids.
+
+    Returns
+    -------
+    str
+        The labels, e.g. ``"site=Leiden, sex=M"``.
+    """
+    return ", ".join(
+        f"{dim}={next(k for k, v in be_maps[dim].items() if v == idx)}"
+        for dim, idx in t.items()
+    )
+
+
 class BLR(RegressionModel):
     """
     Bayesian Linear Regression model implementation.
@@ -438,6 +461,19 @@ class BLR(RegressionModel):
             # This creates a list of dictionaries
             # Each dictionary contains a unique combination of batch effects:
             # [{"sex":"F", "site":"A"}, {"sex":"F", "site":"B"}, {"sex":"M", "site":"A"}, {"sex":"M", "site":"B"}]
+            # Combinations without adaptation subjects have no correction
+            unseen = [
+                _batch_effect_labels(t, self.transfered_be_maps)
+                for t, _ in self.be_idx_gen(be, self.transfered_be_maps)
+                if str(tuple(t.values())) not in self.correction_coefficients
+            ]
+            if unseen:
+                raise ValueError(
+                    Output.error(
+                        Errors.ERROR_BLR_TRANSFER_UNSEEN_BATCH_EFFECTS,
+                        batch_effects="; ".join(unseen),
+                    )
+                )
             for t, mask in self.be_idx_gen(be, self.transfered_be_maps):
                 residual_mean, correction_factor = self.correction_coefficients[
                     str(tuple(t.values()))
@@ -595,12 +631,7 @@ class BLR(RegressionModel):
         too_small = []
         for t, mask in self.be_idx_gen(be, be_maps):
             if mask.sum() < MIN_TRANSFER_SUBJECTS:
-                # Show the labels of the batch effects, not their encoded ids
-                # eg "site=Leiden, sex=F (n=1)"
-                labels = ", ".join(
-                    f"{dim}={next(k for k, v in be_maps[dim].items() if v == idx)}"
-                    for dim, idx in t.items()
-                )
+                labels = _batch_effect_labels(t, be_maps)
                 too_small.append(f"{labels} (n={int(mask.sum())})")
         if too_small:
             raise ValueError(
