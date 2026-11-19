@@ -32,7 +32,10 @@ from pcntoolkit.regression_model.regression_model import (
     YHAT_Z_MAX,
     RegressionModel,
 )
-from pcntoolkit.util.data_utils import iter_batch_combinations
+from pcntoolkit.util.data_utils import (
+    batch_combination_to_text,
+    iter_batch_combinations,
+)
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 
@@ -41,29 +44,6 @@ if TYPE_CHECKING:
 
 # Minimum subjects per combination of batch effects in BLR.transfer
 MIN_TRANSFER_SUBJECTS = 2
-
-
-def _batch_effect_labels(
-    t: dict[str, object], be_maps: dict[str, dict[str, int]]
-) -> str:
-    """Return the labels of an encoded batch-effect combination.
-
-    Parameters
-    ----------
-    t : dict[str, object]
-        Encoded combination, e.g. ``{"site": 0, "sex": 1}``.
-    be_maps : dict[str, dict[str, int]]
-        Mapping from batch-effect labels to encoded integer ids.
-
-    Returns
-    -------
-    str
-        The labels, e.g. ``"site=Leiden, sex=M"``.
-    """
-    return ", ".join(
-        f"{dim}={next(k for k, v in be_maps[dim].items() if v == idx)}"
-        for dim, idx in t.items()
-    )
 
 
 class BLR(RegressionModel):
@@ -462,7 +442,7 @@ class BLR(RegressionModel):
             # [{"sex":"F", "site":"A"}, {"sex":"F", "site":"B"}, {"sex":"M", "site":"A"}, {"sex":"M", "site":"B"}]
             # Combinations without adaptation subjects have no correction
             unseen = [
-                _batch_effect_labels(t, self.transfered_be_maps)
+                batch_combination_to_text(t, self.transfered_be_maps)
                 for t, _ in self.be_idx_gen(be, self.transfered_be_maps)
                 if str(tuple(t.values())) not in self.correction_coefficients
             ]
@@ -585,11 +565,7 @@ class BLR(RegressionModel):
 
         For each combination of batch effects (e.g. site x sex), an offset
         and a scale factor are estimated from the residuals of its ``n``
-        adaptation subjects and applied to the reference prediction. The
-        scale factor uses ``ddof=1`` and is multiplied by ``sqrt(1 + 1/n)``
-        because the offset is itself estimated. With small ``n``, Z-scores
-        stay slightly too spread out: with 10 subjects, 8% of healthy
-        subjects get ``abs(Z) > 1.96`` instead of 5%.
+        adaptation subjects and applied to the reference prediction.
 
         Parameters
         ----------
@@ -618,7 +594,7 @@ class BLR(RegressionModel):
         too_small = []
         for t, mask in self.be_idx_gen(be, be_maps):
             if mask.sum() < MIN_TRANSFER_SUBJECTS:
-                labels = _batch_effect_labels(t, be_maps)
+                labels = batch_combination_to_text(t, be_maps)
                 too_small.append(f"{labels} (n={int(mask.sum())})")
         if too_small:
             raise ValueError(
