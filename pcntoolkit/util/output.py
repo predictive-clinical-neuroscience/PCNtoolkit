@@ -328,6 +328,14 @@ class Errors:
     ERROR_Y_NOT_FOUND = "y not found in data"
     HBR_MODEL_NOT_FITTED = "HBR model is not fitted"
     ERROR_BLR_TRANSFER_NOT_IMPLEMENTED = "BLR transfer not implemented"
+    ERROR_BLR_TRANSFER_TOO_FEW_SUBJECTS = (
+        "Cannot transfer: each combination of batch effects needs at least "
+        "{min_subjects} subjects. Too few for: {batch_effects}."
+    )
+    ERROR_BLR_TRANSFER_UNSEEN_BATCH_EFFECTS = (
+        "No subjects for {batch_effects} in the transfer data, so they "
+        "cannot be predicted."
+    )
     ERROR_MULTIPLE_COVARIATE_DIMS = (
         "Multiple covariate dimensions found: {covariate_dims}"
     )

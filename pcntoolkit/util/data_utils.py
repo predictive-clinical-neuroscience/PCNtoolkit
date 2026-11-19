@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from functools import partial
 from itertools import product
-from typing import Callable, Generator
+from typing import Callable, Generator, Mapping
 
 import dask.array as da
 import numpy as np
@@ -22,30 +22,33 @@ def iter_batch_combinations(
     unique_batch_effects: dict[str, list[str | int]],
     batch_dims: list[str],
 ) -> Generator[tuple[dict[str, str | int], np.ndarray]]:
-    """Yield batch-effect combinations together with observation masks.
+    """Loop over each combination of batch effects in the data, with its rows.
+
+    Example: with site1, site2 and sexes F, M, one step yields
+    ``({"site": "site1", "sex": "F"}, mask)``, where ``mask`` is True for the
+    rows of site1 women. Combinations with no rows are skipped.
 
     Parameters
     ----------
     batch_values : np.ndarray
-        Observed batch-effect values with shape
-        ``(n_observations, n_batch_dims)``.
+        Batch effects of each row, e.g. ``[["site1", "F"], ["site2", "M"]]``.
     unique_batch_effects : dict[str, list[str | int]]
-        Allowed values for each batch-effect dimension.
+        All values of each batch effect,
+        e.g. ``{"site": ["site1", "site2"], "sex": ["F", "M"]}``.
     batch_dims : list[str]
-        Ordered batch-effect dimensions used to interpret both
-        ``batch_values`` and ``unique_batch_effects``.
+        Batch effect names, in the column order of ``batch_values``,
+        e.g. ``["site", "sex"]``.
 
     Yields
     ------
     tuple[dict[str, str | int], np.ndarray]
-        A dictionary describing one batch-effect combination and a
-        boolean mask that selects observations in that combination.
+        The combination, e.g. ``{"site": "site1", "sex": "F"}``, and a
+        True/False array marking its rows.
 
     Raises
     ------
     KeyError
-        If ``unique_batch_effects`` is missing a requested batch
-        dimension.
+        If a name in ``batch_dims`` is not in ``unique_batch_effects``.
     """
 
     # Collect one ordered level list per dimension.
@@ -83,6 +86,32 @@ def iter_batch_combinations(
         # Yield: return one combination at a time (memory-efficient)
         # instead of returning all of them in a list.
         yield combination, mask
+
+
+def batch_combination_to_text(
+    combination: Mapping[str, object], be_maps: dict[str, dict[str, int]]
+) -> str:
+    """Turn a combination of batch effects stored as numbers into text.
+
+    Example: ``{"site": 0, "sex": 1}`` becomes ``"site=site1, sex=M"`` when
+    ``be_maps`` is ``{"site": {"site1": 0}, "sex": {"F": 0, "M": 1}}``.
+
+    Parameters
+    ----------
+    combination : Mapping[str, object]
+        The combination as numbers, e.g. ``{"site": 0, "sex": 1}``.
+    be_maps : dict[str, dict[str, int]]
+        The number of each label, e.g. ``{"sex": {"F": 0, "M": 1}}``.
+
+    Returns
+    -------
+    str
+        The combination as text, e.g. ``"site=site1, sex=M"``.
+    """
+    return ", ".join(
+        f"{dim}={next(k for k, v in be_maps[dim].items() if v == idx)}"
+        for dim, idx in combination.items()
+    )
 
 
 # dedupe uses np.unique only on arrays larger than UNIQUE_SAMPLE_SIZE, and only
