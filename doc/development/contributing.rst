@@ -44,7 +44,7 @@ You are always welcome to contribute code yourself. PCNtoolkit runs on Linux, Ma
 
 Congrats! You have now set up your development environment. 
 
-To contribute, create a new branch based on the ``dev`` branch and open your pull request. Your pull request should be approved by at least one developer before merging. The ``dev`` branch is where we add changes for the next release and once we are ready to release to the public we move all our code to the ``master`` branch. Read more about `our branching and PR workflow <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/GitHub-workflow>`_ in our GitHub Wiki.
+Before writing code, open a new issue or comment on an existing one to discuss how you want to tackle the change. Open a pull request only after a maintainer has accepted it in the issue. To contribute, create a new branch based on the ``dev`` branch and open your pull request. Your pull request should be approved by at least one developer before merging. The ``dev`` branch is where we add changes for the next release and once we are ready to release to the public we move all our code to the ``master`` branch. Read more about `our branching and PR workflow <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/GitHub-workflow>`_ in our GitHub Wiki.
 
 .. note::
     Ran into issues when you set up your dev environment? Check out `this list of common errors and how to fix them <https://github.com/predictive-clinical-neuroscience/PCNtoolkit/wiki/Common-errors-in-dev-environment-setup>`_.
