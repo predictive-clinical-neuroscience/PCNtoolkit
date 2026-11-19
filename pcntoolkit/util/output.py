@@ -308,6 +308,9 @@ class Errors:
     ERROR_DATA_MUST_BE_1D = (
         "Data must be a 1D array or a N-dimensional array with a single column"
     )
+    ERROR_DATA_IS_ZERO_VARIANCE = (
+        "Data must have non-zero variance"
+    )
     ERROR_BATCH_EFFECTS_NOT_LIST = (
         "Items of the batch_effect dict be a list or a string, not {batch_effect_type}"
     )
