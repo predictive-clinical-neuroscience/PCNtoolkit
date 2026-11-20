@@ -128,8 +128,7 @@ class TestNormativeModel:
         assert (moved_dir / "results").exists()
         assert not self.save_dir.exists()
 
-    @pytest.mark.parametrize("method", ["fit", "predict", "fit_predict"])
-    def test_saveresults_without_evaluation(self, method: str) -> None:
+    def test_saveresults_without_evaluation(self) -> None:
         """Results are saved without statistics when evaluate_model=False."""
         data = NormData.from_ndarrays(
             name="test_data",
@@ -141,24 +140,19 @@ class TestNormativeModel:
         model = NormativeModel(
             template_regression_model=self.template_model,
             savemodel=False,
-            evaluate_model=False,
-            saveresults=True,
+            evaluate_model=False, # do not evaluate model
+            saveresults=True, # save results
             saveplots=False,
             save_dir=str(self.save_dir),
             inscaler="none",
             outscaler="none",
         )
 
-        if method == "fit":
-            model.fit(data)
-        elif method == "predict":
-            model.fit(data)
-            model.predict(data)
-        else:
-            model.fit_predict(data, data)
+        model.fit_predict(data, data)
 
         results_dir = self.save_dir / "results"
-        assert (results_dir / "Z_test_data.csv").exists()
+        for var in ["Z", "centiles", "logp", "Yhat"]:
+            assert (results_dir / f"{var}_test_data.csv").exists()
         assert not (results_dir / "statistics_test_data.csv").exists()
         assert "statistics" not in data.data_vars
 

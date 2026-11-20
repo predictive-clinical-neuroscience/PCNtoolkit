@@ -1939,7 +1939,7 @@ class NormData(xr.Dataset):
         Parameters
         ----------
         save_dir : str
-            Where the results are saved, e.g. ``{save_dir}/Z_fit_test.csv``.
+            Where the results are saved, e.g. ``{save_dir}/Z_{name}.csv``.
 
         Returns
         -------
@@ -1949,7 +1949,7 @@ class NormData(xr.Dataset):
         self.save_centiles(save_dir)
         self.save_logp(save_dir)
         self.save_yhat(save_dir)
-        # 'statistics' is only created by the Evaluator
+        # Statistics are only saved if they exist
         if "statistics" in self.data_vars:
             self.save_statistics(save_dir)
 
