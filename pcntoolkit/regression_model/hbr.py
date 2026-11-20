@@ -182,12 +182,14 @@ class HBR(RegressionModel):
             Z-values mapped to Y space
         """
         fn = self.likelihood.forward
-        kwargs = {"Y": np.squeeze(Y.values)[:, None]}
+        kwargs = {"Y": Y.values.reshape(X.sizes["observations"], 1)}
         model = self.likelihood.create_model_with_data(X, be, self.be_maps, Y)
         params = self.likelihood.compile_params(model, X, be, self.be_maps, Y)
         return self.inference_method.apply(fn, model, params, kwargs)
 
-    def backward(self, X, be, Z) -> xr.DataArray:  # type: ignore
+    def backward(
+        self, X: xr.DataArray, be: xr.DataArray, Z: xr.DataArray
+    ) -> xr.DataArray:
         """
         Map Z values to Y space using MCMC samples
 
@@ -207,7 +209,7 @@ class HBR(RegressionModel):
         """
         Y = xr.DataArray(np.zeros_like(Z.values), dims=Z.dims)
         fn = self.likelihood.backward
-        kwargs = kwargs = {"Z": np.squeeze(Z.values)[:, None]}
+        kwargs = {"Z": Z.values.reshape(X.sizes["observations"], 1)}
         model = self.likelihood.create_model_with_data(X, be, self.be_maps, Y)
         params = self.likelihood.compile_params(model, X, be, self.be_maps, Y)
         return self.inference_method.apply(fn, model, params, kwargs)
@@ -413,9 +415,13 @@ class HBR(RegressionModel):
             inference_method=MCMC(**{k: args[k] for k in MCMC_INIT_KEYS if k in args}),
         )
 
-    def compute_yhat(self, data, responsevar, X, be):
+    def compute_yhat(
+        self, data: xr.Dataset, responsevar: str, X: xr.DataArray, be: xr.DataArray
+    ) -> xr.DataArray:
         fn = self.likelihood.yhat
-        Y = xr.DataArray(np.squeeze(data.Y.values), dims=("observations",))
+        Y = xr.DataArray(
+            data.Y.values.reshape(X.sizes["observations"]), dims=("observations",)
+        )
         model = self.likelihood.create_model_with_data(X, be, self.be_maps, Y)
         params = self.likelihood.compile_params(model, X, be, self.be_maps, Y)
         yhat = self.inference_method.apply(fn, model, params, kwargs={})
@@ -579,12 +585,15 @@ class InferenceMethod(ABC):
         return az.extract(logp, "log_likelihood", var_names=["Yhat"]).mean("sample")
 
     def extract_and_reshape(
-        self, post_pred, observations, var_name: str
+        self, post_pred: xr.Dataset, observations: int, var_name: str
     ) -> xr.DataArray:
         preds = post_pred[var_name].values
         if len(preds.shape) == 1:
             preds = np.repeat(preds[None, :], observations, axis=0)
-        return xr.DataArray(np.squeeze(preds), dims=["observations", "sample"])
+        return xr.DataArray(
+            preds.reshape(observations, post_pred.sizes["sample"]),
+            dims=("observations", "sample"),
+        )
 
     def save_data_tree(self, path: str) -> None:
         if self.is_fitted:
