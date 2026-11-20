@@ -128,6 +128,34 @@ class TestNormativeModel:
         assert (moved_dir / "results").exists()
         assert not self.save_dir.exists()
 
+    def test_saveresults_without_evaluation(self) -> None:
+        """Results are saved without statistics when evaluate_model=False."""
+        data = NormData.from_ndarrays(
+            name="test_data",
+            X=self.data["covariates"],
+            Y=self.data["responses"],
+            batch_effects=self.data["batch_effects"],
+            subject_ids=self.data["subject_ids"],
+        )
+        model = NormativeModel(
+            template_regression_model=self.template_model,
+            savemodel=False,
+            evaluate_model=False, # do not evaluate model
+            saveresults=True, # save results
+            saveplots=False,
+            save_dir=str(self.save_dir),
+            inscaler="none",
+            outscaler="none",
+        )
+
+        model.fit_predict(data, data)
+
+        results_dir = self.save_dir / "results"
+        for var in ["Z", "centiles", "logp", "Yhat"]:
+            assert (results_dir / f"{var}_test_data.csv").exists()
+        assert not (results_dir / "statistics_test_data.csv").exists()
+        assert "statistics" not in data.data_vars
+
     def test_model_with_batch_effects(self):
         """Test model with batch effect correction."""
         # Create data with batch effects
