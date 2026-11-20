@@ -14,7 +14,7 @@ and supports both homoskedastic and heteroskedastic noise models.
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Generator, Literal, Optional
+from typing import TYPE_CHECKING, Any, Generator, Literal, Optional
 
 import numpy as np
 import xarray as xr
@@ -32,12 +32,18 @@ from pcntoolkit.regression_model.regression_model import (
     YHAT_Z_MAX,
     RegressionModel,
 )
-from pcntoolkit.util.data_utils import iter_batch_combinations
+from pcntoolkit.util.data_utils import (
+    batch_combination_to_text,
+    iter_batch_combinations,
+)
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
 
 if TYPE_CHECKING:
     from pcntoolkit.dataio.norm_data import NormData
+
+# Minimum subjects per combination of batch effects in BLR.transfer
+MIN_TRANSFER_SUBJECTS = 2
 
 
 class BLR(RegressionModel):
@@ -434,6 +440,19 @@ class BLR(RegressionModel):
             # This creates a list of dictionaries
             # Each dictionary contains a unique combination of batch effects:
             # [{"sex":"F", "site":"A"}, {"sex":"F", "site":"B"}, {"sex":"M", "site":"A"}, {"sex":"M", "site":"B"}]
+            # Combinations without adaptation subjects have no correction
+            unseen = [
+                batch_combination_to_text(t, self.transfered_be_maps)
+                for t, _ in self.be_idx_gen(be, self.transfered_be_maps)
+                if str(tuple(t.values())) not in self.correction_coefficients
+            ]
+            if unseen:
+                raise ValueError(
+                    Output.error(
+                        Errors.ERROR_BLR_TRANSFER_UNSEEN_BATCH_EFFECTS,
+                        batch_effects="; ".join(unseen),
+                    )
+                )
             for t, mask in self.be_idx_gen(be, self.transfered_be_maps):
                 residual_mean, correction_factor = self.correction_coefficients[
                     str(tuple(t.values()))
@@ -540,8 +559,52 @@ class BLR(RegressionModel):
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
         Y: xr.DataArray,
-        **kwargs,
+        **kwargs: Any,
     ) -> BLR:
+        """Adapt a fitted BLR to new batch effects (e.g. a new site).
+
+        For each combination of batch effects (e.g. site x sex), an offset
+        and a scale factor are estimated from the residuals of its ``n``
+        adaptation subjects and applied to the reference prediction.
+
+        Parameters
+        ----------
+        X : xr.DataArray
+            Covariates of the adaptation subjects.
+        be : xr.DataArray
+            Batch effects of the adaptation subjects.
+        be_maps : dict[str, dict[str, int]]
+            Mapping from batch-effect labels to encoded integer ids.
+        Y : xr.DataArray
+            Response variable of the adaptation subjects.
+        **kwargs : Any
+            Unused. Accepted for compatibility with other regression models.
+
+        Returns
+        -------
+        BLR
+            A copy of the model that holds the corrections.
+
+        Raises
+        ------
+        ValueError
+            If a combination has fewer than 2 adaptation subjects.
+        """
+        # With 1 subject the scale is 0 and the Z-scores are infinite
+        too_small = []
+        for t, mask in self.be_idx_gen(be, be_maps):
+            if mask.sum() < MIN_TRANSFER_SUBJECTS:
+                labels = batch_combination_to_text(t, be_maps)
+                too_small.append(f"{labels} (n={int(mask.sum())})")
+        if too_small:
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_BLR_TRANSFER_TOO_FEW_SUBJECTS,
+                    min_subjects=MIN_TRANSFER_SUBJECTS,
+                    batch_effects="; ".join(too_small),
+                )
+            )
+
         # Create synthetic batch effect data
         synth_be = np.tile(
             np.array([list(v.values())[0] for v in self.be_maps.values()]),
@@ -576,10 +639,13 @@ class BLR(RegressionModel):
             # Then we correct the variance
             # The predicted average std is:
             pred_avg_std = np.mean(np.sqrt(synth_s2[mask]))
-            # The actual average std is:
-            real_avg_std = np.mean(np.std(y[mask] - corrected_mean))
+            # The actual std (ddof=1: the mean comes from the same subjects):
+            n_subjects = int(mask.sum())
+            real_avg_std = np.std(y[mask] - corrected_mean, ddof=1)
             # So the predicted average std has to be corrected with a factor of:
             correction_factor = real_avg_std / pred_avg_std
+            # The offset is estimated from n subjects: widen the prediction
+            correction_factor *= np.sqrt(1 + 1 / n_subjects)
 
             # We have to save these correction coefficients:
             transfered_model.correction_coefficients[str(tuple(t.values()))] = (
