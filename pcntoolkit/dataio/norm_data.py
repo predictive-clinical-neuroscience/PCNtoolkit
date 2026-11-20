@@ -492,24 +492,31 @@ class NormData(xr.Dataset):
             data_vars["visits"] = (["observations"], dataframe[visits].to_numpy())
 
         coords["observations"] = list(np.arange(len(dataframe)))
-
         if response_vars is not None and len(response_vars) > 0:
             for respvar in response_vars:
                 if respvar not in dataframe.columns:
                     dataframe[respvar] = np.nan
+
+            response_data = dataframe[response_vars].to_numpy()
+            if response_data.dtype != np.float32:
+                response_data = response_data.astype(np.float64)
+
             data_vars["Y"] = (
                 ["observations", "response_vars"],
-                dataframe[response_vars].to_numpy(),
+                response_data,
             )
             coords["response_vars"] = response_vars
 
         if covariates is not None and len(covariates) > 0:
+            covariate_data = dataframe[covariates].to_numpy()
+            if covariate_data.dtype != np.float32:
+                covariate_data = covariate_data.astype(np.float64)
+
             data_vars["X"] = (
                 ["observations", "covariates"],
-                dataframe[covariates].to_numpy(),
+                covariate_data,
             )
             coords["covariates"] = covariates
-
         if batch_effects is not None and len(batch_effects) > 0:
             data_vars["batch_effects"] = (
                 ["observations", "batch_effect_dims"],
