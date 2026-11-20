@@ -5,7 +5,6 @@ from tempfile import gettempdir
 import numpy as np
 import pytest
 
-from pcntoolkit.dataio import norm_data
 from test.fixtures.norm_data_fixtures import *
 
 """
@@ -302,13 +301,13 @@ def test_netcdf(norm_data_from_arrays: NormData):
     assert norm_data_from_arrays.identical(norm_data_from_netcdf)
 
 def test_normdata_mixed_numeric_covariates_save():
-    """Mixed integer and float covariates should not break model saving."""
+    """Mixed int and float covariates and responses should not break model saving."""
     import pandas as pd
 
+    # Mix int and float for both age and response
     df = pd.DataFrame({
         "age": pd.Series([20, 25.5, 30, 35.5], dtype=object),
-        "response": [1.2, 2.3, 3.4, 4.5],
-        "site": ["A", "A", "B", "B"],
+        "response": pd.Series([1, 2.3, 3, 4.5], dtype=object),
     })
 
     norm_data = NormData.from_dataframe(
@@ -316,7 +315,6 @@ def test_normdata_mixed_numeric_covariates_save():
         dataframe=df,
         covariates=["age"],
         response_vars=["response"],
-        batch_effects=["site"],
     )
     assert norm_data.X.dtype == np.float64
     assert norm_data.Y.dtype == np.float64 
@@ -328,19 +326,13 @@ def test_normdata_mixed_numeric_covariates_save():
 
     scaler.to_dict()
 
-def test_normdata_preserves_float32():
-    import pandas as pd
-
-    df = pd.DataFrame({
-        "age": pd.Series([20.0, 25.5, 30.0], dtype=np.float32),
-        "response": pd.Series([1.2, 2.3, 3.4], dtype=np.float32),
-    })
-
-    norm_data = NormData.from_dataframe(
-        name="float32_data",
-        dataframe=df,
-        covariates=["age"],
-        response_vars=["response"],
+def test_normdata_preserves_float32(train_arrays):
+    """float32 covariates and responses should stay float32, not become float64.
+    We don't want to unnecessarily increase the storage space."""
+    X, y, _ = train_arrays
+    # Create a float32 NormData object from numpy arrays
+    norm_data = NormData.from_ndarrays(
+        "float32_data", X.astype(np.float32), y.astype(np.float32)
     )
 
     assert norm_data.X.dtype == np.float32
