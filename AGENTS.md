@@ -17,6 +17,7 @@ ALWAYS follow our contribution guidelines. Fetch and read these before contribut
 - `master` is the release branch, 
 - `dev` is the active development branch. 
 - Every contributor MUST work on a feature branch based on `dev` and the branch MUST follow the name conventions: <github-username>/<short-feature-description>. 
+- Discuss the change in an issue first; open a PR only after a maintainer accepts it.
 - Pull requests must point to `dev`. 
 - Every Pull Request MUST define if AI was used to generate the code
 

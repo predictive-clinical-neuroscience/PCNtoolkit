@@ -32,7 +32,6 @@ All distributions support random sampling and log-probability calculations.
 from functools import lru_cache
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-import dask.array as da
 import numpy as np
 import scipy.special as spp  # type: ignore
 from numpy.random import Generator
@@ -46,6 +45,8 @@ from pytensor.scalar.basic import BinaryScalarOp, upgrade_to_float
 from pytensor.tensor import as_tensor_variable  # type: ignore
 from pytensor.tensor.elemwise import Elemwise
 from pytensor.tensor.random.op import RandomVariable  # type: ignore
+
+from pcntoolkit.util.data_utils import dedupe, elementwise
 
 # pylint: disable=arguments-differ
 
@@ -68,36 +69,49 @@ def S_inv(
     return np.sinh((np.arcsinh(x) + e) / d)
 
 
-# def K(p: NDArray[np.float64], x: float) -> NDArray[np.float64]:
-#     """Bessel function of the second kind for unique values.
-#     """
-#     ps, idxs = np.unique(p, return_inverse=True)
-#     return spp.kv(ps, x)[idxs].reshape(p.shape)
+def K(
+    p: Union[float, ArrayLike], x: float, chunks: Any = None
+) -> Union[float, NDArray[np.float64]]:
+    """Modified Bessel function of the second kind, ``K_p(x)``.
 
+    Computed once per repeated value of ``p`` (see ``dedupe``).
 
-# def K(p: NDArray[np.float64], x: float) -> NDArray[np.float64]:
-#     """Bessel function of the second kind for unique values."""
-#     return spp.kv(p, x)
+    Parameters
+    ----------
+    p : float or array_like
+        Orders.
+    x : float
+        Argument.
+    chunks : Any, optional
+        Not used. Kept for backward compatibility.
 
-
-# Fast version 3: Dask parallelized (best for large arrays, multi-core)
-def K(p, x, chunks=None):
+    Returns
+    -------
+    float or NDArray[np.float64]
+        ``K_p(x)``, with the shape of ``p``.
+    """
     if isinstance(p, float):
         return spp.kv(p, x)
-    return da.map_blocks(
-        lambda c: spp.kv(c, x),
-        da.from_array(p, chunks=chunks or "auto"),
-        dtype=np.float64,
-    )
+    values, expand = dedupe(p)
+    return expand(elementwise(lambda v: spp.kv(v, x), values)[0])
 
 
-def P(q: NDArray[np.float64]) -> NDArray[np.float64]:
-    """The P function as given in Jones et al."""
+def _P(q: NDArray[np.float64]) -> NDArray[np.float64]:
     frac = np.exp(1 / 4) / np.sqrt(8 * np.pi)
-    K1 = K((q + 1) / 2, 1 / 4, chunks=(1000, 1000))
-    K2 = K((q - 1) / 2, 1 / 4, chunks=(1000, 1000))
-    a = (K1 + K2) * frac
-    return a
+    K1 = spp.kv((q + 1) / 2, 1 / 4)
+    K2 = spp.kv((q - 1) / 2, 1 / 4)
+    return (K1 + K2) * frac
+
+
+def P(q: Union[float, ArrayLike]) -> Union[float, NDArray[np.float64]]:
+    """The P function as given in Jones et al.
+
+    Computed once per repeated value of ``q`` (see ``dedupe``).
+    """
+    if np.ndim(q) == 0:
+        return _P(q)  # type: ignore[arg-type]
+    values, expand = dedupe(q)
+    return expand(elementwise(_P, values)[0])
 
 
 def m(
@@ -115,11 +129,35 @@ def m(
     return frac1 * acc
 
 
-def m1m2(epsilon: float, delta: float) -> Tuple[float, float]:
-    inv_delta = 1.0 / delta
-    two_inv_delta = 2.0 * inv_delta
-    p1 = P(inv_delta)
-    p2 = P(two_inv_delta)
+def m1m2(
+    epsilon: Union[float, ArrayLike], delta: Union[float, ArrayLike]
+) -> Tuple[Any, Any]:
+    """Mean and raw second moment of the SHASH distribution (Jones et al.).
+
+    ``P`` is computed once per repeated value of ``delta`` (see ``dedupe``).
+
+    Parameters
+    ----------
+    epsilon : float or array_like
+        Skewness parameter.
+    delta : float or array_like
+        Tail weight parameter.
+
+    Returns
+    -------
+    mean : float or NDArray[np.float64]
+        First moment.
+    raw_second : float or NDArray[np.float64]
+        Raw (uncentered) second moment.
+    """
+    if np.ndim(delta) == 0:
+        inv_delta = 1.0 / delta  # type: ignore[operator]
+        p1, p2 = _P(inv_delta), _P(2.0 * inv_delta)
+    else:
+        values, expand = dedupe(delta)
+        inv_delta = 1.0 / values
+        two_inv_delta = 2.0 * inv_delta
+        p1, p2 = map(expand, elementwise(_P, inv_delta, two_inv_delta))
     eps_delta = epsilon / delta
     sinh_eps_delta = np.sinh(eps_delta)
     cosh_2eps_delta = np.cosh(2 * eps_delta)

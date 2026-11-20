@@ -8,7 +8,7 @@ This page describes the future goals of PCNtoolkit.
 
 **Extend longitudinal normative modelling**
 
-* Version 1.4.0 added the z-diff score (`Bučková et al., 2025 <https://elifesciences.org/reviewed-preprints/95823>`_), and the velocity models (z-gain score, thrivelines; `Bayer et al., 2026 (preprint) <https://arxiv.org/abs/2601.07591>`_).
+* Version 1.4.0 added the z-diff score (`Bučková et al., 2025 <https://doi.org/10.7554/eLife.95823>`_), and the velocity models (z-gain score, thrivelines; `Bayer et al., 2026 (preprint) <https://arxiv.org/abs/2601.07591>`_).
 * Forecast a subject's future z-score from their full visit history (conditional forecasting).
 * Compute z-gain from all of a subject's visits, not only the last two.
 * Compute your own correlation matrix.

@@ -17,6 +17,7 @@ Tutorials
    04_HBR_SHASH
    05_HBR_Beta
    15_HBR_ZINB
+   17_HBR_Laplace
    07_model_comparison
    13_evaluation_metrics
    08_cluster

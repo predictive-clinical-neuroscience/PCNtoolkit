@@ -56,8 +56,8 @@ class NormativeModel:
         Whether to save the results.
     saveplots : bool
         Whether to save the plots.
-    save_dir : str
-        Directory to save the model, results, and plots.
+    save_dir : str or None
+        Directory to save the model, results, and plots. Default is None.
     inscaler : str
         Input (X/covariates) scaler to use.
     outscaler: str
@@ -90,7 +90,11 @@ class NormativeModel:
         self.evaluate_model: bool = evaluate_model
         self.saveresults: bool = saveresults
         self.saveplots: bool = saveplots
-        self._save_dir = save_dir if save_dir is not None else get_default_save_dir()
+        if save_dir is None:
+            save_dir = get_default_save_dir()
+            if savemodel or saveresults or saveplots:
+                Output.print(Messages.NO_SAVE_DIR_SPECIFIED, save_dir=save_dir)
+        self._save_dir = save_dir
         self.inscaler: str = inscaler
         self.outscaler: str = outscaler
         self.y_transform: Optional[str] = y_transform
@@ -548,9 +552,24 @@ class NormativeModel:
         into : NormBase, optional
             The normative model to load the data into. If None, a new normative model is created.
             This is useful if you want to load a normative model into an existing normative model, for example in the runner.
+
+        Raises
+        ------
+        TypeError
+            If ``path`` is not a string, e.g. None.
+        FileNotFoundError
+            If ``path`` does not exist.
         """
-        assert isinstance(path, str), f"Path must be a string, got {type(path)}"
-        assert os.path.exists(path), f"Path {path} does not exist"
+        if not isinstance(path, str):
+            raise TypeError(
+                Output.error(
+                    Errors.ERROR_LOAD_PATH_NOT_STRING, path_type=type(path).__name__
+                )
+            )
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                Output.error(Errors.ERROR_LOAD_PATH_NOT_FOUND, path=path)
+            )
         model_path = os.path.join(path, "model", "normative_model.json")
         with open(model_path, mode="r", encoding="utf-8") as f:
             metadata = json.load(f)

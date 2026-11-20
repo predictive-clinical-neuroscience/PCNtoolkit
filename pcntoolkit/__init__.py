@@ -23,7 +23,7 @@ from .math_functions.likelihood import (
 from .math_functions.prior import make_prior
 from .normative_model import NormativeModel
 from .regression_model.blr import BLR
-from .regression_model.hbr import HBR
+from .regression_model.hbr import HBR, MCMC, Laplace
 from .util.plotter import (
     plot_centiles,
     plot_centiles_advanced,
@@ -45,6 +45,8 @@ __all__ = [
     "CorrelationMatrix",
     "BLR",
     "HBR",
+    "MCMC",
+    "Laplace",
     "BetaLikelihood",
     "NormalLikelihood",
     "SHASHbLikelihood",
