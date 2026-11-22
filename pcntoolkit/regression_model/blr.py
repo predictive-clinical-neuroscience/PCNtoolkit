@@ -14,22 +14,36 @@ and supports both homoskedastic and heteroskedastic noise models.
 from __future__ import annotations
 
 import copy
-from typing import Generator, Literal, Optional
+from typing import TYPE_CHECKING, Any, Generator, Literal, Optional
 
 import numpy as np
 import xarray as xr
 from scipy import linalg, optimize  # type: ignore
 from scipy.linalg import LinAlgError  # type: ignore
+from scipy.stats import norm  # type: ignore
 
 from pcntoolkit.math_functions.basis_function import (
     BasisFunction,
     create_basis_function,
 )
 from pcntoolkit.math_functions.warp import *
-from pcntoolkit.regression_model.regression_model import RegressionModel
-from pcntoolkit.util.data_utils import iter_batch_combinations
+from pcntoolkit.regression_model.regression_model import (
+    YHAT_N_Z,
+    YHAT_Z_MAX,
+    RegressionModel,
+)
+from pcntoolkit.util.data_utils import (
+    batch_combination_to_text,
+    iter_batch_combinations,
+)
 from pcntoolkit.util.migration import registry
 from pcntoolkit.util.output import Errors, Messages, Output, Warnings
+
+if TYPE_CHECKING:
+    from pcntoolkit.dataio.norm_data import NormData
+
+# Minimum subjects per combination of batch effects in BLR.transfer
+MIN_TRANSFER_SUBJECTS = 2
 
 
 class BLR(RegressionModel):
@@ -347,30 +361,8 @@ class BLR(RegressionModel):
         """
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.BLR_MODEL_NOT_FITTED))
-        np_X = X.values
-        if self.transfered:
-            # Create synthetic batch effect data
-            np_be = np.tile(
-                np.array([list(v.values())[0] for v in self.be_maps.values()]),
-                (X.shape[0], 1),
-            )
-        else:
-            np_be = be.values
         np_Y = Y.values
-        self.ys_s2(np_X, np_be)
-
-        if self.transfered:
-            # Loop over the unique batch effects:
-            # This creates a list of dictionaries
-            # Each dictionary contains a unique combination of batch effects:
-            # [{"sex":"F", "site":"A"}, {"sex":"F", "site":"B"}, {"sex":"M", "site":"A"}, {"sex":"M", "site":"B"}]
-            for t, mask in self.be_idx_gen(be, self.transfered_be_maps):
-                residual_mean, correction_factor = self.correction_coefficients[
-                    str(tuple(t.values()))
-                ]
-
-                self.ys[mask] = self.ys[mask] + residual_mean
-                self.s2[mask] = np.square(np.sqrt(self.s2[mask]) * correction_factor)
+        self.predictive_ys_s2(X, be)
 
         if self.warp:
             warped_y = self.warp.f(np_Y, self.gamma)
@@ -402,6 +394,36 @@ class BLR(RegressionModel):
         """
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.BLR_MODEL_NOT_FITTED))
+        np_Z = Z.values
+        self.predictive_ys_s2(X, be)
+
+        # Compute the centiles in the original Y space: centiles = Z * std + mean
+        centiles = np_Z * np.sqrt(self.s2) + self.ys
+        if self.warp:
+            centiles = self.warp.invf(centiles, self.gamma)
+
+        return xr.DataArray(centiles, dims=("observations",))
+
+    def predictive_ys_s2(
+        self, X: xr.DataArray, be: xr.DataArray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Compute the predictive mean and variance in the latent (warped) space.
+
+        For a transferred model, the per-batch-effect corrections are applied.
+        The results are also stored in ``self.ys`` and ``self.s2``.
+
+        Parameters
+        ----------
+        X : xr.DataArray
+            Covariate data
+        be : xr.DataArray
+            Batch effect data
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            Predictive mean ``ys`` and variance ``s2``, one value per observation.
+        """
         np_X = X.values
         if self.transfered:
             # Create synthetic batch effect data
@@ -411,9 +433,26 @@ class BLR(RegressionModel):
             )
         else:
             np_be = be.values
-        np_Z = Z.values
         self.ys_s2(np_X, np_be)
+
         if self.transfered:
+            # Loop over the unique batch effects:
+            # This creates a list of dictionaries
+            # Each dictionary contains a unique combination of batch effects:
+            # [{"sex":"F", "site":"A"}, {"sex":"F", "site":"B"}, {"sex":"M", "site":"A"}, {"sex":"M", "site":"B"}]
+            # Combinations without adaptation subjects have no correction
+            unseen = [
+                batch_combination_to_text(t, self.transfered_be_maps)
+                for t, _ in self.be_idx_gen(be, self.transfered_be_maps)
+                if str(tuple(t.values())) not in self.correction_coefficients
+            ]
+            if unseen:
+                raise ValueError(
+                    Output.error(
+                        Errors.ERROR_BLR_TRANSFER_UNSEEN_BATCH_EFFECTS,
+                        batch_effects="; ".join(unseen),
+                    )
+                )
             for t, mask in self.be_idx_gen(be, self.transfered_be_maps):
                 residual_mean, correction_factor = self.correction_coefficients[
                     str(tuple(t.values()))
@@ -421,13 +460,48 @@ class BLR(RegressionModel):
 
                 self.ys[mask] = self.ys[mask] + residual_mean
                 self.s2[mask] = np.square(np.sqrt(self.s2[mask]) * correction_factor)
+        return self.ys, self.s2
 
-        # Compute the centiles in the original Y space: centiles = Z * std + mean
-        centiles = np_Z * np.sqrt(self.s2) + self.ys
+    def compute_yhat(
+        self, data: NormData, responsevar: str, X: xr.DataArray, be: xr.DataArray
+    ) -> np.ndarray:
+        """Compute the predicted mean of Y for each observation.
+
+        Same result as ``RegressionModel.compute_yhat``, which calls
+        ``backward`` once for each of 200 Z values. Here the predictive mean
+        and variance are computed once and the 200 Z values are mapped in
+        one array operation.
+
+        Parameters
+        ----------
+        data : NormData
+            Data of one response variable (only used for its size).
+        responsevar : str
+            Name of the response variable, for the progress message.
+        X : xr.DataArray
+            Covariate data
+        be : xr.DataArray
+            Batch effect data
+
+        Returns
+        -------
+        np.ndarray
+            Predicted mean of Y, one value per observation.
+        """
+        if not self.is_fitted:
+            raise ValueError(Output.error(Errors.BLR_MODEL_NOT_FITTED))
+        Z_space = np.linspace(-YHAT_Z_MAX, YHAT_Z_MAX, YHAT_N_Z)
+        Output.print(Messages.COMPUTING_YHAT_MODEL, model_name=responsevar)
+        ys, s2 = self.predictive_ys_s2(X, be)
+        # Column i is backward() at Z = Z_space[i]: Z * std + mean.
+        Y_space = (
+            Z_space[np.newaxis, :] * np.sqrt(s2)[:, np.newaxis] + ys[:, np.newaxis]
+        )
         if self.warp:
-            centiles = self.warp.invf(centiles, self.gamma)
-
-        return xr.DataArray(centiles, dims=("observations",))
+            Y_space = self.warp.invf(Y_space, self.gamma)
+        Z_pdf = norm.pdf(Z_space)
+        Y_space *= Z_pdf
+        return Y_space.sum(axis=1) / Z_pdf.sum()
 
     def elemwise_logp(
         self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
@@ -454,25 +528,8 @@ class BLR(RegressionModel):
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.BLR_MODEL_NOT_FITTED))
 
-        np_X = X.values
-        if self.transfered:
-            # Create synthetic batch effect data
-            np_be = np.tile(
-                np.array([list(v.values())[0] for v in self.be_maps.values()]),
-                (X.shape[0], 1),
-            )
-        else:
-            np_be = be.values
         np_Y = Y.values
-        self.ys_s2(np_X, np_be)
-
-        if self.transfered:
-            for t, mask in self.be_idx_gen(be, self.transfered_be_maps):
-                residual_mean, correction_factor = self.correction_coefficients[
-                    str(tuple(t.values()))
-                ]
-                self.ys[mask] = self.ys[mask] + residual_mean
-                self.s2[mask] = np.square(np.sqrt(self.s2[mask]) * correction_factor)
+        self.predictive_ys_s2(X, be)
 
         ys = self.ys
         s2 = self.s2
@@ -502,8 +559,52 @@ class BLR(RegressionModel):
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
         Y: xr.DataArray,
-        **kwargs,
+        **kwargs: Any,
     ) -> BLR:
+        """Adapt a fitted BLR to new batch effects (e.g. a new site).
+
+        For each combination of batch effects (e.g. site x sex), an offset
+        and a scale factor are estimated from the residuals of its ``n``
+        adaptation subjects and applied to the reference prediction.
+
+        Parameters
+        ----------
+        X : xr.DataArray
+            Covariates of the adaptation subjects.
+        be : xr.DataArray
+            Batch effects of the adaptation subjects.
+        be_maps : dict[str, dict[str, int]]
+            Mapping from batch-effect labels to encoded integer ids.
+        Y : xr.DataArray
+            Response variable of the adaptation subjects.
+        **kwargs : Any
+            Unused. Accepted for compatibility with other regression models.
+
+        Returns
+        -------
+        BLR
+            A copy of the model that holds the corrections.
+
+        Raises
+        ------
+        ValueError
+            If a combination has fewer than 2 adaptation subjects.
+        """
+        # With 1 subject the scale is 0 and the Z-scores are infinite
+        too_small = []
+        for t, mask in self.be_idx_gen(be, be_maps):
+            if mask.sum() < MIN_TRANSFER_SUBJECTS:
+                labels = batch_combination_to_text(t, be_maps)
+                too_small.append(f"{labels} (n={int(mask.sum())})")
+        if too_small:
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_BLR_TRANSFER_TOO_FEW_SUBJECTS,
+                    min_subjects=MIN_TRANSFER_SUBJECTS,
+                    batch_effects="; ".join(too_small),
+                )
+            )
+
         # Create synthetic batch effect data
         synth_be = np.tile(
             np.array([list(v.values())[0] for v in self.be_maps.values()]),
@@ -538,10 +639,13 @@ class BLR(RegressionModel):
             # Then we correct the variance
             # The predicted average std is:
             pred_avg_std = np.mean(np.sqrt(synth_s2[mask]))
-            # The actual average std is:
-            real_avg_std = np.mean(np.std(y[mask] - corrected_mean))
+            # The actual std (ddof=1: the mean comes from the same subjects):
+            n_subjects = int(mask.sum())
+            real_avg_std = np.std(y[mask] - corrected_mean, ddof=1)
             # So the predicted average std has to be corrected with a factor of:
             correction_factor = real_avg_std / pred_avg_std
+            # The offset is estimated from n subjects: widen the prediction
+            correction_factor *= np.sqrt(1 + 1 / n_subjects)
 
             # We have to save these correction coefficients:
             transfered_model.correction_coefficients[str(tuple(t.values()))] = (

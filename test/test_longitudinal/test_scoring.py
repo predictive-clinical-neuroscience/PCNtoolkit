@@ -1,113 +1,22 @@
-"""Tests for CorrelationMatrix, ZGainScore, and ZDiffScore."""
+"""Tests for VelocityModel and ZDiffScore."""
 
 from __future__ import annotations
-
-import warnings
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from pcntoolkit.dataio.norm_data import NormData
-from pcntoolkit.longitudinal_score.zdiff_score import ZDiffScore
-from pcntoolkit.longitudinal_score.zgain_score import ZGainScore
-from pcntoolkit.math_functions.correlation_matrix import CorrelationMatrix
+from pcntoolkit.longitudinal.correlation_matrix import CorrelationMatrix
+from pcntoolkit.longitudinal.velocity_model import VelocityModel
+from pcntoolkit.longitudinal.zdiff_score import ZDiffScore
 from test.test_longitudinal.conftest import (
     expected_zgain,
-    make_cross_sectional_norm_data,
     set_z_scores,
 )
 
 # ------------------------------------------------------------------ #
-# CorrelationMatrix
-# ------------------------------------------------------------------ #
-
-
-def test_correlation_matrix_compute_from_longitudinal_cohort(
-    longitudinal_cohort_norm_data,
-):
-    corr = CorrelationMatrix.compute(
-        longitudinal_cohort_norm_data,
-        bandwidth=1,
-        covariate="age",
-    )
-
-    assert corr.n_subjects == 30
-    assert corr.estimated_range == (10, 11)
-    assert corr.matrix.dims == ("response_vars", "age_1", "age_2")
-    assert np.allclose(np.diagonal(corr.matrix.values[0]), 1.0)
-
-
-def test_correlation_matrix_compute_rejects_cross_sectional(
-    predicted_norm_data_factory,
-):
-    data = make_cross_sectional_norm_data(predicted_norm_data_factory)
-    with pytest.raises(
-        ValueError, match="single-visit|cross-sectional|multiple visits"
-    ):
-        CorrelationMatrix.compute(data, bandwidth=1)
-
-
-def test_correlation_matrix_compute_rejects_missing_z(longitudinal_cohort_norm_data):
-    data = longitudinal_cohort_norm_data.drop_vars("Z")
-    with pytest.raises(ValueError, match="'Z'"):
-        CorrelationMatrix.compute(data, bandwidth=1)
-
-
-def test_correlation_matrix_invalid_max_correlation(correlation_matrix_array_factory):
-    matrix = correlation_matrix_array_factory()
-    with pytest.raises(ValueError, match="max_correlation"):
-        CorrelationMatrix(matrix, max_correlation=1.0)
-
-
-def test_correlation_matrix_save_not_implemented(correlation_matrix):
-    with pytest.raises(NotImplementedError):
-        correlation_matrix.save("/tmp/unused.pkl")
-
-
-@pytest.mark.parametrize(
-    ("age_1", "age_2", "expected_r"),
-    [
-        (0, 1, 0.8),
-        (1, 0, 0.8),
-        (-5, 1, 0.8),
-        (99, 4, 0.8),
-    ],
-    ids=["forward", "symmetric", "clamp_low", "clamp_high"],
-)
-def test_correlation_matrix_get_clamps_ages(
-    correlation_matrix,
-    age_1,
-    age_2,
-    expected_r,
-):
-    assert correlation_matrix.get("metric_a", age_1, age_2) == pytest.approx(expected_r)
-
-
-def test_correlation_matrix_get_respects_max_correlation(
-    correlation_matrix_array_factory,
-):
-    matrix = correlation_matrix_array_factory(offset_correlations={1: 0.999})
-    corr = CorrelationMatrix(matrix, max_correlation=0.5)
-    assert corr.get("metric_a", 0, 1) == pytest.approx(0.5)
-
-
-def test_correlation_matrix_get_warns_outside_estimated_range(correlation_matrix):
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        correlation_matrix.get("metric_a", 99, 100)
-
-    assert len(caught) == 1
-    assert issubclass(caught[0].category, UserWarning)
-
-
-def test_correlation_matrix_get_unknown_response_var_raises(correlation_matrix):
-    with pytest.raises(KeyError, match="metric_b"):
-        correlation_matrix.get("metric_b", 0, 1)
-
-
-# ------------------------------------------------------------------ #
-# ZGainScore — formula and edge cases
+# VelocityModel — formula and edge cases
 # ------------------------------------------------------------------ #
 
 
@@ -118,7 +27,7 @@ def zgain_setup(
     blr_longitudinal_dataframe_factory,
     blr_predicted_norm_data_factory,
 ):
-    """Return a builder for a ZGainScore scorer and matching predicted NormData."""
+    """Return a builder for a VelocityModel scorer and matching predicted NormData."""
 
     def _build(
         *,
@@ -127,7 +36,7 @@ def zgain_setup(
         visits_subject_a: tuple[int, int] = (1, 2),
         r: float = 0.8,
         extra_visits: list[int] | None = None,
-    ) -> tuple[ZGainScore, NormData, CorrelationMatrix]:
+    ) -> tuple[VelocityModel, NormData, CorrelationMatrix]:
         df = blr_longitudinal_dataframe_factory(extra_visits=extra_visits)
         if extra_visits is None:
             mask = df["sub_id"] == "a"
@@ -145,7 +54,7 @@ def zgain_setup(
             covariate="covariate_0",
             estimated_range=(0, 25),
         )
-        scorer = ZGainScore(fitted_norm_blr_model, corr)
+        scorer = VelocityModel(fitted_norm_blr_model, corr)
         return scorer, data, corr
 
     return _build
@@ -210,7 +119,7 @@ def test_zgain_sorts_by_visit_label_not_row_order(
         covariate="covariate_0",
     )
     corr = CorrelationMatrix(matrix, covariate="covariate_0", estimated_range=(0, 25))
-    scores = ZGainScore(fitted_norm_blr_model, corr).score(data)
+    scores = VelocityModel(fitted_norm_blr_model, corr).score(data)
     assert scores.sel(
         subjects="a", response_vars="response_var_0"
     ).item() == pytest.approx(expected_zgain(z_prev, z_last, r))
@@ -236,7 +145,7 @@ def test_zgain_leaves_single_visit_subject_as_nan(
         covariate="covariate_0",
     )
     corr = CorrelationMatrix(matrix, covariate="covariate_0", estimated_range=(0, 25))
-    scores = ZGainScore(fitted_norm_blr_model, corr).score(data)
+    scores = VelocityModel(fitted_norm_blr_model, corr).score(data)
     assert np.isnan(scores.sel(subjects="b", response_vars="response_var_0").item())
     assert np.isfinite(scores.sel(subjects="a", response_vars="response_var_0").item())
 
@@ -247,7 +156,7 @@ def test_zgain_caches_and_overwrites_on_rescore(
     blr_longitudinal_dataframe_factory,
     blr_predicted_norm_data_factory,
 ):
-    scorer = ZGainScore(fitted_norm_blr_model, blr_correlation_matrix)
+    scorer = VelocityModel(fitted_norm_blr_model, blr_correlation_matrix)
     data_v1 = blr_predicted_norm_data_factory(
         blr_longitudinal_dataframe_factory(),
         z_values=np.array([[0.0], [1.0], [0.0], [0.0]]),
@@ -268,10 +177,21 @@ def test_zgain_rejects_unpredicted_data(
     blr_correlation_matrix,
     blr_predicted_longitudinal_norm_data,
 ):
-    scorer = ZGainScore(fitted_norm_blr_model, blr_correlation_matrix)
+    scorer = VelocityModel(fitted_norm_blr_model, blr_correlation_matrix)
     bad = blr_predicted_longitudinal_norm_data.drop_vars("Z")
     with pytest.raises(ValueError, match="'Z'"):
         scorer.score(bad)
+
+
+def test_zgain_does_not_need_yhat(
+    fitted_norm_blr_model,
+    blr_correlation_matrix,
+    blr_predicted_longitudinal_norm_data,
+):
+    scorer = VelocityModel(fitted_norm_blr_model, blr_correlation_matrix)
+    data = blr_predicted_longitudinal_norm_data.drop_vars("Yhat")
+    scores = scorer.score(data)
+    assert scores.sizes["subjects"] == 2
 
 
 def test_zgain_rejects_duplicate_visit_labels(
@@ -280,7 +200,7 @@ def test_zgain_rejects_duplicate_visit_labels(
     blr_longitudinal_dataframe_factory,
     blr_predicted_norm_data_factory,
 ):
-    scorer = ZGainScore(fitted_norm_blr_model, blr_correlation_matrix)
+    scorer = VelocityModel(fitted_norm_blr_model, blr_correlation_matrix)
     data = blr_predicted_norm_data_factory(
         blr_longitudinal_dataframe_factory(duplicate_visits=True)
     )
@@ -303,7 +223,7 @@ def test_zgain_subject_order_follows_first_appearance(
         max_age=50,
     )
     corr = CorrelationMatrix(matrix, covariate="covariate_0", estimated_range=(0, 50))
-    scores = ZGainScore(fitted_norm_blr_model, corr).score(data)
+    scores = VelocityModel(fitted_norm_blr_model, corr).score(data)
     assert list(scores.coords["subjects"].values) == ["a", "b", "c"]
 
 
@@ -329,7 +249,7 @@ def test_zdiff_score_scales_by_reference_spread(
     score_data = blr_predicted_norm_data_factory(score_df, yhat_values=yhat)
     score_data["Y"] = (["observations", "response_vars"], y)
 
-    scorer = ZDiffScore(fitted_norm_blr_model, reference, subject_id_col="sub_id")
+    scorer = ZDiffScore(fitted_norm_blr_model, reference)
     scores = scorer.score(score_data)
 
     ref_deltas = list(
@@ -356,7 +276,7 @@ def test_zdiff_doubles_when_target_change_doubles(
         data = blr_predicted_norm_data_factory(base_df)
         y = np.array([[y_pair[0]], [y_pair[1]]])
         data["Y"] = (["observations", "response_vars"], y)
-        scorer = ZDiffScore(fitted_norm_blr_model, reference, subject_id_col="sub_id")
+        scorer = ZDiffScore(fitted_norm_blr_model, reference)
         return float(scorer.score(data).sel(subjects="a").item())
 
     small = _score_with_y((10.0, 11.0))
@@ -376,7 +296,7 @@ def test_zdiff_visit_order_not_row_order(
     y = np.array([[5.0], [8.0]])
     score_data = blr_predicted_norm_data_factory(score_df, yhat_values=y.copy())
 
-    scorer = ZDiffScore(fitted_norm_blr_model, reference, subject_id_col="sub_id")
+    scorer = ZDiffScore(fitted_norm_blr_model, reference)
     scores = scorer.score(score_data)
     assert np.isfinite(scores.sel(subjects="a").item())
 
@@ -390,7 +310,7 @@ def test_zdiff_zero_reference_variability_raises(
     flat = blr_predicted_norm_data_factory(df, yhat_values=np.zeros((4, 1)))
     flat["Yhat"] = (["observations", "response_vars"], flat.Y.values.copy())
 
-    scorer = ZDiffScore(fitted_norm_blr_model, flat, subject_id_col="sub_id")
+    scorer = ZDiffScore(fitted_norm_blr_model, flat)
     target = blr_predicted_norm_data_factory(
         blr_longitudinal_dataframe_factory(n_subjects=1)
     )
@@ -409,7 +329,6 @@ def test_zdiff_rejects_non_blr_model(blr_predicted_longitudinal_norm_data):
         ZDiffScore(
             _NotBlrModel(),  # type: ignore[arg-type]
             blr_predicted_longitudinal_norm_data,
-            subject_id_col="sub_id",
         )
 
 
@@ -422,7 +341,7 @@ def test_zdiff_rejects_more_than_two_visits(
     score_data = blr_predicted_norm_data_factory(
         blr_longitudinal_dataframe_factory(n_subjects=1, extra_visits=[1, 2, 3])
     )
-    scorer = ZDiffScore(fitted_norm_blr_model, reference, subject_id_col="sub_id")
+    scorer = ZDiffScore(fitted_norm_blr_model, reference)
     with pytest.raises(ValueError, match="at most two visits"):
         scorer.score(score_data)
 
@@ -435,7 +354,7 @@ def test_zdiff_caches_result(
 ):
     reference = blr_predicted_longitudinal_norm_data
     target = blr_predicted_norm_data_factory(blr_longitudinal_dataframe_factory())
-    scorer = ZDiffScore(fitted_norm_blr_model, reference, subject_id_col="sub_id")
+    scorer = ZDiffScore(fitted_norm_blr_model, reference)
     first = scorer.score(target)
     assert scorer.zdiff is first
     second = scorer.score(target)
@@ -450,5 +369,43 @@ def test_zdiff_requires_reference_at_init(
         ZDiffScore(
             fitted_norm_blr_model,
             None,  # type: ignore[arg-type]
-            subject_id_col="sub_id",
         )
+
+
+# ------------------------------------------------------------------ #
+# Saving scores to CSV
+# ------------------------------------------------------------------ #
+
+
+@pytest.mark.parametrize("score_type", ["zgain", "zdiff"])
+def test_saved_scores_match_returned_scores(
+    score_type,
+    tmp_path,
+    fitted_norm_blr_model,
+    blr_correlation_matrix,
+    blr_predicted_longitudinal_norm_data,
+    blr_longitudinal_dataframe_factory,
+    blr_predicted_norm_data_factory,
+):
+    if score_type == "zgain":
+        scorer = VelocityModel(fitted_norm_blr_model, blr_correlation_matrix)
+    else:
+        scorer = ZDiffScore(fitted_norm_blr_model, blr_predicted_longitudinal_norm_data)
+    data = blr_predicted_norm_data_factory(
+        blr_longitudinal_dataframe_factory(),
+        z_values=np.array([[0.0], [1.0], [0.5], [-0.3]]),
+    )
+    save_path = tmp_path / f"{score_type}.csv"
+
+    scores = scorer.score(data, save_path=save_path)
+
+    saved = pd.read_csv(save_path, index_col=0)
+    # Compare contents only: ignore column order, index/column names, and the
+    # text dtype of subject ids.
+    pd.testing.assert_frame_equal(
+        saved,
+        scores.to_pandas(),
+        check_like=True,
+        check_names=False,
+        check_index_type=False,
+    )

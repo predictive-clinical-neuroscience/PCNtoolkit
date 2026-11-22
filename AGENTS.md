@@ -17,6 +17,7 @@ ALWAYS follow our contribution guidelines. Fetch and read these before contribut
 - `master` is the release branch, 
 - `dev` is the active development branch. 
 - Every contributor MUST work on a feature branch based on `dev` and the branch MUST follow the name conventions: <github-username>/<short-feature-description>. 
+- Discuss the change in an issue first; open a PR only after a maintainer accepts it.
 - Pull requests must point to `dev`. 
 - Every Pull Request MUST define if AI was used to generate the code
 
@@ -53,7 +54,7 @@ For more detailed software architecture fetch and read the [architecture descrip
 
 You MUST use these CLI tools for the corresponding tasks (check `--help` for exact commands):
 
-- **conda** -  virtual environment setup (fetch and follow the guidelines from https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html)
+- **conda** or **uv** - virtual environment setup (`make dev-setup` for conda, `make uv-dev-setup` for uv; fetch and follow the guidelines from https://pcntoolkit.readthedocs.io/en/stable/pages/contributing.html)
 - **ruff** - lint and format.
 - **pytest** - tests, under `test/`
 - **gh** - branches and PRs

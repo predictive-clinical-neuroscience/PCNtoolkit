@@ -23,12 +23,13 @@ from __future__ import annotations
 
 import functools
 import importlib.metadata
+import warnings
 from typing import Callable, Literal
 
 # Use the "packaging" module to read also "post1" versions
 from packaging.version import Version
 
-from pcntoolkit.util.output import Output, Warnings
+from pcntoolkit.util.output import Errors, Output, Warnings
 
 
 @functools.cache
@@ -172,11 +173,14 @@ class MigrationRegistry:
         # Apply migrations in ascending version order.
         for introduced_in, fn in self._migrations[component]:
             if saved_version < introduced_in:
-                # Emit an informational message that migration is running.
-                Output.warning(
-                    Warnings.MODEL_MIGRATION_APPLIED,
-                    saved_version=str(saved_version),
-                    current_version=current_version,
+                # Use warnings.warn, not Output.warning: otherwise the warning
+                # may show more than once per saved version.
+                warnings.warn(
+                    Warnings.MODEL_MIGRATION_APPLIED.format(
+                        saved_version=str(saved_version),
+                        current_version=current_version,
+                    ),
+                    stacklevel=1,
                 )
                 d = fn(d)
 
@@ -294,30 +298,6 @@ def _migrate_basis_function_1_2_0post1(d: dict) -> dict:
     return d
 
 
-@registry.register("HBR", introduced_in="1.4.0")
-def _migrate_variational_inference_1_4_0(d: dict) -> dict:
-    """Add the variational inference fields to an HBR dict saved before VI.
-    These fields specify what methods is used for fitting
-    (e.g., "mcmc", "pathfinder" etc).
-
-    Parameters
-    ----------
-    d : dict
-        Raw dict read from the saved JSON file.
-
-    Returns
-    -------
-    dict
-        Dict with the variational inference fields populated.
-    """
-    d.setdefault("inference_method", "mcmc")
-    d.setdefault("vi_iterations", 30000)
-    d.setdefault("vi_draws", 1000)
-    d.setdefault("vi_kwargs", {})
-
-    return d
-
-
 @registry.register("BasisFunction", introduced_in="1.4.0")
 def _migrate_bspline_basis_function_1_4_0(d: dict) -> dict:
     """Preserve legacy B-spline behavior for models saved before v1.4.0.
@@ -389,5 +369,58 @@ def _migrate_blr_slope_indices_1_4_0(d: dict) -> dict:
     for key in ("fixed_effect_slope_indices", "fixed_effect_var_slope_indices"):
         if d.get(key) is None:
             d[key] = [0]
+
+    return d
+
+
+@registry.register("HBR", introduced_in="1.5.0")
+def _migrate_inference_method_as_class_1_5_0(d: dict) -> dict:
+    """Turn the string inference_method of older HBR dicts into an MCMC() class entry.
+
+    We handle two cases:
+
+    1. Models saved before v1.4.0 have no ``inference_method`` and are
+       treated as "mcmc" (see 2.).
+    2. Models saved with v1.4.0 store ``inference_method="mcmc"`` as a
+       string. From v1.5.0 it is saved as ``{"type": "MCMC", ...}`` and
+       loaded as ``MCMC()``.
+
+    Parameters
+    ----------
+    d : dict
+        Raw dict read from the saved JSON file.
+
+    Returns
+    -------
+    dict
+        Dict with an ``inference_method`` entry of type MCMC.
+
+    Raises
+    ------
+    ValueError
+        If the model was fitted with a v1.4.0 method other than "mcmc".
+        Those methods were experimental, so the model must be refitted.
+    """
+    from pcntoolkit.regression_model.hbr import MCMC_INIT_KEYS
+
+    method = d.get("inference_method", "mcmc")
+    # Handle models saved from the dev branch: already in the new format,
+    # but still stamped 1.4.0
+    if isinstance(method, dict):
+        return d
+    if method != "mcmc":
+        raise ValueError(
+            Output.error(Errors.ERROR_HBR_INFERENCE_METHOD_STRING, method=method)
+        )
+
+    inference_method = {"type": "MCMC", "is_fitted": d.get("is_fitted", False)}
+    for key in MCMC_INIT_KEYS:
+        if key in d:
+            inference_method[key] = d.pop(key)
+    if "idata_path" in d:
+        inference_method["data_tree_path"] = d.pop("idata_path")
+    for key in ("vi_iterations", "vi_draws", "vi_kwargs"):
+        d.pop(key, None)
+    d["inference_method"] = inference_method
 
     return d

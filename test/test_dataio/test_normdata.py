@@ -299,3 +299,41 @@ def test_netcdf(norm_data_from_arrays: NormData):
     # Check if the two norm data objects are identical
     # Additionally checks for object's name and attributes.
     assert norm_data_from_arrays.identical(norm_data_from_netcdf)
+
+def test_normdata_mixed_numeric_covariates_save():
+    """Mixed int and float covariates and responses should not break model saving."""
+    import pandas as pd
+
+    # Mix int and float for both age and response
+    df = pd.DataFrame({
+        "age": pd.Series([20, 25.5, 30, 35.5], dtype=object),
+        "response": pd.Series([1, 2.3, 3, 4.5], dtype=object),
+    })
+
+    norm_data = NormData.from_dataframe(
+        name="mixed_numeric",
+        dataframe=df,
+        covariates=["age"],
+        response_vars=["response"],
+    )
+    assert norm_data.X.dtype == np.float64
+    assert norm_data.Y.dtype == np.float64 
+
+    from pcntoolkit.math_functions.scaler import StandardScaler
+
+    scaler = StandardScaler()
+    scaler.fit(norm_data.X.sel(covariates="age").data)
+
+    scaler.to_dict()
+
+def test_normdata_preserves_float32(train_arrays):
+    """float32 covariates and responses should stay float32, not become float64.
+    We don't want to unnecessarily increase the storage space."""
+    X, y, _ = train_arrays
+    # Create a float32 NormData object from numpy arrays
+    norm_data = NormData.from_ndarrays(
+        "float32_data", X.astype(np.float32), y.astype(np.float32)
+    )
+
+    assert norm_data.X.dtype == np.float32
+    assert norm_data.Y.dtype == np.float32

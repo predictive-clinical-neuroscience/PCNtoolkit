@@ -518,7 +518,7 @@ class CenteredRandomPrior(RandomPrior):
     """
     A random effect drawn directly at the group scale.
 
-    Differs from :class:`RandomPrior` only in how the offsets are sampled: here
+    Differs from ``RandomPrior`` only in how the offsets are sampled: here
     they are drawn at the group's own scale, rather than at unit scale and then
     multiplied by it. The two describe the same model but sample differently.
     """

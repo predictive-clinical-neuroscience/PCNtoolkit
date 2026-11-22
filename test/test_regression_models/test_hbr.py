@@ -6,7 +6,10 @@ import logging
 
 import pytest
 
-from pcntoolkit.math_functions.likelihood import NormalLikelihood
+from pcntoolkit.math_functions.likelihood import (
+    NormalLikelihood,
+    get_default_normal_likelihood,
+)
 from pcntoolkit.math_functions.prior import (
     CenteredRandomPrior,
     LinearPrior,
@@ -17,6 +20,7 @@ from pcntoolkit.math_functions.prior import (
 )
 from pcntoolkit.regression_model.hbr import (  # noqa: F401, F403
     HBR,
+    MCMC,
 )
 from test.fixtures.data_fixtures import *  # noqa: F401, F403
 from test.fixtures.hbr_model_fixtures import *  # noqa: F401, F403
@@ -82,9 +86,9 @@ The tests cover:
 def test_hbr_to_and_from_dict_and_args(sample_args, args):
     # Testing from args first
     hbr = HBR.from_args("test_name", sample_args | args)
-    assert hbr.draws == sample_args.get("draws")
-    assert hbr.tune == sample_args.get("tune")
-    assert hbr.cores == sample_args.get("cores")
+    assert hbr.inference_method.draws == sample_args.get("draws")
+    assert hbr.inference_method.tune == sample_args.get("tune")
+    assert hbr.inference_method.cores == sample_args.get("cores")
     assert isinstance(hbr.likelihood, NormalLikelihood)
     if args.get("linear_mu", False):
         assert isinstance(hbr.likelihood.mu, LinearPrior)
@@ -101,9 +105,9 @@ def test_hbr_to_and_from_dict_and_args(sample_args, args):
 
     # Testing to_dict
     hbr_dict = hbr.to_dict()
-    assert hbr_dict["draws"] == sample_args.get("draws")
-    assert hbr_dict["tune"] == sample_args.get("tune")
-    assert hbr_dict["cores"] == sample_args.get("cores")
+    assert hbr_dict["inference_method"]["draws"] == sample_args.get("draws")
+    assert hbr_dict["inference_method"]["tune"] == sample_args.get("tune")
+    assert hbr_dict["inference_method"]["cores"] == sample_args.get("cores")
     assert hbr_dict["likelihood"]["name"] == "Normal"
     assert args.get("linear_mu", False) == (
         hbr_dict["likelihood"]["mu"]["type"] == "LinearPrior"
@@ -133,9 +137,9 @@ def test_hbr_to_and_from_dict_and_args(sample_args, args):
     # Testing from_dict
     del hbr
     hbr = HBR.from_dict(hbr_dict)
-    assert hbr.draws == sample_args.get("draws")
-    assert hbr.tune == sample_args.get("tune")
-    assert hbr.cores == sample_args.get("cores")
+    assert hbr.inference_method.draws == sample_args.get("draws")
+    assert hbr.inference_method.tune == sample_args.get("tune")
+    assert hbr.inference_method.cores == sample_args.get("cores")
     assert isinstance(hbr.likelihood, NormalLikelihood)
     if args.get("linear_mu", False):
         assert isinstance(hbr.likelihood.mu, LinearPrior)
@@ -583,3 +587,31 @@ def test_to_dict(extract_data):
 
     # Check if json.dumps does not throw an error
     json.dumps(my_dict)
+
+
+def test_init_should_useLikelihood_when_givenAsSecondPositionalArg() -> None:
+    """
+    Arrange: a likelihood object.
+    Act: create HBR("name", likelihood), the v1.4.0 call style.
+    Assert: HBR uses that likelihood and is not marked as fitted.
+
+    Regression test: the likelihood used to land in is_fitted, and HBR
+    silently fell back to the default Normal likelihood.
+    """
+    likelihood = get_default_normal_likelihood()
+
+    model = HBR("test_hbr", likelihood)
+
+    assert model.likelihood is likelihood
+    assert model.is_fitted is False
+
+
+def test_init_should_useMCMC_when_noInferenceMethodGiven() -> None:
+    """
+    Arrange: nothing.
+    Act: create HBR without an inference_method.
+    Assert: HBR falls back to MCMC.
+    """
+    model = HBR("test_hbr")
+
+    assert isinstance(model.inference_method, MCMC)

@@ -205,4 +205,30 @@ Fix packaging issues (no missing files or folders)
 3. Add h5py and h5netcdf as dependency in toml 
 
 
+# Version 1.4.0
 
+**Major changes:**
+1. Add longitudinal normative modelling: z-diff (ZDiffScore), z-gain and thrivelines (VelocityModel), and loading/saving correlation matrices
+2. Redesign the website
+3. Add the zero-inflated negative binomial (ZINB) likelihood for HBR
+4. Allow pairwise covariate interactions in composite basis functions
+5. Add Tukey fences and batch-aware outlier removal
+6. Migrate to PyMC 6, PyTensor 3, ArviZ 1 and nutpie 0.16.9 or newer
+7. Drop Python 3.11 and add Python 3.13 support
+
+**Minor changes:**
+1. Faster model saving and loading for BLR
+2. Save Yhat with the results
+3. Remove unused dependencies
+4. Add a uv option for the development setup
+5. Add AGENTS.md and ruff documentation
+6. Allow bug-fix (patch) releases between feature releases
+
+**Bug fixes:**
+1. Remove the extra linear term from the B-spline basis, as the B-spline can already model a linear trend 
+2. BLR results are slightly more accurate: the fit is now computed from the final hyperparameters
+3. Fix BLR.transfer() for unwarped models
+4. Keep each observation linked to its correct label in NormData.to_dataframe() and NormData.merge() 
+5. Recompute batch effects when splitting NormData
+6. Remove ":" from Runner folder names, so Runner works on Windows
+7. Warn once per version on model migration

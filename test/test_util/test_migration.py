@@ -6,6 +6,7 @@ Tests use local registry instances so they are fully isolated
 from the module-level singleton and from each other.
 """
 
+import warnings
 from unittest.mock import patch
 
 from pcntoolkit.util.migration import (
@@ -185,3 +186,30 @@ def test_008_checkForwardCompat_should_notEmitWarning_when_savedVersionIsOlder()
     with patch("pcntoolkit.util.migration.Output.warning") as mock_warning:
         check_forward_compatibility(saved_model, current_pcntoolkit)
         assert mock_warning.call_count == 0
+
+
+# ---------------------------------------------------------------------------
+# Migration warning tests
+# ---------------------------------------------------------------------------
+
+
+def test_009_migrate_should_warnOnce_when_calledRepeatedlyForSameVersion():
+    """
+    Arrange: a registry with two migrations.
+    Act: migrate five dicts saved at 1.0.0, then one at 1.1.5.
+    Assert: one warning per saved version.
+    """
+    # Arrange
+    reg = _make_registry_with_two_migrations()
+
+    # Act
+    with warnings.catch_warnings(record=True) as caught:
+        for _ in range(5):
+            reg.migrate("TestComp", {"old_key": "value"}, version="1.0.0")
+        reg.migrate("TestComp", {"old_key": "value"}, version="1.1.5")
+
+    migration_warnings = [
+        warning for warning in caught if "saved with PCNtoolkit" in str(warning.message)
+    ]
+    # Assert — 1.0.0 once + 1.1.5 once.
+    assert len(migration_warnings) == 2

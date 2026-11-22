@@ -12,8 +12,8 @@ import pytest
 import xarray as xr
 
 from pcntoolkit.dataio.norm_data import NormData
+from pcntoolkit.longitudinal.correlation_matrix import CorrelationMatrix
 from pcntoolkit.math_functions.basis_function import BsplineBasisFunction
-from pcntoolkit.math_functions.correlation_matrix import CorrelationMatrix
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
 from test.fixtures.blr_model_fixtures import BLR_BASE_CONFIG

@@ -1,4 +1,3 @@
-
 import numpy as np
 import pytest
 
@@ -129,6 +128,34 @@ class TestNormativeModel:
         assert (moved_dir / "results").exists()
         assert not self.save_dir.exists()
 
+    def test_saveresults_without_evaluation(self) -> None:
+        """Results are saved without statistics when evaluate_model=False."""
+        data = NormData.from_ndarrays(
+            name="test_data",
+            X=self.data["covariates"],
+            Y=self.data["responses"],
+            batch_effects=self.data["batch_effects"],
+            subject_ids=self.data["subject_ids"],
+        )
+        model = NormativeModel(
+            template_regression_model=self.template_model,
+            savemodel=False,
+            evaluate_model=False, # do not evaluate model
+            saveresults=True, # save results
+            saveplots=False,
+            save_dir=str(self.save_dir),
+            inscaler="none",
+            outscaler="none",
+        )
+
+        model.fit_predict(data, data)
+
+        results_dir = self.save_dir / "results"
+        for var in ["Z", "centiles", "logp", "Yhat"]:
+            assert (results_dir / f"{var}_test_data.csv").exists()
+        assert not (results_dir / "statistics_test_data.csv").exists()
+        assert "statistics" not in data.data_vars
+
     def test_model_with_batch_effects(self):
         """Test model with batch effect correction."""
         # Create data with batch effects
@@ -147,3 +174,15 @@ class TestNormativeModel:
         assert "Z" in predictions
         assert predictions.Z.shape == self.data["responses"].shape
         assert not np.isnan(predictions.Z).any()
+
+
+def test_load_path_must_be_string() -> None:
+    """load(None) raises a TypeError saying the path must be a string."""
+    with pytest.raises(TypeError, match="Load path must be a string"):
+        NormativeModel.load(None)
+
+
+def test_load_missing_path_raises(tmp_path) -> None:
+    """load() on a folder that does not exist raises FileNotFoundError."""
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        NormativeModel.load(str(tmp_path / "missing"))

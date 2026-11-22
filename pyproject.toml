@@ -47,9 +47,11 @@ dependencies = [
     "xarray>=2024.11.0",
 
     # Bayesian sampling / statistics
-    "pymc>=6.0.0",
-    "pytensor>=3.0.0",
-    "arviz>=1.0.0",
+    # Upper bounds stop a new major release from breaking an installed
+    # PCNtoolkit.
+    "pymc>=6.0.0,<7.0.0",
+    "pytensor>=3.0.0,<4.0.0",
+    "arviz>=1.0.0,<2.0.0",
     "pymc-extras>=0.11.0",
     "nutpie>=0.16.9",
     "numba>=0.61.0", # required by nutpie's PyMC (numba) sampling backend

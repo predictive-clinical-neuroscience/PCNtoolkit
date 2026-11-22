@@ -65,26 +65,25 @@ Imports
 
 .. code:: ipython3
 
+    import logging
     import os
     import sys
     import warnings
-    import logging
     
-    import numpy as np
-    import pandas as pd
     import matplotlib.pyplot as plt
+    import pandas as pd
     import seaborn as sns
     
+    import pcntoolkit.util.output
     from pcntoolkit import (
         BLR,
         BsplineBasisFunction,
         NormativeModel,
         NormData,
+        Runner,
         load_fcon1000,
         plot_centiles,
-        Runner,
     )
-    import pcntoolkit.util.output
     
     sns.set_theme(style="darkgrid")
     
@@ -120,7 +119,9 @@ Imports
     norm_data = norm_data.sel({"response_vars": features_to_model})
     # Leave two sites out for doing transfer and extend later
     transfer_sites = ["Milwaukee_b", "Oulu"]
-    transfer_data, fit_data = norm_data.batch_effects_split({"site": transfer_sites}, names=("transfer", "fit"))
+    transfer_data, fit_data = norm_data.batch_effects_split(
+        {"site": transfer_sites}, names=("transfer", "fit")
+    )
     
     # Split into train and test sets
     train, test = fit_data.train_test_split()
@@ -156,7 +157,13 @@ Imports
     df = train.to_dataframe()
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
     
-    sns.countplot(data=df, y=("batch_effects", "site"), hue=("batch_effects", "sex"), ax=ax[0], orient="h")
+    sns.countplot(
+        data=df,
+        y=("batch_effects", "site"),
+        hue=("batch_effects", "sex"),
+        ax=ax[0],
+        orient="h",
+    )
     ax[0].legend(title="Sex")
     ax[0].set_title("Count of sites")
     ax[0].set_xlabel("Site")

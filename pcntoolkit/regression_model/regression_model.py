@@ -21,6 +21,10 @@ from scipy.stats.distributions import norm
 from pcntoolkit.util.migration import ptk_version
 from pcntoolkit.util.output import Messages, Output
 
+# Z grid that compute_yhat averages backward() over.
+YHAT_N_Z = 200
+YHAT_Z_MAX = 4.0
+
 
 class RegressionModel(ABC):
     """
@@ -88,10 +92,14 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        be_maps: dictionary of dictionaries mapping batch effect to indices
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------
@@ -107,9 +115,12 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------
@@ -126,9 +137,12 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        Z : xr.DataArray
+            Z-scores to convert back to response variable values.
 
         Returns
         -------
@@ -155,10 +169,14 @@ class RegressionModel(ABC):
 
         Parameters
         ----------
-        X: xr.DataArray containing covariates
-        be: xr.DataArray containing batch effects
-        be_maps: dictionary of dictionaries mapping batch effect to indices
-        Y: xr.DataArray containing covariates
+        X : xr.DataArray
+            Covariate data.
+        be : xr.DataArray
+            Batch effect data.
+        be_maps : dict[str, dict[str, int]]
+            Maps each batch effect level to an integer index.
+        Y : xr.DataArray
+            Response variable data.
 
         Returns
         -------
@@ -186,9 +204,8 @@ class RegressionModel(ABC):
         return my_dict
 
     def compute_yhat(self, data, responsevar, X, be):
-        n_importance_samples = 200
-        Z_space = np.linspace(-4, 4, n_importance_samples)
-        Y_space = np.zeros((data.X.shape[0], n_importance_samples))
+        Z_space = np.linspace(-YHAT_Z_MAX, YHAT_Z_MAX, YHAT_N_Z)
+        Y_space = np.zeros((data.X.shape[0], YHAT_N_Z))
         Output.print(Messages.COMPUTING_YHAT_MODEL, model_name=responsevar)
         Z = xr.DataArray(np.zeros(data.X.shape[0]), dims=("observations",))
         for i, s in enumerate(Z_space):

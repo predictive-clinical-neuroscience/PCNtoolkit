@@ -5,7 +5,7 @@ NeuroStars Forum
 ----------------
 
 Feel free to look for answers or post your questions on
-`NeuroStars.org <https://neurostars.org/tags/pcntoolkit>`_.
+`NeuroStars.org <https://neurostars.org/tag/pcntoolkit/1106>`_.
 Please add the tag *pcntoolkit* to your post so that it is
 easier for others to find it.
 
