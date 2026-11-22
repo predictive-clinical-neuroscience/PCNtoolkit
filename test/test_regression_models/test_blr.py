@@ -1,4 +1,5 @@
 import json
+from typing import Callable
 
 import numpy as np
 import pytest
@@ -270,3 +271,12 @@ def test_migration_loads_model_when_slopes_are_off() -> None:
     # Pretend the model was saved with v1.3.0 so that the migration logic for pre-1.4.0
     # models is triggered.
     registry.migrate("BLR", d, version="1.3.0")
+
+
+def test_init_hyp_accepts_array_hyp0(blr_model_factory: Callable) -> None:
+    """init_hyp() must accept hyp0 as np.ndarray, the type the docstring
+    declares. Regression test for #557."""
+    blr_model = blr_model_factory(hyp0=np.array([0.0, 0.0]))
+    hyp0 = blr_model.init_hyp()
+    assert isinstance(hyp0, np.ndarray)
+    assert hyp0.shape == (2,)
