@@ -302,7 +302,7 @@ class BLR(RegressionModel):
         _, self.beta, self.gamma = self.parse_hyps(self.hyp, Phi, Phi_var)
         self.is_fitted = True
 
-    def be_idx_gen(
+    def _iter_combinations_to_correct(
         self,
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
@@ -447,14 +447,16 @@ class BLR(RegressionModel):
         self.ys_s2(np_X, pretrained_be)
 
         if self.transfered:
-            new_combinations = list(self.be_idx_gen(new_be, self.transfered_be_maps))
+            combinations_to_correct = list(
+                self._iter_combinations_to_correct(new_be, self.transfered_be_maps)
+            )
             # Combinations without adaptation subjects have no correction
             unseen = [
                 batch_combination_to_text(
                     {d: c for d, c in t.items() if c != KEEP_PRETRAINED_BATCH_EFFECT},
                     self.transfered_be_maps,
                 )
-                for t, _ in new_combinations
+                for t, _ in combinations_to_correct
                 if str(tuple(t.values())) not in self.correction_coefficients
             ]
             if unseen:
@@ -464,7 +466,7 @@ class BLR(RegressionModel):
                         batch_effects="; ".join(unseen),
                     )
                 )
-            for t, mask in new_combinations:
+            for t, mask in combinations_to_correct:
                 residual_mean, correction_factor = self.correction_coefficients[
                     str(tuple(t.values()))
                 ]
@@ -575,7 +577,7 @@ class BLR(RegressionModel):
     ) -> BLR:
         """Adapt a fitted BLR to new batch effects (e.g. a new site).
 
-        Known levels (e.g. sex F) keep their pretrained estimate. New levels
+        Known levels (e.g. sex F and M) keep their pretrained estimate. New levels
         (e.g. a new site) get an offset and scale from the transfer data.
 
         Parameters
@@ -604,7 +606,7 @@ class BLR(RegressionModel):
         ------
         ValueError
             If ``reestimate_batch_effects`` names an unknown batch effect, or
-            a combination has fewer than 2 subjects.
+            a combination has fewer than 2 adaptation subjects.
         """
         be_dims = [str(d) for d in be.batch_effect_dims.values]
         reestimate = list(reestimate_batch_effects or [])
@@ -627,7 +629,9 @@ class BLR(RegressionModel):
         pretrained_be, new_be = self._split_pretrained_and_new_batch_effects(
             be, be_maps, pretrained_dims
         )
-        new_combinations = list(self.be_idx_gen(new_be, be_maps))
+        combinations_to_correct = list(
+            self._iter_combinations_to_correct(new_be, be_maps)
+        )
 
         # With 1 subject the scale is 0 and the Z-scores are infinite
         too_small = [
@@ -636,7 +640,7 @@ class BLR(RegressionModel):
                 be_maps,
             )
             + f" (n={int(mask.sum())})"
-            for t, mask in new_combinations
+            for t, mask in combinations_to_correct
             if mask.sum() < MIN_TRANSFER_SUBJECTS
         ]
         if too_small:
@@ -663,7 +667,7 @@ class BLR(RegressionModel):
 
         # The pretrained model centiles do not align with our data: correct 
         # each new combination of batch effects by a vertical offset and a scale 
-        for t, mask in new_combinations:
+        for t, mask in combinations_to_correct:
             # Correct the mean
             residuals = y[mask] - pretrained_ys[mask]
             residual_mean = np.mean(residuals)

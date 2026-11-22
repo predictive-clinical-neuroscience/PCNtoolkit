@@ -250,8 +250,8 @@ class NormativeModel:
         save_dir : str | None, optional
             Where to save the transferred model. Default: ``<save_dir>_transfer``.
         reestimate_batch_effects : list[str] | None, optional
-            BLR only. Batch effects to re-estimate fully, also known levels,
-            e.g. ``["site"]`` if a site changed scanner. Default None: keep all.
+            BLR only. Batch effects to not keep their pretrained estimate, but to re-estimate from
+            the adaptation data. Default is None, which keeps all pretrained model estimates.
         **kwargs : Any
             Passed to the ``transfer`` method of the regression model.
 
@@ -318,6 +318,7 @@ class NormativeModel:
             Output.print(Messages.TRANSFERRING_MODEL, model_name=responsevar)
             resp_transfer_data = transfer_data.sel({"response_vars": responsevar})
             X, be, be_maps, Y, _ = new_model.extract_data(resp_transfer_data)
+            # Transfer
             new_model[responsevar] = self[responsevar].transfer(
                 X, be, be_maps, Y, **kwargs
             )
