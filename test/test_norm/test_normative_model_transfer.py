@@ -124,7 +124,11 @@ def test_003_transfer_should_warn_when_fewerBatchEffects(
     # Assert: the warning appeared
     with pytest.warns(
         UserWarning,
-        match=re.escape(Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS),
+        match=re.escape(
+            Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS.format(
+                batch_effects="batch_effect_1"
+            )
+        ),
     ):
         fitted_norm_blr_model.transfer(
             transfer_norm_data_1be,
