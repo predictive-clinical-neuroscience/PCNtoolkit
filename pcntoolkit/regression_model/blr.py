@@ -575,9 +575,15 @@ class BLR(RegressionModel):
 
         # Decide what batch effects to keep from the pretrained mdel and what to 
         # re-estimate from the adaptation data.
-        pretrained_dims = [
-            d for d in be_dims if d in self.be_maps and d not in reestimate
-        ]
+        if self.fixed_effect:
+            pretrained_dims = [
+                d for d in be_dims if d in self.be_maps and d not in reestimate
+            ]
+        # If no fixed_effect in pretrained model, there are no pretrained b.e. estimates.
+        # So re-estimate all
+        else: 
+            Output.print(Messages.BLR_TRANSFER_REESTIMATES_ALL)
+            pretrained_dims = []
         pretrained_be, new_be = self._split_pretrained_and_new_batch_effects(
             be, be_maps, pretrained_dims
         )

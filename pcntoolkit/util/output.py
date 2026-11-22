@@ -22,6 +22,10 @@ class Messages:
     SAVING_ZSCORES = "Saving z-scores to:\n\t{save_dir}."
     TRANSFERRING_MODELS = "Transferring models on {n_models} response variables."
     TRANSFERRING_MODEL = "Transferring model for {model_name}."
+    BLR_TRANSFER_REESTIMATES_ALL = (
+        "The pretrained BLR has no batch effects in its mean (fixed_effect=False), "
+        "so all batch effects are re-estimated from the transfer data."
+    )
     COMPUTING_CENTILES = "Computing centiles for {n_models} response variables."
     COMPUTING_CENTILES_MODEL = "Computing centiles for {model_name}."
     COMPUTING_ZSCORES = "Computing z-scores for {n_models} response variables."
