@@ -302,57 +302,6 @@ class BLR(RegressionModel):
         _, self.beta, self.gamma = self.parse_hyps(self.hyp, Phi, Phi_var)
         self.is_fitted = True
 
-    def _iter_combinations_to_correct(
-        self,
-        be: xr.DataArray,
-        be_maps: dict[str, dict[str, int]],
-    ) -> Generator[tuple[dict[str, object], np.ndarray]]:
-        """Yield encoded batch-effect combinations and their masks.
-
-        Combinations of only ``KEEP_PRETRAINED_BATCH_EFFECT`` need no correction and
-        are skipped.
-
-        Parameters
-        ----------
-        be : xr.DataArray
-            Encoded batch-effect values for each observation.
-        be_maps : dict[str, dict[str, int]]
-            Mapping from batch-effect labels to encoded integer ids.
-
-        Yields
-        ------
-        tuple[dict[str, object], np.ndarray]
-            Encoded batch-effect combination together with its mask.
-        """
-        # Preserve the DataArray dimension order used by the caller.
-        # eg ['site', 'sex']
-        batch_dims = [str(batch_dim) for batch_dim in be.batch_effect_dims.values]
-
-        # Build the integer batch-effect levels expected by the shared
-        # helper.
-        # eg {'site': [0, 1], 'sex': [0, 1, 2]}
-        unique_batch_effects: dict[str, list[int]] = {}
-
-        # Iterate in the same order used by the batch-effect DataArray.
-        # eg ['site', 'sex']
-        for batch_dim in batch_dims:
-            # Collect the encoded ids for this batch-effect dimension.
-            # eg {'site': [0, 1], 'sex': [0, 1, 2]}
-            unique_batch_effects[batch_dim] = list(be_maps[batch_dim].values()) + [
-                KEEP_PRETRAINED_BATCH_EFFECT
-            ]
-
-        for combination, mask in iter_batch_combinations(
-            be.values,
-            unique_batch_effects,
-            batch_dims,
-        ):
-            # Skip combinations that have estimated pretrained batch effects
-            if any(
-                code != KEEP_PRETRAINED_BATCH_EFFECT for code in combination.values()
-            ):
-                yield combination, mask
-
     def forward(
         self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
     ) -> xr.DataArray:
@@ -1272,6 +1221,57 @@ class BLR(RegressionModel):
     def has_batch_effect(self) -> bool:
         return self.fixed_effect or self.fixed_effect_var
 
+    def _iter_combinations_to_correct(
+            self,
+            be: xr.DataArray,
+            be_maps: dict[str, dict[str, int]],
+        ) -> Generator[tuple[dict[str, object], np.ndarray]]:
+            """Yield encoded batch-effect combinations and their masks.
+
+            Combinations of only ``KEEP_PRETRAINED_BATCH_EFFECT`` need no correction and
+            are skipped.
+
+            Parameters
+            ----------
+            be : xr.DataArray
+                Encoded batch-effect values for each observation.
+            be_maps : dict[str, dict[str, int]]
+                Mapping from batch-effect labels to encoded integer ids.
+
+            Yields
+            ------
+            tuple[dict[str, object], np.ndarray]
+                Encoded batch-effect combination together with its mask.
+            """
+            # Preserve the DataArray dimension order used by the caller.
+            # eg ['site', 'sex']
+            batch_dims = [str(batch_dim) for batch_dim in be.batch_effect_dims.values]
+
+            # Build the integer batch-effect levels expected by the shared
+            # helper.
+            # eg {'site': [0, 1], 'sex': [0, 1, 2]}
+            unique_batch_effects: dict[str, list[int]] = {}
+
+            # Iterate in the same order used by the batch-effect DataArray.
+            # eg ['site', 'sex']
+            for batch_dim in batch_dims:
+                # Collect the encoded ids for this batch-effect dimension.
+                # eg {'site': [0, 1], 'sex': [0, 1, 2]}
+                unique_batch_effects[batch_dim] = list(be_maps[batch_dim].values()) + [
+                    KEEP_PRETRAINED_BATCH_EFFECT
+                ]
+
+            for combination, mask in iter_batch_combinations(
+                be.values,
+                unique_batch_effects,
+                batch_dims,
+            ):
+                # Skip combinations that have estimated pretrained batch effects
+                if any(
+                    code != KEEP_PRETRAINED_BATCH_EFFECT for code in combination.values()
+                ):
+                    yield combination, mask
+                    
     def _split_pretrained_and_new_batch_effects(
         self,
         be: xr.DataArray,
