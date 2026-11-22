@@ -387,13 +387,16 @@ class BLR(RegressionModel):
             Predictive mean ``ys`` and variance ``s2``, one value per observation.
         """
         np_X = X.values
+        # transfer
         if self.transfered:
             pretrained_be, new_be = self._split_pretrained_and_new_batch_effects(
                 be, self.transfered_be_maps, self.pretrained_batch_effects
             )
+            self.ys_s2(np_X, pretrained_be)
+        # fit, predict and extend
         else:
-            pretrained_be = be.values
-        self.ys_s2(np_X, pretrained_be)
+            design_be = be.values
+            self.ys_s2(np_X, design_be)
 
         if self.transfered:
             combinations_to_correct = list(
