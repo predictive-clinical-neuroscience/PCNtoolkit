@@ -53,13 +53,6 @@ Imports
     pd.options.mode.chained_assignment = None  # default='warn'
     pcntoolkit.util.output.Output.set_show_messages(False)
 
-
-.. code:: text
-
-    /tmp/ipykernel_2994/55121059.py:21: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
-      pd.options.mode.chained_assignment = None  # default='warn'
-
-
 Load data
 ---------
 
@@ -150,6 +143,7 @@ Create BLR model
     template_blr = BLR(
         name="template",
         heteroskedastic=True,
+        fixed_effect=True,
         warp_name="WarpSinhArcsinh",
         basis_function_mean=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
         basis_function_var=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
@@ -248,7 +242,7 @@ merges it with the real local data, and refits a full model.
     extended_model = model.extend_predict(transfer_train, transfer_test)
     plot_centiles_advanced(
         extended_model,
-        scatter_data=test,
+        scatter_data=transfer_test,
         batch_effects="all",
         show_legend=False,
         covariate_ranges={
@@ -279,26 +273,25 @@ example exists
 Transfer
 --------
 
-Transfering looks very similar to extending.
+Transfer looks very similar to extend.But the underlying mathematics is
+very different.
 
-But the underlying mathematics is very different. It adapts a
-pre-trained reference model to new data by re-estimating parameters
-*based on prior information derived from the reference model*.
+Transfer keeps the reference model and only adds a correction for the
+batch effect levels it has not seen.
 
-For this reason, we can *not* use a transfered model to make predictions
-on the original train data and a model is not meant to be transferred
-more than once.
+In comparison to the extend, a model is not meant to be transferred more
+than once.
 
-Another consequence is that a transferred model centiles cover the age
-range present in the data you transferred to (see x-axis range in the
-centiles plot below), not the age range of the reference model.
+Also the centiles of a transferred model cover the age range present in
+the data you transferred to (see x-axis range in the centiles plot
+below), not the age range of the reference model.
 
 .. code:: ipython3
 
     transfered_model = model.transfer_predict(transfer_train, transfer_test)
     plot_centiles_advanced(
         transfered_model,
-        scatter_data=transfer_test,  # note you can not select scatter_data=test as with transfer we lose info about the reference model sites
+        scatter_data=transfer_test,
         batch_effects="all",
         show_legend=False,
     )

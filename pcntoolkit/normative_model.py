@@ -9,7 +9,7 @@ import glob
 import json
 import os
 import uuid
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import scipy.stats as stats
@@ -235,11 +235,43 @@ class NormativeModel:
         return predict_data
 
     def transfer(
-        self, transfer_data: NormData, save_dir: str | None = None, **kwargs
+        self,
+        transfer_data: NormData,
+        save_dir: str | None = None,
+        reestimate_batch_effects: list[str] | None = None,
+        **kwargs: Any,
     ) -> NormativeModel:
+        """Transfer the model to a new dataset.
+
+        Parameters
+        ----------
+        transfer_data : NormData
+            Data to adapt the model to.
+        save_dir : str | None, optional
+            Where to save the transferred model. Default: ``<save_dir>_transfer``.
+        reestimate_batch_effects : list[str] | None, optional
+            BLR only. Batch effects to not keep their pretrained estimate, but to re-estimate from
+            the adaptation data. Default is None, which keeps all pretrained model estimates.
+        **kwargs : Any
+            Passed to the ``transfer`` method of the regression model.
+
+        Returns
+        -------
+        NormativeModel
+            The transferred model.
+
+        Raises
+        ------
+        NotImplementedError
+            If ``reestimate_batch_effects`` is given for a model that is not BLR.
         """
-        Transfers the model to a new dataset.
-        """
+        is_blr = isinstance(self.template_regression_model, BLR)
+        if reestimate_batch_effects is not None:
+            if not is_blr:
+                raise NotImplementedError(
+                    Output.error(Errors.ERROR_TRANSFER_REESTIMATE_NOT_IMPLEMENTED)
+                )
+            kwargs["reestimate_batch_effects"] = reestimate_batch_effects
         new_model = NormativeModel(
             copy.deepcopy(self.template_regression_model),
             savemodel=True,
@@ -267,15 +299,26 @@ class NormativeModel:
         new_model.preprocess(transfer_data)
 
         if self.unique_batch_effects is not None:
-            if len(transfer_data.batch_effect_dims) < len(self.batch_effect_dims):
-                Output.warning(Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS)
+            missing = [
+                str(be)
+                for be in self.batch_effect_dims
+                if be not in transfer_data.unique_batch_effects
+            ]
+            if missing:
+                Output.warning(
+                    Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS,
+                    batch_effects=", ".join(missing),
+                )
         new_model.register_batch_effects(transfer_data)
+        if is_blr and self.unique_batch_effects is not None:
+            self._combine_pretrained_and_new_batch_effects(new_model)
 
         Output.print(Messages.TRANSFERRING_MODELS, n_models=len(respvar_intersection))
         for responsevar in respvar_intersection:
             Output.print(Messages.TRANSFERRING_MODEL, model_name=responsevar)
             resp_transfer_data = transfer_data.sel({"response_vars": responsevar})
             X, be, be_maps, Y, _ = new_model.extract_data(resp_transfer_data)
+            # Transfer
             new_model[responsevar] = self[responsevar].transfer(
                 X, be, be_maps, Y, **kwargs
             )
@@ -300,6 +343,24 @@ class NormativeModel:
         new_model = self.transfer(transfer_data, save_dir, **kwargs)
         new_model.predict(predict_data)
         return new_model
+
+    def _combine_pretrained_and_new_batch_effects(
+        self, new_model: NormativeModel
+    ) -> None:
+        """Keep the batch effects of both the pretrained and the new dataset.
+
+        So the transferred model can still predict the pretrained sites.
+
+        Parameters
+        ----------
+        new_model : NormativeModel
+            Transferred model, with the batch effects of the new dataset.
+        """
+        for be, levels in new_model.unique_batch_effects.items():
+            for lvl in self.unique_batch_effects.get(be, []):
+                if lvl not in levels:
+                    new_model.batch_effects_maps[be][lvl] = len(levels)
+                    levels.append(lvl)
 
     def extend(
         self,

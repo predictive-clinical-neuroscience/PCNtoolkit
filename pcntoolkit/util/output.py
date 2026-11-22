@@ -22,6 +22,10 @@ class Messages:
     SAVING_ZSCORES = "Saving z-scores to:\n\t{save_dir}."
     TRANSFERRING_MODELS = "Transferring models on {n_models} response variables."
     TRANSFERRING_MODEL = "Transferring model for {model_name}."
+    BLR_TRANSFER_REESTIMATES_ALL = (
+        "The pretrained BLR has no batch effects in its mean (fixed_effect=False), "
+        "so all batch effects are re-estimated from the transfer data."
+    )
     COMPUTING_CENTILES = "Computing centiles for {n_models} response variables."
     COMPUTING_CENTILES_MODEL = "Computing centiles for {model_name}."
     COMPUTING_ZSCORES = "Computing z-scores for {n_models} response variables."
@@ -199,8 +203,8 @@ class Warnings:
         "compared. Skipped: {response_vars}."
     )
     TRANSFER_DATA_FEWER_BATCH_EFFECTS = (
-        "Transfer data contain fewer batch effect levels than training data. "
-        "This may lead to biased results."
+        "Your transfer data don't have the batch effect(s): {batch_effects}, that "
+        "the pretrained model was trained with. This may lead to biased results."
     )
     MODEL_SAVED_WITH_NEWER_VERSION = (
         "This model was saved with PCNtoolkit v{saved_version}, "
@@ -335,6 +339,14 @@ class Errors:
     ERROR_BLR_TRANSFER_UNSEEN_BATCH_EFFECTS = (
         "No subjects for {batch_effects} in the transfer data, so they "
         "cannot be predicted."
+    )
+    ERROR_TRANSFER_UNKNOWN_REESTIMATE = (
+        "Cannot re-estimate {unknown}: the batch effects of the transfer data "
+        "are {batch_effects}."
+    )
+    ERROR_TRANSFER_REESTIMATE_NOT_IMPLEMENTED = (
+        "reestimate_batch_effects is only implemented for BLR. HBR transfer "
+        "re-estimates all batch effects (see issue #387)."
     )
     ERROR_MULTIPLE_COVARIATE_DIMS = (
         "Multiple covariate dimensions found: {covariate_dims}"

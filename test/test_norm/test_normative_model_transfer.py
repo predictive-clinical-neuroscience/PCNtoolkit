@@ -124,7 +124,11 @@ def test_003_transfer_should_warn_when_fewerBatchEffects(
     # Assert: the warning appeared
     with pytest.warns(
         UserWarning,
-        match=re.escape(Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS),
+        match=re.escape(
+            Warnings.TRANSFER_DATA_FEWER_BATCH_EFFECTS.format(
+                batch_effects="batch_effect_1"
+            )
+        ),
     ):
         fitted_norm_blr_model.transfer(
             transfer_norm_data_1be,
@@ -193,3 +197,33 @@ def test_005_split_should_keepOnlyItsOwnBatchEffects(
 
     assert first.unique_batch_effects["batch_effect_0"] == ["0"]
     assert second.unique_batch_effects["batch_effect_0"] == ["1"]
+
+
+def test_006_transfer_should_keepPretrainedBatchEffects_unlessReestimated(
+    fitted_norm_blr_model: NormativeModel,
+    transfer_norm_data_from_arrays: NormData,
+) -> None:
+    """Sex keeps its pretrained estimate, unless re-estimated (#388).
+
+    batch_effect_0 plays the role of sex (known levels 0, 1) and
+    batch_effect_1 of site (new level 3). Keys are (sex, site) codes;
+    -1 marks a sex that keeps its pretrained estimate.
+
+    Parameters
+    ----------
+    fitted_norm_blr_model : NormativeModel
+        Pre-fitted BLR normative model, with fixed_effect=True.
+    transfer_norm_data_from_arrays : NormData
+        Transfer dataset, from a new site.
+    """
+    rv = fitted_norm_blr_model.response_vars[0]
+
+    # Default: one correction for the new site, shared by both sexes
+    kept = fitted_norm_blr_model.transfer(transfer_norm_data_from_arrays)
+    assert list(kept[rv].correction_coefficients) == ["(-1, 0)"]
+
+    # Re-estimate sex: one correction per sex at the new site
+    reestimated = fitted_norm_blr_model.transfer(
+        transfer_norm_data_from_arrays, reestimate_batch_effects=["batch_effect_0"]
+    )
+    assert sorted(reestimated[rv].correction_coefficients) == ["(0, 0)", "(1, 0)"]
