@@ -42,13 +42,6 @@ Imports
     pd.options.mode.chained_assignment = None
     pcntoolkit.util.output.Output.set_show_messages(False)
 
-
-.. code:: text
-
-    /tmp/ipykernel_3322/3108278632.py:17: Pandas4Warning: The 'mode.chained_assignment' option is deprecated. It has had no effect since pandas 3.0, which removed the SettingWithCopyWarning it controlled. Chained assignment now emits a ChainedAssignmentError warning instead; use warnings.filterwarnings with category=ChainedAssignmentError to silence or escalate it. This option will be removed in pandas 4.0.
-      pd.options.mode.chained_assignment = None
-
-
 1. See which pretrained models are available
 --------------------------------------------
 
@@ -187,8 +180,7 @@ parcellation, trained on 67.000 subjects from 89 sites.
 
 .. code:: text
 
-    Downloading BLRw_ct_DES_lifespan_67K_89sites ...
-    Model available at /home/runner/work/PCNtoolkit/PCNtoolkit/resources/pretrained/BLRw_ct_DES_lifespan_67K_89sites
+    Model available at c:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\examples\resources\pretrained\BLRw_ct_DES_lifespan_67K_89sites
 
 
 3. Load the model and see what it expects
@@ -220,9 +212,9 @@ models published earlier.
 
 .. code:: text
 
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.2, but you are running v1.4.0. Loading this model in v1.4.0...
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.1, but you are running v1.4.0. Loading this model in v1.4.0...
       warnings.warn(
-    /home/runner/work/PCNtoolkit/PCNtoolkit/pcntoolkit/util/migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.1, but you are running v1.4.0. Loading this model in v1.4.0...
+    C:\Users\kontsi\Documents\GitHub\PCNtoolkit-local\pcntoolkit\util\migration.py:178: UserWarning: This model was saved with PCNtoolkit v1.1.2, but you are running v1.4.0. Loading this model in v1.4.0...
       warnings.warn(
 
 
