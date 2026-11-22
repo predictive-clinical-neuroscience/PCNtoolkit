@@ -44,6 +44,8 @@ if TYPE_CHECKING:
 
 # Minimum subjects per combination of batch effects in BLR.transfer
 MIN_TRANSFER_SUBJECTS = 2
+# Marks a level that keeps its pretrained estimate in BLR.transfer
+KEEP_PRETRAINED_BATCH_EFFECT = -1
 
 
 class BLR(RegressionModel):
@@ -173,6 +175,7 @@ class BLR(RegressionModel):
         self.models_variance = self.heteroskedastic or self.fixed_effect_var
         self.hyp0 = hyp0
         self.hyp: np.ndarray = None  # type: ignore
+        self.pretrained_batch_effects: list[str] = []
 
     def initialize_warp(self) -> None:
         if self.warp_name:
@@ -306,6 +309,9 @@ class BLR(RegressionModel):
     ) -> Generator[tuple[dict[str, object], np.ndarray]]:
         """Yield encoded batch-effect combinations and their masks.
 
+        Combinations of only ``KEEP_PRETRAINED_BATCH_EFFECT`` need no correction and
+        are skipped.
+
         Parameters
         ----------
         be : xr.DataArray
@@ -332,13 +338,20 @@ class BLR(RegressionModel):
         for batch_dim in batch_dims:
             # Collect the encoded ids for this batch-effect dimension.
             # eg {'site': [0, 1], 'sex': [0, 1, 2]}
-            unique_batch_effects[batch_dim] = list(be_maps[batch_dim].values())
+            unique_batch_effects[batch_dim] = list(be_maps[batch_dim].values()) + [
+                KEEP_PRETRAINED_BATCH_EFFECT
+            ]
 
-        yield from iter_batch_combinations(
+        for combination, mask in iter_batch_combinations(
             be.values,
             unique_batch_effects,
             batch_dims,
-        )
+        ):
+            # Skip combinations that have estimated pretrained batch effects
+            if any(
+                code != KEEP_PRETRAINED_BATCH_EFFECT for code in combination.values()
+            ):
+                yield combination, mask
 
     def forward(
         self, X: xr.DataArray, be: xr.DataArray, Y: xr.DataArray
@@ -426,24 +439,22 @@ class BLR(RegressionModel):
         """
         np_X = X.values
         if self.transfered:
-            # Create synthetic batch effect data
-            np_be = np.tile(
-                np.array([list(v.values())[0] for v in self.be_maps.values()]),
-                (X.shape[0], 1),
+            pretrained_be, new_be = self._split_pretrained_and_new_batch_effects(
+                be, self.transfered_be_maps, self.pretrained_batch_effects
             )
         else:
-            np_be = be.values
-        self.ys_s2(np_X, np_be)
+            pretrained_be = be.values
+        self.ys_s2(np_X, pretrained_be)
 
         if self.transfered:
-            # Loop over the unique batch effects:
-            # This creates a list of dictionaries
-            # Each dictionary contains a unique combination of batch effects:
-            # [{"sex":"F", "site":"A"}, {"sex":"F", "site":"B"}, {"sex":"M", "site":"A"}, {"sex":"M", "site":"B"}]
+            new_combinations = list(self.be_idx_gen(new_be, self.transfered_be_maps))
             # Combinations without adaptation subjects have no correction
             unseen = [
-                batch_combination_to_text(t, self.transfered_be_maps)
-                for t, _ in self.be_idx_gen(be, self.transfered_be_maps)
+                batch_combination_to_text(
+                    {d: c for d, c in t.items() if c != KEEP_PRETRAINED_BATCH_EFFECT},
+                    self.transfered_be_maps,
+                )
+                for t, _ in new_combinations
                 if str(tuple(t.values())) not in self.correction_coefficients
             ]
             if unseen:
@@ -453,7 +464,7 @@ class BLR(RegressionModel):
                         batch_effects="; ".join(unseen),
                     )
                 )
-            for t, mask in self.be_idx_gen(be, self.transfered_be_maps):
+            for t, mask in new_combinations:
                 residual_mean, correction_factor = self.correction_coefficients[
                     str(tuple(t.values()))
                 ]
@@ -559,13 +570,13 @@ class BLR(RegressionModel):
         be: xr.DataArray,
         be_maps: dict[str, dict[str, int]],
         Y: xr.DataArray,
+        reestimate_batch_effects: list[str] | None = None,
         **kwargs: Any,
     ) -> BLR:
         """Adapt a fitted BLR to new batch effects (e.g. a new site).
 
-        For each combination of batch effects (e.g. site x sex), an offset
-        and a scale factor are estimated from the residuals of its ``n``
-        adaptation subjects and applied to the reference prediction.
+        Known levels (e.g. sex F) keep their pretrained estimate. New levels
+        (e.g. a new site) get an offset and scale from the transfer data.
 
         Parameters
         ----------
@@ -577,6 +588,10 @@ class BLR(RegressionModel):
             Mapping from batch-effect labels to encoded integer ids.
         Y : xr.DataArray
             Response variable of the adaptation subjects.
+        reestimate_batch_effects : list[str] | None, optional
+            Batch effects to not keep their pretrained estimate, but to re-estimate from
+            the adaptation data. Default is None, which keeps all pretrained model
+            estimates.
         **kwargs : Any
             Unused. Accepted for compatibility with other regression models.
 
@@ -588,14 +603,42 @@ class BLR(RegressionModel):
         Raises
         ------
         ValueError
-            If a combination has fewer than 2 adaptation subjects.
+            If ``reestimate_batch_effects`` names an unknown batch effect, or
+            a combination has fewer than 2 subjects.
         """
+        be_dims = [str(d) for d in be.batch_effect_dims.values]
+        reestimate = list(reestimate_batch_effects or [])
+        # Catch typos, e.g. "stie" instead of "site"
+        unknown = [d for d in reestimate if d not in be_dims]
+        if unknown:
+            raise ValueError(
+                Output.error(
+                    Errors.ERROR_TRANSFER_UNKNOWN_REESTIMATE,
+                    unknown=", ".join(unknown),
+                    batch_effects=", ".join(be_dims),
+                )
+            )
+
+        # Decide what batch effects to keep from the pretrained mdel and what to 
+        # re-estimate from the adaptation data.
+        pretrained_dims = [
+            d for d in be_dims if d in self.be_maps and d not in reestimate
+        ]
+        pretrained_be, new_be = self._split_pretrained_and_new_batch_effects(
+            be, be_maps, pretrained_dims
+        )
+        new_combinations = list(self.be_idx_gen(new_be, be_maps))
+
         # With 1 subject the scale is 0 and the Z-scores are infinite
-        too_small = []
-        for t, mask in self.be_idx_gen(be, be_maps):
-            if mask.sum() < MIN_TRANSFER_SUBJECTS:
-                labels = batch_combination_to_text(t, be_maps)
-                too_small.append(f"{labels} (n={int(mask.sum())})")
+        too_small = [
+            batch_combination_to_text(
+                {d: c for d, c in t.items() if c != KEEP_PRETRAINED_BATCH_EFFECT},
+                be_maps,
+            )
+            + f" (n={int(mask.sum())})"
+            for t, mask in new_combinations
+            if mask.sum() < MIN_TRANSFER_SUBJECTS
+        ]
         if too_small:
             raise ValueError(
                 Output.error(
@@ -605,19 +648,8 @@ class BLR(RegressionModel):
                 )
             )
 
-        # Create synthetic batch effect data
-        synth_be = np.tile(
-            np.array([list(v.values())[0] for v in self.be_maps.values()]),
-            (X.shape[0], 1),
-        )
-        synth_be = xr.DataArray(
-            synth_be,
-            dims=("observations", "batch_effect_dims"),
-            coords=(X.observations, list(self.be_maps.keys())),
-        )
-
-        # Get predictive mean and variance
-        synth_ys, synth_s2 = self.ys_s2(X.values, synth_be)
+        # Pretrained prediction, with pretrained estimates for known levels
+        pretrained_ys, pretrained_s2 = self.ys_s2(X.values, pretrained_be)
 
         if self.warp:
             y = self.warp.f(Y.values, self.gamma)
@@ -627,24 +659,21 @@ class BLR(RegressionModel):
         transfered_model = copy.deepcopy(self)
         transfered_model.correction_coefficients = {}
         transfered_model.transfered_be_maps = be_maps
+        transfered_model.pretrained_batch_effects = pretrained_dims
 
-        for t, mask in self.be_idx_gen(be, be_maps):
-            # The predicted centiles do not align with the data, so we need to correct them
-            # First we correct the mean
-            # We compute the residuals and add the difference to the predicted mean
-            residuals = y[mask] - synth_ys[mask]
+        # The pretrained model centiles do not align with our data: correct 
+        # each new combination of batch effects by a vertical offset and a scale 
+        for t, mask in new_combinations:
+            # Correct the mean
+            residuals = y[mask] - pretrained_ys[mask]
             residual_mean = np.mean(residuals)
-            corrected_mean = synth_ys[mask] + residual_mean
+            corrected_mean = pretrained_ys[mask] + residual_mean
 
-            # Then we correct the variance
-            # The predicted average std is:
-            pred_avg_std = np.mean(np.sqrt(synth_s2[mask]))
-            # The actual std (ddof=1: the mean comes from the same subjects):
+            # Correct the variance
+            pred_avg_std = np.mean(np.sqrt(pretrained_s2[mask]))
             n_subjects = int(mask.sum())
             real_avg_std = np.std(y[mask] - corrected_mean, ddof=1)
-            # So the predicted average std has to be corrected with a factor of:
             correction_factor = real_avg_std / pred_avg_std
-            # The offset is estimated from n subjects: widen the prediction
             correction_factor *= np.sqrt(1 + 1 / n_subjects)
 
             # We have to save these correction coefficients:
@@ -1143,6 +1172,8 @@ class BLR(RegressionModel):
             else:
                 object.__setattr__(self, key, value)
         self.initialize_warp()
+        # The loop above turned this list into an array
+        self.pretrained_batch_effects = [str(d) for d in self.pretrained_batch_effects]
         self.is_from_dict = True
         # Pass version down so basis function migrations are applied.
         self.basis_function_mean = BasisFunction.from_dict(
@@ -1236,6 +1267,51 @@ class BLR(RegressionModel):
     @property
     def has_batch_effect(self) -> bool:
         return self.fixed_effect or self.fixed_effect_var
+
+    def _split_pretrained_and_new_batch_effects(
+        self,
+        be: xr.DataArray,
+        be_maps: dict[str, dict[str, int]],
+        pretrained_dims: list[str],
+    ) -> tuple[np.ndarray, xr.DataArray]:
+        """Split batch effects into pretrained and new levels.
+
+        Known batch effect levels enter the design matrix with their pretrained code and get no
+        correction. New levels are marked in a second array to get a correction.
+
+        Parameters
+        ----------
+        be : xr.DataArray
+            Batch effects, coded with ``be_maps``.
+        be_maps : dict[str, dict[str, int]]
+            Code of each label in ``be``.
+        pretrained_dims : list[str]
+            Batch effects whose known levels keep their pretrained estimate.
+
+        Returns
+        -------
+        tuple[np.ndarray, xr.DataArray]
+            Codes for the pretrained prediction, and codes of the new levels.
+        """
+        pretrained_be = np.tile(
+            np.array([list(v.values())[0] for v in self.be_maps.values()]),
+            (be.shape[0], 1),
+        )
+        new_be = be.values.astype(int)
+        be_dims = [str(d) for d in be.batch_effect_dims.values]
+        train_dims = list(self.be_maps)
+        for dim in pretrained_dims:
+            train_map = {str(k): v for k, v in self.be_maps[dim].items()}
+            # Transfer code -> training code (-1 = new level)
+            to_train = np.full(max(be_maps[dim].values()) + 1, -1)
+            for label, code in be_maps[dim].items():
+                to_train[code] = train_map.get(str(label), -1)
+            col = be_dims.index(dim)
+            train_codes = to_train[new_be[:, col]]
+            known = train_codes >= 0
+            pretrained_be[known, train_dims.index(dim)] = train_codes[known]
+            new_be[known, col] = KEEP_PRETRAINED_BATCH_EFFECT
+        return pretrained_be, be.copy(data=new_be)
 
 
 def default_slope_indices(basis_function: BasisFunction) -> list[int]:
