@@ -20,6 +20,34 @@ These tests ensure that the NormData class correctly handles data input,
 maintains data integrity, and performs proper data splitting and stratification.
 """
 
+# Attributes that summarise the observations: they must change with a subset.
+SUMMARY_ATTRS = (
+    "unique_batch_effects",
+    "batch_effect_counts",
+    "covariate_ranges",
+    "batch_effect_covariate_ranges",
+)
+
+
+def assert_summaries_describe(data: NormData) -> None:
+    """Assert that the counts and covariate ranges match the data itself.
+
+    Parameters
+    ----------
+    data : NormData
+        The data to check, usually a subset of a bigger dataset.
+    """
+    n_observations = data.sizes["observations"]
+    for dim in data.batch_effect_dims.to_numpy():
+        present = data.batch_effects.sel(batch_effect_dims=dim).to_numpy()
+        assert set(data.unique_batch_effects[dim]) == set(present)
+        assert sum(data.batch_effect_counts[dim].values()) == n_observations
+        assert set(data.batch_effect_covariate_ranges[dim]) == set(present)
+    for cov in data.covariates.to_numpy():
+        values = data.X.sel(covariates=cov).to_numpy()
+        assert data.covariate_ranges[cov]["min"] == pytest.approx(values.min())
+        assert data.covariate_ranges[cov]["max"] == pytest.approx(values.max())
+
 
 @pytest.mark.parametrize(
     "norm_data_fixture, n_batch_effect_dims",
@@ -135,12 +163,14 @@ def test_split_with_stratify(
             )
             assert np.all(np.isin(split_data, original_data))
 
-        # Check if the attributes are preserved in the splits
+        # Check if the attributes are preserved in the splits. The counts and
+        # covariate ranges are the exception: they describe the split itself.
         for split in splits:
             assert split.name in ["train", "val"]
             for key in norm_data_from_arrays.attrs:
-                if key != "name":
+                if key not in ("name", *SUMMARY_ATTRS):
                     assert split.attrs[key] == norm_data_from_arrays.attrs[key]
+            assert_summaries_describe(split)
 
         # Check if the coordinate names are preserved
         for split in splits:
@@ -159,6 +189,104 @@ def test_chunk(norm_data_from_arrays):
     chunks = norm_data_from_arrays.chunk(n_chunks=2)
     for i, chunk in enumerate(chunks):
         assert chunk.response_vars == ["response_var_{}".format(i)]
+
+
+@pytest.mark.parametrize("how", ["isel", "sel", "where_drop"])
+def test_subset_describes_its_own_data(norm_data_from_arrays: NormData, how: str):
+    """A subset must report its own counts and covariate ranges.
+
+    Regression test for issue #640: a subset kept the size, sites and
+    covariate ranges of the full dataset, so a model fitted on it stored
+    those wrong values.
+
+    Parameters
+    ----------
+    norm_data_from_arrays : NormData
+        Dataset with covariates drawn uniformly between 0 and 1.
+    how : str
+        Which xarray selection to use. All of them must give the same result.
+    """
+    parent_attrs = copy.deepcopy(norm_data_from_arrays.attrs)
+    # Keep the lower part of the first covariate, like keeping subjects under 30.
+    mask = (norm_data_from_arrays.X.isel(covariates=0) < 0.3).to_numpy()
+    if how == "isel":
+        subset = norm_data_from_arrays.isel(observations=mask)
+    elif how == "sel":
+        labels = norm_data_from_arrays.observations.to_numpy()[mask]
+        subset = norm_data_from_arrays.sel(observations=labels)
+    else:
+        cond = norm_data_from_arrays.X.isel(covariates=0, drop=True) < 0.3
+        subset = norm_data_from_arrays.where(cond, drop=True)
+
+    assert subset.sizes["observations"] == mask.sum()
+    assert subset.covariate_ranges["covariate_0"]["max"] < 0.3
+    assert_summaries_describe(subset)
+
+    # The full dataset must not change when we take a subset or rename it.
+    subset.attrs["name"] = "subset"
+    assert norm_data_from_arrays.attrs.keys() == parent_attrs.keys()
+    for key, value in parent_attrs.items():
+        assert norm_data_from_arrays.attrs[key] == value
+
+
+def test_subset_forgets_dropped_batch_effects(norm_data_from_arrays: NormData):
+    """A subset must not list sites it no longer contains.
+
+    Otherwise ``synthesize`` can generate subjects from sites the model was
+    never fitted on.
+
+    Parameters
+    ----------
+    norm_data_from_arrays : NormData
+        Dataset whose ``batch_effect_1`` has the levels "0", "1" and "2".
+    """
+    site = norm_data_from_arrays.batch_effects.sel(batch_effect_dims="batch_effect_1")
+    subset = norm_data_from_arrays.isel(observations=(site != "2").to_numpy())
+
+    assert sorted(subset.unique_batch_effects["batch_effect_1"]) == ["0", "1"]
+    assert "2" not in subset.batch_effect_counts["batch_effect_1"]
+    assert "2" not in subset.batch_effect_covariate_ranges["batch_effect_1"]
+
+
+def test_selecting_one_observation_does_not_fail(norm_data_from_arrays: NormData):
+    """Selecting a single observation drops the observations dimension.
+
+    There is then no table left to summarise, so the selection must still work
+    and simply keep the summaries it had.
+
+    Parameters
+    ----------
+    norm_data_from_arrays : NormData
+        Any dataset.
+    """
+    single = norm_data_from_arrays.isel(observations=0)
+    assert "observations" not in single.dims
+
+
+def test_model_fitted_on_subset_stores_subset_info(norm_data_from_arrays: NormData):
+    """A model fitted on a subset must store the subset's counts and ranges.
+
+    This is the scenario of issue #640: before the fix ``n_fit_observations``
+    was the size of the full dataset and ``covariate_ranges`` its full range,
+    so centile plots extrapolated and ``merge`` over-weighted the model.
+
+    Parameters
+    ----------
+    norm_data_from_arrays : NormData
+        Dataset with covariates drawn uniformly between 0 and 1.
+    """
+    from pcntoolkit.normative_model import NormativeModel
+    from pcntoolkit.regression_model.blr import BLR
+
+    mask = (norm_data_from_arrays.X.isel(covariates=0) < 0.3).to_numpy()
+    subset = norm_data_from_arrays.isel(observations=mask)
+    subset_max = float(subset.X.sel(covariates="covariate_0").max())
+
+    model = NormativeModel(BLR(), savemodel=False, saveresults=False, saveplots=False)
+    model.fit(subset)
+
+    assert model.n_fit_observations == mask.sum()
+    assert model.covariate_ranges["covariate_0"]["max"] == pytest.approx(subset_max)
 
 
 def test_merge(norm_data_from_arrays: NormData):
