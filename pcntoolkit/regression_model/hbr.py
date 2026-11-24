@@ -566,7 +566,30 @@ class InferenceMethod(ABC):
         result = xr.apply_ufunc(fn, *array_of_vars, kwargs=kwargs).mean(dim="sample")
         return result
 
-    def elemwise_logp(self, model) -> xr.DataArray:  # type: ignore
+    def elemwise_logp(self, model: pm.Model) -> xr.DataArray:
+        """
+        Compute the log posterior predictive density of each observation.
+
+        Each posterior draw (one sampled set of parameters) gives a density.
+        The result is the log of the mean of these densities. It is never
+        below the mean of their logs, so MLL and MSLL are never higher than
+        with that mean.
+
+        Parameters
+        ----------
+        model : pm.Model
+            Model with the data to evaluate.
+
+        Returns
+        -------
+        xr.DataArray
+            Log density of each observation.
+
+        Raises
+        ------
+        ValueError
+            If the inference method has not been fitted.
+        """
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.HBR_MODEL_NOT_FITTED))
         with model:
@@ -576,7 +599,10 @@ class InferenceMethod(ABC):
                 extend_inferencedata=False,
                 progressbar=False,
             )
-        return az.extract(logp, "log_likelihood", var_names=["Yhat"]).mean("sample")
+        logp = az.extract(logp, "log_likelihood", var_names=["Yhat"])
+        # Sum the densities in log space: those of outliers underflow to 0
+        log_sum = logp.reduce(np.logaddexp.reduce, dim="sample")
+        return log_sum - np.log(logp.sizes["sample"])
 
     def extract_and_reshape(
         self, post_pred, observations, var_name: str
