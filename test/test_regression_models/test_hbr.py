@@ -4,7 +4,10 @@ import inspect
 import json
 import logging
 
+import numpy as np
+import pymc as pm
 import pytest
+import xarray as xr
 
 from pcntoolkit.math_functions.likelihood import (
     NormalLikelihood,
@@ -615,3 +618,51 @@ def test_init_should_useMCMC_when_noInferenceMethodGiven() -> None:
     model = HBR("test_hbr")
 
     assert isinstance(model.inference_method, MCMC)
+
+
+def test_elemwise_logp_should_integrateToOne_when_givenOneSubject(
+    train_and_save_hbr_model: NormativeModel, norm_data_from_arrays: NormData
+) -> None:
+    """
+    Arrange: one subject, repeated with many different response values.
+    Act: compute the log density of every response value.
+    Assert: the density integrates to 1, the log density is finite for outliers,
+    and it is never below the mean log density over the posterior draws.
+
+    Regression test for #600: logp used to be that mean, so the density of one
+    subject integrated to less than 1 and MLL and MSLL were too high.
+
+    Parameters
+    ----------
+    train_and_save_hbr_model : NormativeModel
+        Fitted and saved HBR model.
+    norm_data_from_arrays : NormData
+        Data the model was fitted on.
+    """
+    # Load a fresh model: other tests add variables to the shared PyMC model
+    model = NormativeModel.load(train_and_save_hbr_model.save_dir)
+    data = norm_data_from_arrays.copy(deep=True)
+    responsevar = model.response_vars[0]
+    hbr: HBR = model[responsevar]  # type: ignore
+    model.preprocess(data)
+    X, be, *_ = model.extract_data(data.sel(response_vars=responsevar))
+    grid = np.linspace(-50.0, 50.0, 2001)
+    Y = xr.DataArray(np.append(grid, [-1000.0, 1000.0]), dims="observations")
+    Y = Y.assign_coords(observations=np.arange(Y.size))
+    first = np.zeros(Y.size, dtype=int)
+    X = X.isel(observations=first).assign_coords(observations=Y.observations)
+    be = be.isel(observations=first).assign_coords(observations=Y.observations)
+
+    logp = hbr.elemwise_logp(X, be, Y).values
+
+    with hbr.pymc_model:
+        draws = pm.compute_log_likelihood(
+            hbr.idata,
+            var_names=["Yhat"],
+            extend_inferencedata=False,
+            progressbar=False,
+        )
+    mean_logp = draws["Yhat"].mean(("chain", "draw")).values
+    assert np.trapezoid(np.exp(logp[:-2]), grid) == pytest.approx(1.0, abs=1e-3)
+    assert np.isfinite(logp).all()
+    assert (logp >= mean_logp - 1e-8 * np.abs(mean_logp)).all()
