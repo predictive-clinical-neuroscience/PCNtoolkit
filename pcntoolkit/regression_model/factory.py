@@ -70,7 +70,9 @@ def SHASHb1_likelihood() -> SHASHbLikelihood:
                 mapping_params=(0, 3),
             ),
         ),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+        basis_function=BsplineBasisFunction(
+            basis_column=0, nknots=5, degree=3, drop_first=True
+        ),
     )
     # BSpline regression in sigma with fixed intercept
     sigma = LinearPrior(
@@ -84,7 +86,9 @@ def SHASHb1_likelihood() -> SHASHbLikelihood:
         ),
         mapping="softplus",
         mapping_params=(0, 3),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+        basis_function=BsplineBasisFunction(
+            basis_column=0, nknots=5, degree=3, drop_first=True
+        ),
     )
     # Fixed values for epsilon and delta
     epsilon = Prior(
@@ -116,7 +120,9 @@ def SHASHb2_likelihood() -> SHASHbLikelihood:
                 mapping_params=(0, 3),
             ),
         ),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+        basis_function=BsplineBasisFunction(
+            basis_column=0, nknots=5, degree=3, drop_first=True
+        ),
     )
     # BSpline regression in sigma with fixed intercept
     sigma = LinearPrior(
@@ -130,7 +136,9 @@ def SHASHb2_likelihood() -> SHASHbLikelihood:
         ),
         mapping="softplus",
         mapping_params=(0, 3),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+        basis_function=BsplineBasisFunction(
+            basis_column=0, nknots=5, degree=3, drop_first=True
+        ),
     )
     # BSpline regression in epsilon with fixed intercept
     epsilon = LinearPrior(
@@ -142,7 +150,9 @@ def SHASHb2_likelihood() -> SHASHbLikelihood:
             dist_name="Normal",
             dist_params=(0.0, 1.0),
         ),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+        basis_function=BsplineBasisFunction(
+            basis_column=0, nknots=5, degree=3, drop_first=True
+        ),
     )
     # BSpline regression in delta with fixed intercept
     delta = LinearPrior(
@@ -156,7 +166,9 @@ def SHASHb2_likelihood() -> SHASHbLikelihood:
         ),
         mapping="softplus",
         mapping_params=(0, 3, 0.6),
-        basis_function=BsplineBasisFunction(basis_column=0, nknots=5, degree=3),
+        basis_function=BsplineBasisFunction(
+            basis_column=0, nknots=5, degree=3, drop_first=True
+        ),
     )
 
     return SHASHbLikelihood(mu, sigma, epsilon, delta)
