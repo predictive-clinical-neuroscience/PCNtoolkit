@@ -140,8 +140,8 @@ def test_approximate_gamma(shape, scale):
 
 
 @pytest.mark.parametrize("lower, upper", [(0, 1), (1, 2), (-1, 0.5)])
-def test_approximate_uniform(lower, upper):
-    samples = stats.uniform.rvs(lower, upper, size=1000000)
+def test_approximate_uniform(lower: float, upper: float) -> None:
+    samples = stats.uniform.rvs(loc=lower, scale=upper - lower, size=1000000)
     dens = stats.gaussian_kde(samples)
     approximation = factorize_uniform(samples, 1)
     loose_approximation = factorize_uniform(samples, 2)

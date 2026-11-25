@@ -1,6 +1,7 @@
 
 import numpy as np
 import scipy.stats as stats
+from numpy.typing import ArrayLike
 
 
 def factorize_normal(samples, freedom=1) -> tuple[float, float]:
@@ -8,8 +9,8 @@ def factorize_normal(samples, freedom=1) -> tuple[float, float]:
     return (mu, sigma * freedom)
 
 
-def factorize_halfnormal(samples, freedom=1) -> tuple[float]:
-    loc, scale = stats.halfnorm.fit(samples)
+def factorize_halfnormal(samples: ArrayLike, freedom: float = 1) -> tuple[float]:
+    _, scale = stats.halfnorm.fit(samples, floc=0)
     return (scale * freedom,)
 
 
@@ -38,9 +39,10 @@ def factorize_gamma(samples, freedom=1) -> tuple[float, float]:
 #     return (a, beta*freedom)
 
 
-def factorize_uniform(samples, freedom=1) -> tuple[float, float]:
-    a, b = stats.uniform.fit(samples)
-    return (a, b)
+def factorize_uniform(samples: ArrayLike, freedom: float = 1) -> tuple[float, float]:
+    # scipy returns (loc, scale), PyMC expects (lower, upper)
+    loc, scale = stats.uniform.fit(samples)
+    return (loc, loc + scale)
 
 
 def factorize_exponential(samples, freedom=1) -> tuple[float]:
