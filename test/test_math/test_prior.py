@@ -6,8 +6,10 @@ because they need a fitted model to compile against.
 """
 
 import numpy as np
+import pymc as pm
 import pytensor.tensor as pt
 import pytest
+import xarray as xr
 
 from pcntoolkit.math_functions.prior import BasePrior, make_prior
 
@@ -93,3 +95,39 @@ def test_mapping_survives_serialization(mapping):
 
     assert loaded.mapping == mapping
     assert loaded.mapping_params == (0.5, 2.0)
+
+
+# --------------------------------------------------------------------------- #
+# transfer
+# --------------------------------------------------------------------------- #
+
+
+def _transfer_params(dist_name: str, samples: np.ndarray) -> tuple[float, ...]:
+    """Parameters of the prior that Prior.transfer fits to posterior samples."""
+    prior = make_prior("theta", dist_name=dist_name)
+    posterior = xr.Dataset({"theta": (("chain", "draw"), samples.reshape(2, -1))})
+    idata = xr.DataTree.from_dict({"posterior": posterior})
+    return tuple(prior.transfer(idata).dist_params)
+
+
+def test_transfer_uniform_covers_the_posterior() -> None:
+    """A Uniform prior is fitted as (lower, upper), not as (loc, scale) (#653)."""
+    samples = np.linspace(2.0, 3.0, 1000)
+
+    lower, upper = _transfer_params("Uniform", samples)
+
+    assert (lower, upper) == pytest.approx((2.0, 3.0))
+    assert np.isfinite(pm.logp(pm.Uniform.dist(lower, upper), 2.5).eval())
+
+
+def test_transfer_halfnormal_keeps_its_scale_when_away_from_zero() -> None:
+    """The scale of a HalfNormal is the root mean square of the samples.
+
+    It must not shrink when the posterior is concentrated away from 0 (#653):
+    it was about 0.16 for samples around 0.5.
+    """
+    samples = np.random.default_rng(653).normal(0.5, 0.05, 1000)
+
+    (sigma,) = _transfer_params("HalfNormal", samples)
+
+    assert sigma == pytest.approx(np.sqrt(np.mean(samples**2)), rel=1e-6)
