@@ -121,10 +121,13 @@ def test_empty_selection_rejected_and_passthrough_supported() -> None:
     assert basis.dimension == 3
 
 
-def test_passthrough_dimension_requires_fitted_input_width() -> None:
+def test_passthrough_dimension_warns_until_input_width_is_known() -> None:
     basis = CompositeBasisFunction([LinearBasisFunction(0)], include_untransformed=True)
-    with pytest.raises(ValueError, match="fit"):
-        _ = basis.dimension
+    with pytest.warns(UserWarning, match="Assuming no uncovered columns"):
+        assert basis.dimension == 1
+    X = np.arange(12.0).reshape(4, 3)
+    basis.fit(X)
+    assert basis.dimension == basis.transform(X).shape[1] == 3
 
 
 def test_transform_requires_fit_and_consistent_input_width() -> None:

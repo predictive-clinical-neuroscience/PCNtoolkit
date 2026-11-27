@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -358,8 +359,8 @@ class CompositeBasisFunction(BasisFunction):
     is_fitted : bool
         Whether the composite has been fitted.
     dimension : int
-        Number of output columns. With ``include_untransformed=True``, fit
-        first so the number of uncovered covariates is known.
+        Number of output columns. With ``include_untransformed=True`` and
+        unknown input width, warns and assumes zero uncovered covariates.
 
     Raises
     ------
@@ -384,8 +385,6 @@ class CompositeBasisFunction(BasisFunction):
         include_untransformed: bool = False,
     ) -> None:
         super().__init__(basis_column=0)
-        if not isinstance(include_untransformed, bool):
-            raise ValueError("include_untransformed must be a bool.")
         if not parts and not include_untransformed:
             raise ValueError("Select at least one basis part.")
         self.parts = parts
@@ -466,13 +465,26 @@ class CompositeBasisFunction(BasisFunction):
         self.is_fitted = True
 
     def transform(self, X: np.ndarray) -> np.ndarray:
+        """Transform input covariates using the fitted basis parts.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input covariates in the same column order as during fitting.
+            Column order is not validated.
+
+        Returns
+        -------
+        np.ndarray
+            Basis expansions, optional copied covariates, and interactions.
+        """
         if not self.is_fitted:
             raise ValueError(Output.error(Errors.ERROR_BASIS_FUNCTION_NOT_FITTED))
         X = self._validate_input(X)
         if self.n_features_in is not None and X.shape[1] != self.n_features_in:
             raise ValueError(
                 f"X has {X.shape[1]} columns; expected {self.n_features_in} "
-                "columns in the same order as during fit."
+                "columns, as during fit."
             )
 
         mats = []
@@ -530,8 +542,15 @@ class CompositeBasisFunction(BasisFunction):
         uncovered = 0
         if self.include_untransformed:
             if self.n_features_in is None:
-                raise ValueError("Call fit before requesting the full dimension.")
-            uncovered = self.n_features_in - len({p.basis_column for p in self.parts})
+                warnings.warn(
+                    "The input feature count is unknown. Assuming no uncovered "
+                    "columns; the full dimension may be larger once the input "
+                    "width is known.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+            else:
+                uncovered = self.n_features_in - len({p.basis_column for p in self.parts})
         return sum(p.dimension for p in self.parts) + interaction_dimension + uncovered
 
 
