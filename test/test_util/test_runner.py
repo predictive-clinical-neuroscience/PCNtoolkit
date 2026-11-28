@@ -1,13 +1,18 @@
 import multiprocessing
+import re
 import shutil
+import subprocess
 import sys
 from multiprocessing.synchronize import Barrier
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
 import pytest
 
+import pcntoolkit.util.job_observer as observer_module
+import pcntoolkit.util.runner as runner_module
 from pcntoolkit.util.runner import Runner
 from test.fixtures.test_model_fixtures import *
 
@@ -364,6 +369,63 @@ def test_runner_transfer_predict_kfold(
         )
     )
     cleanup(transferred_model, runner)
+
+
+def test_runner_raises_when_parallel_job_fails(
+    new_norm_test_model: NormativeModel,
+    norm_data_from_arrays: NormData,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A failed parallel job stops the Runner instead of returning a partial model."""
+    submitted: list[str] = []
+
+    def fake_popen(cmd: list[str], **kwargs) -> SimpleNamespace:
+        """Stand-in for SLURM: run the first job here, let the others fail."""
+        out = ""
+        if cmd[0] == "sbatch":
+            with open(cmd[1]) as f:
+                script = f.read()
+            if not submitted:
+                args = re.search(r"^python .*", script, re.M).group(0).split()[-3:]
+                runner_module.load_and_execute(args)
+                open(re.search(r"touch (\S+)", script).group(1), "w").close()
+            submitted.append(cmd[1])
+            out = f"Submitted batch job {len(submitted)}"
+        # squeue gets an empty answer: no job is left in the queue
+        return SimpleNamespace(communicate=lambda: (out, ""), returncode=0)
+
+    fake_subprocess = SimpleNamespace(
+        PIPE=subprocess.PIPE,
+        Popen=fake_popen,
+        run=lambda *a, **k: SimpleNamespace(stdout="", stderr="", returncode=0),
+    )
+    monkeypatch.setattr(runner_module, "subprocess", fake_subprocess)
+    monkeypatch.setattr(observer_module, "subprocess", fake_subprocess)
+    # The job observer sleeps between its checks of the queue
+    monkeypatch.setattr(observer_module, "time", SimpleNamespace(sleep=lambda s: None))
+
+    new_norm_test_model.saveplots = False
+    new_norm_test_model.evaluate_model = False
+    # The Runner only checks that <environment>/bin/python exists
+    environment = tmp_path / "env"
+    (environment / "bin").mkdir(parents=True)
+    (environment / "bin" / "python").touch()
+    runner = Runner(
+        parallelize=True,
+        job_type="slurm",
+        n_batches=2,
+        max_retries=0,
+        environment=str(environment),
+        log_dir=str(tmp_path / "logs"),
+        temp_dir=str(tmp_path / "temp"),
+    )
+
+    with pytest.raises(RuntimeError, match=r"1 job\(s\) failed"):
+        runner.fit(new_norm_test_model, norm_data_from_arrays, observe=True)
+    assert len(submitted) == 2
+    assert len(runner.failed_jobs) == 1
+    cleanup(new_norm_test_model, runner)
 
 
 def _save_zscores_one_var(save_dir: str, i: int, n_obs: int, barrier: Barrier) -> None:

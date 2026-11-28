@@ -238,6 +238,7 @@ class Errors:
         "Predict data is required for fit_predict without cross-validation"
     )
     ERROR_SUBMITTING_JOB = "Error submitting job {job_id}: {stderr}"
+    ERROR_FAILED_JOBS = "{n_failed} job(s) failed. See the .err files in {log_dir}"
     BLR_X_NOT_PROVIDED = "X is not provided"
     ERROR_UNKNOWN_FUNCTION = "Unknown function {func}"
     ERROR_ARGUMENT_SPECIFIED_TWICE = "Argument {key} is specified twice."
