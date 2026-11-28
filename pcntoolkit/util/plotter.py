@@ -71,6 +71,7 @@ def plot_centiles(
         The model to plot the centiles for.
     scatter_data: NormData
         The data to scatter on top of the centiles.
+        Only the response variables that it holds are plotted.
     centiles: List[float], optional
         The centiles to plot.
     covariate: str, optional
@@ -98,6 +99,11 @@ def plot_centiles(
     -------
     list[Figure]
         One matplotlib Figure per response variable.
+
+    Raises
+    ------
+    ValueError
+        If ``scatter_data`` holds none of the response variables to plot.
     """
     complete_scatter_kwargs: dict = {}
     if scatter_data is not None:
@@ -125,6 +131,14 @@ def plot_centiles(
     if response_vars is None:
         response_vars = model.response_vars
     response_vars = list(set(model.response_vars).intersection(set(response_vars)))
+    if scatter_data is not None:
+        # The scatter data may hold only some of the model's response variables
+        present = set(scatter_data.response_vars.values)
+        response_vars = [rv for rv in response_vars if rv in present]
+        if not response_vars:
+            raise ValueError(
+                "scatter_data holds none of the response variables to plot"
+            )
     # Select the batch effect that has the most data in the scatter data
     batch_effects = {
         k: max(v.items(), key=lambda x: x[1])[0]
@@ -499,6 +513,7 @@ def plot_centiles_advanced(
         The batch effects to plot the centiles for. If None, the first level of each batch effect is used, in the order the levels appear in the data.
     scatter_data: NormData | None, optional
         Data to scatter on top of the centiles.
+        Only the response variables that it holds are plotted.
     harmonize_data: bool, optional
         Whether to harmonize the scatter data before plotting. Data will be harmonized to the batch effect for which the centiles were computed.
     hue_data: str, optional
@@ -1300,7 +1315,8 @@ def _build_centile_grid(
         takes the first level of each, in the order they appear in the data.
     scatter_data : NormData | None, optional
         When given, it is filtered to the plotted range and its batch effects
-        and covariate means are used in place of the model's.
+        and covariate means are used in place of the model's. Only the
+        response variables that it holds are plotted.
     plt_kwargs : dict | None, optional
         Keyword arguments for ``plt.subplots()``.
 
@@ -1308,6 +1324,11 @@ def _build_centile_grid(
     -------
     _CentileGrid
         The grid and the resolved settings used to build it.
+
+    Raises
+    ------
+    ValueError
+        If ``scatter_data`` holds none of the response variables to plot.
     """
     if covariate is None:
         covariate = model.covariates[0]
@@ -1325,6 +1346,14 @@ def _build_centile_grid(
     if response_vars is None:
         response_vars = model.response_vars
     response_vars = list(set(model.response_vars).intersection(set(response_vars)))
+    if scatter_data is not None:
+        # The scatter data may hold only some of the model's response variables
+        present = set(scatter_data.response_vars.values)
+        response_vars = [rv for rv in response_vars if rv in present]
+        if not response_vars:
+            raise ValueError(
+                "scatter_data holds none of the response variables to plot"
+            )
 
     # Drop scatter points outside the plotted covariate range.
     if scatter_data:

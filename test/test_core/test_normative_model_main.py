@@ -4,6 +4,7 @@ import pytest
 from pcntoolkit.dataio.norm_data import NormData
 from pcntoolkit.normative_model import NormativeModel
 from pcntoolkit.regression_model.blr import BLR
+from pcntoolkit.util.plotter import plot_centiles, plot_centiles_advanced
 
 
 class TestNormativeModel:
@@ -75,6 +76,40 @@ class TestNormativeModel:
         assert "Z" in predictions
         assert predictions.Z.shape == self.data["responses"].shape
         assert not np.isnan(predictions.Z).any()
+
+    def test_model_predict_subset_of_response_vars(self) -> None:
+        """Predict and plot data that holds one of the two response variables."""
+        data = NormData.from_ndarrays(
+            name="test_data",
+            X=self.data["covariates"],
+            Y=self.data["responses"],
+            batch_effects=self.data["batch_effects"],
+            subject_ids=self.data["subject_ids"],
+        )
+        self.model.fit(data)
+        subset = data.sel(response_vars=["response_var_0"])
+
+        # saveplots=True: predict ends with plot_centiles
+        predictions = self.model.predict(subset)
+        assert predictions.Z.shape == (len(self.data["responses"]), 1)
+
+        figs = plot_centiles_advanced(
+            self.model,
+            scatter_data=subset,
+            hue_data="batch_effect_0",
+            markers_data="batch_effect_1",
+            show_figure=False,
+        )
+        assert len(figs) == 1
+
+        # Asking for a variable that the scatter data lacks is an error
+        with pytest.raises(ValueError, match="none of the response variables"):
+            plot_centiles(
+                self.model,
+                scatter_data=subset,
+                response_vars=["response_var_1"],
+                show_figure=False,
+            )
 
     def test_model_save_load(self):
         """Test model saving and loading."""
