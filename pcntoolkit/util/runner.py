@@ -162,8 +162,34 @@ class Runner:
         self.failed_jobs: Dict[str, str] = {}
 
     def wait_or_finish(
-        self, observe: bool, into: NormativeModel | None = None, *data_sources
+        self,
+        observe: bool,
+        into: NormativeModel | None = None,
+        *data_sources: NormData,
     ) -> NormativeModel | None:
+        """Wait for the submitted jobs and load their results, or save the runner state.
+
+        Parameters
+        ----------
+        observe : bool
+            If True, wait until all jobs are done, then load the results.
+            If False, save the runner state and return at once.
+        into : NormativeModel | None, optional
+            Model to load the fitted model into. Defaults to None (a new model).
+        *data_sources : NormData
+            Datasets to load the saved results into.
+
+        Returns
+        -------
+        NormativeModel | None
+            The loaded model, or None when jobs were submitted and ``observe``
+            is False.
+
+        Raises
+        ------
+        RuntimeError
+            If at least one job failed. Nothing is loaded in that case.
+        """
         if self.parallelize:
             if observe:
                 self.job_observer = JobObserver(
@@ -171,6 +197,15 @@ class Runner:
                 )
                 self.job_observer.wait_for_jobs()
                 _, self.finished_jobs, self.failed_jobs = self.check_jobs_status()
+                # A failed job leaves its response variables out of save_dir
+                if self.failed_jobs:
+                    raise RuntimeError(
+                        Output.error(
+                            Errors.ERROR_FAILED_JOBS,
+                            n_failed=len(self.failed_jobs),
+                            log_dir=self.unique_log_dir,
+                        )
+                    )
                 if data_sources:
                     for data_source in data_sources:
                         self.load_data(data_source)
